@@ -97,7 +97,7 @@ export default function PaymentPage() {
 
         if (regError || !regData) {
           toast.error("Registration not found")
-          router.push("/my-registrations")
+          router.push("/my-purchases")
           return
         }
 
@@ -313,8 +313,8 @@ export default function PaymentPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Link href="/my-registrations">
-                    <Button>Back to My Registrations</Button>
+                  <Link href="/my-purchases">
+                    <Button>Back to My Purchases</Button>
                   </Link>
                 </CardContent>
               </Card>

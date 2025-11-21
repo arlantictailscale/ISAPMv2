@@ -1,13 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Loader2, Printer } from 'lucide-react'
+import { Loader2, Printer } from "lucide-react"
 import Image from "next/image"
 
 interface Registration {
@@ -62,7 +62,7 @@ export default function BadgePage() {
           .single()
 
         if (regError || !regData) {
-          router.push("/my-registrations")
+          router.push("/my-purchases")
           return
         }
 
@@ -73,8 +73,8 @@ export default function BadgePage() {
           .eq("registration_id", registrationId)
           .single()
 
-        if (paymentError || !paymentData || paymentData.payment_status !== 'verified') {
-          router.push("/my-registrations")
+        if (paymentError || !paymentData || paymentData.payment_status !== "verified") {
+          router.push("/my-purchases")
           return
         }
 
@@ -86,7 +86,7 @@ export default function BadgePage() {
         setQrCodeUrl(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${qrData}`)
       } catch (err) {
         console.error("Error fetching data:", err)
-        router.push("/my-registrations")
+        router.push("/my-purchases")
       } finally {
         setIsLoading(false)
       }
@@ -133,150 +133,180 @@ export default function BadgePage() {
             </div>
 
             {/* Visible Badge for Display */}
-            <div id="participant-badge" className="mx-auto print-only max-w-full" style={{ 
-              width: '95mm', 
-              height: '126mm',
-              backgroundColor: '#ffffff'
-            }}>
-              <div style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                border: '2px solid #0066cc',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                fontFamily: 'system-ui, -apple-system, sans-serif'
-              }}>
+            <div
+              id="participant-badge"
+              className="mx-auto print-only max-w-full"
+              style={{
+                width: "95mm",
+                height: "126mm",
+                backgroundColor: "#ffffff",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  border: "2px solid #0066cc",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  fontFamily: "system-ui, -apple-system, sans-serif",
+                }}
+              >
                 {/* Header */}
-                <div style={{
-                  background: 'linear-gradient(to right, #0066cc, #0052a3)',
-                  color: '#ffffff',
-                  padding: '16px',
-                  textAlign: 'center',
-                  flexShrink: 0
-                }}>
-                  <div style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '8px',
-                    marginBottom: '8px'
-                  }}>
+                <div
+                  style={{
+                    background: "linear-gradient(to right, #0066cc, #0052a3)",
+                    color: "#ffffff",
+                    padding: "16px",
+                    textAlign: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "8px",
+                      marginBottom: "8px",
+                    }}
+                  >
                     <Image
                       src="/images/isapm-logo.png"
                       alt="ISAPM Logo"
                       width={60}
                       height={60}
                       style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '9999px',
-                        padding: '6px'
+                        backgroundColor: "#ffffff",
+                        borderRadius: "9999px",
+                        padding: "6px",
                       }}
                     />
                   </div>
-                  <h1 style={{
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    lineHeight: '1.3',
-                    margin: 0
-                  }}>
+                  <h1
+                    style={{
+                      fontSize: "24px",
+                      fontWeight: "bold",
+                      lineHeight: "1.3",
+                      margin: 0,
+                    }}
+                  >
                     ISAPM 8th National Meeting 2026
                   </h1>
-                  <p style={{
-                    fontSize: '14px',
-                    opacity: 0.9,
-                    marginTop: '4px',
-                    margin: 0
-                  }}>
+                  <p
+                    style={{
+                      fontSize: "14px",
+                      opacity: 0.9,
+                      marginTop: "4px",
+                      margin: 0,
+                    }}
+                  >
                     Malang, 16-18 April 2026
                   </p>
                 </div>
 
                 {/* Content */}
-                <div style={{
-                  padding: '24px',
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between'
-                }}>
+                <div
+                  style={{
+                    padding: "24px",
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <div>
                     {/* Participant Name */}
-                    <div style={{
-                      textAlign: 'center',
-                      paddingBottom: '16px',
-                      borderBottom: '2px solid rgba(0, 102, 204, 0.2)',
-                      marginBottom: '16px'
-                    }}>
-                      <h2 style={{
-                        fontSize: '30px',
-                        fontWeight: 'bold',
-                        lineHeight: '1.3',
-                        margin: 0,
-                        color: '#000000',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
+                    <div
+                      style={{
+                        textAlign: "center",
+                        paddingBottom: "16px",
+                        borderBottom: "2px solid rgba(0, 102, 204, 0.2)",
+                        marginBottom: "16px",
+                      }}
+                    >
+                      <h2
+                        style={{
+                          fontSize: "30px",
+                          fontWeight: "bold",
+                          lineHeight: "1.3",
+                          margin: 0,
+                          color: "#000000",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
                         {registration.first_name} {registration.last_name}
                       </h2>
                     </div>
 
                     {/* Position, Institution, Course & QR */}
-                    <div style={{
-                      display: 'flex',
-                      gap: '16px',
-                      alignItems: 'flex-start',
-                      paddingBottom: '16px',
-                      borderBottom: '2px solid rgba(0, 102, 204, 0.2)',
-                      marginBottom: '16px'
-                    }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: "16px",
+                        alignItems: "flex-start",
+                        paddingBottom: "16px",
+                        borderBottom: "2px solid rgba(0, 102, 204, 0.2)",
+                        marginBottom: "16px",
+                      }}
+                    >
                       {/* Left column */}
                       <div style={{ flex: 1 }}>
-                        <p style={{
-                          fontSize: '18px',
-                          fontWeight: 600,
-                          color: '#0066cc',
-                          margin: 0,
-                          marginBottom: '8px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical'
-                        }}>
+                        <p
+                          style={{
+                            fontSize: "18px",
+                            fontWeight: 600,
+                            color: "#0066cc",
+                            margin: 0,
+                            marginBottom: "8px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                          }}
+                        >
                           {registration.position}
                         </p>
-                        <p style={{
-                          fontSize: '14px',
-                          color: '#666666',
-                          margin: 0,
-                          marginBottom: '8px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 3,
-                          WebkitBoxOrient: 'vertical'
-                        }}>
+                        <p
+                          style={{
+                            fontSize: "14px",
+                            color: "#666666",
+                            margin: 0,
+                            marginBottom: "8px",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 3,
+                            WebkitBoxOrient: "vertical",
+                          }}
+                        >
                           {registration.institution}
                         </p>
-                        <div style={{
-                          paddingTop: '8px',
-                          borderTop: '1px solid #e5e5e5'
-                        }}>
-                          <p style={{
-                            fontSize: '12px',
-                            fontWeight: 500,
-                            color: '#666666',
-                            margin: 0,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical'
-                          }}>
+                        <div
+                          style={{
+                            paddingTop: "8px",
+                            borderTop: "1px solid #e5e5e5",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              color: "#666666",
+                              margin: 0,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                            }}
+                          >
                             {registration.event}
                           </p>
                         </div>
@@ -285,12 +315,14 @@ export default function BadgePage() {
                       {/* Right: QR Code */}
                       <div style={{ flexShrink: 0 }}>
                         {qrCodeUrl && (
-                          <div style={{
-                            padding: '8px',
-                            backgroundColor: '#ffffff',
-                            border: '2px solid #cccccc',
-                            borderRadius: '4px'
-                          }}>
+                          <div
+                            style={{
+                              padding: "8px",
+                              backgroundColor: "#ffffff",
+                              border: "2px solid #cccccc",
+                              borderRadius: "4px",
+                            }}
+                          >
                             <img
                               src={qrCodeUrl || "/placeholder.svg"}
                               alt="QR"
@@ -298,8 +330,8 @@ export default function BadgePage() {
                               height={96}
                               crossOrigin="anonymous"
                               style={{
-                                display: 'block',
-                                imageRendering: 'crisp-edges'
+                                display: "block",
+                                imageRendering: "crisp-edges",
                               }}
                             />
                           </div>
@@ -308,46 +340,54 @@ export default function BadgePage() {
                     </div>
 
                     {/* Registration Type */}
-                    <div style={{
-                      paddingBottom: '16px',
-                      borderBottom: '2px solid rgba(0, 102, 204, 0.2)'
-                    }}>
-                      <p style={{
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        lineHeight: '1.6',
-                        textAlign: 'center',
-                        margin: 0,
-                        color: '#000000',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical'
-                      }}>
+                    <div
+                      style={{
+                        paddingBottom: "16px",
+                        borderBottom: "2px solid rgba(0, 102, 204, 0.2)",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontWeight: 600,
+                          fontSize: "14px",
+                          lineHeight: "1.6",
+                          textAlign: "center",
+                          margin: 0,
+                          color: "#000000",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                        }}
+                      >
                         {registration.registration_type}
                       </p>
                     </div>
                   </div>
 
                   {/* Registration ID */}
-                  <div style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    paddingTop: '16px',
-                    flexShrink: 0
-                  }}>
-                    <p style={{
-                      fontSize: '14px',
-                      color: '#666666',
-                      margin: 0,
-                      fontFamily: 'monospace',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      maxWidth: '100%',
-                      whiteSpace: 'nowrap'
-                    }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      paddingTop: "16px",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontSize: "14px",
+                        color: "#666666",
+                        margin: 0,
+                        fontFamily: "monospace",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: "100%",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
                       ID: {registrationId.substring(0, 16)}...
                     </p>
                   </div>

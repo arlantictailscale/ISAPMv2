@@ -1,13 +1,13 @@
-import { Resend } from 'resend'
+import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function sendWelcomeEmail(toEmail: string, userName: string) {
   try {
     await resend.emails.send({
-      from: 'ISAPM 2026 <noreply@isapm2026.org>',
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: toEmail,
-      subject: 'Welcome to ISAPM 2026!',
+      subject: "Welcome to ISAPM 2026!",
       html: `
         <!DOCTYPE html>
         <html>
@@ -54,7 +54,7 @@ export async function sendWelcomeEmail(toEmail: string, userName: string) {
     })
     return { success: true }
   } catch (error) {
-    console.error('Error sending welcome email:', error)
+    console.error("Error sending welcome email:", error)
     return { success: false, error }
   }
 }
@@ -77,12 +77,12 @@ export async function sendRegistrationConfirmation({
   registrationId: string
 }) {
   const userName = lastName ? `${firstName} ${lastName}` : firstName
-  
+
   try {
     await resend.emails.send({
-      from: 'ISAPM 2026 <noreply@isapm2026.org>',
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: email,
-      subject: 'Registration Confirmation - ISAPM 2026',
+      subject: "Registration Confirmation - ISAPM 2026",
       html: `
         <!DOCTYPE html>
         <html>
@@ -122,7 +122,7 @@ export async function sendRegistrationConfirmation({
                 </ol>
 
                 <p style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-registrations" class="button">View My Registrations</a>
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-purchases" class="button">View My Purchases</a>
                 </p>
 
                 <p>For any questions, please contact us at admin@isapm2026.org or +6289602626709 (WhatsApp).</p>
@@ -140,7 +140,7 @@ export async function sendRegistrationConfirmation({
     })
     return { success: true }
   } catch (error) {
-    console.error('Error sending registration confirmation:', error)
+    console.error("Error sending registration confirmation:", error)
     return { success: false, error }
   }
 }
@@ -158,20 +158,20 @@ export async function sendPaymentVerificationEmail({
   email: string
   firstName: string
   lastName?: string
-  status: 'verified' | 'rejected'
+  status: "verified" | "rejected"
   rejectionReason?: string
   registrationType?: string
   amount?: number
   currency?: string
 }) {
   const userName = lastName ? `${firstName} ${lastName}` : firstName
-  const isVerified = status === 'verified'
-  
+  const isVerified = status === "verified"
+
   try {
     await resend.emails.send({
-      from: 'ISAPM 2026 <noreply@isapm2026.org>',
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: email,
-      subject: `Payment ${isVerified ? 'Verified' : 'Rejected'} - ISAPM 2026`,
+      subject: `Payment ${isVerified ? "Verified" : "Rejected"} - ISAPM 2026`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -180,9 +180,9 @@ export async function sendPaymentVerificationEmail({
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: ${isVerified ? '#00A9E0' : '#EF3340'}; color: white; padding: 30px; text-align: center; }
+              .header { background: ${isVerified ? "#00A9E0" : "#EF3340"}; color: white; padding: 30px; text-align: center; }
               .content { background: #f9f9f9; padding: 30px; }
-              .alert { background: ${isVerified ? '#d4edda' : '#f8d7da'}; border: 1px solid ${isVerified ? '#c3e6cb' : '#f5c6cb'}; color: ${isVerified ? '#155724' : '#721c24'}; padding: 15px; margin: 20px 0; border-radius: 5px; }
+              .alert { background: ${isVerified ? "#d4edda" : "#f8d7da"}; border: 1px solid ${isVerified ? "#c3e6cb" : "#f5c6cb"}; color: ${isVerified ? "#155724" : "#721c24"}; padding: 15px; margin: 20px 0; border-radius: 5px; }
               .details { background: white; padding: 20px; margin: 20px 0; border-left: 4px solid #00A9E0; }
               .button { display: inline-block; background: #EF3340; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
               .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
@@ -191,24 +191,30 @@ export async function sendPaymentVerificationEmail({
           <body>
             <div class="container">
               <div class="header">
-                <h1>Payment ${isVerified ? 'Verified' : 'Rejected'}</h1>
+                <h1>Payment ${isVerified ? "Verified" : "Rejected"}</h1>
               </div>
               <div class="content">
                 <p>Dear ${userName},</p>
                 
-                ${isVerified ? `
+                ${
+                  isVerified
+                    ? `
                   <div class="alert">
                     <strong>✓ Payment Verified!</strong><br>
                     Your payment has been successfully verified by our admin team.
                   </div>
                   
-                  ${registrationType && amount && currency ? `
+                  ${
+                    registrationType && amount && currency
+                      ? `
                     <div class="details">
                       <h3>Payment Details:</h3>
                       <p><strong>Registration Type:</strong> ${registrationType}</p>
                       <p><strong>Amount Paid:</strong> ${currency} ${amount.toLocaleString()}</p>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   
                   <p>Your registration is now complete! You can now:</p>
                   <ul>
@@ -222,21 +228,26 @@ export async function sendPaymentVerificationEmail({
                   </p>
 
                   <p>We look forward to seeing you at ISAPM 2026!</p>
-                ` : `
+                `
+                    : `
                   <div class="alert">
                     <strong>✗ Payment Rejected</strong><br>
                     Unfortunately, your payment could not be verified.
                   </div>
                   
-                  ${registrationType && amount && currency ? `
+                  ${
+                    registrationType && amount && currency
+                      ? `
                     <div class="details">
                       <h3>Payment Details:</h3>
                       <p><strong>Registration Type:</strong> ${registrationType}</p>
                       <p><strong>Expected Amount:</strong> ${currency} ${amount.toLocaleString()}</p>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   
-                  ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ''}
+                  ${rejectionReason ? `<p><strong>Reason:</strong> ${rejectionReason}</p>` : ""}
                   
                   <p><strong>What to do next:</strong></p>
                   <ol>
@@ -246,9 +257,10 @@ export async function sendPaymentVerificationEmail({
                   </ol>
 
                   <p style="text-align: center;">
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-registrations" class="button">Update Payment Proof</a>
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-purchases" class="button">Update Payment Proof</a>
                   </p>
-                `}
+                `
+                }
                 
                 <p>For any questions, please contact us at admin@isapm2026.org or +6289602626709 (WhatsApp).</p>
                 
@@ -265,7 +277,7 @@ export async function sendPaymentVerificationEmail({
     })
     return { success: true }
   } catch (error) {
-    console.error('Error sending payment verification email:', error)
+    console.error("Error sending payment verification email:", error)
     return { success: false, error }
   }
 }
@@ -278,8 +290,8 @@ export async function sendContactFormEmail(formData: {
 }) {
   try {
     await resend.emails.send({
-      from: 'ISAPM 2026 Contact Form <noreply@isapm2026.org>',
-      to: 'admin@isapm2026.org',
+      from: "ISAPM 2026 Contact Form <noreply@isapm2026.org>",
+      to: "admin@isapm2026.org",
       replyTo: formData.email,
       subject: `Contact Form: ${formData.subject}`,
       html: `
@@ -326,7 +338,7 @@ export async function sendContactFormEmail(formData: {
     })
     return { success: true }
   } catch (error) {
-    console.error('Error sending contact form email:', error)
+    console.error("Error sending contact form email:", error)
     return { success: false, error }
   }
 }
@@ -344,9 +356,9 @@ export async function sendPosterSubmissionConfirmation({
 }) {
   try {
     await resend.emails.send({
-      from: 'ISAPM 2026 <noreply@isapm2026.org>',
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: email,
-      subject: 'E-Poster Submission Received - ISAPM 2026',
+      subject: "E-Poster Submission Received - ISAPM 2026",
       html: `
         <!DOCTYPE html>
         <html>
@@ -404,7 +416,7 @@ export async function sendPosterSubmissionConfirmation({
     })
     return { success: true }
   } catch (error) {
-    console.error('Error sending poster submission confirmation:', error)
+    console.error("Error sending poster submission confirmation:", error)
     return { success: false, error }
   }
 }
@@ -420,17 +432,17 @@ export async function sendPosterReviewNotification({
   email: string
   userName: string
   posterTitle: string
-  status: 'accepted' | 'rejected'
+  status: "accepted" | "rejected"
   rejectionComment?: string
   canResubmit?: boolean
 }) {
-  const isAccepted = status === 'accepted'
-  
+  const isAccepted = status === "accepted"
+
   try {
     await resend.emails.send({
-      from: 'ISAPM 2026 <noreply@isapm2026.org>',
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: email,
-      subject: `E-Poster ${isAccepted ? 'Accepted' : 'Rejected'} - ISAPM 2026`,
+      subject: `E-Poster ${isAccepted ? "Accepted" : "Rejected"} - ISAPM 2026`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -439,9 +451,9 @@ export async function sendPosterReviewNotification({
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: ${isAccepted ? '#00A9E0' : '#EF3340'}; color: white; padding: 30px; text-align: center; }
+              .header { background: ${isAccepted ? "#00A9E0" : "#EF3340"}; color: white; padding: 30px; text-align: center; }
               .content { background: #f9f9f9; padding: 30px; }
-              .alert { background: ${isAccepted ? '#d4edda' : '#f8d7da'}; border: 1px solid ${isAccepted ? '#c3e6cb' : '#f5c6cb'}; color: ${isAccepted ? '#155724' : '#721c24'}; padding: 15px; margin: 20px 0; border-radius: 5px; }
+              .alert { background: ${isAccepted ? "#d4edda" : "#f8d7da"}; border: 1px solid ${isAccepted ? "#c3e6cb" : "#f5c6cb"}; color: ${isAccepted ? "#155724" : "#721c24"}; padding: 15px; margin: 20px 0; border-radius: 5px; }
               .details { background: white; padding: 20px; margin: 20px 0; border-left: 4px solid #00A9E0; }
               .button { display: inline-block; background: #EF3340; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
               .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
@@ -455,7 +467,9 @@ export async function sendPosterReviewNotification({
               <div class="content">
                 <p>Dear ${userName},</p>
                 
-                ${isAccepted ? `
+                ${
+                  isAccepted
+                    ? `
                   <div class="alert">
                     <strong>✓ Congratulations!</strong><br>
                     Your e-poster has been accepted for presentation at ISAPM 2026.
@@ -479,7 +493,8 @@ export async function sendPosterReviewNotification({
                   </p>
 
                   <p>We look forward to your presentation at ISAPM 2026!</p>
-                ` : `
+                `
+                    : `
                   <div class="alert">
                     <strong>✗ Submission Not Accepted</strong><br>
                     After careful review, your e-poster submission was not accepted for this year's conference.
@@ -491,23 +506,32 @@ export async function sendPosterReviewNotification({
                     <p><strong>Status:</strong> Not Accepted</p>
                   </div>
                   
-                  ${rejectionComment ? `
+                  ${
+                    rejectionComment
+                      ? `
                     <div class="details">
                       <h3>Reviewer Feedback:</h3>
                       <p>${rejectionComment}</p>
                     </div>
-                  ` : ''}
+                  `
+                      : ""
+                  }
                   
-                  ${canResubmit ? `
+                  ${
+                    canResubmit
+                      ? `
                     <p><strong>Good News:</strong> You are welcome to revise and resubmit your abstract based on the feedback provided.</p>
                     
                     <p style="text-align: center;">
                       <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-posters" class="button">Revise & Resubmit</a>
                     </p>
-                  ` : `
+                  `
+                      : `
                     <p>We encourage you to consider submitting to future ISAPM conferences.</p>
-                  `}
-                `}
+                  `
+                  }
+                `
+                }
                 
                 <p>For any questions, please contact us at admin@isapm2026.org or +6289602626709 (WhatsApp).</p>
                 
@@ -524,7 +548,7 @@ export async function sendPosterReviewNotification({
     })
     return { success: true }
   } catch (error) {
-    console.error('Error sending poster review notification:', error)
+    console.error("Error sending poster review notification:", error)
     return { success: false, error }
   }
 }

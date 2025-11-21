@@ -3,7 +3,6 @@
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { isBefore, parseISO, format } from "date-fns"
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -13,11 +12,64 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Loader2, AlertCircle, User } from "lucide-react"
+import { AddToCartButton } from "@/components/add-to-cart-button"
+import { createClient } from "@/lib/supabase/client"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function PricingPage() {
-  const earlyBirdDeadline = parseISO("2027-01-20T23:59:59") // January 20, 2027, end of day
+  const earlyBirdDeadline = parseISO("2027-01-20T23:59:59")
   const isEarlyBirdPeriod = isBefore(new Date(), earlyBirdDeadline)
+
+  const [user, setUser] = useState<any>(null)
+  const [userProfession, setUserProfession] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const supabase = createClient()
+  const router = useRouter()
+
+  useEffect(() => {
+    const loadUserProfile = async () => {
+      setIsLoading(true)
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
+      setUser(user)
+
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("position")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error("[v0] Error loading profile:", error)
+        toast.error("Failed to load your profile information")
+      } else if (profile) {
+        setUserProfession(profile.position)
+      }
+
+      setIsLoading(false)
+    }
+
+    loadUserProfile()
+  }, [supabase])
+
+  const professionToParticipantMap: Record<string, string[]> = {
+    Anestesiologist: ["span", "span_team"],
+    "General Practitioner": ["dokter_umum"],
+    Resident: ["resident"],
+    Nurse: ["perawat"],
+    "Nurse Anesthetist": ["penata_anestesi"],
+  }
 
   const registrationOptions = [
     {
@@ -230,42 +282,140 @@ export default function PricingPage() {
     }).format(amount)
   }
 
+  const getFilteredParticipantTypes = (participantTypes: any[]) => {
+    if (!user || !userProfession) {
+      return participantTypes
+    }
+
+    const allowedIds = professionToParticipantMap[userProfession] || []
+    return participantTypes.filter((pt) => allowedIds.includes(pt.id))
+  }
+
+  const getFilteredEvents = () => {
+    return registrationOptions
+      .map((event) => ({
+        ...event,
+        participantTypes: getFilteredParticipantTypes(event.participantTypes),
+      }))
+      .filter((event) => event.participantTypes.length > 0)
+  }
+
+  const filteredEvents = getFilteredEvents()
+
+  if (isLoading) {
+    return (
+      <>
+        <Navigation />
+        <main className="pt-24 min-h-screen flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading registration options...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
       <Navigation />
       <main className="pt-24 overflow-x-hidden">
-        <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
+        <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5 pt-20 pb-[30px]">
           <div className="max-w-6xl mx-auto">
-            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Registration Fees</h1>
+            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Register for ISAPM 2026</h1>
             <p className="text-lg text-muted-foreground">
-              Find the right registration option for you at ISAPM National Meeting 2026.
+              Choose your registration package and secure your spot at ISAPM National Meeting 2026. Select from CPD
+              courses, workshops, and symposium options.
             </p>
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-900">
-                <strong>Note:</strong> On-site registration is available at a higher rate. We recommend registering
-                online to secure the best price.
-              </p>
-            </div>
-          </div>
-        </section>
 
-        <section className="py-16 px-4">
-          <div className="max-w-6xl mx-auto space-y-12">
             {isEarlyBirdPeriod && (
-              <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg text-blue-900">
+              <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg text-blue-900">
                 <h2 className="font-display text-2xl font-bold mb-3">Early Bird Discount Available!</h2>
                 <p className="text-lg">
                   Register before <span className="font-semibold">{format(earlyBirdDeadline, "MMMM dd, yyyy")}</span> to
                   secure special reduced rates. Don't miss out!
                 </p>
-                <Link href="/register" className="mt-4 inline-block">
-                  <Button>Register Now</Button>
-                </Link>
+              </div>
+            )}
+
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-900">
+                <strong>Important:</strong> On-site registration is available at a higher rate. Register online now to
+                secure the best price and guarantee your participation.
+              </p>
+            </div>
+
+            {user && userProfession && (
+              <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-3">
+                <User className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-primary mb-1">Showing options for: {userProfession}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Registration options are tailored to your profession. If you need to access options for a different
+                    profession, please update your profile.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {user && !userProfession && (
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-900 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-900 mb-1">Complete Your Profile</p>
+                  <p className="text-xs text-yellow-800 mb-2">
+                    Please complete your profile with your profession to see personalized registration options.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white hover:bg-yellow-50"
+                    onClick={() => router.push("/profile")}
+                  >
+                    Complete Profile
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!user && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-900 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900 mb-1">Login Required</p>
+                  <p className="text-xs text-blue-800 mb-2">
+                    Please login to see profession-specific pricing and registration options tailored for you.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white hover:bg-blue-50"
+                    onClick={() => router.push("/auth/login")}
+                  >
+                    Login
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="py-16 px-4 pt-[30px]">
+          <div className="max-w-6xl mx-auto space-y-12">
+            {filteredEvents.length === 0 && user && userProfession && (
+              <div className="p-8 bg-muted rounded-lg text-center">
+                <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-display text-xl font-bold mb-2">No Registration Options Available</h3>
+                <p className="text-muted-foreground">
+                  There are currently no registration options available for your profession ({userProfession}). Please
+                  contact us if you believe this is an error.
+                </p>
               </div>
             )}
 
             <div className="space-y-4">
-              {registrationOptions.map((event) => (
+              {filteredEvents.map((event) => (
                 <Dialog key={event.id}>
                   <DialogTrigger asChild>
                     <button className="w-full bg-card border border-border rounded-xl p-4 hover:border-primary transition-colors text-left flex items-center justify-between group">
@@ -282,40 +432,55 @@ export default function PricingPage() {
                       <DialogDescription className="break-words">{event.date}</DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 mt-4">
-                      {event.participantTypes.map((pt) => (
-                        <div key={pt.id} className="border border-border rounded-lg p-4 space-y-3">
-                          <h4 className="font-semibold text-foreground break-words">{pt.label}</h4>
-                          <div className="space-y-2">
-                            {isEarlyBirdPeriod && (
+                      {event.participantTypes.map((pt) => {
+                        const currentPrice = isEarlyBirdPeriod ? pt.earlyBirdPrice : pt.normalPrice
+
+                        return (
+                          <div key={pt.id} className="border border-border rounded-lg p-4 space-y-3">
+                            <h4 className="font-semibold text-foreground break-words">{pt.label}</h4>
+                            <div className="space-y-2">
+                              {isEarlyBirdPeriod && (
+                                <div className="flex justify-between items-center gap-3">
+                                  <span className="text-sm text-muted-foreground min-w-0">Early Bird Price</span>
+                                  <span className="font-bold text-primary text-base sm:text-lg whitespace-nowrap">
+                                    {formatPrice(pt.earlyBirdPrice, pt.currency)}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex justify-between items-center gap-3">
-                                <span className="text-sm text-muted-foreground min-w-0">Early Bird Price</span>
-                                <span className="font-bold text-primary text-base sm:text-lg whitespace-nowrap">
-                                  {formatPrice(pt.earlyBirdPrice, pt.currency)}
+                                <span className="text-sm text-muted-foreground min-w-0">Regular Price</span>
+                                <span
+                                  className={`whitespace-nowrap ${isEarlyBirdPeriod ? "text-muted-foreground line-through" : "font-bold text-primary text-base sm:text-lg"}`}
+                                >
+                                  {formatPrice(pt.normalPrice, pt.currency)}
                                 </span>
                               </div>
-                            )}
-                            <div className="flex justify-between items-center gap-3">
-                              <span className="text-sm text-muted-foreground min-w-0">Regular Price</span>
-                              <span
-                                className={`whitespace-nowrap ${isEarlyBirdPeriod ? "text-muted-foreground line-through" : "font-bold text-primary text-base sm:text-lg"}`}
-                              >
-                                {formatPrice(pt.normalPrice, pt.currency)}
-                              </span>
+                              <div className="flex justify-between items-center gap-3">
+                                <span className="text-sm text-muted-foreground min-w-0">On-site Price</span>
+                                <span className="font-semibold text-foreground whitespace-nowrap">
+                                  {formatPrice(pt.onSitePrice, pt.currency)}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex justify-between items-center gap-3">
-                              <span className="text-sm text-muted-foreground min-w-0">On-site Price</span>
-                              <span className="font-semibold text-foreground whitespace-nowrap">
-                                {formatPrice(pt.onSitePrice, pt.currency)}
-                              </span>
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                              <AddToCartButton
+                                item={{
+                                  item_type: "event",
+                                  event_id: event.id,
+                                  event_label: event.label,
+                                  participant_type_id: pt.id,
+                                  participant_type_label: pt.label,
+                                  unit_price: currentPrice,
+                                  currency: pt.currency,
+                                }}
+                                variant="default"
+                                size="default"
+                                className="w-full"
+                              />
                             </div>
                           </div>
-                        </div>
-                      ))}
-                      <Link href="/register" className="block">
-                        <Button className="w-full" size="lg">
-                          Register for this Event
-                        </Button>
-                      </Link>
+                        )
+                      })}
                     </div>
                   </DialogContent>
                 </Dialog>

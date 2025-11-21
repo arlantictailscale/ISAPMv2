@@ -20,12 +20,10 @@ export default function Hero() {
       </div>
 
       {/* Decorative Elements */}
-      
+
       <div className="absolute bottom-0 left-10 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
 
-      <div 
-        className="max-w-6xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000"
-      >
+      <div className="max-w-6xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">
         <div className="text-center space-y-8">
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl leading-tight text-balance px-4 drop-shadow-lg font-sans font-extrabold text-primary">
             Indonesian Society Anesthesiology for Pain Management (ISAPM) 8th National Meeting 2026
@@ -41,7 +39,9 @@ export default function Hero() {
 
           <div className="pt-4 space-y-2 text-white/90">
             <p className="text-lg font-semibold drop-shadow-md text-lime-300">April 16-18, 2026</p>
-            <p className="text-base drop-shadow-md text-sky-100">The Singhasari Resort & Convention Batu, Malang, Jawa Timur, Indonesia</p>
+            <p className="text-base drop-shadow-md text-sky-100">
+              The Singhasari Resort & Convention Batu, Malang, Jawa Timur, Indonesia
+            </p>
           </div>
 
           <div className="pt-8">
@@ -51,7 +51,7 @@ export default function Hero() {
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
             <Link
-              href="/register"
+              href="/pricing"
               className="px-8 py-4 rounded-lg font-bold hover:shadow-lg transition-all text-lg text-center bg-red-700 text-background"
             >
               Register Now

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, User, ClipboardList, FileText, Users, CreditCard, Presentation, Hotel } from "lucide-react"
+import { Loader2, User, ClipboardList, FileText, Users, Presentation, Hotel } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -88,13 +88,6 @@ export default function DashboardPage() {
       color: "from-blue-500 to-blue-600",
     },
     {
-      title: "My Registrations",
-      description: "View your conference registrations and payments",
-      icon: ClipboardList,
-      href: "/my-registrations",
-      color: "from-green-500 to-green-600",
-    },
-    {
       title: "My E-Posters",
       description: "Manage your poster submissions",
       icon: FileText,
@@ -102,11 +95,11 @@ export default function DashboardPage() {
       color: "from-purple-500 to-purple-600",
     },
     {
-      title: "My Hotel Bookings",
-      description: "View your hotel reservations",
-      icon: Hotel,
-      href: "/my-orders",
-      color: "from-orange-500 to-orange-600",
+      title: "My Purchases",
+      description: "View all your CPD courses and hotel bookings",
+      icon: ClipboardList,
+      href: "/my-purchases",
+      color: "from-green-500 to-green-600",
     },
   ]
 
@@ -117,13 +110,6 @@ export default function DashboardPage() {
       icon: Users,
       href: "/admin/users",
       color: "from-blue-500 to-blue-600",
-    },
-    {
-      title: "Payment Validation",
-      description: "Review and approve payments",
-      icon: CreditCard,
-      href: "/admin/payments",
-      color: "from-red-500 to-red-600",
     },
     {
       title: "E-Poster Submissions",

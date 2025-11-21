@@ -1,6 +1,9 @@
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { MapPin, Phone, Mail, Clock } from 'lucide-react'
+import { MapPin, Phone, Mail, Clock, Hotel, Calendar } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function Venue() {
   return (
@@ -9,7 +12,7 @@ export default function Venue() {
       <main className="pt-24 overflow-x-hidden">
         <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
           <div className="max-w-6xl mx-auto">
-            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Venue & Contact</h1>
+            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Venue & Accommodations</h1>
             <p className="text-lg text-muted-foreground">The Singhasari Resort & Convention Batu, Malang, Jawa Timur</p>
           </div>
         </section>
@@ -43,18 +46,15 @@ export default function Venue() {
                     <h3 className="font-semibold mb-1">Phone</h3>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">
-                        <strong>Resort:</strong>{' '}
-                        <a 
-                          href="tel:+62341513333" 
-                          className="text-primary hover:underline"
-                        >
+                        <strong>Resort:</strong>{" "}
+                        <a href="tel:+62341513333" className="text-primary hover:underline">
                           (62-341) 513333
                         </a>
                       </p>
                       <p className="text-muted-foreground">
-                        <strong>Conference Info:</strong>{' '}
-                        <a 
-                          href="https://wa.me/6289602626709" 
+                        <strong>Conference Info:</strong>{" "}
+                        <a
+                          href="https://wa.me/6289602626709"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline"
@@ -70,10 +70,7 @@ export default function Venue() {
                   <Mail className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Email</h3>
-                    <a 
-                      href="mailto:admin@isapm2026.org" 
-                      className="text-primary hover:underline"
-                    >
+                    <a href="mailto:admin@isapm2026.org" className="text-primary hover:underline">
                       admin@isapm2026.org
                     </a>
                   </div>
@@ -108,7 +105,8 @@ export default function Venue() {
                 <ul className="space-y-4 text-sm text-muted-foreground">
                   <li>
                     <strong className="text-foreground block mb-1">By Air (International/Major):</strong>
-                    Juanda International Airport (SUB), Surabaya. The most common entry point for international and many domestic flights.
+                    Juanda International Airport (SUB), Surabaya. The most common entry point for international and many
+                    domestic flights.
                     <br />
                     <span className="italic">Travel time: approx. 2-3 hours to Batu via Pandaan-Malang Toll Road.</span>
                   </li>
@@ -120,13 +118,15 @@ export default function Venue() {
                   </li>
                   <li>
                     <strong className="text-foreground block mb-1">By Train:</strong>
-                    Malang Kota Baru Station. Scenic train routes available from Jakarta, Bandung, Yogyakarta, and Surabaya.
+                    Malang Kota Baru Station. Scenic train routes available from Jakarta, Bandung, Yogyakarta, and
+                    Surabaya.
                     <br />
                     <span className="italic">Travel time: approx. 30-45 minutes by car to Batu.</span>
                   </li>
                   <li>
                     <strong className="text-foreground block mb-1">Ground Transport:</strong>
-                    Ride-hailing apps (Grab, Gojek) and official airport taxis are widely available. Private car rentals can also be arranged from airports or stations.
+                    Ride-hailing apps (Grab, Gojek) and official airport taxis are widely available. Private car rentals
+                    can also be arranged from airports or stations.
                   </li>
                 </ul>
               </div>
@@ -134,34 +134,150 @@ export default function Venue() {
           </div>
         </section>
 
-        {/* Accommodations */}
+        {/* Accommodations & Hotel Booking */}
         <section className="py-16 px-4 bg-card">
           <div className="max-w-6xl mx-auto">
-            <h2 className="font-display text-2xl font-bold mb-8">Resort Accommodations</h2>
+            <div className="flex items-center gap-3 mb-8">
+              <Hotel className="w-8 h-8 text-primary" />
+              <h2 className="font-display text-2xl font-bold">Hotel Accommodations & Booking</h2>
+            </div>
 
-            <div className="max-w-2xl">
-              <div className="bg-background border border-border rounded-xl p-6">
-                <h3 className="font-semibold text-lg mb-3">Resort Facilities</h3>
-                <ul className="space-y-2 text-muted-foreground text-sm">
-                  <li className="flex gap-2">
-                    <span className="text-primary font-bold">•</span> Modern convention center & conference rooms
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary font-bold">•</span> High-speed WiFi throughout the resort
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary font-bold">•</span> Multiple on-site restaurants & cafes
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary font-bold">•</span> Business center & meeting facilities
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary font-bold">•</span> Swimming pool, fitness center & spa
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-primary font-bold">•</span> Beautiful mountain views and resort grounds
-                  </li>
-                </ul>
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              {/* Room Types & Pricing */}
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-primary" />
+                      Deluxe Room
+                    </CardTitle>
+                    <CardDescription>Spacious comfort with modern amenities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-primary">Rp 1,250,000</span>
+                        <span className="text-muted-foreground">/ night</span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> King or twin beds
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Mountain or garden view
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Modern bathroom with amenities
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Complimentary WiFi & breakfast
+                        </li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="w-5 h-5 text-primary" />
+                      Premier Room
+                    </CardTitle>
+                    <CardDescription>Enhanced luxury and exclusive amenities</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-primary">Rp 1,350,000</span>
+                        <span className="text-muted-foreground">/ night</span>
+                      </div>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Larger room with premium furnishings
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Panoramic mountain views
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Executive bathroom with bathtub
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-primary font-bold">•</span> Complimentary WiFi, breakfast & minibar
+                        </li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Resort Facilities & Booking CTA */}
+              <div className="space-y-6">
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardHeader>
+                    <CardTitle>Book Your Stay</CardTitle>
+                    <CardDescription>Reserve your room for ISAPM 2026</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      Stay at the conference venue for maximum convenience. Book your room now and enjoy easy access to
+                      all sessions, networking opportunities, and resort amenities.
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Conference Dates:</span>
+                        <span className="font-medium">April 16-18, 2026</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Check-in:</span>
+                        <span className="font-medium">2:00 PM</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Check-out:</span>
+                        <span className="font-medium">12:00 PM</span>
+                      </div>
+                    </div>
+                    <Link href="/hotel-booking" className="block">
+                      <Button
+                        size="lg"
+                        className="w-full bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
+                      >
+                        <Hotel className="w-5 h-5 mr-2" />
+                        Book Hotel Room
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Resort Facilities</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2 text-muted-foreground text-sm">
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> Modern convention center & conference rooms
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> High-speed WiFi throughout the resort
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> Multiple on-site restaurants & cafes
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> Business center & meeting facilities
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> Swimming pool, fitness center & spa
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> Beautiful mountain views and resort grounds
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-primary font-bold">•</span> 24-hour room service & concierge
+                      </li>
+                    </ul>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>

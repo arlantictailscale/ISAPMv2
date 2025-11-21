@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, CheckCircle2, Clock, AlertCircle, ImageIcon } from 'lucide-react'
+import { Loader2, CheckCircle2, Clock, AlertCircle, ImageIcon } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 
@@ -68,7 +68,7 @@ export default function PaymentDetailsPage() {
           .single()
 
         if (regError || !regData) {
-          router.push("/my-registrations")
+          router.push("/my-purchases")
           return
         }
 
@@ -89,7 +89,7 @@ export default function PaymentDetailsPage() {
         setPayment(paymentData)
       } catch (err) {
         console.error("Error fetching data:", err)
-        router.push("/my-registrations")
+        router.push("/my-purchases")
       } finally {
         setIsLoading(false)
       }
@@ -119,41 +119,42 @@ export default function PaymentDetailsPage() {
 
   const getStatusConfig = () => {
     switch (payment.payment_status) {
-      case 'pending':
+      case "pending":
         return {
           icon: <Clock className="w-12 h-12 text-orange-600" />,
-          title: 'Payment Pending Verification',
-          description: 'Your payment information has been submitted successfully. Our team will verify your payment shortly.',
-          bgColor: 'bg-orange-50',
-          borderColor: 'border-orange-200',
-          textColor: 'text-orange-900',
+          title: "Payment Pending Verification",
+          description:
+            "Your payment information has been submitted successfully. Our team will verify your payment shortly.",
+          bgColor: "bg-orange-50",
+          borderColor: "border-orange-200",
+          textColor: "text-orange-900",
         }
-      case 'verified':
+      case "verified":
         return {
           icon: <CheckCircle2 className="w-12 h-12 text-green-600" />,
-          title: 'Payment Verified',
-          description: 'Your payment has been verified successfully. You will receive a confirmation email shortly.',
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
-          textColor: 'text-green-900',
+          title: "Payment Verified",
+          description: "Your payment has been verified successfully. You will receive a confirmation email shortly.",
+          bgColor: "bg-green-50",
+          borderColor: "border-green-200",
+          textColor: "text-green-900",
         }
-      case 'rejected':
+      case "rejected":
         return {
           icon: <AlertCircle className="w-12 h-12 text-red-600" />,
-          title: 'Payment Rejected',
-          description: 'Your payment information was rejected. Please check the details below and resubmit.',
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-900',
+          title: "Payment Rejected",
+          description: "Your payment information was rejected. Please check the details below and resubmit.",
+          bgColor: "bg-red-50",
+          borderColor: "border-red-200",
+          textColor: "text-red-900",
         }
       default:
         return {
           icon: <Clock className="w-12 h-12" />,
-          title: 'Payment Status',
-          description: 'Payment information',
-          bgColor: 'bg-gray-50',
-          borderColor: 'border-gray-200',
-          textColor: 'text-gray-900',
+          title: "Payment Status",
+          description: "Payment information",
+          bgColor: "bg-gray-50",
+          borderColor: "border-gray-200",
+          textColor: "text-gray-900",
         }
     }
   }
@@ -172,16 +173,18 @@ export default function PaymentDetailsPage() {
                 <div className="flex flex-col items-center text-center space-y-4">
                   {statusConfig.icon}
                   <div>
-                    <h2 className={`text-2xl font-bold ${statusConfig.textColor} mb-2`}>
-                      {statusConfig.title}
-                    </h2>
-                    <p className={statusConfig.textColor}>
-                      {statusConfig.description}
-                    </p>
+                    <h2 className={`text-2xl font-bold ${statusConfig.textColor} mb-2`}>{statusConfig.title}</h2>
+                    <p className={statusConfig.textColor}>{statusConfig.description}</p>
                   </div>
-                  <Badge 
-                    variant="secondary" 
-                    className={payment.payment_status === 'pending' ? 'bg-orange-100 text-orange-800' : payment.payment_status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}
+                  <Badge
+                    variant="secondary"
+                    className={
+                      payment.payment_status === "pending"
+                        ? "bg-orange-100 text-orange-800"
+                        : payment.payment_status === "verified"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                    }
                   >
                     Status: {payment.payment_status.charAt(0).toUpperCase() + payment.payment_status.slice(1)}
                   </Badge>
@@ -218,18 +221,23 @@ export default function PaymentDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Payment Details</CardTitle>
-                <CardDescription>Information submitted on {new Date(payment.created_at).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}</CardDescription>
+                <CardDescription>
+                  Information submitted on{" "}
+                  {new Date(payment.created_at).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Payment Method:</span>
-                  <span className="font-semibold">{payment.payment_method === 'bank_transfer' ? 'Bank Transfer' : payment.payment_method}</span>
+                  <span className="font-semibold">
+                    {payment.payment_method === "bank_transfer" ? "Bank Transfer" : payment.payment_method}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Bank Name:</span>
@@ -281,23 +289,19 @@ export default function PaymentDetailsPage() {
 
             {/* Actions */}
             <div className="flex gap-4 flex-col sm:flex-row">
-              <Link href="/my-registrations" className="flex-1">
-                <Button variant="outline" className="w-full">
-                  View All Registrations
+              <Link href="/my-purchases" className="flex-1">
+                <Button variant="outline" className="w-full bg-transparent">
+                  View All Purchases
                 </Button>
               </Link>
-              {payment.payment_status === 'verified' && (
+              {payment.payment_status === "verified" && (
                 <Link href={`/badge/${registrationId}`} className="flex-1">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    View & Print Participant Badge
-                  </Button>
+                  <Button className="w-full bg-green-600 hover:bg-green-700">View & Print Participant Badge</Button>
                 </Link>
               )}
-              {payment.payment_status === 'rejected' && (
+              {payment.payment_status === "rejected" && (
                 <Link href={`/payment/${registrationId}`} className="flex-1">
-                  <Button className="w-full">
-                    Resubmit Payment
-                  </Button>
+                  <Button className="w-full">Resubmit Payment</Button>
                 </Link>
               )}
             </div>

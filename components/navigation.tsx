@@ -9,13 +9,15 @@ import {
   X,
   LogOut,
   User,
-  ClipboardList,
   FileText,
   Users,
-  CreditCard,
   Presentation,
   LayoutDashboard,
   Hotel,
+  ShoppingCart,
+  ShoppingBag,
+  Calendar,
+  CheckCircle,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -26,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { CartIcon } from "@/components/cart/cart-icon"
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -103,12 +106,8 @@ export default function Navigation() {
 
   const navItems = [
     { label: "Home", href: "/" },
-    { label: "CPD Courses", href: "/program" },
-    { label: "Workshop", href: "/workshop" },
-    { label: "Symposium", href: "/symposium" },
+    { label: "Events", href: "/events" },
     { label: "e-Poster", href: "/call-for-papers" },
-    { label: "Hotel Booking", href: "/hotel-booking" },
-    { label: "Pricing", href: "/pricing" },
     { label: "Venue", href: "/venue" },
   ]
 
@@ -137,7 +136,16 @@ export default function Navigation() {
                 {item.label}
               </Link>
             ))}
+            <Link href="/pricing">
+              <Button
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-md hover:shadow-lg transition-all"
+              >
+                Register Now
+              </Button>
+            </Link>
             <div className="flex gap-3 items-center">
+              {!isLoading && user && <CartIcon />}
               {!isLoading && user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -159,22 +167,28 @@ export default function Navigation() {
                         My Profile
                       </DropdownMenuItem>
                     </Link>
-                    <Link href="/my-registrations">
-                      <DropdownMenuItem>
-                        <ClipboardList className="w-4 h-4 mr-2" />
-                        My Registrations
-                      </DropdownMenuItem>
-                    </Link>
                     <Link href="/my-posters">
                       <DropdownMenuItem>
                         <FileText className="w-4 h-4 mr-2" />
                         My E-Posters
                       </DropdownMenuItem>
                     </Link>
-                    <Link href="/my-orders">
+                    <Link href="/my-events">
+                      <DropdownMenuItem>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        My Events
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-hotel-bookings">
                       <DropdownMenuItem>
                         <Hotel className="w-4 h-4 mr-2" />
                         My Hotel Bookings
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-purchases">
+                      <DropdownMenuItem>
+                        <ShoppingBag className="w-4 h-4 mr-2" />
+                        My Purchases
                       </DropdownMenuItem>
                     </Link>
                     {userRole === "admin" && (
@@ -186,22 +200,28 @@ export default function Navigation() {
                             User Management (Admin)
                           </DropdownMenuItem>
                         </Link>
-                        <Link href="/admin/payments">
-                          <DropdownMenuItem className="text-primary">
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            Payment Validation (Admin)
-                          </DropdownMenuItem>
-                        </Link>
                         <Link href="/admin/posters">
                           <DropdownMenuItem className="text-primary">
                             <Presentation className="w-4 h-4 mr-2" />
                             E-Poster Submissions (Admin)
                           </DropdownMenuItem>
                         </Link>
+                        <Link href="/admin/payment-validation">
+                          <DropdownMenuItem className="text-primary">
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Payment Validation (Admin)
+                          </DropdownMenuItem>
+                        </Link>
                         <Link href="/admin/hotel-bookings">
                           <DropdownMenuItem className="text-primary">
                             <Hotel className="w-4 h-4 mr-2" />
                             Hotel Booking Management (Admin)
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/admin/carts">
+                          <DropdownMenuItem className="text-primary">
+                            <ShoppingCart className="w-4 h-4 mr-2" />
+                            Cart Management (Admin)
                           </DropdownMenuItem>
                         </Link>
                       </>
@@ -247,6 +267,12 @@ export default function Navigation() {
               </Link>
             ))}
 
+            <Link href="/pricing" className="block mx-2" onClick={() => setIsOpen(false)}>
+              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+                Register Now
+              </Button>
+            </Link>
+
             <div className="border-t border-border pt-4 space-y-2">
               {!isLoading && user ? (
                 <>
@@ -265,13 +291,6 @@ export default function Navigation() {
                     My Profile
                   </Link>
                   <Link
-                    href="/my-registrations"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Registrations
-                  </Link>
-                  <Link
                     href="/my-posters"
                     className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
                     onClick={() => setIsOpen(false)}
@@ -279,11 +298,25 @@ export default function Navigation() {
                     My E-Posters
                   </Link>
                   <Link
-                    href="/my-orders"
+                    href="/my-events"
+                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Events
+                  </Link>
+                  <Link
+                    href="/my-hotel-bookings"
                     className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
                     onClick={() => setIsOpen(false)}
                   >
                     My Hotel Bookings
+                  </Link>
+                  <Link
+                    href="/my-purchases"
+                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Purchases
                   </Link>
                   {userRole === "admin" && (
                     <>
@@ -295,13 +328,6 @@ export default function Navigation() {
                         User Management (Admin)
                       </Link>
                       <Link
-                        href="/admin/payments"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Payment Validation (Admin)
-                      </Link>
-                      <Link
                         href="/admin/posters"
                         className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
                         onClick={() => setIsOpen(false)}
@@ -309,11 +335,25 @@ export default function Navigation() {
                         E-Poster Submissions (Admin)
                       </Link>
                       <Link
+                        href="/admin/payment-validation"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Payment Validation (Admin)
+                      </Link>
+                      <Link
                         href="/admin/hotel-bookings"
                         className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
                         onClick={() => setIsOpen(false)}
                       >
                         Hotel Booking Management (Admin)
+                      </Link>
+                      <Link
+                        href="/admin/carts"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Cart Management (Admin)
                       </Link>
                     </>
                   )}

@@ -97,7 +97,7 @@ export default function FlipBookSection() {
 
           <div className="text-center">
             <p className="text-lg text-muted-foreground mb-4">Don't miss out on the 8th National Meeting!</p>
-            <Link href="/register">
+            <Link href="/pricing">
               <Button size="lg" className="text-lg px-8 py-6 h-auto font-bold animate-pulse">
                 Register Now
               </Button>

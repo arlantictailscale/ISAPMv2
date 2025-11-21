@@ -6,13 +6,13 @@ import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Hotel, Loader2 } from "lucide-react"
+import { Hotel, Loader2, Calendar, MapPin, Building2, Users, Clock, Info } from "lucide-react"
 import { toast } from "sonner"
 import { format, differenceInDays } from "date-fns"
+import { AddToCartButton } from "@/components/add-to-cart-button"
 
 const ROOM_TYPES = [
   { id: "deluxe", name: "Deluxe Room", price: 1250000 },
@@ -156,29 +156,92 @@ export default function HotelBookingPage() {
   const selectedRoom = ROOM_TYPES.find((r) => r.id === roomType)
   const nights = calculateNights()
   const total = calculateTotal()
+  const isFormValid = checkInDate && checkOutDate && roomType && nights > 0
 
   return (
     <>
       <Navigation />
-      <main className="pt-24 pb-20 min-h-screen">
-        <section className="py-12 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-3 mb-4">
-              <Hotel className="w-10 h-10 text-primary" />
-              <h1 className="font-display text-4xl font-bold">Hotel Booking</h1>
+      <main className="pt-24 pb-20 min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
+        <section className="py-12 px-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
+          <div className="max-w-7xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-8 items-start">
+              <div>
+                <div className="flex items-center gap-3 mb-4">
+                  <Hotel className="w-12 h-12 text-primary" />
+                  <div>
+                    <h1 className="font-display text-4xl md:text-5xl font-bold text-balance">Hotel Accommodation</h1>
+                    <p className="text-lg text-primary font-semibold mt-1">ISAPM 8th National Meeting 2026</p>
+                  </div>
+                </div>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Reserve your accommodation at our exclusive event venue and enjoy convenient access to all conference
+                  activities, workshops, and networking opportunities.
+                </p>
+              </div>
+
+              <Card className="bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-2xl">
+                    <Calendar className="w-6 h-6 text-primary" />
+                    Event Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Event Dates</p>
+                      <p className="text-muted-foreground">April 16-18, 2026</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        • Day 1-2: CPD Courses (April 16-17)
+                        <br />• Day 3: Workshops & Symposium (April 17)
+                        <br />• Day 4: Symposium (April 18)
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Location</p>
+                      <p className="text-muted-foreground">The Singhasari Resort & Convention</p>
+                      <p className="text-sm text-muted-foreground">Batu, Malang, Jawa Timur, Indonesia</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <Users className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Expected Participants</p>
+                      <p className="text-sm text-muted-foreground">
+                        Anesthesiologists, Pain Specialists, General Practitioners, Nurses, Healthcare Professionals
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <p className="text-lg text-muted-foreground">
-              Reserve your room at The Singhasari Resort & Convention, Batu, Malang, Jawa Timur
-            </p>
           </div>
         </section>
 
-        <section className="py-12 px-4">
+        
+
+        
+
+        {/* Booking Form Section */}
+        <section className="py-12 px-4 bg-background">
           <div className="max-w-4xl mx-auto">
-            <Card>
+            <div className="mb-8">
+              <h2 className="font-display text-3xl font-bold mb-2">Complete Your Booking</h2>
+              <p className="text-muted-foreground">
+                Fill in your details below to reserve your accommodation for ISAPM 2026
+              </p>
+            </div>
+
+            <Card className="border-primary/20">
               <CardHeader>
-                <CardTitle>The Singhasari Resort & Convention</CardTitle>
-                <CardDescription>Batu, Malang, Jawa Timur</CardDescription>
+                <CardTitle>Booking Details</CardTitle>
+                <CardDescription>Select your room type and dates</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="grid gap-6 md:grid-cols-2">
@@ -214,7 +277,7 @@ export default function HotelBookingPage() {
                     <SelectContent>
                       {ROOM_TYPES.map((room) => (
                         <SelectItem key={room.id} value={room.id}>
-                          {room.name} - Rp {room.price.toLocaleString("id-ID")}
+                          {room.name} - Rp {room.price.toLocaleString("id-ID")}/night
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -253,11 +316,19 @@ export default function HotelBookingPage() {
                 </div>
 
                 {nights > 0 && selectedRoom && (
-                  <div className="bg-muted p-6 rounded-lg space-y-2">
+                  <div className="bg-gradient-to-br from-primary/5 to-transparent p-6 rounded-lg border border-primary/20 space-y-2">
                     <h3 className="font-semibold text-lg mb-4">Booking Summary</h3>
                     <div className="flex justify-between">
                       <span>Room Type:</span>
                       <span className="font-medium">{selectedRoom.name}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Check-in:</span>
+                      <span className="font-medium">{format(new Date(checkInDate), "PPP")}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Check-out:</span>
+                      <span className="font-medium">{format(new Date(checkOutDate), "PPP")}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Number of Nights:</span>
@@ -276,21 +347,24 @@ export default function HotelBookingPage() {
                   </div>
                 )}
 
-                <Button
-                  onClick={handleBookNow}
-                  disabled={isSubmitting || nights <= 0 || !roomType}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    "Book Now"
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {isFormValid && selectedRoom && (
+                    <AddToCartButton
+                      item={{
+                        item_type: "hotel",
+                        hotel_room_type: roomType,
+                        check_in_date: checkInDate,
+                        check_out_date: checkOutDate,
+                        nights: nights,
+                        unit_price: selectedRoom.price,
+                        currency: "IDR",
+                      }}
+                      variant="default"
+                      size="lg"
+                      className="w-full"
+                    />
                   )}
-                </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

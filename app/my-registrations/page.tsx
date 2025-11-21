@@ -1,14 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, CheckCircle2, Clock, XCircle, Trash2, Download, ImageIcon } from 'lucide-react'
+import { Loader2, CheckCircle2, Clock, XCircle, Trash2, Download, ImageIcon } from "lucide-react"
 import Link from "next/link"
 import {
   AlertDialog,
@@ -21,10 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent } from "@/components/ui/dialog"
 
 interface Registration {
   id: string
@@ -110,7 +107,7 @@ export default function MyRegistrationsPage() {
         setRegistrations(data || [])
 
         if (data && data.length > 0) {
-          const registrationIds = data.map(r => r.id)
+          const registrationIds = data.map((r) => r.id)
           const { data: paymentsData, error: paymentsError } = await supabase
             .from("payments")
             .select("*")
@@ -118,7 +115,7 @@ export default function MyRegistrationsPage() {
 
           if (!paymentsError && paymentsData) {
             const paymentsMap: Record<string, Payment> = {}
-            paymentsData.forEach(payment => {
+            paymentsData.forEach((payment) => {
               paymentsMap[payment.registration_id] = payment
             })
             setPayments(paymentsMap)
@@ -138,7 +135,7 @@ export default function MyRegistrationsPage() {
   const handleDeleteRegistration = async (registrationId: string) => {
     try {
       setDeletingId(registrationId)
-      
+
       const { error: deleteError } = await supabase
         .from("registrations")
         .delete()
@@ -151,8 +148,8 @@ export default function MyRegistrationsPage() {
         return
       }
 
-      setRegistrations(prev => prev.filter(r => r.id !== registrationId))
-      setPayments(prev => {
+      setRegistrations((prev) => prev.filter((r) => r.id !== registrationId))
+      setPayments((prev) => {
         const newPayments = { ...prev }
         delete newPayments[registrationId]
         return newPayments
@@ -168,7 +165,7 @@ export default function MyRegistrationsPage() {
   const handleCancelPayment = async (registrationId: string, paymentId: string) => {
     try {
       setCancellingPaymentId(paymentId)
-      
+
       const { error: deleteError } = await supabase
         .from("payments")
         .delete()
@@ -182,7 +179,7 @@ export default function MyRegistrationsPage() {
         return
       }
 
-      setPayments(prev => {
+      setPayments((prev) => {
         const newPayments = { ...prev }
         delete newPayments[registrationId]
         return newPayments
@@ -235,7 +232,7 @@ export default function MyRegistrationsPage() {
               <Card>
                 <CardContent className="pt-12 pb-12 text-center">
                   <p className="text-muted-foreground mb-6">You don&apos;t have any registrations yet.</p>
-                  <Link href="/register">
+                  <Link href="/pricing">
                     <Button>Register for ISAPM 2026</Button>
                   </Link>
                 </CardContent>
@@ -246,14 +243,16 @@ export default function MyRegistrationsPage() {
                   <h2 className="font-display text-2xl font-bold">
                     {registrations.length} Registration{registrations.length !== 1 ? "s" : ""}
                   </h2>
-                  <Link href="/register">
-                    <Button variant="outline" className="w-full sm:w-auto">Add New Registration</Button>
+                  <Link href="/pricing">
+                    <Button variant="outline" className="w-full sm:w-auto bg-transparent">
+                      Add New Registration
+                    </Button>
                   </Link>
                 </div>
 
                 {registrations.map((registration) => {
                   const payment = payments[registration.id]
-                  
+
                   return (
                     <Card key={registration.id} className="overflow-hidden">
                       <CardHeader className="pb-3">
@@ -262,7 +261,9 @@ export default function MyRegistrationsPage() {
                             <CardTitle className="break-words text-lg sm:text-xl">
                               {registration.first_name} {registration.last_name}
                             </CardTitle>
-                            <CardDescription className="break-all text-xs sm:text-sm">Order ID: {registration.id}</CardDescription>
+                            <CardDescription className="break-all text-xs sm:text-sm">
+                              Order ID: {registration.id}
+                            </CardDescription>
                           </div>
                           <div className="flex gap-2 flex-wrap justify-start sm:justify-end w-full sm:w-auto">
                             {!payment && (
@@ -272,10 +273,11 @@ export default function MyRegistrationsPage() {
                             )}
                             {payment && (
                               <Badge variant="secondary" className={paymentStatusColors[payment.payment_status] || ""}>
-                                {payment.payment_status === 'pending' && <Clock className="w-3 h-3 mr-1" />}
-                                {payment.payment_status === 'verified' && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                                {payment.payment_status === 'rejected' && <XCircle className="w-3 h-3 mr-1" />}
-                                Payment {payment.payment_status.charAt(0).toUpperCase() + payment.payment_status.slice(1)}
+                                {payment.payment_status === "pending" && <Clock className="w-3 h-3 mr-1" />}
+                                {payment.payment_status === "verified" && <CheckCircle2 className="w-3 h-3 mr-1" />}
+                                {payment.payment_status === "rejected" && <XCircle className="w-3 h-3 mr-1" />}
+                                Payment{" "}
+                                {payment.payment_status.charAt(0).toUpperCase() + payment.payment_status.slice(1)}
                               </Badge>
                             )}
                           </div>
@@ -288,8 +290,7 @@ export default function MyRegistrationsPage() {
                             <h3 className="font-semibold text-sm text-muted-foreground mb-3">Registration Details</h3>
                             <div className="space-y-2 text-sm">
                               <p className="break-words">
-                                <span className="font-medium">Type:</span>{" "}
-                                {registration.registration_type}
+                                <span className="font-medium">Type:</span> {registration.registration_type}
                               </p>
                               <p className="break-words">
                                 <span className="font-medium">Institution:</span> {registration.institution}
@@ -333,7 +334,8 @@ export default function MyRegistrationsPage() {
                                 </p>
                               )}
                               <p className="text-xs text-muted-foreground pt-2 break-words">
-                                {!payment && registration.status === "pending" &&
+                                {!payment &&
+                                  registration.status === "pending" &&
                                   "Payment not yet submitted. Please submit your payment proof."}
                                 {payment?.payment_status === "pending" &&
                                   "Your payment is pending verification by our team."}
@@ -341,10 +343,8 @@ export default function MyRegistrationsPage() {
                                   "Your payment has been verified. You're all set!"}
                                 {payment?.payment_status === "rejected" &&
                                   "Your payment was rejected. Please resubmit with correct information."}
-                                {registration.status === "completed" &&
-                                  "Your registration is complete."}
-                                {registration.status === "cancelled" && 
-                                  "This registration has been cancelled."}
+                                {registration.status === "completed" && "Your registration is complete."}
+                                {registration.status === "cancelled" && "This registration has been cancelled."}
                               </p>
                             </div>
                           </div>
@@ -403,11 +403,11 @@ export default function MyRegistrationsPage() {
                               )}
 
                               {payment?.payment_status !== "verified" && (
-                                <Link href={payment ? `/payment/${registration.id}/details` : `/payment/${registration.id}`} className="w-full">
-                                  <Button 
-                                    variant={payment ? "outline" : "default"}
-                                    className="w-full"
-                                  >
+                                <Link
+                                  href={payment ? `/payment/${registration.id}/details` : `/payment/${registration.id}`}
+                                  className="w-full"
+                                >
+                                  <Button variant={payment ? "outline" : "default"} className="w-full">
                                     {!payment && "Submit Payment Proof"}
                                     {payment?.payment_status === "pending" && "View Payment Details"}
                                     {payment?.payment_status === "rejected" && "Resubmit Payment Proof"}
@@ -419,9 +419,9 @@ export default function MyRegistrationsPage() {
                                 {payment?.payment_status === "pending" && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                      <Button 
-                                        variant="outline" 
-                                        className="border-orange-200 text-orange-700 hover:bg-orange-50 w-full"
+                                      <Button
+                                        variant="outline"
+                                        className="border-orange-200 text-orange-700 hover:bg-orange-50 w-full bg-transparent"
                                         disabled={cancellingPaymentId === payment.id}
                                       >
                                         {cancellingPaymentId === payment.id ? (
@@ -438,11 +438,14 @@ export default function MyRegistrationsPage() {
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>Cancel Payment Submission?</AlertDialogTitle>
                                         <AlertDialogDescription className="break-words">
-                                          This will remove your payment submission. You will need to submit payment proof again if you want to continue with this registration.
+                                          This will remove your payment submission. You will need to submit payment
+                                          proof again if you want to continue with this registration.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                                        <AlertDialogCancel className="w-full sm:w-auto">Keep Submission</AlertDialogCancel>
+                                        <AlertDialogCancel className="w-full sm:w-auto">
+                                          Keep Submission
+                                        </AlertDialogCancel>
                                         <AlertDialogAction
                                           onClick={() => handleCancelPayment(registration.id, payment.id)}
                                           className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
@@ -457,9 +460,9 @@ export default function MyRegistrationsPage() {
                                 {!payment && (
                                   <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                      <Button 
-                                        variant="outline" 
-                                        className="border-red-200 text-red-700 hover:bg-red-50 w-full"
+                                      <Button
+                                        variant="outline"
+                                        className="border-red-200 text-red-700 hover:bg-red-50 w-full bg-transparent"
                                         disabled={deletingId === registration.id}
                                       >
                                         {deletingId === registration.id ? (
@@ -479,7 +482,8 @@ export default function MyRegistrationsPage() {
                                       <AlertDialogHeader>
                                         <AlertDialogTitle>Delete Registration?</AlertDialogTitle>
                                         <AlertDialogDescription className="break-words">
-                                          This action cannot be undone. This will permanently delete your registration for {registration.first_name} {registration.last_name}.
+                                          This action cannot be undone. This will permanently delete your registration
+                                          for {registration.first_name} {registration.last_name}.
                                         </AlertDialogDescription>
                                       </AlertDialogHeader>
                                       <AlertDialogFooter className="flex-col sm:flex-row gap-2">

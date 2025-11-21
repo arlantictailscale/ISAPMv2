@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
@@ -27,9 +27,9 @@ export default function ExportUsersPage() {
   const [sheetName, setSheetName] = useState("User Profiles")
   const [lastSyncResult, setLastSyncResult] = useState<any>(null)
 
-  useState(() => {
+  useEffect(() => {
     checkAdmin()
-  })
+  }, [])
 
   const checkAdmin = async () => {
     try {

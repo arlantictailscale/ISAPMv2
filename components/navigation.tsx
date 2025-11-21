@@ -204,12 +204,6 @@ export default function Navigation() {
                             Hotel Booking Management (Admin)
                           </DropdownMenuItem>
                         </Link>
-                        <Link href="/admin/export-users">
-                          <DropdownMenuItem className="text-primary">
-                            <FileText className="w-4 h-4 mr-2" />
-                            Export User Profiles (Admin)
-                          </DropdownMenuItem>
-                        </Link>
                       </>
                     )}
                     <DropdownMenuSeparator />
@@ -320,13 +314,6 @@ export default function Navigation() {
                         onClick={() => setIsOpen(false)}
                       >
                         Hotel Booking Management (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/export-users"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Export User Profiles (Admin)
                       </Link>
                     </>
                   )}

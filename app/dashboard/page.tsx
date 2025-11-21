@@ -1,12 +1,12 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, User, ClipboardList, FileText, Users, CreditCard, Presentation } from 'lucide-react'
+import { Loader2, User, ClipboardList, FileText, Users, CreditCard, Presentation, Hotel } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -101,6 +101,13 @@ export default function DashboardPage() {
       href: "/my-posters",
       color: "from-purple-500 to-purple-600",
     },
+    {
+      title: "My Hotel Bookings",
+      description: "View your hotel reservations",
+      icon: Hotel,
+      href: "/my-orders",
+      color: "from-orange-500 to-orange-600",
+    },
   ]
 
   const adminCards = [
@@ -124,6 +131,13 @@ export default function DashboardPage() {
       icon: Presentation,
       href: "/admin/posters",
       color: "from-cyan-500 to-cyan-600",
+    },
+    {
+      title: "Hotel Booking Management",
+      description: "Review and approve hotel bookings",
+      icon: Hotel,
+      href: "/admin/hotel-bookings",
+      color: "from-orange-500 to-orange-600",
     },
   ]
 
@@ -153,7 +167,9 @@ export default function DashboardPage() {
                   <Link key={card.href} href={card.href}>
                     <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer group">
                       <CardHeader>
-                        <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gradient-to-br ${card.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+                        >
                           <Icon className="w-6 h-6 text-white" />
                         </div>
                         <CardTitle className="text-xl">{card.title}</CardTitle>
@@ -162,18 +178,8 @@ export default function DashboardPage() {
                       <CardContent>
                         <div className="flex items-center text-sm text-primary font-medium group-hover:translate-x-1 transition-transform">
                           View details
-                          <svg
-                            className="w-4 h-4 ml-1"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
+                          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
                         </div>
                       </CardContent>

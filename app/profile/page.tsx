@@ -14,6 +14,9 @@ import { toast } from "sonner"
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
     fullName: "",
+    titleDegree: "",
+    satuSehatName: "",
+    satuSehatEmail: "",
     nik: "",
     phone: "",
     institution: "",
@@ -49,6 +52,9 @@ export default function ProfilePage() {
       } else if (profile) {
         setFormData({
           fullName: profile.full_name || "",
+          titleDegree: profile.title_degree || "",
+          satuSehatName: profile.satu_sehat_name || "",
+          satuSehatEmail: profile.satu_sehat_email || "",
           nik: profile.nik || "",
           phone: profile.phone || "",
           institution: profile.institution || "",
@@ -75,6 +81,9 @@ export default function ProfilePage() {
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: formData.fullName,
+        title_degree: formData.titleDegree,
+        satu_sehat_name: formData.satuSehatName,
+        satu_sehat_email: formData.satuSehatEmail,
         nik: formData.nik,
         phone: formData.phone,
         institution: formData.institution,
@@ -129,74 +138,144 @@ export default function ProfilePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label className="block text-sm font-semibold mb-2">
-                  Name (Name according to SATUSEHAT SDMK account)
+                  Full Name + Titles/Degrees <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="fullName"
                   value={formData.fullName}
                   onChange={handleChange}
+                  required
                   className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="Full Name"
+                  placeholder="e.g., Dr. John Doe, Sp.An, M.Kes"
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Include your full name with all professional titles and degrees
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">NIK (Nomer Induk Kependudukan)</label>
+                <label className="block text-sm font-semibold mb-2">Titles/Degrees (Optional)</label>
+                <input
+                  type="text"
+                  name="titleDegree"
+                  value={formData.titleDegree}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="e.g., Dr., Sp.An, M.Kes, Ph.D"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Separate multiple titles with commas</p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Name on Satu Sehat Account <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="satuSehatName"
+                  value={formData.satuSehatName}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Name as registered on SATUSEHAT SDMK"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Enter your name exactly as it appears on your Satu Sehat SDMK account
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  Email Registered on Satu Sehat Account <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  name="satuSehatEmail"
+                  value={formData.satuSehatEmail}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="your.email@example.com"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Email address used for your Satu Sehat SDMK account
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2">
+                  National ID Number (NIK) <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="nik"
                   value={formData.nik}
                   onChange={handleChange}
+                  required
                   className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="NIK"
+                  placeholder="16 digit NIK"
+                  maxLength={16}
                 />
+                <p className="text-xs text-muted-foreground mt-1">Your Nomor Induk Kependudukan (16 digits)</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Email</label>
+                <label className="block text-sm font-semibold mb-2">Login Email</label>
                 <input
                   type="email"
                   value={user?.email || ""}
                   readOnly
                   className="w-full px-4 py-2 border border-input rounded-lg bg-muted cursor-not-allowed"
                 />
-                <p className="text-xs text-muted-foreground mt-1">Email cannot be changed</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Email used to login to this system (cannot be changed)
+                </p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Phone Number</label>
+                <label className="block text-sm font-semibold mb-2">
+                  Mobile Phone Number <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
+                  required
                   className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="+62 XXX XXXX XXXX"
+                  placeholder="+62 812 3456 7890"
                 />
+                <p className="text-xs text-muted-foreground mt-1">Include country code (e.g., +62 for Indonesia)</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Institution</label>
+                <label className="block text-sm font-semibold mb-2">
+                  Institution / Organization <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="institution"
                   value={formData.institution}
                   onChange={handleChange}
+                  required
                   className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Your hospital or institution"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold mb-2">Position</label>
+                <label className="block text-sm font-semibold mb-2">
+                  Profession <span className="text-red-500">*</span>
+                </label>
                 <select
                   name="position"
                   value={formData.position}
                   onChange={handleChange}
+                  required
                   className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="">Select your position</option>
+                  <option value="">Select your profession</option>
                   <option value="Anestesiologist">Anestesiologist</option>
                   <option value="General Practitioner">General Practitioner</option>
                   <option value="Resident">Resident</option>

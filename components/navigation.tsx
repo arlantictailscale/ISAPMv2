@@ -3,8 +3,20 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useRouter } from 'next/navigation'
-import { Menu, X, LogOut, User, ClipboardList, FileText, Users, CreditCard, Presentation, LayoutDashboard } from 'lucide-react'
+import { useRouter } from "next/navigation"
+import {
+  Menu,
+  X,
+  LogOut,
+  User,
+  ClipboardList,
+  FileText,
+  Users,
+  CreditCard,
+  Presentation,
+  LayoutDashboard,
+  Hotel,
+} from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import {
@@ -31,7 +43,7 @@ export default function Navigation() {
           data: { user },
         } = await supabase.auth.getUser()
         setUser(user)
-        
+
         if (user) {
           try {
             const { data: profile, error } = await supabase
@@ -39,7 +51,7 @@ export default function Navigation() {
               .select("role")
               .eq("id", user.id)
               .maybeSingle()
-            
+
             if (error) {
               console.error("[v0] Error fetching user role:", error.message)
               // Default to 'user' role if database fails
@@ -95,16 +107,17 @@ export default function Navigation() {
     { label: "Workshop", href: "/workshop" },
     { label: "Symposium", href: "/symposium" },
     { label: "e-Poster", href: "/call-for-papers" },
+    { label: "Hotel Booking", href: "/hotel-booking" },
     { label: "Pricing", href: "/pricing" },
     { label: "Venue", href: "/venue" },
   ]
 
   return (
-    <nav className={`fixed top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border z-50 transition-all duration-300 ${
-      isScrolled 
-        ? "bg-background/98 border-b border-border shadow-md" 
-        : "bg-background/60 border-b border-border/50"
-    }`}>
+    <nav
+      className={`fixed top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border z-50 transition-all duration-300 ${
+        isScrolled ? "bg-background/98 border-b border-border shadow-md" : "bg-background/60 border-b border-border/50"
+      }`}
+    >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
         <div className="grid grid-cols-3 items-center h-16 md:flex md:justify-between">
           <div className="md:hidden"></div>
@@ -158,6 +171,12 @@ export default function Navigation() {
                         My E-Posters
                       </DropdownMenuItem>
                     </Link>
+                    <Link href="/my-orders">
+                      <DropdownMenuItem>
+                        <Hotel className="w-4 h-4 mr-2" />
+                        My Hotel Bookings
+                      </DropdownMenuItem>
+                    </Link>
                     {userRole === "admin" && (
                       <>
                         <DropdownMenuSeparator />
@@ -177,6 +196,18 @@ export default function Navigation() {
                           <DropdownMenuItem className="text-primary">
                             <Presentation className="w-4 h-4 mr-2" />
                             E-Poster Submissions (Admin)
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/admin/hotel-bookings">
+                          <DropdownMenuItem className="text-primary">
+                            <Hotel className="w-4 h-4 mr-2" />
+                            Hotel Booking Management (Admin)
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/admin/export-users">
+                          <DropdownMenuItem className="text-primary">
+                            <FileText className="w-4 h-4 mr-2" />
+                            Export User Profiles (Admin)
                           </DropdownMenuItem>
                         </Link>
                       </>
@@ -253,6 +284,13 @@ export default function Navigation() {
                   >
                     My E-Posters
                   </Link>
+                  <Link
+                    href="/my-orders"
+                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Hotel Bookings
+                  </Link>
                   {userRole === "admin" && (
                     <>
                       <Link
@@ -275,6 +313,20 @@ export default function Navigation() {
                         onClick={() => setIsOpen(false)}
                       >
                         E-Poster Submissions (Admin)
+                      </Link>
+                      <Link
+                        href="/admin/hotel-bookings"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Hotel Booking Management (Admin)
+                      </Link>
+                      <Link
+                        href="/admin/export-users"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Export User Profiles (Admin)
                       </Link>
                     </>
                   )}

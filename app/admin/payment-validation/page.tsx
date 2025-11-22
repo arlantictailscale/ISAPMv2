@@ -10,9 +10,10 @@ import { formatCurrency } from "@/lib/cart/utils"
 import { formatDistanceToNow } from "date-fns"
 import { CheckCircle, XCircle, Eye, Clock, RefreshCw, FileX } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { toast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
+import { approvePayment, rejectPayment } from "@/app/actions/payment-validation"
 
 interface OrderPayment {
   id: string
@@ -63,6 +64,7 @@ export default function PaymentValidationPage() {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     checkAuth()
@@ -144,39 +146,18 @@ export default function PaymentValidationPage() {
     if (!selectedPayment) return
     setIsProcessing(true)
 
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    console.log("[v0] Approving payment:", selectedPayment.id)
 
-    const { error: paymentError } = await supabase
-      .from("order_payments")
-      .update({
-        payment_status: "verified",
-        verified_at: new Date().toISOString(),
-        verified_by: user?.id,
-        rejection_reason: null,
-      })
-      .eq("id", selectedPayment.id)
+    const result = await approvePayment(selectedPayment.id, selectedPayment.order_id)
 
-    if (paymentError) {
+    if (!result.success) {
       toast({
         title: "Error",
-        description: "Failed to approve payment",
+        description: result.error || "Failed to approve payment",
         variant: "destructive",
       })
       setIsProcessing(false)
       return
-    }
-
-    // Update order status to paid
-    const { error: orderError } = await supabase
-      .from("orders")
-      .update({ status: "paid" })
-      .eq("id", selectedPayment.order_id)
-
-    if (orderError) {
-      console.error("[v0] Error updating order status:", orderError)
     }
 
     toast({
@@ -201,20 +182,14 @@ export default function PaymentValidationPage() {
     }
 
     setIsProcessing(true)
-    const supabase = createClient()
+    console.log("[v0] Rejecting payment:", selectedPayment.id)
 
-    const { error } = await supabase
-      .from("order_payments")
-      .update({
-        payment_status: "rejected",
-        rejection_reason: rejectionReason,
-      })
-      .eq("id", selectedPayment.id)
+    const result = await rejectPayment(selectedPayment.id, rejectionReason)
 
-    if (error) {
+    if (!result.success) {
       toast({
         title: "Error",
-        description: "Failed to reject payment",
+        description: result.error || "Failed to reject payment",
         variant: "destructive",
       })
       setIsProcessing(false)

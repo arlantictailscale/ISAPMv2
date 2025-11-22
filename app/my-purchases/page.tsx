@@ -39,6 +39,15 @@ export default async function MyPurchasesPage() {
     console.error("[v0] Error loading purchases:", error.message)
   }
 
+  if (orders) {
+    orders.forEach((order) => {
+      console.log("[v0] Order ID:", order.id.slice(0, 8))
+      console.log("[v0] Order payments array:", order.order_payments)
+      console.log("[v0] First payment:", order.order_payments?.[0])
+      console.log("[v0] Payment status:", order.order_payments?.[0]?.payment_status)
+    })
+  }
+
   const getEventType = (eventId: string, eventLabel: string): string => {
     const lowerLabel = eventLabel?.toLowerCase() || ""
     const lowerId = eventId?.toLowerCase() || ""

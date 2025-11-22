@@ -1,102 +1,68 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export default function CallbackPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleCallback = async () => {
-      const code = searchParams.get("code")
-      const errorParam = searchParams.get("error")
-      const errorDescription = searchParams.get("error_description")
-
-      if (errorParam) {
-        setError(`${errorParam}: ${errorDescription || "Authentication failed"}`)
-        setTimeout(() => {
-          router.push("/auth/login")
-        }, 3000)
-        return
-      }
-
-      if (!code) {
-        router.push("/auth/login")
-        return
-      }
-
       try {
-        const response = await fetch("/api/auth/exchange-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code }),
-        })
+        const supabase = createClient()
 
-        if (!response.ok) {
-          const data = await response.json()
-          setError(data.error || "Failed to complete authentication")
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (sessionError) {
+          console.error("[v0] Session error:", sessionError)
+          setError(sessionError.message)
           setTimeout(() => {
             router.push("/auth/login")
           }, 3000)
           return
         }
 
-        const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
-        
-        if (user) {
-          const type = searchParams.get("type")
-          if (type === "signup") {
-            try {
-              console.log('[v0] Sending welcome email to:', user.email);
-              
-              const emailResponse = await fetch('/api/send-welcome-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  email: user.email,
-                  userId: user.id,
-                }),
-              });
-
-              console.log('[v0] Welcome email API response status:', emailResponse.status);
-              
-              if (!emailResponse.ok) {
-                const errorData = await emailResponse.json().catch(() => ({}));
-                console.error('[v0] Failed to send welcome email:', errorData);
-              } else {
-                console.log('[v0] Welcome email sent successfully');
-              }
-            } catch (emailError) {
-              console.error('[v0] Error sending welcome email:', emailError);
-            }
-          }
-
-          try {
-            const { data: profile } = await supabase
-              .from('profiles')
-              .select('first_name, last_name, phone, institution, position, created_at')
-              .eq('id', user.id)
-              .single()
-
-            const isProfileComplete = profile && 
-              profile.first_name && 
-              profile.last_name && 
-              profile.phone && 
-              profile.institution && 
-              profile.position
-
-            router.push("/dashboard")
-          } catch (error) {
-            router.push("/dashboard")
-          }
-        } else {
-          router.push("/dashboard")
+        if (!session) {
+          console.error("[v0] No session found")
+          setError("Authentication failed - no session")
+          setTimeout(() => {
+            router.push("/auth/login")
+          }, 3000)
+          return
         }
+
+        const user = session.user
+
+        // Check if this is a new signup (optional welcome email)
+        const urlParams = new URLSearchParams(window.location.search)
+        const type = urlParams.get("type")
+
+        if (type === "signup") {
+          try {
+            console.log("[v0] Sending welcome email to:", user.email)
+
+            await fetch("/api/send-welcome-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: user.email,
+                userId: user.id,
+              }),
+            })
+          } catch (emailError) {
+            console.error("[v0] Error sending welcome email:", emailError)
+          }
+        }
+
+        // Redirect to dashboard
+        router.push("/dashboard")
       } catch (err) {
+        console.error("[v0] Callback error:", err)
         setError("An error occurred during authentication")
         setTimeout(() => {
           router.push("/auth/login")
@@ -105,7 +71,7 @@ export default function CallbackPage() {
     }
 
     handleCallback()
-  }, [searchParams, router])
+  }, [router])
 
   if (error) {
     return (

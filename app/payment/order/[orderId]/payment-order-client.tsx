@@ -35,6 +35,12 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
   const [transactionRef, setTransactionRef] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
 
+  console.log("[v0] PaymentOrderClient render", {
+    hasPayment: !!payment,
+    showResubmitForm,
+    paymentStatus: payment?.payment_status,
+  })
+
   const getEventType = (label: string, id: string) => {
     const labelLower = label.toLowerCase()
     const idLower = id.toLowerCase()
@@ -105,7 +111,9 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
       formData.append("accountName", accountName)
       formData.append("transactionRef", transactionRef)
       formData.append("additionalNotes", additionalNotes)
-      formData.append("userId", userId) // Added userId to formData
+      formData.append("userId", userId)
+
+      console.log("[v0] Submitting payment proof")
 
       const response = await fetch("/api/upload-payment-proof", {
         method: "POST",
@@ -118,10 +126,12 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
         throw new Error(result.error || "Failed to upload payment proof")
       }
 
+      console.log("[v0] Payment proof submitted successfully")
       toast.success("Payment proof submitted successfully! Awaiting verification.")
 
-      // Redirect to my purchases page
+      setShowResubmitForm(false)
       router.push("/my-purchases")
+      router.refresh()
     } catch (error: any) {
       console.error("[v0] Payment submission error:", error)
       toast.error(error.message || "Failed to submit payment proof")
@@ -131,6 +141,8 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
   }
 
   const hasSubmittedPayment = payment && !showResubmitForm
+
+  console.log("[v0] Render decision:", { hasSubmittedPayment, willShowForm: !hasSubmittedPayment })
 
   if (hasSubmittedPayment) {
     return (
@@ -301,7 +313,10 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                   {/* Action Buttons */}
                   {payment.payment_status === "rejected" && (
                     <Button
-                      onClick={() => setShowResubmitForm(true)}
+                      onClick={() => {
+                        console.log("[v0] Resubmit button clicked")
+                        setShowResubmitForm(true)
+                      }}
                       className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
                     >
                       Resubmit Payment Proof
@@ -323,14 +338,27 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
       <main className="pt-24 pb-20 min-h-screen bg-gray-50">
         <section className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* Back button */}
-            <Link
-              href="/my-purchases"
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to My Purchases
-            </Link>
+            <div className="flex items-center justify-between mb-6">
+              <Link
+                href="/my-purchases"
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to My Purchases
+              </Link>
+              {showResubmitForm && payment && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    console.log("[v0] Cancel resubmit clicked")
+                    setShowResubmitForm(false)
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
 
             <Card className="mb-6">
               <CardHeader>

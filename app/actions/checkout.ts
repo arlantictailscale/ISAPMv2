@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { sendOrderConfirmationEmail } from "@/lib/email"
 
 /**
  * Create order from cart and proceed to checkout
@@ -94,6 +95,21 @@ export async function createOrderFromCart(guestInfo: {
   await supabase.from("cart_items").delete().eq("cart_id", cart.id)
 
   await supabase.from("carts").update({ status: "checked_out" }).eq("id", cart.id)
+
+  try {
+    await sendOrderConfirmationEmail({
+      email: guestInfo.email,
+      userName: guestInfo.full_name,
+      orderId: order.id,
+      orderItems: orderItemsData,
+      totalAmount: totalAmount,
+      currency: currency,
+    })
+    console.log("[v0] Order confirmation email sent to:", guestInfo.email)
+  } catch (emailError) {
+    // Log error but don't fail the order creation
+    console.error("[v0] Failed to send order confirmation email:", emailError)
+  }
 
   revalidatePath("/cart")
   revalidatePath("/checkout")

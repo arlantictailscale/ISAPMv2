@@ -171,28 +171,41 @@ export async function sendOrderConfirmationEmail({
   currency: string
 }) {
   try {
-    // Format order items for display
     const itemsHtml = orderItems
       .map((item) => {
         let itemName = ""
+        const itemType = item.item_type.replace("_", " ").toUpperCase()
+
         if (item.item_type === "workshop" || item.item_type === "symposium") {
-          itemName = `${item.event_label} - ${item.participant_type_label}`
+          const eventName = item.event_label || `${itemType}`
+          const participantType = item.participant_type_label || "General Participant"
+          itemName = `${eventName} - ${participantType}`
         } else if (item.item_type === "hotel") {
-          itemName = `Hotel: ${item.hotel_room_type} (${item.check_in_date} to ${item.check_out_date}, ${item.nights} nights)`
+          const roomType = item.hotel_room_type || "Standard Room"
+          const checkIn = item.check_in_date || "TBD"
+          const checkOut = item.check_out_date || "TBD"
+          const nights = item.nights || 1
+          itemName = `Hotel: ${roomType} (${checkIn} to ${checkOut}, ${nights} night${nights > 1 ? "s" : ""})`
         } else if (item.item_type === "cpd_course") {
-          itemName = `CPD Course: ${item.event_label}`
+          itemName = item.event_label || "CPD Course"
+        } else {
+          // Fallback for any other item types
+          itemName = item.event_label || itemType
+          if (item.participant_type_label) {
+            itemName += ` - ${item.participant_type_label}`
+          }
         }
 
         return `
           <div style="padding: 15px; margin: 10px 0; background: #f8f9fa; border-left: 3px solid #00A9E0; border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: start;">
-              <div>
+              <div style="flex: 1;">
                 <div style="font-weight: 600; color: #1a202c; margin-bottom: 4px;">${itemName}</div>
                 <div style="font-size: 12px; color: #718096; text-transform: uppercase; font-weight: 500;">
-                  ${item.item_type.replace("_", " ")}
+                  ${itemType}
                 </div>
               </div>
-              <div style="text-align: right; font-weight: 600; color: #00A9E0;">
+              <div style="text-align: right; font-weight: 600; color: #00A9E0; white-space: nowrap; margin-left: 15px;">
                 ${currency} ${item.unit_price.toLocaleString()}
               </div>
             </div>
@@ -230,10 +243,17 @@ export async function sendOrderConfirmationEmail({
               .total-row { display: flex; justify-content: space-between; align-items: center; }
               .total-label { font-size: 18px; font-weight: 600; color: #1a202c; }
               .total-amount { font-size: 24px; font-weight: 700; color: #00A9E0; }
+              .bank-details { background: #fff7ed; border: 2px solid #fb923c; border-radius: 8px; padding: 20px; margin: 20px 0; }
+              .bank-details-title { font-weight: 700; color: #9a3412; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; }
+              .bank-info { background: white; padding: 15px; border-radius: 6px; margin-top: 10px; }
+              .bank-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #fed7aa; }
+              .bank-row:last-child { border-bottom: none; }
+              .bank-label { color: #78350f; font-weight: 500; font-size: 14px; }
+              .bank-value { color: #1a202c; font-weight: 700; font-size: 14px; font-family: monospace; }
               .button { display: inline-block; background: linear-gradient(135deg, #EF3340 0%, #d92532 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(239, 51, 64, 0.2); }
               .button:hover { box-shadow: 0 6px 8px rgba(239, 51, 64, 0.3); }
               .steps { margin: 25px 0; }
-              .step { padding: 15px; margin: 10px 0; background: #f8fafc; border-left: 3px solid #00A9E0; border-radius: 4px; }
+              .step { padding: 15px; margin: 10px 0; background: #f8f9fa; border-left: 3px solid #00A9E0; border-radius: 4px; }
               .step-number { display: inline-block; width: 24px; height: 24px; background: #00A9E0; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-weight: 600; font-size: 12px; margin-right: 10px; }
               .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
               .footer-brand { font-weight: 600; color: #1e293b; margin-bottom: 8px; }
@@ -287,10 +307,40 @@ export async function sendOrderConfirmationEmail({
 
                 <div class="steps">
                   <div style="font-size: 18px; font-weight: 600; color: #1a202c; margin-bottom: 15px;">Next Steps:</div>
+                  
                   <div class="step">
                     <span class="step-number">1</span>
-                    <strong>Make Payment:</strong> Complete payment using the provided bank account details
+                    <strong>Make Payment:</strong> Transfer the total amount to our bank account
                   </div>
+
+                  <!-- Added bank account details section -->
+                  <div class="bank-details">
+                    <div class="bank-details-title">
+                      <span style="margin-right: 8px;">🏦</span> Bank Account Details
+                    </div>
+                    <div class="bank-info">
+                      <div class="bank-row">
+                        <span class="bank-label">Bank Name</span>
+                        <span class="bank-value">Bank Syariah Indonesia (BSI)</span>
+                      </div>
+                      <div class="bank-row">
+                        <span class="bank-label">Account Number</span>
+                        <span class="bank-value">7207681363</span>
+                      </div>
+                      <div class="bank-row">
+                        <span class="bank-label">Account Name</span>
+                        <span class="bank-value">PT Tombo Farma Indonesia</span>
+                      </div>
+                      <div class="bank-row">
+                        <span class="bank-label">Amount to Transfer</span>
+                        <span class="bank-value" style="color: #00A9E0; font-size: 16px;">${currency} ${totalAmount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <p style="margin: 12px 0 0 0; font-size: 13px; color: #9a3412; font-style: italic;">
+                      💡 Tip: Please transfer the exact amount to help us verify your payment quickly
+                    </p>
+                  </div>
+
                   <div class="step">
                     <span class="step-number">2</span>
                     <strong>Upload Proof:</strong> Submit a clear photo of your payment receipt

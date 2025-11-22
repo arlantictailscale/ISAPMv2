@@ -91,10 +91,17 @@ export async function createOrderFromCart(guestInfo: {
     return { error: orderItemsError.message }
   }
 
-  // Mark cart as checked out and clear items
-  await supabase.from("cart_items").delete().eq("cart_id", cart.id)
+  const { error: deleteError } = await supabase.from("cart_items").delete().eq("cart_id", cart.id)
 
-  await supabase.from("carts").update({ status: "checked_out" }).eq("id", cart.id)
+  if (deleteError) {
+    console.error("[v0] Error deleting cart items:", deleteError)
+  }
+
+  const { error: updateError } = await supabase.from("carts").update({ status: "checked_out" }).eq("id", cart.id)
+
+  if (updateError) {
+    console.error("[v0] Error updating cart status:", updateError)
+  }
 
   try {
     await sendOrderConfirmationEmail({
@@ -113,6 +120,7 @@ export async function createOrderFromCart(guestInfo: {
 
   revalidatePath("/cart")
   revalidatePath("/checkout")
+  revalidatePath("/", "layout")
 
   return { data: order }
 }

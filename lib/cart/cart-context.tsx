@@ -37,7 +37,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadCartCount()
 
-    const channel = supabase
+    const cartItemsChannel = supabase
       .channel("cart_changes")
       .on(
         "postgres_changes",
@@ -50,10 +50,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
           loadCartCount()
         },
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "carts",
+        },
+        () => {
+          loadCartCount()
+        },
+      )
       .subscribe()
 
     return () => {
-      supabase.removeChannel(channel)
+      supabase.removeChannel(cartItemsChannel)
     }
   }, [supabase])
 

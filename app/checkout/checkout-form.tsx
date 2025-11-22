@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 import { createOrderFromCart } from "@/app/actions/checkout"
+import { useCart } from "@/lib/cart/cart-context"
 
 interface CheckoutFormProps {
   defaultValues: {
@@ -23,6 +24,7 @@ interface CheckoutFormProps {
 
 export function CheckoutForm({ defaultValues }: CheckoutFormProps) {
   const router = useRouter()
+  const { refreshCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState(defaultValues)
 
@@ -54,6 +56,8 @@ export function CheckoutForm({ defaultValues }: CheckoutFormProps) {
         setIsSubmitting(false)
         return
       }
+
+      await refreshCart()
 
       toast.success("Order created successfully!")
       router.push(`/payment/order/${result.data.id}`)

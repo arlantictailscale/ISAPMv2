@@ -137,10 +137,28 @@ export default async function AdminCartsPage() {
 
             {/* Tabs for better navigation between sections */}
             <Tabs defaultValue="orders" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="orders">Completed Orders ({orders?.length || 0})</TabsTrigger>
-                <TabsTrigger value="abandoned">Abandoned Carts ({abandonedCarts.length})</TabsTrigger>
-                <TabsTrigger value="active">Active Carts ({activeCarts.length})</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-auto overflow-x-auto">
+                <TabsTrigger
+                  value="orders"
+                  className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap px-2 sm:px-4 py-2"
+                >
+                  <span className="hidden sm:inline">Completed Orders ({orders?.length || 0})</span>
+                  <span className="sm:hidden">Orders ({orders?.length || 0})</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="abandoned"
+                  className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap px-2 sm:px-4 py-2"
+                >
+                  <span className="hidden sm:inline">Abandoned Carts ({abandonedCarts.length})</span>
+                  <span className="sm:hidden">Abandoned ({abandonedCarts.length})</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="active"
+                  className="text-xs sm:text-sm whitespace-normal sm:whitespace-nowrap px-2 sm:px-4 py-2"
+                >
+                  <span className="hidden sm:inline">Active Carts ({activeCarts.length})</span>
+                  <span className="sm:hidden">Active ({activeCarts.length})</span>
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="orders" className="space-y-4">
@@ -159,13 +177,15 @@ export default async function AdminCartsPage() {
 
                           return (
                             <div key={order.id} className="border rounded-lg p-4 space-y-2">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <p className="font-semibold">{order.full_name}</p>
-                                  <p className="text-sm text-muted-foreground">{order.email}</p>
-                                  {order.phone && <p className="text-sm text-muted-foreground">{order.phone}</p>}
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold truncate">{order.full_name}</p>
+                                  <p className="text-sm text-muted-foreground truncate">{order.email}</p>
+                                  {order.phone && (
+                                    <p className="text-sm text-muted-foreground break-all">{order.phone}</p>
+                                  )}
                                 </div>
-                                <div className="flex gap-2 flex-wrap justify-end">
+                                <div className="flex gap-2 flex-wrap">
                                   <Badge
                                     variant={
                                       order.status === "paid"
@@ -174,15 +194,16 @@ export default async function AdminCartsPage() {
                                           ? "secondary"
                                           : "destructive"
                                     }
+                                    className="shrink-0"
                                   >
                                     {order.status}
                                   </Badge>
                                   {hasPaymentProof && (
-                                    <Badge variant="outline" className="text-green-600 border-green-600">
+                                    <Badge variant="outline" className="text-green-600 border-green-600 shrink-0">
                                       Payment Proof
                                     </Badge>
                                   )}
-                                  <Badge variant="outline">
+                                  <Badge variant="outline" className="shrink-0 text-xs">
                                     {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
                                   </Badge>
                                 </div>
@@ -239,14 +260,17 @@ export default async function AdminCartsPage() {
 
                           return (
                             <div key={cart.id} className="border rounded-lg p-4 space-y-2">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <p className="font-semibold">{cartProfile?.full_name || "Unknown User"}</p>
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold truncate">{cartProfile?.full_name || "Unknown User"}</p>
                                   {cartProfile?.phone && (
-                                    <p className="text-sm text-muted-foreground">{cartProfile.phone}</p>
+                                    <p className="text-sm text-muted-foreground break-all">{cartProfile.phone}</p>
                                   )}
                                 </div>
-                                <Badge variant="outline" className="text-amber-600 border-amber-600">
+                                <Badge
+                                  variant="outline"
+                                  className="text-amber-600 border-amber-600 shrink-0 w-fit text-xs"
+                                >
                                   {formatDistanceToNow(new Date(cart.updated_at), { addSuffix: true })}
                                 </Badge>
                               </div>
@@ -296,16 +320,20 @@ export default async function AdminCartsPage() {
 
                           return (
                             <div key={cart.id} className="border rounded-lg p-4 space-y-2">
-                              <div className="flex items-start justify-between">
-                                <div>
-                                  <p className="font-semibold">{cartProfile?.full_name || "Unknown User"}</p>
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold truncate">{cartProfile?.full_name || "Unknown User"}</p>
                                   {cartProfile?.phone && (
-                                    <p className="text-sm text-muted-foreground">{cartProfile.phone}</p>
+                                    <p className="text-sm text-muted-foreground break-all">{cartProfile.phone}</p>
                                   )}
                                 </div>
-                                <div className="flex gap-2">
-                                  {isEmpty && <Badge variant="secondary">Empty</Badge>}
-                                  <Badge variant="outline">
+                                <div className="flex gap-2 flex-wrap">
+                                  {isEmpty && (
+                                    <Badge variant="secondary" className="shrink-0">
+                                      Empty
+                                    </Badge>
+                                  )}
+                                  <Badge variant="outline" className="shrink-0 text-xs">
                                     {formatDistanceToNow(new Date(cart.updated_at), { addSuffix: true })}
                                   </Badge>
                                 </div>

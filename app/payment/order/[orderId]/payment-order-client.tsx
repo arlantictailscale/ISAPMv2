@@ -19,23 +19,21 @@ import Link from "next/link"
 interface PaymentOrderClientProps {
   order: any
   userId: string // Changed from user object to userId string
+  payment: any
 }
 
-export default function PaymentOrderClient({ order, userId }: PaymentOrderClientProps) {
+export default function PaymentOrderClient({ order, userId, payment }: PaymentOrderClientProps) {
   const router = useRouter()
   const [isUploading, setIsUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [showResubmitForm, setShowResubmitForm] = useState(false)
 
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer")
   const [bankName, setBankName] = useState("")
   const [accountName, setAccountName] = useState("")
   const [transactionRef, setTransactionRef] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
-
-  const payment = order.order_payments?.[0]
-
-  const hasSubmittedPayment = payment && payment.payment_proof_url
 
   const getEventType = (label: string, id: string) => {
     const labelLower = label.toLowerCase()
@@ -131,6 +129,8 @@ export default function PaymentOrderClient({ order, userId }: PaymentOrderClient
       setIsUploading(false)
     }
   }
+
+  const hasSubmittedPayment = payment && !showResubmitForm
 
   if (hasSubmittedPayment) {
     return (
@@ -301,7 +301,7 @@ export default function PaymentOrderClient({ order, userId }: PaymentOrderClient
                   {/* Action Buttons */}
                   {payment.payment_status === "rejected" && (
                     <Button
-                      onClick={() => router.refresh()}
+                      onClick={() => setShowResubmitForm(true)}
                       className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
                     >
                       Resubmit Payment Proof

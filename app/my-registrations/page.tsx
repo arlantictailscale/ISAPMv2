@@ -37,6 +37,8 @@ interface Registration {
   currency: string | null
   order_date: string
   payment_proof_url?: string
+  event_name: string
+  created_at: string
 }
 
 interface Payment {
@@ -256,28 +258,39 @@ export default function MyRegistrationsPage() {
                   return (
                     <Card key={registration.id} className="overflow-hidden">
                       <CardHeader className="pb-3">
-                        <div className="flex flex-col sm:flex-row items-start justify-between gap-3 max-w-full">
-                          <div className="min-w-0 flex-1 max-w-full">
-                            <CardTitle className="break-words text-lg sm:text-xl">
-                              {registration.first_name} {registration.last_name}
-                            </CardTitle>
-                            <CardDescription className="break-all text-xs sm:text-sm">
-                              Order ID: {registration.id}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <CardTitle className="text-lg truncate">{registration.event_name}</CardTitle>
+                            <CardDescription className="mt-1">
+                              Registered on{" "}
+                              {new Date(registration.created_at).toLocaleDateString("id-ID", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
                             </CardDescription>
                           </div>
-                          <div className="flex gap-2 flex-wrap justify-start sm:justify-end w-full sm:w-auto">
+                          <div className="flex gap-2 flex-wrap shrink-0">
                             {!payment && (
-                              <Badge variant="secondary" className={statusColors[registration.status] || ""}>
+                              <Badge
+                                variant="secondary"
+                                className={`${statusColors[registration.status] || ""} whitespace-nowrap`}
+                              >
                                 {registration.status.charAt(0).toUpperCase() + registration.status.slice(1)}
                               </Badge>
                             )}
                             {payment && (
-                              <Badge variant="secondary" className={paymentStatusColors[payment.payment_status] || ""}>
-                                {payment.payment_status === "pending" && <Clock className="w-3 h-3 mr-1" />}
-                                {payment.payment_status === "verified" && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                                {payment.payment_status === "rejected" && <XCircle className="w-3 h-3 mr-1" />}
-                                Payment{" "}
-                                {payment.payment_status.charAt(0).toUpperCase() + payment.payment_status.slice(1)}
+                              <Badge
+                                variant="secondary"
+                                className={`${paymentStatusColors[payment.payment_status] || ""} whitespace-nowrap flex items-center gap-1`}
+                              >
+                                {payment.payment_status === "pending" && <Clock className="w-3 h-3 shrink-0" />}
+                                {payment.payment_status === "verified" && <CheckCircle2 className="w-3 h-3 shrink-0" />}
+                                {payment.payment_status === "rejected" && <XCircle className="w-3 h-3 shrink-0" />}
+                                <span className="text-xs sm:text-sm">
+                                  Payment{" "}
+                                  {payment.payment_status.charAt(0).toUpperCase() + payment.payment_status.slice(1)}
+                                </span>
                               </Badge>
                             )}
                           </div>

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Hotel, Loader2, Calendar, MapPin, Building2, Users, Clock, Info } from "lucide-react"
+import { Hotel, Loader2, Calendar, MapPin, Users } from "lucide-react"
 import { toast } from "sonner"
 import { format, differenceInDays } from "date-fns"
 import { AddToCartButton } from "@/components/add-to-cart-button"
@@ -27,8 +27,8 @@ export default function HotelBookingPage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
 
-  const [checkInDate, setCheckInDate] = useState("")
-  const [checkOutDate, setCheckOutDate] = useState("")
+  const [checkInDate, setCheckInDate] = useState("2026-04-16")
+  const [checkOutDate, setCheckOutDate] = useState("2026-04-18")
   const [roomType, setRoomType] = useState("")
   const [guestName, setGuestName] = useState("")
   const [guestEmail, setGuestEmail] = useState("")
@@ -223,10 +223,6 @@ export default function HotelBookingPage() {
             </div>
           </div>
         </section>
-
-        
-
-        
 
         {/* Booking Form Section */}
         <section className="py-12 px-4 bg-background">

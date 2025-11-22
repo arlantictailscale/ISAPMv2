@@ -69,9 +69,9 @@ export default function MyOrdersPage() {
     const Icon = config.icon
 
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
-        <Icon className="w-3 h-3" />
-        {config.label}
+      <Badge variant={config.variant} className="flex items-center gap-1 w-fit max-w-full whitespace-nowrap shrink-0">
+        <Icon className="w-3 h-3 shrink-0" />
+        <span className="text-xs sm:text-sm">{config.label}</span>
       </Badge>
     )
   }
@@ -117,17 +117,17 @@ export default function MyOrdersPage() {
                   return (
                     <Card key={order.id}>
                       <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div className="min-w-0 flex-1">
                             <CardTitle className="flex items-center gap-2">
-                              <Hotel className="w-5 h-5" />
-                              {item?.metadata?.hotel_name || "Hotel Booking"}
+                              <Hotel className="w-5 h-5 shrink-0" />
+                              <span className="truncate">{item?.metadata?.hotel_name || "Hotel Booking"}</span>
                             </CardTitle>
                             <CardDescription>
                               Booked on {new Date(order.created_at).toLocaleDateString("id-ID")}
                             </CardDescription>
                           </div>
-                          {getStatusBadge(order.status)}
+                          <div className="shrink-0">{getStatusBadge(order.status)}</div>
                         </div>
                       </CardHeader>
                       <CardContent>

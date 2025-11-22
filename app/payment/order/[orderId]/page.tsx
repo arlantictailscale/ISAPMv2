@@ -33,5 +33,7 @@ export default async function PaymentOrderPage({
     redirect("/auth/login")
   }
 
-  return <PaymentOrderClient order={orderData} userId={userId} />
+  const payment = orderData.order_payments?.[0] || null
+
+  return <PaymentOrderClient order={orderData} userId={userId} payment={payment} />
 }

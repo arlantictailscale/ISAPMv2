@@ -167,16 +167,16 @@ export default function Navigation() {
                         My Profile
                       </DropdownMenuItem>
                     </Link>
-                    <Link href="/my-posters">
-                      <DropdownMenuItem>
-                        <FileText className="w-4 h-4 mr-2" />
-                        My E-Posters
-                      </DropdownMenuItem>
-                    </Link>
                     <Link href="/my-events">
                       <DropdownMenuItem>
                         <Calendar className="w-4 h-4 mr-2" />
                         My Events
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-posters">
+                      <DropdownMenuItem>
+                        <FileText className="w-4 h-4 mr-2" />
+                        My E-Posters
                       </DropdownMenuItem>
                     </Link>
                     <Link href="/my-hotel-bookings">
@@ -200,16 +200,16 @@ export default function Navigation() {
                             User Management (Admin)
                           </DropdownMenuItem>
                         </Link>
-                        <Link href="/admin/posters">
-                          <DropdownMenuItem className="text-primary">
-                            <Presentation className="w-4 h-4 mr-2" />
-                            E-Poster Submissions (Admin)
-                          </DropdownMenuItem>
-                        </Link>
                         <Link href="/admin/payment-validation">
                           <DropdownMenuItem className="text-primary">
                             <CheckCircle className="w-4 h-4 mr-2" />
                             Payment Validation (Admin)
+                          </DropdownMenuItem>
+                        </Link>
+                        <Link href="/admin/posters">
+                          <DropdownMenuItem className="text-primary">
+                            <Presentation className="w-4 h-4 mr-2" />
+                            E-Poster Submissions (Admin)
                           </DropdownMenuItem>
                         </Link>
                         <Link href="/admin/hotel-bookings">
@@ -291,18 +291,18 @@ export default function Navigation() {
                     My Profile
                   </Link>
                   <Link
-                    href="/my-posters"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My E-Posters
-                  </Link>
-                  <Link
                     href="/my-events"
                     className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
                     onClick={() => setIsOpen(false)}
                   >
                     My Events
+                  </Link>
+                  <Link
+                    href="/my-posters"
+                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My E-Posters
                   </Link>
                   <Link
                     href="/my-hotel-bookings"
@@ -328,18 +328,18 @@ export default function Navigation() {
                         User Management (Admin)
                       </Link>
                       <Link
-                        href="/admin/posters"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        E-Poster Submissions (Admin)
-                      </Link>
-                      <Link
                         href="/admin/payment-validation"
                         className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
                         onClick={() => setIsOpen(false)}
                       >
                         Payment Validation (Admin)
+                      </Link>
+                      <Link
+                        href="/admin/posters"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        E-Poster Submissions (Admin)
                       </Link>
                       <Link
                         href="/admin/hotel-bookings"

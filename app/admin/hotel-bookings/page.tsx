@@ -8,12 +8,9 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, Hotel, CheckCircle, XCircle, FileDown } from "lucide-react"
+import { Loader2, Hotel, FileDown } from "lucide-react"
 import { toast } from "sonner"
-import Image from "next/image"
 import * as XLSX from "xlsx"
 
 export default function AdminHotelBookingsPage() {
@@ -265,8 +262,8 @@ export default function AdminHotelBookingsPage() {
                             </p>
                           </div>
                         </div>
-                        <Button onClick={() => setSelectedBooking(booking)} className="w-full">
-                          View Details & Payment Proof
+                        <Button onClick={() => setSelectedBooking(booking)} variant="outline" className="w-full">
+                          View Details
                         </Button>
                       </CardContent>
                     </Card>
@@ -283,7 +280,7 @@ export default function AdminHotelBookingsPage() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Booking Details</DialogTitle>
-            <DialogDescription>Review and approve or reject this booking</DialogDescription>
+            <DialogDescription>View booking details and payment information</DialogDescription>
           </DialogHeader>
 
           {selectedBooking && (
@@ -314,59 +311,11 @@ export default function AdminHotelBookingsPage() {
                 </div>
               </div>
 
-              {selectedBooking.payment_proof_url && (
-                <div>
-                  <h3 className="font-semibold mb-2">Payment Proof</h3>
-                  <Image
-                    src={selectedBooking.payment_proof_url || "/placeholder.svg"}
-                    alt="Payment proof"
-                    width={600}
-                    height={400}
-                    className="rounded-lg border"
-                  />
-                </div>
-              )}
-
-              {selectedBooking.status === "pending" && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="rejectionReason">Rejection Reason (if rejecting)</Label>
-                    <Textarea
-                      id="rejectionReason"
-                      value={rejectionReason}
-                      onChange={(e) => setRejectionReason(e.target.value)}
-                      placeholder="Enter reason for rejection..."
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => handleApprove(selectedBooking.id)}
-                      disabled={isProcessing}
-                      className="flex-1"
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                      )}
-                      Approve Booking
-                    </Button>
-                    <Button
-                      onClick={() => handleReject(selectedBooking.id)}
-                      disabled={isProcessing}
-                      variant="destructive"
-                      className="flex-1"
-                    >
-                      {isProcessing ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <XCircle className="w-4 h-4 mr-2" />
-                      )}
-                      Reject Booking
-                    </Button>
-                  </div>
-                </div>
-              )}
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
+                  💡 Payment approval and rejection is handled in the <strong>Payment Validation</strong> page
+                </p>
+              </div>
             </div>
           )}
         </DialogContent>

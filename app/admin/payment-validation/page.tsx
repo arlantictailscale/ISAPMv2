@@ -14,6 +14,16 @@ import { useToast } from "@/hooks/use-toast"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { approvePayment, rejectPayment } from "@/app/actions/payment-validation"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 
 interface OrderPayment {
   id: string
@@ -64,6 +74,7 @@ export default function PaymentValidationPage() {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -106,40 +117,89 @@ export default function PaymentValidationPage() {
     await fetchPayments()
   }
 
-  const fetchPayments = async () => {
-    console.log("[v0] Starting to fetch payments...")
+  async function fetchPayments() {
     setLoading(true)
-    const supabase = createClient()
+    setError(null)
 
-    const { data, error } = await supabase
-      .from("order_payments")
-      .select(`
-        *,
-        orders (
+    try {
+      console.log("[v0] Starting to fetch payments...")
+
+      // Fetch existing payment records
+      const { data: paymentsData, error: paymentsError } = await createClient()
+        .from("order_payments")
+        .select(`
+          *,
+          orders (
+            *,
+            order_items (*)
+          )
+        `)
+        .order("created_at", { ascending: false })
+
+      if (paymentsError) {
+        console.error("[v0] Error fetching payments:", paymentsError)
+        setError(paymentsError.message)
+        return
+      }
+
+      // Fetch orders without payment records
+      const { data: ordersData, error: ordersError } = await createClient()
+        .from("orders")
+        .select(`
           *,
           order_items (*)
-        )
-      `)
-      .order("created_at", { ascending: false })
+        `)
+        .order("created_at", { ascending: false })
 
-    console.log("[v0] Fetched payments count:", data?.length || 0)
-    console.log("[v0] Fetch error:", error)
-    console.log("[v0] Payments data:", JSON.stringify(data, null, 2))
+      if (ordersError) {
+        console.error("[v0] Error fetching orders:", ordersError)
+        setError(ordersError.message)
+        return
+      }
 
-    if (error) {
-      console.error("[v0] Error fetching payments:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load payments",
-        variant: "destructive",
-      })
-    } else {
-      console.log("[v0] Setting payments state with", data?.length || 0, "items")
-      setPayments(data || [])
+      // Find orders that don't have payment records
+      const orderIdsWithPayments = new Set(paymentsData?.map((p) => p.order_id) || [])
+      const ordersWithoutPayments = ordersData?.filter((order) => !orderIdsWithPayments.has(order.id)) || []
+
+      // Create payment objects for orders without payments
+      const noProofPayments = ordersWithoutPayments.map((order) => ({
+        id: `no-payment-${order.id}`,
+        order_id: order.id,
+        user_id: order.user_id,
+        amount: order.total_amount,
+        currency: order.currency,
+        payment_method: null,
+        payment_proof_url: null,
+        bank_name: null,
+        account_name: null,
+        transaction_reference: null,
+        payment_status: "no_proof",
+        rejection_reason: null,
+        notes: null,
+        verified_by: null,
+        verified_at: null,
+        created_at: order.created_at,
+        updated_at: order.updated_at,
+        orders: order,
+      }))
+
+      // Combine both lists
+      const allPayments = [...(paymentsData || []), ...noProofPayments]
+
+      console.log("[v0] Fetched payments count:", paymentsData?.length || 0)
+      console.log("[v0] Orders without payments count:", noProofPayments.length)
+      console.log("[v0] Fetch error:", paymentsError || ordersError)
+      console.log("[v0] Payments data:", paymentsData)
+
+      console.log("[v0] Setting payments state with", allPayments.length, "items")
+      setPayments(allPayments)
+      console.log("[v0] Finished fetching payments")
+    } catch (err) {
+      console.error("[v0] Unexpected error:", err)
+      setError("Failed to fetch payments")
+    } finally {
+      setLoading(false)
     }
-
-    setLoading(false)
-    console.log("[v0] Finished fetching payments")
   }
 
   const handleApprove = async () => {
@@ -211,7 +271,7 @@ export default function PaymentValidationPage() {
   const pendingPayments = payments.filter((p) => p.payment_status === "pending" && p.payment_proof_url)
   const approvedPayments = payments.filter((p) => p.payment_status === "verified")
   const rejectedPayments = payments.filter((p) => p.payment_status === "rejected")
-  const noProofPayments = payments.filter((p) => !p.payment_proof_url)
+  const noProofPayments = payments.filter((p) => p.payment_status === "no_proof" || !p.payment_proof_url)
 
   console.log("[v0] Filtered payments:", {
     total: payments.length,
@@ -240,13 +300,13 @@ export default function PaymentValidationPage() {
         <CardContent className="p-6">
           <div className="space-y-4">
             {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg">{order?.full_name}</h3>
-                <p className="text-sm text-muted-foreground">{order?.email}</p>
-                {order?.phone && <p className="text-sm text-muted-foreground">{order.phone}</p>}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-lg truncate">{order?.full_name}</h3>
+                <p className="text-sm text-muted-foreground truncate">{order?.email}</p>
+                {order?.phone && <p className="text-sm text-muted-foreground break-all">{order.phone}</p>}
               </div>
-              <div className="flex flex-col items-end gap-2">
+              <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                 <Badge
                   variant={
                     payment.payment_status === "verified"
@@ -255,10 +315,11 @@ export default function PaymentValidationPage() {
                         ? "secondary"
                         : "destructive"
                   }
+                  className="whitespace-nowrap"
                 >
                   {payment.payment_status}
                 </Badge>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(payment.created_at), { addSuffix: true })}
                 </span>
               </div>
@@ -268,44 +329,48 @@ export default function PaymentValidationPage() {
             <div className="space-y-2 pt-2 border-t">
               <p className="text-sm font-medium text-muted-foreground">Order Items:</p>
               {items.map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
+                <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
+                  <div className="flex items-center gap-2 flex-wrap min-w-0">
                     {item.item_type === "event" ? (
                       <>
                         {getEventTypeBadge(item.event_label)}
-                        <span>{item.event_label}</span>
+                        <span className="break-words">{item.event_label}</span>
                       </>
                     ) : (
                       <>
                         <Badge variant="outline">HOTEL</Badge>
-                        <span>
+                        <span className="break-words">
                           {item.hotel_room_type} ({item.nights} nights)
                         </span>
                       </>
                     )}
                   </div>
-                  <span className="font-medium">{formatCurrency(item.unit_price, payment.currency)}</span>
+                  <span className="font-medium whitespace-nowrap">
+                    {formatCurrency(item.unit_price, payment.currency)}
+                  </span>
                 </div>
               ))}
             </div>
 
             {/* Payment Details */}
-            <div className="grid grid-cols-2 gap-4 pt-2 border-t text-sm">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t text-sm">
+              <div className="min-w-0">
                 <p className="text-muted-foreground">Payment Method</p>
-                <p className="font-medium">{payment.payment_method || "Bank Transfer"}</p>
+                <p className="font-medium truncate">{payment.payment_method || "Bank Transfer"}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground">Bank</p>
-                <p className="font-medium">{payment.bank_name || "N/A"}</p>
+                <p className="font-medium truncate">{payment.bank_name || "N/A"}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground">Account Name</p>
-                <p className="font-medium">{payment.account_name || "N/A"}</p>
+                <p className="font-medium truncate">{payment.account_name || "N/A"}</p>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="text-muted-foreground">Total Amount</p>
-                <p className="font-bold text-primary text-lg">{formatCurrency(payment.amount, payment.currency)}</p>
+                <p className="font-bold text-primary text-lg break-all">
+                  {formatCurrency(payment.amount, payment.currency)}
+                </p>
               </div>
             </div>
 
@@ -314,7 +379,7 @@ export default function PaymentValidationPage() {
               <div className="pt-2 border-t">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Payment Proof:</p>
                 <div
-                  className="relative w-full h-40 bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                  className="relative w-full max-w-full h-40 bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => {
                     setSelectedPayment(payment)
                     setIsImageDialogOpen(true)
@@ -336,13 +401,13 @@ export default function PaymentValidationPage() {
             {payment.rejection_reason && (
               <div className="pt-2 border-t">
                 <p className="text-sm font-medium text-destructive mb-1">Rejection Reason:</p>
-                <p className="text-sm text-muted-foreground">{payment.rejection_reason}</p>
+                <p className="text-sm text-muted-foreground break-words">{payment.rejection_reason}</p>
               </div>
             )}
 
             {/* Actions */}
             {payment.payment_status === "pending" && payment.payment_proof_url && (
-              <div className="flex gap-2 pt-2 border-t">
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                 <Button
                   className="flex-1"
                   variant="default"
@@ -392,11 +457,11 @@ export default function PaymentValidationPage() {
     <>
       <Navigation />
       <main className="pt-24 lg:pt-20 pb-20">
-        <div className="min-h-screen bg-muted/30">
-          <div className="container mx-auto p-6">
+        <div className="bg-muted/30 overflow-x-hidden">
+          <div className="container mx-auto p-4 sm:p-6 max-w-full">
             <div className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Payment Validation</h1>
-              <p className="text-muted-foreground">Review and approve submitted payment proofs</p>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Payment Validation</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Review and approve submitted payment proofs</p>
             </div>
 
             {loading ? (
@@ -414,7 +479,7 @@ export default function PaymentValidationPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">No Payments Yet</h3>
-                    <p className="text-muted-foreground max-w-md mx-auto">
+                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
                       There are currently no payment submissions in the system. Payments will appear here once users
                       submit their payment proofs for orders.
                     </p>
@@ -431,31 +496,35 @@ export default function PaymentValidationPage() {
               // Existing tabs content
               <div className="space-y-6">
                 <Tabs defaultValue="pending" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="pending" className="flex items-center gap-2">
-                      <Clock className="w-4 h-4" />
-                      Pending
+                  <TabsList className="sticky top-16 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
+                    <TabsTrigger value="pending" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Pending</span>
+                      <span className="sm:hidden">Pend.</span>
                       {pendingPayments.length > 0 && (
-                        <span className="ml-1 px-2 py-0.5 text-xs bg-yellow-500 text-white rounded-full">
+                        <span className="ml-1 px-1.5 py-0.5 text-xs bg-yellow-500 text-white rounded-full">
                           {pendingPayments.length}
                         </span>
                       )}
                     </TabsTrigger>
-                    <TabsTrigger value="approved" className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      Approved ({approvedPayments.length})
+                    <TabsTrigger value="approved" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Approved ({approvedPayments.length})</span>
+                      <span className="sm:hidden">App. ({approvedPayments.length})</span>
                     </TabsTrigger>
-                    <TabsTrigger value="rejected" className="flex items-center gap-2">
-                      <XCircle className="w-4 h-4" />
-                      Rejected ({rejectedPayments.length})
+                    <TabsTrigger value="rejected" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">Rejected ({rejectedPayments.length})</span>
+                      <span className="sm:hidden">Rej. ({rejectedPayments.length})</span>
                     </TabsTrigger>
-                    <TabsTrigger value="no-proof" className="flex items-center gap-2">
-                      <FileX className="w-4 h-4" />
-                      No Proof ({noProofPayments.length})
+                    <TabsTrigger value="no-proof" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+                      <FileX className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden sm:inline">No Proof ({noProofPayments.length})</span>
+                      <span className="sm:hidden">None ({noProofPayments.length})</span>
                     </TabsTrigger>
                   </TabsList>
 
-                  <TabsContent value="pending" className="space-y-4">
+                  <TabsContent value="pending" className="space-y-4 mt-6">
                     {pendingPayments.length === 0 ? (
                       <Card className="p-8">
                         <div className="text-center space-y-2">
@@ -471,7 +540,7 @@ export default function PaymentValidationPage() {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="approved" className="space-y-4">
+                  <TabsContent value="approved" className="space-y-4 mt-6">
                     {approvedPayments.length === 0 ? (
                       <Card className="p-8">
                         <div className="text-center space-y-2">
@@ -487,7 +556,7 @@ export default function PaymentValidationPage() {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="rejected" className="space-y-4">
+                  <TabsContent value="rejected" className="space-y-4 mt-6">
                     {rejectedPayments.length === 0 ? (
                       <Card className="p-8">
                         <div className="text-center space-y-2">
@@ -503,7 +572,7 @@ export default function PaymentValidationPage() {
                     )}
                   </TabsContent>
 
-                  <TabsContent value="no-proof" className="space-y-4">
+                  <TabsContent value="no-proof" className="space-y-4 mt-6">
                     {noProofPayments.length === 0 ? (
                       <Card className="p-8">
                         <div className="text-center space-y-2">
@@ -524,6 +593,103 @@ export default function PaymentValidationPage() {
           </div>
         </div>
       </main>
+
+      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Approve Payment</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to approve this payment? This action will mark the order as paid and allow the user
+              to access their event registrations.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="space-y-2 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Order ID:</div>
+                <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
+                <div className="text-muted-foreground">Amount:</div>
+                <div className="font-semibold break-all">
+                  {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
+                </div>
+                <div className="text-muted-foreground">Customer:</div>
+                <div className="truncate">{selectedPayment.orders?.full_name}</div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsApproveDialogOpen(false)} disabled={isProcessing}>
+              Cancel
+            </Button>
+            <Button onClick={handleApprove} disabled={isProcessing}>
+              {isProcessing ? "Approving..." : "Approve Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject Payment</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this payment. The user will be notified and can resubmit with
+              corrections.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayment && (
+            <div className="space-y-4 py-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                <div className="text-muted-foreground">Order ID:</div>
+                <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
+                <div className="text-muted-foreground">Amount:</div>
+                <div className="font-semibold break-all">
+                  {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
+                </div>
+                <div className="text-muted-foreground">Customer:</div>
+                <div className="truncate">{selectedPayment.orders?.full_name}</div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rejection-reason">Rejection Reason *</Label>
+                <Textarea
+                  id="rejection-reason"
+                  placeholder="E.g., Payment proof is unclear, incorrect amount, etc."
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  rows={4}
+                  disabled={isProcessing}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)} disabled={isProcessing}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleReject} disabled={isProcessing || !rejectionReason.trim()}>
+              {isProcessing ? "Rejecting..." : "Reject Payment"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Payment Proof</DialogTitle>
+          </DialogHeader>
+          {selectedPayment?.payment_proof_url && (
+            <div className="w-full">
+              <img
+                src={selectedPayment.payment_proof_url || "/placeholder.svg"}
+                alt="Payment proof"
+                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
+              />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </>
   )

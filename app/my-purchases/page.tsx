@@ -63,15 +63,30 @@ export default async function MyPurchasesPage() {
     return "CPD COURSE"
   }
 
+  const getItemTypeBadgeColor = (itemType: string): string => {
+    switch (itemType) {
+      case "WORKSHOP":
+        return "bg-cyan-500 text-white"
+      case "SYMPOSIUM":
+        return "bg-purple-500 text-white"
+      case "HOTEL":
+        return "bg-orange-500 text-white"
+      case "CPD COURSE":
+        return "bg-blue-500 text-white"
+      default:
+        return "bg-primary text-primary-foreground"
+    }
+  }
+
   const getPaymentStatusBadge = (order: any) => {
     const payment = order.order_payments?.[0]
 
     if (!payment) {
       // No payment record yet - needs to submit proof
       return (
-        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
-          <Upload className="w-3 h-3" />
-          Awaiting Payment Proof
+        <Badge variant="secondary" className="flex items-center gap-1 w-fit max-w-full whitespace-nowrap shrink-0">
+          <Upload className="w-3 h-3 shrink-0" />
+          <span className="text-xs sm:text-sm">Awaiting Payment Proof</span>
         </Badge>
       )
     }
@@ -88,12 +103,12 @@ export default async function MyPurchasesPage() {
     return (
       <Badge
         variant={config.variant}
-        className={`flex items-center gap-1 w-fit ${
+        className={`flex items-center gap-1 w-fit max-w-full whitespace-nowrap shrink-0 ${
           payment.payment_status === "verified" ? "bg-green-500 hover:bg-green-600" : ""
         } ${payment.payment_status === "pending" ? "bg-amber-500 hover:bg-amber-600" : ""}`}
       >
-        <Icon className="w-3 h-3" />
-        {config.label}
+        <Icon className="w-3 h-3 shrink-0" />
+        <span className="text-xs sm:text-sm">{config.label}</span>
       </Badge>
     )
   }
@@ -180,11 +195,11 @@ export default async function MyPurchasesPage() {
                   return (
                     <Card key={order.id}>
                       <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div>
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                          <div className="min-w-0 flex-1">
                             <CardTitle className="flex items-center gap-2">
-                              <Package className="w-5 h-5" />
-                              Order #{order.id.slice(0, 8)}
+                              <Package className="w-5 h-5 shrink-0" />
+                              <span className="truncate">Order #{order.id.slice(0, 8)}</span>
                             </CardTitle>
                             <CardDescription>
                               Placed on{" "}
@@ -195,7 +210,7 @@ export default async function MyPurchasesPage() {
                               })}
                             </CardDescription>
                           </div>
-                          {getPaymentStatusBadge(order)}
+                          <div className="shrink-0">{getPaymentStatusBadge(order)}</div>
                         </div>
                       </CardHeader>
                       <CardContent>
@@ -317,7 +332,9 @@ export default async function MyPurchasesPage() {
                                   <div>
                                     {item.item_type === "event" && (
                                       <>
-                                        <div className="text-xs font-semibold text-primary mb-0.5">
+                                        <div
+                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${getItemTypeBadgeColor(getEventType(item.event_id || "", item.event_label || item.item_name))}`}
+                                        >
                                           {getEventType(item.event_id || "", item.event_label || item.item_name)}
                                         </div>
                                         <p className="font-medium">{item.event_label || item.item_name}</p>
@@ -328,7 +345,11 @@ export default async function MyPurchasesPage() {
                                     )}
                                     {item.item_type === "hotel" && (
                                       <>
-                                        <div className="text-xs font-semibold text-primary mb-0.5">HOTEL</div>
+                                        <div
+                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${getItemTypeBadgeColor("HOTEL")}`}
+                                        >
+                                          HOTEL
+                                        </div>
                                         <p className="font-medium">{item.hotel_room_type || item.item_name}</p>
                                         <p className="text-xs text-muted-foreground">
                                           {item.check_in_date && (

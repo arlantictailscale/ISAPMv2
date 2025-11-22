@@ -4,6 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { calculateCartTotal, formatCurrency } from "@/lib/cart/utils"
 import { CheckoutForm } from "./checkout-form"
+import { checkProfileCompleteness } from "@/lib/profile/validation"
+import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 
 export default async function CheckoutPage() {
   const supabase = await createClient()
@@ -17,6 +19,8 @@ export default async function CheckoutPage() {
 
   // Get user profile
   const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+
+  const profileStatus = checkProfileCompleteness(profile)
 
   // Get active cart with items
   const { data: cart } = await supabase
@@ -43,6 +47,15 @@ export default async function CheckoutPage() {
           <p className="text-muted-foreground">Review your order and complete your purchase</p>
         </div>
 
+        {!profileStatus.isComplete && (
+          <div className="mb-6">
+            <ProfileIncompleteAlert
+              missingFields={profileStatus.missingFields}
+              completionPercentage={profileStatus.completionPercentage}
+            />
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Checkout Form */}
           <div className="lg:col-span-2">
@@ -60,6 +73,7 @@ export default async function CheckoutPage() {
                     institution: profile?.institution || "",
                     position: profile?.position || "",
                   }}
+                  profileComplete={profileStatus.isComplete}
                 />
               </CardContent>
             </Card>

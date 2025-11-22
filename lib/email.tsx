@@ -2,8 +2,10 @@ import { Resend } from "resend"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function sendWelcomeEmail(toEmail: string, userName: string) {
+export async function sendWelcomeEmail(toEmail: string, userName?: string) {
   try {
+    const displayName = userName || toEmail.split("@")[0] || "User"
+
     await resend.emails.send({
       from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: toEmail,
@@ -16,35 +18,38 @@ export async function sendWelcomeEmail(toEmail: string, userName: string) {
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #00A9E0; color: white; padding: 30px; text-align: center; }
-              .content { background: #f9f9f9; padding: 30px; }
+              .header { background: #00A9E0; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
               .button { display: inline-block; background: #EF3340; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
               .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+              ul { padding-left: 20px; }
+              li { margin: 8px 0; }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1>Welcome to ISAPM 2026!</h1>
+                <h1 style="margin: 0; font-size: 28px;">Welcome to ISAPM 2026!</h1>
               </div>
               <div class="content">
-                <p>Dear ${userName},</p>
-                <p>Thank you for registering with ISAPM 2026. Your account has been successfully created!</p>
-                <p>You can now:</p>
-                <ul>
+                <p style="font-size: 16px;">Dear ${displayName},</p>
+                <p style="font-size: 16px;">Thank you for registering with ISAPM 2026. Your account has been successfully created!</p>
+                <p style="font-size: 16px; font-weight: bold;">You can now:</p>
+                <ul style="font-size: 15px;">
                   <li>Register for the conference</li>
                   <li>Submit poster abstracts</li>
                   <li>View the program schedule</li>
                   <li>Manage your profile</li>
                 </ul>
                 <p style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">Go to Dashboard</a>
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/dashboard" class="button">Go to Dashboard</a>
                 </p>
-                <p>If you have any questions, feel free to contact us.</p>
-                <p>Best regards,<br>ISAPM 2026 Team</p>
+                <p style="font-size: 16px;">If you have any questions, feel free to contact us.</p>
+                <p style="font-size: 16px;">Best regards,<br><strong>ISAPM 2026 Team</strong></p>
               </div>
               <div class="footer">
-                <p>The Indonesian Society of Anesthesiology for Pain Management National Meeting</p>
+                <p><strong>The Indonesian Society of Anesthesiology for Pain Management</strong></p>
+                <p>8th National Meeting - ISAPM 2026</p>
                 <p>Email: admin@isapm2026.org | Phone: +6289602626709 (WhatsApp)</p>
               </div>
             </div>
@@ -52,14 +57,15 @@ export async function sendWelcomeEmail(toEmail: string, userName: string) {
         </html>
       `,
     })
+
+    console.log(`[v0] Welcome email sent successfully to ${toEmail}`)
     return { success: true }
   } catch (error) {
-    console.error("Error sending welcome email:", error)
+    console.error("[v0] Error sending welcome email:", error)
     return { success: false, error }
   }
 }
 
-// Use sendOrderConfirmationEmail instead for new cart-based system
 export async function sendRegistrationConfirmation({
   email,
   firstName,
@@ -456,6 +462,7 @@ export async function sendPaymentVerificationEmail({
               .details-label { color: #64748b; font-size: 14px; }
               .details-value { font-weight: 600; color: #1e293b; text-align: right; }
               .button { display: inline-block; background: linear-gradient(135deg, #EF3340 0%, #d92532 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(239, 51, 64, 0.2); }
+              .button:hover { box-shadow: 0 6px 8px rgba(239, 51, 64, 0.3); }
               .items-list { margin: 15px 0; padding-left: 20px; }
               .items-list li { margin: 8px 0; color: #475569; }
               .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 20px; }

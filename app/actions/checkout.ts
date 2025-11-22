@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendOrderConfirmationEmail } from "@/lib/email"
+import { checkProfileCompleteness } from "@/lib/profile/validation"
 
 /**
  * Create order from cart and proceed to checkout
@@ -21,6 +22,16 @@ export async function createOrderFromCart(guestInfo: {
   } = await supabase.auth.getUser()
   if (!user) {
     return { error: "Not authenticated" }
+  }
+
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+
+  const profileStatus = checkProfileCompleteness(profile)
+
+  if (!profileStatus.isComplete) {
+    return {
+      error: `Profile incomplete. Please complete these fields: ${profileStatus.missingFields.join(", ")}`,
+    }
   }
 
   // Get active cart with items

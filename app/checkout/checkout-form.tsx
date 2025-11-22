@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
+import { Loader2, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { createOrderFromCart } from "@/app/actions/checkout"
 import { useCart } from "@/lib/cart/cart-context"
@@ -20,9 +20,10 @@ interface CheckoutFormProps {
     institution: string
     position: string
   }
+  profileComplete: boolean
 }
 
-export function CheckoutForm({ defaultValues }: CheckoutFormProps) {
+export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormProps) {
   const router = useRouter()
   const { refreshCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -37,6 +38,14 @@ export function CheckoutForm({ defaultValues }: CheckoutFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!profileComplete) {
+      toast.error("Complete your profile first", {
+        description: "You must complete all required profile fields before placing an order.",
+      })
+      router.push("/profile")
+      return
+    }
 
     // Validate required fields
     if (!formData.full_name || !formData.email || !formData.phone || !formData.institution || !formData.position) {
@@ -72,31 +81,73 @@ export function CheckoutForm({ defaultValues }: CheckoutFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="full_name">Full Name *</Label>
-        <Input id="full_name" name="full_name" value={formData.full_name} onChange={handleChange} required />
+        <Input
+          id="full_name"
+          name="full_name"
+          value={formData.full_name}
+          onChange={handleChange}
+          required
+          disabled={!profileComplete}
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="email">Email *</Label>
-        <Input id="email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+          disabled={!profileComplete}
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="phone">Phone Number *</Label>
-        <Input id="phone" name="phone" type="tel" value={formData.phone} onChange={handleChange} required />
+        <Input
+          id="phone"
+          name="phone"
+          type="tel"
+          value={formData.phone}
+          onChange={handleChange}
+          required
+          disabled={!profileComplete}
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="institution">Institution / Organization *</Label>
-        <Input id="institution" name="institution" value={formData.institution} onChange={handleChange} required />
+        <Input
+          id="institution"
+          name="institution"
+          value={formData.institution}
+          onChange={handleChange}
+          required
+          disabled={!profileComplete}
+        />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="position">Position / Profession *</Label>
-        <Input id="position" name="position" value={formData.position} onChange={handleChange} required />
+        <Input
+          id="position"
+          name="position"
+          value={formData.position}
+          onChange={handleChange}
+          required
+          disabled={!profileComplete}
+        />
       </div>
 
-      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
+      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !profileComplete}>
+        {!profileComplete ? (
+          <>
+            <Lock className="w-4 h-4 mr-2" />
+            Complete Profile to Continue
+          </>
+        ) : isSubmitting ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Processing Order...

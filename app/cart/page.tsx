@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { calculateCartTotal, formatCurrency } from "@/lib/cart/utils"
-import { ShoppingBag, ArrowRight } from "lucide-react"
+import { ShoppingBag, ArrowRight, Lock } from "lucide-react"
 import Link from "next/link"
+import { checkProfileCompleteness } from "@/lib/profile/validation"
+import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 
 export default async function CartPage() {
   const supabase = await createClient()
@@ -17,6 +19,10 @@ export default async function CartPage() {
   if (!user) {
     redirect("/auth/login?redirect=/cart")
   }
+
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle()
+
+  const profileStatus = checkProfileCompleteness(profile)
 
   // Get active cart with items
   const { data: cart } = await supabase
@@ -73,7 +79,16 @@ export default async function CartPage() {
             </div>
 
             {/* Order Summary */}
-            <div className="lg:col-span-1">
+            <div className="lg:col-span-1 space-y-4">
+              {!profileStatus.isComplete && (
+                <ProfileIncompleteAlert
+                  missingFields={profileStatus.missingFields}
+                  completionPercentage={profileStatus.completionPercentage}
+                  variant="destructive"
+                  showButton={true}
+                />
+              )}
+
               <Card className="sticky top-24">
                 <CardHeader>
                   <CardTitle>Order Summary</CardTitle>
@@ -97,12 +112,21 @@ export default async function CartPage() {
                     <span className="text-primary">{formatCurrency(cartSummary.subtotal, cartSummary.currency)}</span>
                   </div>
 
-                  <Link href="/checkout" className="block">
-                    <Button size="lg" className="w-full">
-                      Proceed to Checkout
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
+                  {profileStatus.isComplete ? (
+                    <Link href="/checkout" className="block">
+                      <Button size="lg" className="w-full">
+                        Proceed to Checkout
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link href="/profile" className="block">
+                      <Button size="lg" variant="destructive" className="w-full flex items-center justify-center gap-2">
+                        <Lock className="h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">Complete Profile to Checkout</span>
+                      </Button>
+                    </Link>
+                  )}
 
                   <p className="text-xs text-center text-muted-foreground">You'll review your order before payment</p>
                 </CardContent>

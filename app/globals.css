@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -123,13 +124,12 @@
     @apply bg-background text-foreground;
   }
 
-  /* Added global overflow prevention */
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
     max-width: 100vw;
   }
 
-  /* Fixed font-display reference to use correct variable */
   .font-display {
     font-family: var(--font-display);
   }

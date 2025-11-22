@@ -118,10 +118,8 @@ export default function Navigation() {
       }`}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
-        <div className="grid grid-cols-3 items-center h-16 md:flex md:justify-between">
-          <div className="md:hidden"></div>
-
-          <Link href="/" className="flex items-center gap-3 justify-center">
+        <div className="flex items-center justify-between h-16">
+          <Link href="/" className="flex items-center gap-3">
             <Image src="/images/isapm-logo.png" alt="ISAPM Logo" width={40} height={40} className="w-10 h-10" />
             <span className="font-display text-xl font-bold text-primary inline whitespace-nowrap">ISAPM 2026</span>
           </Link>
@@ -243,7 +241,8 @@ export default function Navigation() {
             </div>
           </div>
 
-          <div className="flex justify-end md:hidden">
+          <div className="flex justify-end items-center gap-2 md:hidden">
+            {!isLoading && user && <CartIcon />}
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
@@ -276,6 +275,14 @@ export default function Navigation() {
             <div className="border-t border-border pt-4 space-y-2">
               {!isLoading && user ? (
                 <>
+                  <Link
+                    href="/cart"
+                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <ShoppingCart className="w-4 h-4 inline mr-2" />
+                    My Cart
+                  </Link>
                   <Link
                     href="/dashboard"
                     className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"

@@ -38,25 +38,31 @@ export default function CallbackPage() {
 
         const user = session.user
 
-        // Check if this is a new signup (optional welcome email)
-        const urlParams = new URLSearchParams(window.location.search)
-        const type = urlParams.get("type")
+        // Check if this is a new user by checking if profile exists
+        const { data: existingProfile } = await supabase
+          .from("profiles")
+          .select("id, created_at")
+          .eq("id", user.id)
+          .single()
 
-        if (type === "signup") {
-          try {
-            console.log("[v0] Sending welcome email to:", user.email)
+        const isNewUser =
+          !existingProfile || new Date().getTime() - new Date(existingProfile.created_at).getTime() < 60000 // Less than 1 minute old
 
-            await fetch("/api/send-welcome-email", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: user.email,
-                userId: user.id,
-              }),
-            })
-          } catch (emailError) {
-            console.error("[v0] Error sending welcome email:", emailError)
-          }
+        if (isNewUser) {
+          console.log("[v0] New user detected, sending welcome email to:", user.email)
+
+          // Send welcome email asynchronously (don't wait for it)
+          fetch("/api/send-welcome-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: user.email,
+              userId: user.id,
+              userName: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0],
+            }),
+          }).catch((error) => {
+            console.error("[v0] Error sending welcome email:", error)
+          })
         }
 
         // Redirect to dashboard

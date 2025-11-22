@@ -14,7 +14,6 @@ import { toast } from "sonner"
 export default function ProfilePage() {
   const [formData, setFormData] = useState({
     fullName: "",
-    titleDegree: "",
     satuSehatName: "",
     satuSehatEmail: "",
     nik: "",
@@ -52,7 +51,6 @@ export default function ProfilePage() {
       } else if (profile) {
         setFormData({
           fullName: profile.full_name || "",
-          titleDegree: profile.title_degree || "",
           satuSehatName: profile.satu_sehat_name || "",
           satuSehatEmail: profile.satu_sehat_email || "",
           nik: profile.nik || "",
@@ -81,7 +79,6 @@ export default function ProfilePage() {
       const { error } = await supabase.from("profiles").upsert({
         id: user.id,
         full_name: formData.fullName,
-        title_degree: formData.titleDegree,
         satu_sehat_name: formData.satuSehatName,
         satu_sehat_email: formData.satuSehatEmail,
         nik: formData.nik,
@@ -152,19 +149,6 @@ export default function ProfilePage() {
                 <p className="text-xs text-muted-foreground mt-1">
                   Include your full name with all professional titles and degrees
                 </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold mb-2">Titles/Degrees (Optional)</label>
-                <input
-                  type="text"
-                  name="titleDegree"
-                  value={formData.titleDegree}
-                  onChange={handleChange}
-                  className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                  placeholder="e.g., Dr., Sp.An, M.Kes, Ph.D"
-                />
-                <p className="text-xs text-muted-foreground mt-1">Separate multiple titles with commas</p>
               </div>
 
               <div>

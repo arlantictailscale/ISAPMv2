@@ -3,25 +3,16 @@
 import { createClient } from "@/lib/supabase/client"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/cart/utils"
 import { formatDistanceToNow } from "date-fns"
-import { CheckCircle, XCircle, Eye, Clock, AlertCircle, ImageIcon } from "lucide-react"
+import { CheckCircle, XCircle, Eye, Clock, RefreshCw, FileX } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AdminDropdownNav } from "@/components/admin-dropdown-nav"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import { toast } from "@/hooks/use-toast"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 
 interface OrderPayment {
   id: string
@@ -63,7 +54,7 @@ interface OrderPayment {
 
 export default function PaymentValidationPage() {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [payments, setPayments] = useState<OrderPayment[]>([])
   const [selectedPayment, setSelectedPayment] = useState<OrderPayment | null>(null)
@@ -79,28 +70,43 @@ export default function PaymentValidationPage() {
 
   const checkAuth = async () => {
     const supabase = createClient()
+    console.log("[v0] Checking authentication for payment validation page")
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
+    console.log("[v0] User:", user ? `${user.email} (${user.id})` : "Not logged in")
+
     if (!user) {
+      console.log("[v0] No user found, redirecting to login")
       router.push("/auth/login")
       return
     }
 
-    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single()
+
+    console.log("[v0] Profile:", profile)
+    console.log("[v0] Profile error:", profileError)
 
     if (profile?.role !== "admin") {
+      console.log("[v0] User is not admin, redirecting to dashboard")
       router.push("/dashboard")
       return
     }
 
+    console.log("[v0] User is admin, fetching payments")
     setIsAdmin(true)
     await fetchPayments()
   }
 
   const fetchPayments = async () => {
-    setIsLoading(true)
+    console.log("[v0] Starting to fetch payments...")
+    setLoading(true)
     const supabase = createClient()
 
     const { data, error } = await supabase
@@ -114,6 +120,10 @@ export default function PaymentValidationPage() {
       `)
       .order("created_at", { ascending: false })
 
+    console.log("[v0] Fetched payments count:", data?.length || 0)
+    console.log("[v0] Fetch error:", error)
+    console.log("[v0] Payments data:", JSON.stringify(data, null, 2))
+
     if (error) {
       console.error("[v0] Error fetching payments:", error)
       toast({
@@ -122,10 +132,12 @@ export default function PaymentValidationPage() {
         variant: "destructive",
       })
     } else {
+      console.log("[v0] Setting payments state with", data?.length || 0, "items")
       setPayments(data || [])
     }
 
-    setIsLoading(false)
+    setLoading(false)
+    console.log("[v0] Finished fetching payments")
   }
 
   const handleApprove = async () => {
@@ -222,9 +234,17 @@ export default function PaymentValidationPage() {
   }
 
   const pendingPayments = payments.filter((p) => p.payment_status === "pending" && p.payment_proof_url)
-  const verifiedPayments = payments.filter((p) => p.payment_status === "verified")
+  const approvedPayments = payments.filter((p) => p.payment_status === "verified")
   const rejectedPayments = payments.filter((p) => p.payment_status === "rejected")
   const noProofPayments = payments.filter((p) => !p.payment_proof_url)
+
+  console.log("[v0] Filtered payments:", {
+    total: payments.length,
+    pending: pendingPayments.length,
+    approved: approvedPayments.length,
+    rejected: rejectedPayments.length,
+    noProof: noProofPayments.length,
+  })
 
   const getEventTypeBadge = (label: string) => {
     if (label.toLowerCase().includes("symposium")) {
@@ -378,7 +398,7 @@ export default function PaymentValidationPage() {
     )
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center">
         <div className="text-center">
@@ -394,221 +414,142 @@ export default function PaymentValidationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <AdminDropdownNav />
+    <>
+      <Navigation />
+      <main className="pt-24 lg:pt-20 pb-20">
+        <div className="min-h-screen bg-muted/30">
+          <div className="container mx-auto p-6">
+            <div className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Payment Validation</h1>
+              <p className="text-muted-foreground">Review and approve submitted payment proofs</p>
+            </div>
 
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Payment Validation</h1>
-            <p className="text-muted-foreground">Review and approve submitted payment proofs</p>
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-4">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+                  <p className="text-muted-foreground">Loading payments...</p>
+                </div>
+              </div>
+            ) : payments.length === 0 ? (
+              <Card className="p-12">
+                <div className="text-center space-y-4">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">No Payments Yet</h3>
+                    <p className="text-muted-foreground max-w-md mx-auto">
+                      There are currently no payment submissions in the system. Payments will appear here once users
+                      submit their payment proofs for orders.
+                    </p>
+                  </div>
+                  <div className="pt-4">
+                    <Button variant="outline" onClick={fetchPayments}>
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Refresh
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              // Existing tabs content
+              <div className="space-y-6">
+                <Tabs defaultValue="pending" className="w-full">
+                  <TabsList className="grid w-full grid-cols-4">
+                    <TabsTrigger value="pending" className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Pending
+                      {pendingPayments.length > 0 && (
+                        <span className="ml-1 px-2 py-0.5 text-xs bg-yellow-500 text-white rounded-full">
+                          {pendingPayments.length}
+                        </span>
+                      )}
+                    </TabsTrigger>
+                    <TabsTrigger value="approved" className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Approved ({approvedPayments.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="rejected" className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4" />
+                      Rejected ({rejectedPayments.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="no-proof" className="flex items-center gap-2">
+                      <FileX className="w-4 h-4" />
+                      No Proof ({noProofPayments.length})
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="pending" className="space-y-4">
+                    {pendingPayments.length === 0 ? (
+                      <Card className="p-8">
+                        <div className="text-center space-y-2">
+                          <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="font-semibold">No Pending Payments</h3>
+                          <p className="text-sm text-muted-foreground">
+                            All submitted payments have been reviewed. Check back later for new submissions.
+                          </p>
+                        </div>
+                      </Card>
+                    ) : (
+                      pendingPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="approved" className="space-y-4">
+                    {approvedPayments.length === 0 ? (
+                      <Card className="p-8">
+                        <div className="text-center space-y-2">
+                          <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="font-semibold">No Approved Payments</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Approved payments will appear here once you verify and approve payment submissions.
+                          </p>
+                        </div>
+                      </Card>
+                    ) : (
+                      approvedPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="rejected" className="space-y-4">
+                    {rejectedPayments.length === 0 ? (
+                      <Card className="p-8">
+                        <div className="text-center space-y-2">
+                          <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="font-semibold">No Rejected Payments</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Rejected payments will appear here when you decline payment submissions.
+                          </p>
+                        </div>
+                      </Card>
+                    ) : (
+                      rejectedPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="no-proof" className="space-y-4">
+                    {noProofPayments.length === 0 ? (
+                      <Card className="p-8">
+                        <div className="text-center space-y-2">
+                          <FileX className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                          <h3 className="font-semibold">No Unpaid Orders</h3>
+                          <p className="text-sm text-muted-foreground">
+                            All orders have payment proofs submitted or are being processed.
+                          </p>
+                        </div>
+                      </Card>
+                    ) : (
+                      noProofPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
+                    )}
+                  </TabsContent>
+                </Tabs>
+              </div>
+            )}
           </div>
-
-          {/* Metrics */}
-          <div className="grid gap-4 md:grid-cols-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Review</CardTitle>
-                <Clock className="h-4 w-4 text-amber-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{pendingPayments.length}</div>
-                <p className="text-xs text-muted-foreground">Awaiting approval</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Approved</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{verifiedPayments.length}</div>
-                <p className="text-xs text-muted-foreground">Verified payments</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-                <XCircle className="h-4 w-4 text-red-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{rejectedPayments.length}</div>
-                <p className="text-xs text-muted-foreground">Needs resubmission</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">No Proof</CardTitle>
-                <AlertCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{noProofPayments.length}</div>
-                <p className="text-xs text-muted-foreground">Not submitted yet</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Tabs */}
-          <Tabs defaultValue="pending" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="pending">Pending ({pendingPayments.length})</TabsTrigger>
-              <TabsTrigger value="verified">Approved ({verifiedPayments.length})</TabsTrigger>
-              <TabsTrigger value="rejected">Rejected ({rejectedPayments.length})</TabsTrigger>
-              <TabsTrigger value="no-proof">No Proof ({noProofPayments.length})</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="pending" className="space-y-4">
-              {pendingPayments.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {pendingPayments.map((payment) => (
-                    <PaymentCard key={payment.id} payment={payment} />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-muted-foreground">
-                      <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No pending payments to review</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="verified" className="space-y-4">
-              {verifiedPayments.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {verifiedPayments.map((payment) => (
-                    <PaymentCard key={payment.id} payment={payment} />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-muted-foreground">
-                      <CheckCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No approved payments yet</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="rejected" className="space-y-4">
-              {rejectedPayments.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {rejectedPayments.map((payment) => (
-                    <PaymentCard key={payment.id} payment={payment} />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-muted-foreground">
-                      <XCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>No rejected payments</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="no-proof" className="space-y-4">
-              {noProofPayments.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {noProofPayments.map((payment) => (
-                    <PaymentCard key={payment.id} payment={payment} />
-                  ))}
-                </div>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-muted-foreground">
-                      <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>All payments have proof submitted</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-          </Tabs>
         </div>
-      </div>
-
-      {/* Image View Dialog */}
-      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Payment Proof</DialogTitle>
-            <DialogDescription>Full view of the uploaded payment proof</DialogDescription>
-          </DialogHeader>
-          {selectedPayment?.payment_proof_url && (
-            <div className="w-full max-h-[70vh] overflow-auto">
-              <img
-                src={selectedPayment.payment_proof_url || "/placeholder.svg"}
-                alt="Payment proof full view"
-                className="w-full h-auto"
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Approve Dialog */}
-      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Approve Payment</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to approve this payment? The order status will be updated to "paid".
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsApproveDialogOpen(false)} disabled={isProcessing}>
-              Cancel
-            </Button>
-            <Button onClick={handleApprove} disabled={isProcessing}>
-              {isProcessing ? "Processing..." : "Approve Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reject Dialog */}
-      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject Payment</DialogTitle>
-            <DialogDescription>
-              Please provide a reason for rejecting this payment. The user will be notified and can resubmit.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="rejection-reason">Rejection Reason</Label>
-              <Textarea
-                id="rejection-reason"
-                placeholder="e.g., Payment proof is unclear, amount doesn't match, wrong account..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={4}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)} disabled={isProcessing}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleReject} disabled={isProcessing || !rejectionReason.trim()}>
-              {isProcessing ? "Processing..." : "Reject Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+      </main>
+      <Footer />
+    </>
   )
 }

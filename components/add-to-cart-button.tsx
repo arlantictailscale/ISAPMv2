@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { addToCart } from "@/app/actions/cart"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useCart } from "@/lib/cart/cart-context"
 import type { CartItem } from "@/lib/cart/types"
 
 interface AddToCartButtonProps {
@@ -18,6 +19,7 @@ interface AddToCartButtonProps {
 export function AddToCartButton({ item, variant = "outline", size = "default", className }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false)
   const router = useRouter()
+  const { refreshCart } = useCart()
 
   const handleAddToCart = async () => {
     setIsAdding(true)
@@ -39,6 +41,8 @@ export function AddToCartButton({ item, variant = "outline", size = "default", c
       }
       setIsAdding(false)
     } else {
+      await refreshCart()
+
       toast.success("Added to cart!", {
         action: {
           label: "View Cart",

@@ -5,7 +5,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingBag, CheckCircle, XCircle, Clock, Package } from "lucide-react"
+import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle } from "lucide-react"
 import Link from "next/link"
 
 export default async function MyPurchasesPage() {
@@ -23,7 +23,14 @@ export default async function MyPurchasesPage() {
     .from("orders")
     .select(`
       *,
-      order_items (*)
+      order_items (*),
+      order_payments (
+        id,
+        payment_status,
+        payment_proof_url,
+        rejection_reason,
+        verified_at
+      )
     `)
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
@@ -32,22 +39,96 @@ export default async function MyPurchasesPage() {
     console.error("[v0] Error loading purchases:", error.message)
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
-      pending: { label: "Pending Payment", variant: "secondary", icon: Clock },
-      paid: { label: "Paid", variant: "default", icon: CheckCircle },
-      cancelled: { label: "Cancelled", variant: "destructive", icon: XCircle },
+  const getEventType = (eventId: string, eventLabel: string): string => {
+    const lowerLabel = eventLabel?.toLowerCase() || ""
+    const lowerId = eventId?.toLowerCase() || ""
+
+    if (lowerLabel.startsWith("ws ") || lowerLabel.includes("workshop") || lowerId.includes("workshop")) {
+      return "WORKSHOP"
     }
 
-    const config = statusConfig[status] || statusConfig.pending
+    if (lowerLabel.includes("symposium") || lowerId.includes("symposium")) {
+      return "SYMPOSIUM"
+    }
+
+    return "CPD COURSE"
+  }
+
+  const getPaymentStatusBadge = (order: any) => {
+    const payment = order.order_payments?.[0]
+
+    if (!payment) {
+      // No payment record yet - needs to submit proof
+      return (
+        <Badge variant="secondary" className="flex items-center gap-1 w-fit">
+          <Upload className="w-3 h-3" />
+          Awaiting Payment Proof
+        </Badge>
+      )
+    }
+
+    const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
+      pending: { label: "Waiting Verification Payment", variant: "default", icon: Clock },
+      verified: { label: "Payment Approved", variant: "default", icon: CheckCircle },
+      rejected: { label: "Payment Rejected", variant: "destructive", icon: XCircle },
+    }
+
+    const config = statusConfig[payment.payment_status] || statusConfig.pending
     const Icon = config.icon
 
     return (
-      <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
+      <Badge
+        variant={config.variant}
+        className={`flex items-center gap-1 w-fit ${
+          payment.payment_status === "verified" ? "bg-green-500 hover:bg-green-600" : ""
+        } ${payment.payment_status === "pending" ? "bg-amber-500 hover:bg-amber-600" : ""}`}
+      >
         <Icon className="w-3 h-3" />
         {config.label}
       </Badge>
     )
+  }
+
+  const getActionButton = (order: any) => {
+    const payment = order.order_payments?.[0]
+
+    if (!payment) {
+      return {
+        text: "Submit Payment Proof",
+        variant: "default" as const,
+        icon: Upload,
+      }
+    }
+
+    if (payment.payment_status === "pending") {
+      return {
+        text: "View Payment Status",
+        variant: "outline" as const,
+        icon: Clock,
+      }
+    }
+
+    if (payment.payment_status === "verified") {
+      return {
+        text: "View Order Details",
+        variant: "outline" as const,
+        icon: CheckCircle,
+      }
+    }
+
+    if (payment.payment_status === "rejected") {
+      return {
+        text: "Resubmit Payment Proof",
+        variant: "default" as const,
+        icon: AlertCircle,
+      }
+    }
+
+    return {
+      text: "Submit Payment Proof",
+      variant: "default" as const,
+      icon: Upload,
+    }
   }
 
   return (
@@ -83,6 +164,9 @@ export default async function MyPurchasesPage() {
                   const totalItems = order.order_items?.length || 0
                   const hasHotelItems = order.order_items?.some((item: any) => item.item_type === "hotel")
                   const hasEventItems = order.order_items?.some((item: any) => item.item_type === "event")
+                  const payment = order.order_payments?.[0]
+                  const actionButton = getActionButton(order)
+                  const ActionIcon = actionButton.icon
 
                   return (
                     <Card key={order.id}>
@@ -102,11 +186,76 @@ export default async function MyPurchasesPage() {
                               })}
                             </CardDescription>
                           </div>
-                          {getStatusBadge(order.status)}
+                          {getPaymentStatusBadge(order)}
                         </div>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
+                          {payment?.payment_status === "rejected" && payment.rejection_reason && (
+                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                              <div className="flex gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-semibold text-red-900 text-sm mb-1">Payment Rejected</h4>
+                                  <p className="text-sm text-red-700">{payment.rejection_reason}</p>
+                                  <p className="text-xs text-red-600 mt-2">
+                                    Please resubmit your payment proof with the correct information.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {payment?.payment_status === "pending" && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                              <div className="flex gap-2">
+                                <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-semibold text-amber-900 text-sm mb-1">Payment Under Review</h4>
+                                  <p className="text-sm text-amber-700">
+                                    Your payment proof has been submitted and is currently being verified by our admin
+                                    team. This process typically takes 1-2 business days.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {payment?.payment_status === "verified" && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <div className="flex gap-2">
+                                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-semibold text-green-900 text-sm mb-1">Payment Approved</h4>
+                                  <p className="text-sm text-green-700">
+                                    Your payment has been verified and approved on{" "}
+                                    {new Date(payment.verified_at).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })}
+                                    . Your registration is now confirmed!
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {!payment && (
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="flex gap-2">
+                                <Upload className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-semibold text-blue-900 text-sm mb-1">Action Required</h4>
+                                  <p className="text-sm text-blue-700">
+                                    Please submit your payment proof to complete your order. Click the button below to
+                                    upload your payment confirmation.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
                           {/* Order summary */}
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2 text-sm">
@@ -159,7 +308,9 @@ export default async function MyPurchasesPage() {
                                   <div>
                                     {item.item_type === "event" && (
                                       <>
-                                        <div className="text-xs font-semibold text-primary mb-0.5">CPD COURSE</div>
+                                        <div className="text-xs font-semibold text-primary mb-0.5">
+                                          {getEventType(item.event_id || "", item.event_label || item.item_name)}
+                                        </div>
                                         <p className="font-medium">{item.event_label || item.item_name}</p>
                                         <p className="text-xs text-muted-foreground">
                                           {item.participant_type_label || "Conference Registration"}
@@ -193,13 +344,11 @@ export default async function MyPurchasesPage() {
                             </div>
                           </div>
 
-                          {/* Actions */}
                           <div className="flex gap-2 pt-2">
                             <Link href={`/payment/order/${order.id}`} className="flex-1">
-                              <Button className="w-full" variant={order.status === "pending" ? "default" : "outline"}>
-                                {order.status === "pending" && "Complete Payment"}
-                                {order.status === "paid" && "View Receipt"}
-                                {order.status === "cancelled" && "View Details"}
+                              <Button className="w-full flex items-center gap-2" variant={actionButton.variant}>
+                                <ActionIcon className="w-4 h-4" />
+                                {actionButton.text}
                               </Button>
                             </Link>
                           </div>

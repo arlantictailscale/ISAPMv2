@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/cart/utils"
 import { formatDistanceToNow } from "date-fns"
 import { ShoppingCart, Users, TrendingUp, AlertCircle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { AdminDropdownNav } from "@/components/admin-dropdown-nav"
 
 export default async function AdminCartsPage() {
   const supabase = await createClient()
@@ -75,265 +76,271 @@ export default async function AdminCartsPage() {
   console.log("[v0] Found carts:", carts?.length || 0)
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <AdminDropdownNav />
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-muted/30">
+        <div className="py-24 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8">
+              <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Cart & Order Management</h1>
+              <p className="text-muted-foreground">Monitor shopping carts and completed orders from cart checkout</p>
+            </div>
 
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-display font-bold mb-2">Cart & Order Management</h1>
-            <p className="text-muted-foreground">Monitor shopping carts and completed orders from cart checkout</p>
-          </div>
-
-          {/* Metrics */}
-          <div className="grid gap-4 md:grid-cols-4 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Carts</CardTitle>
-                <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{activeCarts.length}</div>
-                <p className="text-xs text-muted-foreground">
-                  {activeCarts.filter((c) => (c.cart_items?.length || 0) > 0).length} with items
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Abandoned Carts</CardTitle>
-                <AlertCircle className="h-4 w-4 text-amber-600" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{abandonedCarts.length}</div>
-                <p className="text-xs text-muted-foreground">Inactive for 1+ days</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Cart Value</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(totalCartValue, "IDR")}</div>
-                <p className="text-xs text-muted-foreground">In active carts</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Average Cart</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(averageCartValue, "IDR")}</div>
-                <p className="text-xs text-muted-foreground">Per active cart</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Tabs for better navigation between sections */}
-          <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="orders">Completed Orders ({orders?.length || 0})</TabsTrigger>
-              <TabsTrigger value="abandoned">Abandoned Carts ({abandonedCarts.length})</TabsTrigger>
-              <TabsTrigger value="active">Active Carts ({activeCarts.length})</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="orders" className="space-y-4">
-              {orders && orders.length > 0 ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Completed Orders (From Cart)</CardTitle>
-                    <CardDescription>Orders created through the cart checkout flow</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {orders.map((order) => {
-                        const items = order.order_items || []
-                        const payment = order.order_payments?.[0]
-                        const hasPaymentProof = payment?.payment_proof_url
-
-                        return (
-                          <div key={order.id} className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-semibold">{order.full_name}</p>
-                                <p className="text-sm text-muted-foreground">{order.email}</p>
-                                {order.phone && <p className="text-sm text-muted-foreground">{order.phone}</p>}
-                              </div>
-                              <div className="flex gap-2 flex-wrap justify-end">
-                                <Badge
-                                  variant={
-                                    order.status === "paid"
-                                      ? "default"
-                                      : order.status === "pending"
-                                        ? "secondary"
-                                        : "destructive"
-                                  }
-                                >
-                                  {order.status}
-                                </Badge>
-                                {hasPaymentProof && (
-                                  <Badge variant="outline" className="text-green-600 border-green-600">
-                                    Payment Proof
-                                  </Badge>
-                                )}
-                                <Badge variant="outline">
-                                  {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
-                                </Badge>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">{items.length} items</span>
-                              <span className="font-bold text-primary">
-                                {formatCurrency(order.total_amount || 0, order.currency || "IDR")}
-                              </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Items:{" "}
-                              {items
-                                .map((item) =>
-                                  item.item_type === "event" ? item.event_label : `Hotel: ${item.hotel_room_type}`,
-                                )
-                                .join(", ")}
-                            </div>
-                            {payment && (
-                              <div className="text-xs text-muted-foreground pt-2 border-t">
-                                Payment Status: {payment.payment_status || "No payment proof yet"}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-muted-foreground">No completed orders from cart checkout yet</div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="abandoned" className="space-y-4">
-              {abandonedCarts.length > 0 ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Abandoned Carts</CardTitle>
-                    <CardDescription>Carts with items that haven't been updated in over 24 hours</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {abandonedCarts.map((cart) => {
-                        const items = cart.cart_items || []
-                        const total = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
-                        const cartProfile = cart.profile
-
-                        return (
-                          <div key={cart.id} className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-semibold">{cartProfile?.full_name || "Unknown User"}</p>
-                                {cartProfile?.phone && (
-                                  <p className="text-sm text-muted-foreground">{cartProfile.phone}</p>
-                                )}
-                              </div>
-                              <Badge variant="outline" className="text-amber-600 border-amber-600">
-                                {formatDistanceToNow(new Date(cart.updated_at), { addSuffix: true })}
-                              </Badge>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">{items.length} items</span>
-                              <span className="font-bold text-primary">{formatCurrency(total, "IDR")}</span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              Items:{" "}
-                              {items
-                                .map((item) =>
-                                  item.item_type === "event" ? item.event_label : `Hotel: ${item.hotel_room_type}`,
-                                )
-                                .join(", ")}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardContent className="py-12">
-                    <div className="text-center text-muted-foreground">No abandoned carts at the moment</div>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-
-            <TabsContent value="active" className="space-y-4">
+            {/* Metrics */}
+            <div className="grid gap-4 md:grid-cols-4 mb-8">
               <Card>
-                <CardHeader>
-                  <CardTitle>All Active Carts</CardTitle>
-                  <CardDescription>Current shopping sessions</CardDescription>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Active Carts</CardTitle>
+                  <ShoppingCart className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  {activeCarts.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">No active carts at the moment</div>
-                  ) : (
-                    <div className="space-y-4">
-                      {activeCarts.map((cart) => {
-                        const items = cart.cart_items || []
-                        const total = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
-                        const cartProfile = cart.profile
-                        const isEmpty = items.length === 0
+                  <div className="text-2xl font-bold">{activeCarts.length}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {activeCarts.filter((c) => (c.cart_items?.length || 0) > 0).length} with items
+                  </p>
+                </CardContent>
+              </Card>
 
-                        return (
-                          <div key={cart.id} className="border rounded-lg p-4 space-y-2">
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-semibold">{cartProfile?.full_name || "Unknown User"}</p>
-                                {cartProfile?.phone && (
-                                  <p className="text-sm text-muted-foreground">{cartProfile.phone}</p>
-                                )}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Abandoned Carts</CardTitle>
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{abandonedCarts.length}</div>
+                  <p className="text-xs text-muted-foreground">Inactive for 1+ days</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Cart Value</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(totalCartValue, "IDR")}</div>
+                  <p className="text-xs text-muted-foreground">In active carts</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Average Cart</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(averageCartValue, "IDR")}</div>
+                  <p className="text-xs text-muted-foreground">Per active cart</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tabs for better navigation between sections */}
+            <Tabs defaultValue="orders" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="orders">Completed Orders ({orders?.length || 0})</TabsTrigger>
+                <TabsTrigger value="abandoned">Abandoned Carts ({abandonedCarts.length})</TabsTrigger>
+                <TabsTrigger value="active">Active Carts ({activeCarts.length})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="orders" className="space-y-4">
+                {orders && orders.length > 0 ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Completed Orders (From Cart)</CardTitle>
+                      <CardDescription>Orders created through the cart checkout flow</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {orders.map((order) => {
+                          const items = order.order_items || []
+                          const payment = order.order_payments?.[0]
+                          const hasPaymentProof = payment?.payment_proof_url
+
+                          return (
+                            <div key={order.id} className="border rounded-lg p-4 space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="font-semibold">{order.full_name}</p>
+                                  <p className="text-sm text-muted-foreground">{order.email}</p>
+                                  {order.phone && <p className="text-sm text-muted-foreground">{order.phone}</p>}
+                                </div>
+                                <div className="flex gap-2 flex-wrap justify-end">
+                                  <Badge
+                                    variant={
+                                      order.status === "paid"
+                                        ? "default"
+                                        : order.status === "pending"
+                                          ? "secondary"
+                                          : "destructive"
+                                    }
+                                  >
+                                    {order.status}
+                                  </Badge>
+                                  {hasPaymentProof && (
+                                    <Badge variant="outline" className="text-green-600 border-green-600">
+                                      Payment Proof
+                                    </Badge>
+                                  )}
+                                  <Badge variant="outline">
+                                    {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                                  </Badge>
+                                </div>
                               </div>
-                              <div className="flex gap-2">
-                                {isEmpty && <Badge variant="secondary">Empty</Badge>}
-                                <Badge variant="outline">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">{items.length} items</span>
+                                <span className="font-bold text-primary">
+                                  {formatCurrency(order.total_amount || 0, order.currency || "IDR")}
+                                </span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Items:{" "}
+                                {items
+                                  .map((item) =>
+                                    item.item_type === "event" ? item.event_label : `Hotel: ${item.hotel_room_type}`,
+                                  )
+                                  .join(", ")}
+                              </div>
+                              {payment && (
+                                <div className="text-xs text-muted-foreground pt-2 border-t">
+                                  Payment Status: {payment.payment_status || "No payment proof yet"}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center text-muted-foreground">
+                        No completed orders from cart checkout yet
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="abandoned" className="space-y-4">
+                {abandonedCarts.length > 0 ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Abandoned Carts</CardTitle>
+                      <CardDescription>Carts with items that haven't been updated in over 24 hours</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-4">
+                        {abandonedCarts.map((cart) => {
+                          const items = cart.cart_items || []
+                          const total = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+                          const cartProfile = cart.profile
+
+                          return (
+                            <div key={cart.id} className="border rounded-lg p-4 space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="font-semibold">{cartProfile?.full_name || "Unknown User"}</p>
+                                  {cartProfile?.phone && (
+                                    <p className="text-sm text-muted-foreground">{cartProfile.phone}</p>
+                                  )}
+                                </div>
+                                <Badge variant="outline" className="text-amber-600 border-amber-600">
                                   {formatDistanceToNow(new Date(cart.updated_at), { addSuffix: true })}
                                 </Badge>
                               </div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">{items.length} items</span>
+                                <span className="font-bold text-primary">{formatCurrency(total, "IDR")}</span>
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Items:{" "}
+                                {items
+                                  .map((item) =>
+                                    item.item_type === "event" ? item.event_label : `Hotel: ${item.hotel_room_type}`,
+                                  )
+                                  .join(", ")}
+                              </div>
                             </div>
-                            {!isEmpty && (
-                              <>
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-muted-foreground">{items.length} items</span>
-                                  <span className="font-bold text-primary">{formatCurrency(total, "IDR")}</span>
+                          )
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="py-12">
+                      <div className="text-center text-muted-foreground">No abandoned carts at the moment</div>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value="active" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All Active Carts</CardTitle>
+                    <CardDescription>Current shopping sessions</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {activeCarts.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">No active carts at the moment</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {activeCarts.map((cart) => {
+                          const items = cart.cart_items || []
+                          const total = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+                          const cartProfile = cart.profile
+                          const isEmpty = items.length === 0
+
+                          return (
+                            <div key={cart.id} className="border rounded-lg p-4 space-y-2">
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <p className="font-semibold">{cartProfile?.full_name || "Unknown User"}</p>
+                                  {cartProfile?.phone && (
+                                    <p className="text-sm text-muted-foreground">{cartProfile.phone}</p>
+                                  )}
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Items:{" "}
-                                  {items
-                                    .map((item) =>
-                                      item.item_type === "event" ? item.event_label : `Hotel: ${item.hotel_room_type}`,
-                                    )
-                                    .join(", ")}
+                                <div className="flex gap-2">
+                                  {isEmpty && <Badge variant="secondary">Empty</Badge>}
+                                  <Badge variant="outline">
+                                    {formatDistanceToNow(new Date(cart.updated_at), { addSuffix: true })}
+                                  </Badge>
                                 </div>
-                              </>
-                            )}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
+                              </div>
+                              {!isEmpty && (
+                                <>
+                                  <div className="flex items-center justify-between text-sm">
+                                    <span className="text-muted-foreground">{items.length} items</span>
+                                    <span className="font-bold text-primary">{formatCurrency(total, "IDR")}</span>
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    Items:{" "}
+                                    {items
+                                      .map((item) =>
+                                        item.item_type === "event"
+                                          ? item.event_label
+                                          : `Hotel: ${item.hotel_room_type}`,
+                                      )
+                                      .join(", ")}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </div>
-    </div>
+      <Footer />
+    </>
   )
 }

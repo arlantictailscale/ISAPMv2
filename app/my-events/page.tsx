@@ -8,7 +8,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, CheckCircle, XCircle, Clock, Ticket, Users, Loader2 } from "lucide-react"
+import { Calendar, MapPin, CheckCircle, Clock, Ticket, Users, Loader2, Info } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 
@@ -70,14 +70,13 @@ export default function MyEventsPage() {
         return
       }
 
-      // Fetch orders with event items only
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(
           `
           *,
           order_items!inner (*),
-          order_payments (
+          order_payments!inner (
             payment_status,
             payment_proof_url,
             verified_at
@@ -86,10 +85,11 @@ export default function MyEventsPage() {
         )
         .eq("user_id", user.id)
         .eq("order_items.item_type", "event")
+        .eq("order_payments.payment_status", "verified")
         .order("created_at", { ascending: false })
 
       if (ordersError) {
-        console.error("[v0] Error loading events:", ordersError.message)
+        console.error("[v0] Error loading events:", ordersError)
         toast.error("Failed to load your events")
         return
       }
@@ -103,7 +103,6 @@ export default function MyEventsPage() {
     }
   }
 
-  // Event details mapping
   const eventDetails: Record<
     string,
     { date: string; location: string; venue: string; type: "CPD" | "Workshop" | "Symposium" }
@@ -111,68 +110,47 @@ export default function MyEventsPage() {
     "cpd-day-1": {
       date: "Thursday, April 16, 2026",
       location: "Malang, East Java",
-      venue: "Harris Hotel & Conventions Malang",
+      venue: "The Singhasari Resort & Convention, Batu, Malang",
       type: "CPD",
     },
     "cpd-day-2": {
       date: "Friday, April 17, 2026",
       location: "Malang, East Java",
-      venue: "Harris Hotel & Conventions Malang",
+      venue: "The Singhasari Resort & Convention, Batu, Malang",
       type: "CPD",
     },
     "cpd-both": {
       date: "April 16-17, 2026",
       location: "Malang, East Java",
-      venue: "Harris Hotel & Conventions Malang",
+      venue: "The Singhasari Resort & Convention, Batu, Malang",
       type: "CPD",
     },
     workshop: {
       date: "Friday, April 17, 2026",
       location: "Malang, East Java",
-      venue: "Harris Hotel & Conventions Malang",
+      venue: "The Singhasari Resort & Convention, Batu, Malang",
       type: "Workshop",
     },
     symposium: {
       date: "Friday, April 17, 2026",
       location: "Malang, East Java",
-      venue: "Harris Hotel & Conventions Malang",
+      venue: "The Singhasari Resort & Convention, Batu, Malang",
       type: "Symposium",
     },
-  }
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
-      pending: { label: "Pending Payment", variant: "secondary", icon: Clock },
-      paid: { label: "Confirmed", variant: "default", icon: CheckCircle },
-      cancelled: { label: "Cancelled", variant: "destructive", icon: XCircle },
-    }
-
-    const config = statusConfig[status] || statusConfig.pending
-    const Icon = config.icon
-
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
-        <Icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    )
   }
 
   const getEventType = (eventId: string, eventLabel: string): "CPD" | "Workshop" | "Symposium" => {
     const lowerLabel = eventLabel?.toLowerCase() || ""
     const lowerId = eventId?.toLowerCase() || ""
 
-    // Check if it's a workshop (WS prefix or contains "workshop")
     if (lowerLabel.startsWith("ws ") || lowerLabel.includes("workshop") || lowerId.includes("workshop")) {
       return "Workshop"
     }
 
-    // Check if it's a symposium
     if (lowerLabel.includes("symposium") || lowerId.includes("symposium")) {
       return "Symposium"
     }
 
-    // Default to CPD for courses
     return "CPD"
   }
 
@@ -197,15 +175,27 @@ export default function MyEventsPage() {
       <main className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-background to-muted/20">
         <section className="py-12 px-4">
           <div className="max-w-6xl mx-auto">
-            {/* Header */}
             <div className="mb-8">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-3 bg-primary/10 rounded-lg">
-                  <Ticket className="w-8 h-8 text-primary" />
+                  <CheckCircle className="w-8 h-8 text-primary" />
                 </div>
                 <div>
-                  <h1 className="font-display text-4xl font-bold">My Events</h1>
-                  <p className="text-muted-foreground">Your registered CPD courses, workshops, and symposium</p>
+                  <h1 className="font-display text-4xl font-bold">My Verified Events</h1>
+                  <p className="text-muted-foreground">Events you are confirmed to attend</p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <Info className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1 text-sm">
+                    <p className="font-semibold text-green-900 dark:text-green-100 mb-1">Verified Registrations</p>
+                    <p className="text-green-700 dark:text-green-300">
+                      Only events with verified payments are displayed here. These are the events you are confirmed to
+                      attend. Please bring a valid ID and this confirmation on the event day.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -216,17 +206,25 @@ export default function MyEventsPage() {
                   <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 mb-6">
                     <Calendar className="w-10 h-10 text-primary" />
                   </div>
-                  <h3 className="text-2xl font-semibold mb-3">No Events Registered</h3>
+                  <h3 className="text-2xl font-semibold mb-3">No Verified Events</h3>
                   <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-                    You haven't registered for any events yet. Browse our CPD courses, workshops, and symposium to get
-                    started.
+                    You don't have any verified event registrations yet. Complete payment for your pending registrations
+                    or browse new events to get started.
                   </p>
-                  <Link href="/events">
-                    <Button size="lg" className="gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Browse Events
-                    </Button>
-                  </Link>
+                  <div className="flex gap-3 justify-center flex-wrap">
+                    <Link href="/my-purchases">
+                      <Button variant="outline" size="lg" className="gap-2 bg-transparent">
+                        <Clock className="w-4 h-4" />
+                        View Pending Registrations
+                      </Button>
+                    </Link>
+                    <Link href="/events">
+                      <Button size="lg" className="gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Browse Events
+                      </Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
@@ -234,38 +232,50 @@ export default function MyEventsPage() {
                 {orders.map((order) => {
                   const eventItems = order.order_items?.filter((item) => item.item_type === "event") || []
                   const payment = order.order_payments?.[0]
-                  const isPaid = order.status === "paid" || payment?.payment_status === "verified"
 
                   return (
-                    <Card key={order.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                      <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 border-b">
+                    <Card
+                      key={order.id}
+                      className="overflow-hidden hover:shadow-lg transition-shadow border-green-200 dark:border-green-900"
+                    >
+                      <CardHeader className="bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950/30 dark:to-green-900/30 border-b border-green-200 dark:border-green-800">
                         <div className="flex items-start justify-between flex-wrap gap-4">
                           <div className="flex-1">
                             <CardTitle className="flex items-center gap-2 mb-2">
-                              <Ticket className="w-5 h-5 text-primary" />
-                              Registration #{order.id.slice(0, 8).toUpperCase()}
+                              <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+                              <span className="text-green-900 dark:text-green-100">
+                                Registration #{order.id.slice(0, 8).toUpperCase()}
+                              </span>
                             </CardTitle>
-                            <CardDescription className="flex items-center gap-2">
+                            <CardDescription className="flex items-center gap-2 text-green-700 dark:text-green-300">
                               <Calendar className="w-4 h-4" />
-                              Registered on{" "}
-                              {new Date(order.created_at).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
+                              Verified on{" "}
+                              {payment?.verified_at
+                                ? new Date(payment.verified_at).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })
+                                : new Date(order.created_at).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
                             </CardDescription>
                           </div>
-                          {getStatusBadge(order.status)}
+                          <Badge className="bg-green-600 hover:bg-green-700 text-white border-0">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Verified
+                          </Badge>
                         </div>
                       </CardHeader>
                       <CardContent className="pt-6">
                         <div className="space-y-6">
-                          {/* Event Items */}
                           {eventItems.map((item) => {
                             const eventInfo = eventDetails[item.event_id] || {
                               date: "April 16-17, 2026",
                               location: "Malang, East Java",
-                              venue: "Harris Hotel & Conventions Malang",
+                              venue: "The Singhasari Resort & Convention, Batu, Malang",
                               type: getEventType(item.event_id, item.event_label),
                             }
 
@@ -274,7 +284,6 @@ export default function MyEventsPage() {
                                 key={item.id}
                                 className="border rounded-lg p-5 bg-gradient-to-br from-background to-muted/30"
                               >
-                                {/* Event Type Badge */}
                                 <div className="flex items-start justify-between mb-4">
                                   <Badge className="text-xs font-semibold" variant="outline">
                                     {eventInfo.type}
@@ -284,60 +293,56 @@ export default function MyEventsPage() {
                                   </span>
                                 </div>
 
-                                {/* Event Name */}
                                 <h3 className="text-xl font-bold mb-2">{item.event_label}</h3>
                                 <p className="text-sm text-muted-foreground mb-4">{item.participant_type_label}</p>
 
-                                {/* Event Details Grid */}
-                                <div className="grid gap-3 sm:grid-cols-2 text-sm">
+                                <div className="grid gap-4 sm:grid-cols-2 text-sm">
                                   <div className="flex items-start gap-2">
-                                    <Calendar className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                    <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                                     <div>
-                                      <p className="font-medium">Date</p>
+                                      <p className="font-semibold text-base mb-1">Event Date</p>
                                       <p className="text-muted-foreground">{eventInfo.date}</p>
                                     </div>
                                   </div>
                                   <div className="flex items-start gap-2">
-                                    <MapPin className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                    <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                                     <div>
-                                      <p className="font-medium">Location</p>
+                                      <p className="font-semibold text-base mb-1">Location</p>
                                       <p className="text-muted-foreground">{eventInfo.location}</p>
                                     </div>
                                   </div>
                                   <div className="flex items-start gap-2 sm:col-span-2">
-                                    <Users className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                                    <Users className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                                     <div>
-                                      <p className="font-medium">Venue</p>
+                                      <p className="font-semibold text-base mb-1">Venue</p>
                                       <p className="text-muted-foreground">{eventInfo.venue}</p>
                                     </div>
                                   </div>
                                 </div>
 
-                                {/* Access Information */}
-                                {isPaid && (
-                                  <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg">
-                                    <div className="flex items-start gap-2 text-sm">
-                                      <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
-                                      <div>
-                                        <p className="font-semibold text-green-900 dark:text-green-100 mb-1">
-                                          Registration Confirmed
-                                        </p>
-                                        <p className="text-green-700 dark:text-green-300">
-                                          Your registration has been confirmed. Please bring a valid ID on the event
-                                          day.
-                                        </p>
-                                      </div>
+                                <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg">
+                                  <div className="flex items-start gap-3 text-sm">
+                                    <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                                    <div className="flex-1">
+                                      <p className="font-semibold text-green-900 dark:text-green-100 mb-2">
+                                        ✓ Registration Confirmed & Verified
+                                      </p>
+                                      <ul className="text-green-700 dark:text-green-300 space-y-1.5 list-disc list-inside">
+                                        <li>Your payment has been verified by our team</li>
+                                        <li>You are confirmed to attend this event</li>
+                                        <li>Please bring a valid ID on the event day</li>
+                                        <li>Arrive 30 minutes early for check-in</li>
+                                      </ul>
                                     </div>
                                   </div>
-                                )}
+                                </div>
                               </div>
                             )
                           })}
 
-                          {/* Participant Information */}
                           <div className="border-t pt-6">
                             <h4 className="font-semibold mb-4 flex items-center gap-2">
-                              <Users className="w-4 h-4" />
+                              <Users className="w-5 h-5" />
                               Participant Information
                             </h4>
                             <div className="grid gap-3 sm:grid-cols-2 text-sm bg-muted/50 p-4 rounded-lg">
@@ -360,28 +365,17 @@ export default function MyEventsPage() {
                             </div>
                           </div>
 
-                          {/* Actions */}
                           <div className="flex gap-3 pt-2 flex-wrap">
-                            {!isPaid && (
-                              <Link href={`/payment/order/${order.id}`} className="flex-1 min-w-[200px]">
-                                <Button className="w-full gap-2" size="lg">
-                                  <CheckCircle className="w-4 h-4" />
-                                  Complete Payment
-                                </Button>
-                              </Link>
-                            )}
-                            {isPaid && (
-                              <Link href={`/payment/order/${order.id}`} className="flex-1 min-w-[200px]">
-                                <Button variant="outline" className="w-full gap-2 bg-transparent" size="lg">
-                                  <Ticket className="w-4 h-4" />
-                                  View Receipt
-                                </Button>
-                              </Link>
-                            )}
+                            <Link href={`/payment/order/${order.id}`} className="flex-1 min-w-[200px]">
+                              <Button variant="outline" className="w-full gap-2 bg-transparent" size="lg">
+                                <Ticket className="w-4 h-4" />
+                                View Confirmation
+                              </Button>
+                            </Link>
                             <Link href="/venue" className="flex-1 min-w-[200px]">
                               <Button variant="outline" className="w-full gap-2 bg-transparent" size="lg">
                                 <MapPin className="w-4 h-4" />
-                                View Venue Details
+                                Venue Details
                               </Button>
                             </Link>
                           </div>
@@ -393,23 +387,30 @@ export default function MyEventsPage() {
               </div>
             )}
 
-            {/* Help Section */}
             <Card className="mt-8 border-primary/20 bg-primary/5">
               <CardContent className="py-6">
                 <div className="flex items-start gap-4">
                   <div className="p-2 bg-primary/10 rounded-lg">
-                    <Calendar className="w-5 h-5 text-primary" />
+                    <Info className="w-5 h-5 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold mb-1">Need Help?</h4>
+                    <h4 className="font-semibold mb-1">Important Information</h4>
                     <p className="text-sm text-muted-foreground mb-3">
-                      If you have questions about your registration or need assistance, please contact us.
+                      This page shows only your verified event registrations. For pending payments or other
+                      registrations, please visit "My Purchases". Need assistance? Contact our support team.
                     </p>
-                    <Link href="/contact">
-                      <Button variant="outline" size="sm">
-                        Contact Support
-                      </Button>
-                    </Link>
+                    <div className="flex gap-2 flex-wrap">
+                      <Link href="/my-purchases">
+                        <Button variant="outline" size="sm">
+                          View All Purchases
+                        </Button>
+                      </Link>
+                      <Link href="/contact">
+                        <Button variant="outline" size="sm">
+                          Contact Support
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               </CardContent>

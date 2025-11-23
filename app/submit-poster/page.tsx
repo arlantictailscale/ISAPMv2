@@ -219,14 +219,6 @@ export default function SubmitPosterPage() {
         }
       }
 
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("first_name, last_name, university")
-        .eq("id", user.id)
-        .single()
-
-      const university = profileData?.university || ""
-
       const { error: insertError } = await supabase.from("abstracts").insert([
         {
           user_id: user.id,
@@ -238,7 +230,7 @@ export default function SubmitPosterPage() {
           category: formData.category, // Store category (Case Report/Research) in category field
           submission_status: "pending",
           file_url: fileUrl, // Store poster PDF URL in file_url field
-          university: university, // Pulled from user profile
+          university: formData.university, // Use university from form input
         },
       ])
 
@@ -250,9 +242,7 @@ export default function SubmitPosterPage() {
       }
 
       try {
-        const userName = profileData
-          ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
-          : user.email?.split("@")[0] || "Participant"
+        const userName = user.email?.split("@")[0] || "Participant"
 
         const response = await fetch("/api/send-poster-submission-email", {
           method: "POST",

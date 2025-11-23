@@ -4,8 +4,13 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { differenceInSeconds, parseISO } from "date-fns"
+import { Users } from "lucide-react"
 
-export default function FlipBookSection() {
+interface FlipBookSectionProps {
+  registeredCount: number
+}
+
+export default function FlipBookSection({ registeredCount }: FlipBookSectionProps) {
   const [mounted, setMounted] = useState(false)
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -95,13 +100,30 @@ export default function FlipBookSection() {
             </div>
           </div>
 
-          <div className="text-center">
-            <p className="text-lg text-muted-foreground mb-4">Don't miss out on the 8th National Meeting!</p>
-            <Link href="/pricing">
-              <Button size="lg" className="text-lg px-8 py-6 h-auto font-bold animate-pulse">
-                Register Now
-              </Button>
-            </Link>
+          <div className="flex flex-col items-center gap-6 w-full max-w-4xl">
+            <p className="text-lg md:text-xl text-muted-foreground text-center">
+              Don't miss out on the 8th National Meeting!
+            </p>
+
+            <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full">
+              <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-md border-2 border-primary/20 min-w-[200px]">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-primary tabular-nums leading-none">
+                    {registeredCount.toLocaleString()}
+                  </div>
+                  <div className="text-xs font-medium text-muted-foreground">Registered Accounts</div>
+                </div>
+              </div>
+
+              <Link href="/pricing">
+                <Button size="lg" className="text-lg px-8 py-6 h-auto font-bold animate-pulse">
+                  Register Now
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>

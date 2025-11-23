@@ -18,7 +18,7 @@ export default async function Home() {
       <Navigation />
       <LandingHero />
       <div id="content">
-        <FlipBookSection />
+        <FlipBookSection registeredCount={registeredCount} />
         <RegistrationStats initialCount={registeredCount} />
         <WelcomeSection />
         <ConferenceHighlights />

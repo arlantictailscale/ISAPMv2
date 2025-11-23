@@ -15,10 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Upload, ArrowLeft, X } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
 
 interface PaymentOrderClientProps {
   order: any
-  userId: string // Changed from user object to userId string
+  userId: string
   payment: any
 }
 
@@ -34,19 +35,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
   const [accountName, setAccountName] = useState("")
   const [transactionRef, setTransactionRef] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
-
-  const getEventType = (label: string, id: string) => {
-    const labelLower = label.toLowerCase()
-    const idLower = id.toLowerCase()
-
-    if (labelLower.startsWith("ws") || labelLower.includes("workshop")) {
-      return "WORKSHOP"
-    }
-    if (labelLower.includes("symposium")) {
-      return "SYMPOSIUM"
-    }
-    return "CPD COURSE"
-  }
 
   const calculateTotal = () => {
     if (!order.order_items) return 0
@@ -140,23 +128,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
 
   const hasSubmittedPayment = payment && !showResubmitForm
 
-  const getBadgeColors = (itemType: string, eventLabel: string, eventId: string) => {
-    if (itemType === "hotel") {
-      return "bg-purple-100 text-purple-700"
-    }
-
-    const eventType = getEventType(eventLabel, eventId)
-
-    if (eventType === "WORKSHOP") {
-      return "bg-orange-100 text-orange-700"
-    }
-    if (eventType === "SYMPOSIUM") {
-      return "bg-cyan-100 text-cyan-700"
-    }
-    // CPD COURSE
-    return "bg-violet-100 text-violet-700"
-  }
-
   if (hasSubmittedPayment) {
     return (
       <>
@@ -164,7 +135,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
         <main className="pt-24 pb-20 min-h-screen bg-gray-50">
           <section className="py-8 px-4">
             <div className="max-w-2xl mx-auto">
-              {/* Back button */}
               <Link
                 href="/my-purchases"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -173,7 +143,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 Back to My Purchases
               </Link>
 
-              {/* Payment Status Banner */}
               <div
                 className={`mb-6 p-4 rounded-lg ${
                   payment.payment_status === "verified"
@@ -218,18 +187,15 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                   <CardDescription>Order #{order.id.slice(0, 8)}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {/* Order Items List */}
                   <div className="space-y-3">
                     {order.order_items?.map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span
-                              className={`text-xs font-semibold px-2 py-0.5 rounded ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "")}`}
+                              className={`text-xs font-semibold px-2 py-0.5 rounded ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "").bg} ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "").text}`}
                             >
-                              {item.item_type === "hotel"
-                                ? "HOTEL"
-                                : getEventType(item.event_label || "", item.event_id || "")}
+                              {getCategoryLabel(item.item_type, item.event_label || "", item.event_id || "")}
                             </span>
                           </div>
                           <p className="font-medium text-sm">{item.event_label || item.hotel_room_type || "Unknown"}</p>
@@ -269,7 +235,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                     ))}
                   </div>
 
-                  {/* Total */}
                   <div className="flex justify-between items-center pt-3 border-t">
                     <p className="font-semibold text-lg">Total Amount</p>
                     <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>
@@ -277,7 +242,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 </CardContent>
               </Card>
 
-              {/* Payment Information Card */}
               <Card>
                 <CardHeader>
                   <CardTitle>Payment Information</CardTitle>
@@ -361,7 +325,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
       <main className="pt-24 pb-20 min-h-screen bg-gray-50">
         <section className="py-8 px-4">
           <div className="max-w-2xl mx-auto">
-            {/* Back button */}
             <Link
               href="/my-purchases"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
@@ -376,18 +339,15 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 <CardDescription>Order #{order.id.slice(0, 8)}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Order Items List */}
                 <div className="space-y-3">
                   {order.order_items?.map((item: any, index: number) => (
                     <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
                           <span
-                            className={`text-xs font-semibold px-2 py-0.5 rounded ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "")}`}
+                            className={`text-xs font-semibold px-2 py-0.5 rounded ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "").bg} ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "").text}`}
                           >
-                            {item.item_type === "hotel"
-                              ? "HOTEL"
-                              : getEventType(item.event_label || "", item.event_id || "")}
+                            {getCategoryLabel(item.item_type, item.event_label || "", item.event_id || "")}
                           </span>
                         </div>
                         <p className="font-medium text-sm">{item.event_label || item.hotel_room_type || "Unknown"}</p>
@@ -427,7 +387,6 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                   ))}
                 </div>
 
-                {/* Total */}
                 <div className="flex justify-between items-center pt-3 border-t">
                   <p className="font-semibold text-lg">Total Amount</p>
                   <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>

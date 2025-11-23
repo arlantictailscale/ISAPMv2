@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { getBadgeColors, BADGE_COLORS } from "@/lib/badge-colors"
 
 interface OrderPayment {
   id: string
@@ -282,12 +283,27 @@ export default function PaymentValidationPage() {
   })
 
   const getEventTypeBadge = (label: string) => {
+    const colors = getBadgeColors("event", label)
     if (label.toLowerCase().includes("symposium")) {
-      return <Badge className="bg-purple-100 text-purple-700 border-purple-300">SYMPOSIUM</Badge>
+      return (
+        <Badge
+          className={`${BADGE_COLORS.SYMPOSIUM.bg} ${BADGE_COLORS.SYMPOSIUM.text} ${BADGE_COLORS.SYMPOSIUM.border}`}
+        >
+          {BADGE_COLORS.SYMPOSIUM.label}
+        </Badge>
+      )
     } else if (label.toLowerCase().startsWith("ws ")) {
-      return <Badge className="bg-blue-100 text-blue-700 border-blue-300">WORKSHOP</Badge>
+      return (
+        <Badge className={`${BADGE_COLORS.WORKSHOP.bg} ${BADGE_COLORS.WORKSHOP.text} ${BADGE_COLORS.WORKSHOP.border}`}>
+          {BADGE_COLORS.WORKSHOP.label}
+        </Badge>
+      )
     } else {
-      return <Badge className="bg-teal-100 text-teal-700 border-teal-300">CPD COURSE</Badge>
+      return (
+        <Badge className={`${BADGE_COLORS.CPD.bg} ${BADGE_COLORS.CPD.text} ${BADGE_COLORS.CPD.border}`}>
+          {BADGE_COLORS.CPD.label}
+        </Badge>
+      )
     }
   }
 
@@ -343,7 +359,11 @@ export default function PaymentValidationPage() {
                       </>
                     ) : (
                       <>
-                        <Badge variant="outline">HOTEL</Badge>
+                        <Badge
+                          className={`${BADGE_COLORS.HOTEL.bg} ${BADGE_COLORS.HOTEL.text} ${BADGE_COLORS.HOTEL.border}`}
+                        >
+                          {BADGE_COLORS.HOTEL.label}
+                        </Badge>
                         <span className="break-words">
                           {item.hotel_room_type} ({item.nights} nights)
                         </span>

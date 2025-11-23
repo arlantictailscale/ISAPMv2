@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { CancelOrderButton } from "@/components/cancel-order-button"
+import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
 
 export default async function MyPurchasesPage() {
   const supabase = await createClient()
@@ -34,6 +35,7 @@ export default async function MyPurchasesPage() {
       )
     `)
     .eq("user_id", user.id)
+    .neq("status", "cancelled") // Exclude cancelled orders at database level
     .order("created_at", { ascending: false })
 
   if (error) {
@@ -41,11 +43,16 @@ export default async function MyPurchasesPage() {
   }
 
   if (orders) {
+    console.log("[v0] Total orders loaded:", orders.length)
     orders.forEach((order) => {
-      console.log("[v0] Order ID:", order.id.slice(0, 8))
-      console.log("[v0] Order payments array:", order.order_payments)
-      console.log("[v0] First payment:", order.order_payments?.[0])
-      console.log("[v0] Payment status:", order.order_payments?.[0]?.payment_status)
+      console.log(
+        "[v0] Order:",
+        order.id.slice(0, 8),
+        "Status:",
+        order.status,
+        "Payments:",
+        order.order_payments?.length || 0,
+      )
     })
   }
 
@@ -62,21 +69,6 @@ export default async function MyPurchasesPage() {
     }
 
     return "CPD COURSE"
-  }
-
-  const getItemTypeBadgeColor = (itemType: string): string => {
-    switch (itemType) {
-      case "WORKSHOP":
-        return "bg-cyan-500 text-white"
-      case "SYMPOSIUM":
-        return "bg-purple-500 text-white"
-      case "HOTEL":
-        return "bg-orange-500 text-white"
-      case "CPD COURSE":
-        return "bg-blue-500 text-white"
-      default:
-        return "bg-primary text-primary-foreground"
-    }
   }
 
   const getPaymentStatusBadge = (order: any) => {
@@ -186,10 +178,6 @@ export default async function MyPurchasesPage() {
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => {
-                  if (order.status === "cancelled") {
-                    return null
-                  }
-
                   const totalItems = order.order_items?.length || 0
                   const hasHotelItems = order.order_items?.some((item: any) => item.item_type === "hotel")
                   const hasEventItems = order.order_items?.some((item: any) => item.item_type === "event")
@@ -346,9 +334,11 @@ export default async function MyPurchasesPage() {
                                     {item.item_type === "event" && (
                                       <>
                                         <div
-                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${getItemTypeBadgeColor(getEventType(item.event_id || "", item.event_label || item.item_name))}`}
+                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${
+                                            getBadgeColors("event", item.event_label, item.event_id).solid
+                                          }`}
                                         >
-                                          {getEventType(item.event_id || "", item.event_label || item.item_name)}
+                                          {getCategoryLabel("event", item.event_label, item.event_id)}
                                         </div>
                                         <p className="font-medium">{item.event_label || item.item_name}</p>
                                         <p className="text-xs text-muted-foreground">
@@ -359,9 +349,11 @@ export default async function MyPurchasesPage() {
                                     {item.item_type === "hotel" && (
                                       <>
                                         <div
-                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${getItemTypeBadgeColor("HOTEL")}`}
+                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${
+                                            getBadgeColors("hotel").solid
+                                          }`}
                                         >
-                                          HOTEL
+                                          {getBadgeColors("hotel").label}
                                         </div>
                                         <p className="font-medium">{item.hotel_room_type || item.item_name}</p>
                                         <p className="text-xs text-muted-foreground">

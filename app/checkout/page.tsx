@@ -6,6 +6,7 @@ import { calculateCartTotal, formatCurrency } from "@/lib/cart/utils"
 import { CheckoutForm } from "./checkout-form"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
+import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
 
 export default async function CheckoutPage() {
   const supabase = await createClient()
@@ -91,14 +92,22 @@ export default async function CheckoutPage() {
                     <div key={item.id} className="text-sm">
                       {item.item_type === "event" && (
                         <>
-                          <div className="text-xs font-semibold text-primary mb-0.5">CPD COURSE</div>
+                          <div
+                            className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${getBadgeColors("event", item.event_label, item.event_id).solid}`}
+                          >
+                            {getCategoryLabel("event", item.event_label, item.event_id)}
+                          </div>
                           <div className="font-medium">{item.event_label}</div>
                           <div className="text-xs text-muted-foreground">{item.participant_type_label}</div>
                         </>
                       )}
                       {item.item_type === "hotel" && (
                         <>
-                          <div className="text-xs font-semibold text-primary mb-0.5">HOTEL</div>
+                          <div
+                            className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${getBadgeColors("hotel").solid}`}
+                          >
+                            {getBadgeColors("hotel").label}
+                          </div>
                           <div className="font-medium">{item.hotel_room_type}</div>
                           <div className="text-xs text-muted-foreground">
                             {item.nights} night{item.nights !== 1 ? "s" : ""}

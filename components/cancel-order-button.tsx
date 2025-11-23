@@ -27,16 +27,24 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
   const router = useRouter()
 
   const handleCancel = async () => {
+    console.log("[v0] Starting order cancellation for:", orderId)
     setIsLoading(true)
 
     try {
       const result = await cancelOrder(orderId)
+      console.log("[v0] Cancel order result:", result)
 
       if (result.success) {
-        toast.success("Order cancelled successfully")
+        console.log("[v0] Order cancelled successfully, closing dialog and refreshing")
         setOpen(false)
-        router.refresh()
+        toast.success("Order cancelled successfully")
+
+        setTimeout(() => {
+          console.log("[v0] Refreshing page to update order list")
+          router.refresh()
+        }, 100)
       } else {
+        console.error("[v0] Failed to cancel order:", result.error)
         toast.error(result.error || "Failed to cancel order")
       }
     } catch (error) {
@@ -71,7 +79,10 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isLoading}>Keep Order</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleCancel}
+              onClick={(e) => {
+                e.preventDefault()
+                handleCancel()
+              }}
               disabled={isLoading}
               className="bg-destructive hover:bg-destructive/90"
             >

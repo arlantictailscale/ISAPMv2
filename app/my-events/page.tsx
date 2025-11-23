@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin, CheckCircle, Clock, Ticket, Users, Loader2, Info } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
+import { getBadgeColors } from "@/lib/badge-colors"
 
 interface OrderItem {
   id: string
@@ -285,8 +286,10 @@ export default function MyEventsPage() {
                                 className="border rounded-lg p-5 bg-gradient-to-br from-background to-muted/30"
                               >
                                 <div className="flex items-start justify-between mb-4">
-                                  <Badge className="text-xs font-semibold" variant="outline">
-                                    {eventInfo.type}
+                                  <Badge
+                                    className={`text-xs font-semibold ${getBadgeColors("event", item.event_label, item.event_id).bg} ${getBadgeColors("event", item.event_label, item.event_id).text}`}
+                                  >
+                                    {eventInfo.type.toUpperCase()}
                                   </Badge>
                                   <span className="text-lg font-bold text-primary">
                                     {item.currency} {item.unit_price.toLocaleString("id-ID")}

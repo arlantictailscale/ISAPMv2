@@ -329,7 +329,7 @@ export async function GET(request: NextRequest) {
       "Institution",
       "Authors",
       "Category",
-      "Topic",
+      "Topic/Keywords",
       "Submission Status",
       "Submission Date",
       "Updated Date",
@@ -350,7 +350,7 @@ export async function GET(request: NextRequest) {
         poster.submission_status || "Pending",
         poster.created_at ? new Date(poster.created_at).toLocaleDateString() : "",
         poster.updated_at ? new Date(poster.updated_at).toLocaleDateString() : "",
-        poster.abstract_url || "",
+        poster.content || "", // Use content field for abstract URL
         poster.file_url || "",
       ]
     })

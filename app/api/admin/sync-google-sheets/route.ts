@@ -63,6 +63,16 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[v0] Found poster submissions:", postersData?.length || 0)
+    if (postersData && postersData.length > 0) {
+      console.log("[v0] First poster sample:", {
+        id: postersData[0].id,
+        title: postersData[0].title,
+        hasProfile: !!postersData[0].profiles,
+        profileEmail: postersData[0].profiles?.email,
+      })
+    } else {
+      console.log("[v0] No poster submissions found in database")
+    }
 
     const { data: paymentsData, error: paymentsError } = await supabaseAdmin
       .from("order_payments")
@@ -342,7 +352,7 @@ export async function POST(request: NextRequest) {
       "Institution",
       "Authors",
       "Category",
-      "Topic",
+      "Topic/Keywords",
       "Submission Status",
       "Submission Date",
       "Updated Date",
@@ -356,19 +366,21 @@ export async function POST(request: NextRequest) {
         poster.title || "",
         profile.full_name || "",
         poster.email || profile.email || "",
-        profile.institution || "",
+        profile.institution || "", // Get institution from profile
         poster.authors || "",
         poster.category || "",
-        poster.keywords || "",
+        poster.keywords || "", // keywords field contains the topic
         poster.submission_status || "Pending",
         poster.created_at ? new Date(poster.created_at).toLocaleDateString() : "",
         poster.updated_at ? new Date(poster.updated_at).toLocaleDateString() : "",
-        poster.abstract_url || "",
-        poster.file_url || "",
+        poster.content || "", // content field contains abstract PDF URL
+        poster.file_url || "", // file_url contains poster file URL
       ]
     })
 
     const posterValues = [posterHeaders, ...posterRows]
+
+    console.log("[v0] Writing poster data to sheet. Rows:", posterRows.length)
 
     await sheets.spreadsheets.values.update({
       spreadsheetId,

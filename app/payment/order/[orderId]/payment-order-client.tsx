@@ -50,7 +50,10 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
 
   const calculateTotal = () => {
     if (!order.order_items) return 0
-    return order.order_items.reduce((sum: number, item: any) => sum + (item.unit_price || 0), 0)
+    return order.order_items.reduce((sum: number, item: any) => {
+      const nights = item.item_type === "hotel" && item.nights ? item.nights : 1
+      return sum + (item.unit_price || 0) * nights
+    }, 0)
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,9 +230,20 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-cyan-700">
-                            IDR {(item.unit_price || 0).toLocaleString("id-ID")}
-                          </p>
+                          {item.item_type === "hotel" && item.nights > 1 ? (
+                            <>
+                              <p className="font-semibold text-cyan-700">
+                                IDR {((item.unit_price || 0) * item.nights).toLocaleString("id-ID")}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                IDR {(item.unit_price || 0).toLocaleString("id-ID")} × {item.nights} nights
+                              </p>
+                            </>
+                          ) : (
+                            <p className="font-semibold text-cyan-700">
+                              IDR {(item.unit_price || 0).toLocaleString("id-ID")}
+                            </p>
+                          )}
                           {item.quantity > 1 && <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>}
                         </div>
                       </div>
@@ -372,9 +386,20 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-cyan-700">
-                          IDR {(item.unit_price || 0).toLocaleString("id-ID")}
-                        </p>
+                        {item.item_type === "hotel" && item.nights > 1 ? (
+                          <>
+                            <p className="font-semibold text-cyan-700">
+                              IDR {((item.unit_price || 0) * item.nights).toLocaleString("id-ID")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              IDR {(item.unit_price || 0).toLocaleString("id-ID")} × {item.nights} nights
+                            </p>
+                          </>
+                        ) : (
+                          <p className="font-semibold text-cyan-700">
+                            IDR {(item.unit_price || 0).toLocaleString("id-ID")}
+                          </p>
+                        )}
                         {item.quantity > 1 && <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>}
                       </div>
                     </div>

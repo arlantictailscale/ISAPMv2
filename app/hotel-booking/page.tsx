@@ -27,8 +27,8 @@ export default function HotelBookingPage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
 
-  const [checkInDate, setCheckInDate] = useState("2026-04-16")
-  const [checkOutDate, setCheckOutDate] = useState("2026-04-18")
+  const [checkInDate, setCheckInDate] = useState("2026-04-15")
+  const [checkOutDate, setCheckOutDate] = useState("2026-04-19")
   const [roomType, setRoomType] = useState("")
   const [guestName, setGuestName] = useState("")
   const [guestEmail, setGuestEmail] = useState("")

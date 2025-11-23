@@ -105,21 +105,26 @@ export default function FlipBookSection({ registeredCount }: FlipBookSectionProp
               Don't miss out on the 8th National Meeting!
             </p>
 
-            <div className="flex flex-col md:flex-row items-center justify-center gap-6 w-full">
-              <div className="flex items-center gap-3 bg-white p-4 rounded-xl shadow-md border-2 border-primary/20 min-w-[200px]">
-                <div className="bg-primary/10 p-3 rounded-full">
+            <div className="flex flex-col md:flex-row items-stretch justify-center gap-4 w-full max-w-md">
+              {/* Registered Accounts Section */}
+              <div className="flex items-center justify-center gap-3 bg-white px-6 py-4 rounded-xl shadow-md border-2 border-primary/30 flex-1 min-h-[72px]">
+                <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
                   <Users className="w-6 h-6 text-primary" />
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary tabular-nums leading-none">
+                <div className="flex flex-col justify-center">
+                  <div className="text-2xl md:text-3xl font-bold text-primary tabular-nums leading-tight">
                     {registeredCount.toLocaleString()}
                   </div>
-                  <div className="text-xs font-medium text-muted-foreground">Registered Accounts</div>
+                  <div className="text-xs font-medium text-muted-foreground leading-tight">Registered Accounts</div>
                 </div>
               </div>
 
-              <Link href="/pricing">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto font-bold animate-pulse">
+              {/* Register Now Button */}
+              <Link href="/pricing" className="flex-1">
+                <Button
+                  size="lg"
+                  className="w-full h-full min-h-[72px] text-lg md:text-xl px-6 py-4 font-bold animate-pulse rounded-xl shadow-md"
+                >
                   Register Now
                 </Button>
               </Link>

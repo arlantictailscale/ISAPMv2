@@ -368,8 +368,7 @@ export default function PricingPage() {
           <div className="max-w-6xl mx-auto">
             <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Register for ISAPM 2026</h1>
             <p className="text-lg text-muted-foreground">
-              Choose your registration package and secure your spot at ISAPM National Meeting 2026. Select from CPD
-              courses, workshops, and symposium options.
+              Choose your registration package and secure your spot at ISAPM 8th National Meeting 2026. Select from CPD courses, workshops, and symposium options.
             </p>
 
             {isEarlyBirdPeriod && (

@@ -24,7 +24,7 @@ export default function WelcomeSection() {
           {/* Right Side - Welcome Message */}
           <div className="space-y-6">
             <div>
-              <h2 className="text-3xl md:text-5xl font-light text-slate-700 tracking-wide">WELCOME MESSAGE</h2>
+              <h2 className="text-3xl md:text-5xl font-light text-slate-700 tracking-wide mt-0 pt-10">WELCOME MESSAGE</h2>
               <h3 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-wide">FROM ORGANIZING</h3>
               <h3 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-wide">COMMITTEE CHAIR</h3>
               <div className="w-full h-px bg-slate-800 mt-4"></div>

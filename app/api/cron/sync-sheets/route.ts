@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       .from("abstracts")
       .select(`
         *,
-        profiles:user_id (
+        profiles!abstracts_user_id_fkey (
           full_name,
           email,
           institution,
@@ -55,10 +55,10 @@ export async function GET(request: NextRequest) {
       .from("order_payments")
       .select(`
         *,
-        orders (
+        orders!order_payments_order_id_fkey (
           *,
           order_items (*),
-          profiles:user_id (
+          profiles!orders_user_id_fkey (
             title_degree,
             full_name,
             satu_sehat_name,

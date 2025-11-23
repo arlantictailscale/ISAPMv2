@@ -588,7 +588,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                       <label htmlFor="payment-proof" className="cursor-pointer">
                         <Upload className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
                         <p className="font-medium mb-1">Click to upload payment proof</p>
-                        <p className="text-sm text-muted-foreground">.jpg only, maxes 1MB</p>
+                        <p className="text-sm text-muted-foreground">.jpg only, max 1MB</p>
                       </label>
                     </div>
                   ) : (
@@ -606,7 +606,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                           className="w-full h-48 object-contain rounded"
                         />
                       )}
-                      <p className="text-sm text-center mt-2 text-muted-foreground">{selectedFile.name}</p>
+                      <p className="text-sm text-center mt-2 text-muted-foreground">
+                        {selectedFile?.name || "File selected"}
+                      </p>
                     </div>
                   )}
                 </div>

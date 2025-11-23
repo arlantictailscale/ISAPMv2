@@ -87,6 +87,24 @@ export async function GET(request: NextRequest) {
 
     console.log("[v0] Found verified payments:", paymentsData?.length || 0)
 
+    const { data: allPaymentsData, error: allPaymentsError } = await supabaseAdmin
+      .from("order_payments")
+      .select(`
+        *,
+        orders!order_payments_order_id_fkey (
+          *,
+          order_items (*)
+        )
+      `)
+      .not("payment_proof_url", "is", null)
+      .order("created_at", { ascending: false })
+
+    if (allPaymentsError) {
+      console.error("[v0] Error fetching all payments:", allPaymentsError)
+    }
+
+    console.log("[v0] Found payment proofs:", allPaymentsData?.length || 0)
+
     // Fetch all profiles for the users in the orders
     const userIds = paymentsData?.map((p) => p.orders?.user_id).filter(Boolean) as string[]
 
@@ -101,6 +119,18 @@ export async function GET(request: NextRequest) {
 
     // Create a map of user_id to profile for quick lookup
     const profilesMap = new Map(profilesData?.map((p) => [p.id, p]) || [])
+
+    const paymentUserIds = allPaymentsData?.map((p) => p.user_id).filter(Boolean) as string[]
+    const { data: paymentProfilesData, error: paymentProfilesError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .in("id", paymentUserIds)
+
+    if (paymentProfilesError) {
+      console.error("[v0] Error fetching payment profiles:", paymentProfilesError)
+    }
+
+    const paymentProfilesMap = new Map(paymentProfilesData?.map((p) => [p.id, p]) || [])
 
     // Process Event Attendees
     const grouped: Record<string, any[]> = {}
@@ -233,6 +263,15 @@ export async function GET(request: NextRequest) {
       addSheet: {
         properties: {
           sheetId: EVENT_OPTIONS.length + 2,
+          title: "Payment Proofs",
+        },
+      },
+    })
+
+    updateRequests.push({
+      addSheet: {
+        properties: {
+          sheetId: EVENT_OPTIONS.length + 3,
           title: "E-Poster Submissions",
         },
       },
@@ -253,19 +292,53 @@ export async function GET(request: NextRequest) {
       "Validated Event Purchased",
       "Participant Type",
       "Verified Date",
+      "Payment Proof Submitted",
+      "Payment Proof URL",
+      "Payment Amount",
+      "Payment Date",
+      "Payment Proof ID",
+      "Payment File Type",
     ]
 
-    const comprehensiveRows = comprehensiveAttendees.map((attendee) => [
-      attendee.title_degree ? `${attendee.title_degree} ${attendee.full_name || ""}`.trim() : attendee.full_name || "",
-      attendee.satu_sehat_name || "",
-      attendee.satu_sehat_email || attendee.email || "",
-      attendee.nik || "",
-      attendee.institution || "",
-      attendee.phone || "",
-      attendee.event_label || "",
-      attendee.participant_type_label || "",
-      attendee.verified_at ? new Date(attendee.verified_at).toLocaleDateString() : "",
-    ])
+    const paymentProofMap = new Map()
+    allPaymentsData?.forEach((payment) => {
+      if (payment.payment_proof_url && payment.user_id) {
+        // Store the most recent payment proof for each user
+        if (!paymentProofMap.has(payment.user_id)) {
+          paymentProofMap.set(payment.user_id, {
+            payment_proof_url: payment.payment_proof_url,
+            amount: payment.amount,
+            created_at: payment.created_at,
+            transaction_reference: payment.transaction_reference,
+            file_type: payment.payment_proof_url?.split(".").pop()?.toUpperCase() || "Unknown",
+          })
+        }
+      }
+    })
+
+    const comprehensiveRows = comprehensiveAttendees.map((attendee) => {
+      const paymentProof = paymentProofMap.get(attendee.user_id)
+
+      return [
+        attendee.title_degree
+          ? `${attendee.title_degree} ${attendee.full_name || ""}`.trim()
+          : attendee.full_name || "",
+        attendee.satu_sehat_name || "",
+        attendee.satu_sehat_email || attendee.email || "",
+        attendee.nik || "",
+        attendee.institution || "",
+        attendee.phone || "",
+        attendee.event_label || "",
+        attendee.participant_type_label || "",
+        attendee.verified_at ? new Date(attendee.verified_at).toLocaleDateString() : "",
+        paymentProof ? "Yes" : "No",
+        paymentProof?.payment_proof_url || "",
+        paymentProof ? `Rp ${paymentProof.amount?.toLocaleString("id-ID")}` : "",
+        paymentProof?.created_at ? new Date(paymentProof.created_at).toLocaleDateString() : "",
+        paymentProof?.transaction_reference || "",
+        paymentProof?.file_type || "",
+      ]
+    })
 
     const comprehensiveValues = [comprehensiveHeaders, ...comprehensiveRows]
 
@@ -340,6 +413,75 @@ export async function GET(request: NextRequest) {
       requestBody: { values: hotelValues },
     })
 
+    const paymentProofHeaders = [
+      "Unique ID",
+      "Submitter Name",
+      "Email",
+      "Phone",
+      "Institution",
+      "Order ID",
+      "Amount Paid",
+      "Currency",
+      "Payment Method",
+      "Bank Name",
+      "Account Name",
+      "Payment Status",
+      "Payment Proof URL",
+      "File Type",
+      "Submission Date",
+      "Verification Date",
+      "Verified By",
+      "Notes",
+    ]
+
+    const paymentProofRows = (allPaymentsData || []).map((payment) => {
+      const profile = paymentProfilesMap.get(payment.user_id) || {}
+      const order = payment.orders
+
+      let fileType = "Unknown"
+      if (payment.payment_proof_url) {
+        if (payment.payment_proof_url.toLowerCase().includes(".pdf")) {
+          fileType = "PDF"
+        } else if (payment.payment_proof_url.toLowerCase().match(/\.(jpg|jpeg)$/)) {
+          fileType = "JPG/JPEG"
+        } else if (payment.payment_proof_url.toLowerCase().includes(".png")) {
+          fileType = "PNG"
+        }
+      }
+
+      return [
+        payment.transaction_reference || payment.id,
+        profile.full_name || order?.full_name || "",
+        profile.email || order?.email || "",
+        profile.phone || order?.phone || "",
+        profile.institution || order?.institution || "",
+        payment.order_id || "",
+        payment.amount || 0,
+        payment.currency || "IDR",
+        payment.payment_method || "",
+        payment.bank_name || "",
+        payment.account_name || "",
+        payment.payment_status || "pending",
+        payment.payment_proof_url || "",
+        fileType,
+        payment.created_at ? new Date(payment.created_at).toLocaleString() : "",
+        payment.verified_at ? new Date(payment.verified_at).toLocaleString() : "",
+        payment.verified_by || "",
+        payment.notes || "",
+      ]
+    })
+
+    const paymentProofValues = [paymentProofHeaders, ...paymentProofRows]
+
+    console.log("[v0] Writing payment proof data to sheet. Rows:", paymentProofRows.length)
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: "'Payment Proofs'!A1",
+      valueInputOption: "RAW",
+      requestBody: { values: paymentProofValues },
+    })
+
     const posterHeaders = [
       "Poster Title",
       "Presenter Name",
@@ -389,6 +531,7 @@ export async function GET(request: NextRequest) {
       totalAttendees: comprehensiveAttendees.length,
       hotelBookings: hotelList.length,
       posterSubmissions: postersData?.length || 0,
+      paymentProofs: allPaymentsData?.length || 0,
       syncedAt: new Date().toISOString(),
     }
 

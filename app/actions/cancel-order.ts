@@ -45,50 +45,58 @@ export async function cancelOrder(orderId: string) {
     return { success: false, error: "Cannot cancel order with submitted payment" }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://wilienulethgfxdiqghw.supabase.co"
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("[v0] Missing Supabase credentials:", {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseServiceKey,
-    })
-    return { success: false, error: "Configuration error" }
-  }
-
-  const serviceClient = createServiceClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
+  console.log("[v0] Supabase credentials check:", {
+    hasUrl: !!supabaseUrl,
+    hasKey: !!supabaseServiceKey,
+    url: supabaseUrl,
   })
 
-  console.log("[v0] Updating order status to cancelled")
-  const { data: updateData, error: updateError } = await serviceClient
-    .from("orders")
-    .update({
-      status: "cancelled",
-      updated_at: new Date().toISOString(),
+  if (!supabaseServiceKey) {
+    console.error("[v0] Missing SUPABASE_SERVICE_ROLE_KEY")
+    return { success: false, error: "Server configuration error: Missing service key" }
+  }
+
+  try {
+    const serviceClient = createServiceClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
     })
-    .eq("id", orderId)
-    .eq("user_id", user.id)
-    .select()
 
-  console.log("[v0] Update result:", { data: updateData, error: updateError })
+    console.log("[v0] Updating order status to cancelled")
+    const { data: updateData, error: updateError } = await serviceClient
+      .from("orders")
+      .update({
+        status: "cancelled",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", orderId)
+      .eq("user_id", user.id)
+      .select()
 
-  if (updateError) {
-    console.error("[v0] Error cancelling order:", updateError)
-    return { success: false, error: "Failed to cancel order" }
+    console.log("[v0] Update result:", { data: updateData, error: updateError })
+
+    if (updateError) {
+      console.error("[v0] Error cancelling order:", updateError)
+      return { success: false, error: `Failed to cancel order: ${updateError.message}` }
+    }
+
+    if (!updateData || updateData.length === 0) {
+      console.error("[v0] No rows updated - order may not exist or user mismatch")
+      return { success: false, error: "Failed to update order - order not found or permission denied" }
+    }
+
+    console.log("[v0] Order cancelled successfully, revalidating path")
+    // Revalidate the my-purchases page
+    revalidatePath("/my-purchases")
+
+    return { success: true }
+  } catch (error: any) {
+    console.error("[v0] Exception while cancelling order:", error)
+    return { success: false, error: `Failed to cancel order: ${error.message || "Unknown error"}` }
   }
-
-  if (!updateData || updateData.length === 0) {
-    console.error("[v0] No rows updated - order may not exist or user mismatch")
-    return { success: false, error: "Failed to update order" }
-  }
-
-  console.log("[v0] Order cancelled successfully, revalidating path")
-  // Revalidate the my-purchases page
-  revalidatePath("/my-purchases")
-
-  return { success: true }
 }

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Navigation from "@/components/navigation"
@@ -12,23 +11,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, ArrowLeft, X } from "lucide-react"
+import { FileText, Upload, X, AlertCircle, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
 
 interface PaymentOrderClientProps {
-  order: any
-  userId: string
-  payment: any
+  initialOrder: any
+  initialPayment: any
 }
 
-export default function PaymentOrderClient({ order, userId, payment }: PaymentOrderClientProps) {
+export default function PaymentOrderClient({ initialOrder, initialPayment }: PaymentOrderClientProps) {
   const router = useRouter()
   const [isUploading, setIsUploading] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showResubmitForm, setShowResubmitForm] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer")
   const [bankName, setBankName] = useState("")
@@ -37,8 +36,8 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
   const [additionalNotes, setAdditionalNotes] = useState("")
 
   const calculateTotal = () => {
-    if (!order.order_items) return 0
-    return order.order_items.reduce((sum: number, item: any) => {
+    if (!initialOrder.order_items) return 0
+    return initialOrder.order_items.reduce((sum: number, item: any) => {
       const nights = item.item_type === "hotel" && item.nights ? item.nights : 1
       return sum + (item.unit_price || 0) * nights
     }, 0)
@@ -67,10 +66,13 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
 
   const handleRemoveFile = () => {
     setSelectedFile(null)
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-      setPreviewUrl(null)
-    }
+    setPreviewUrl(null)
+  }
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedField(field)
+    setTimeout(() => setCopiedField(null), 2000)
   }
 
   const handleSubmit = async () => {
@@ -90,13 +92,13 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
     try {
       const formData = new FormData()
       formData.append("file", selectedFile)
-      formData.append("orderId", order.id)
+      formData.append("orderId", initialOrder.id)
       formData.append("paymentMethod", paymentMethod)
       formData.append("bankName", bankName)
       formData.append("accountName", accountName)
       formData.append("transactionRef", transactionRef)
       formData.append("additionalNotes", additionalNotes)
-      formData.append("userId", userId) // Added userId to formData
+      formData.append("userId", "userId") // Added userId to formData
 
       const response = await fetch("/api/upload-payment-proof", {
         method: "POST",
@@ -126,7 +128,7 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
     }
   }
 
-  const hasSubmittedPayment = payment && !showResubmitForm
+  const hasSubmittedPayment = initialPayment && !showResubmitForm
 
   if (hasSubmittedPayment) {
     return (
@@ -139,15 +141,15 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 href="/my-purchases"
                 className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
               >
-                <ArrowLeft className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 Back to My Purchases
               </Link>
 
               <div
                 className={`mb-6 p-4 rounded-lg ${
-                  payment.payment_status === "verified"
+                  initialPayment.payment_status === "verified"
                     ? "bg-green-50 border border-green-200"
-                    : payment.payment_status === "rejected"
+                    : initialPayment.payment_status === "rejected"
                       ? "bg-red-50 border border-red-200"
                       : "bg-amber-50 border border-amber-200"
                 }`}
@@ -155,26 +157,26 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-3 h-3 rounded-full ${
-                      payment.payment_status === "verified"
+                      initialPayment.payment_status === "verified"
                         ? "bg-green-500"
-                        : payment.payment_status === "rejected"
+                        : initialPayment.payment_status === "rejected"
                           ? "bg-red-500"
                           : "bg-amber-500"
                     }`}
                   />
                   <div>
                     <p className="font-semibold">
-                      {payment.payment_status === "verified"
+                      {initialPayment.payment_status === "verified"
                         ? "Payment Approved"
-                        : payment.payment_status === "rejected"
+                        : initialPayment.payment_status === "rejected"
                           ? "Payment Rejected"
                           : "Waiting Verification Payment"}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {payment.payment_status === "verified"
+                      {initialPayment.payment_status === "verified"
                         ? "Your payment has been verified and approved."
-                        : payment.payment_status === "rejected"
-                          ? `Your payment was rejected. Reason: ${payment.rejection_reason || "No reason provided"}`
+                        : initialPayment.payment_status === "rejected"
+                          ? `Your payment was rejected. Reason: ${initialPayment.rejection_reason || "No reason provided"}`
                           : "Your payment proof has been submitted and is awaiting admin verification."}
                     </p>
                   </div>
@@ -184,11 +186,11 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
               <Card className="mb-6">
                 <CardHeader>
                   <CardTitle>Order Details</CardTitle>
-                  <CardDescription>Order #{order.id.slice(0, 8)}</CardDescription>
+                  <CardDescription>Order #{initialOrder.id.slice(0, 8)}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    {order.order_items?.map((item: any, index: number) => (
+                    {initialOrder.order_items?.map((item: any, index: number) => (
                       <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
@@ -249,36 +251,36 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {payment.payment_method && (
+                    {initialPayment.payment_method && (
                       <div>
                         <Label className="text-muted-foreground">Payment Method</Label>
-                        <p className="font-medium">{payment.payment_method}</p>
+                        <p className="font-medium">{initialPayment.payment_method}</p>
                       </div>
                     )}
-                    {payment.bank_name && (
+                    {initialPayment.bank_name && (
                       <div>
                         <Label className="text-muted-foreground">Bank Name</Label>
-                        <p className="font-medium">{payment.bank_name}</p>
+                        <p className="font-medium">{initialPayment.bank_name}</p>
                       </div>
                     )}
-                    {payment.account_name && (
+                    {initialPayment.account_name && (
                       <div>
                         <Label className="text-muted-foreground">Account Name</Label>
-                        <p className="font-medium">{payment.account_name}</p>
+                        <p className="font-medium">{initialPayment.account_name}</p>
                       </div>
                     )}
-                    {payment.transaction_reference && (
+                    {initialPayment.transaction_reference && (
                       <div>
                         <Label className="text-muted-foreground">Transaction Reference</Label>
-                        <p className="font-medium">{payment.transaction_reference}</p>
+                        <p className="font-medium">{initialPayment.transaction_reference}</p>
                       </div>
                     )}
                   </div>
 
-                  {payment.notes && (
+                  {initialPayment.notes && (
                     <div>
                       <Label className="text-muted-foreground">Additional Notes</Label>
-                      <p className="font-medium">{payment.notes}</p>
+                      <p className="font-medium">{initialPayment.notes}</p>
                     </div>
                   )}
 
@@ -287,7 +289,7 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                     <Label className="text-muted-foreground mb-2 block">Payment Proof</Label>
                     <div className="border rounded-lg p-4">
                       <img
-                        src={payment.payment_proof_url || "/placeholder.svg"}
+                        src={initialPayment.payment_proof_url || "/placeholder.svg"}
                         alt="Payment proof"
                         className="w-full h-auto max-h-96 object-contain rounded"
                       />
@@ -297,11 +299,11 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                   {/* Submission Date */}
                   <div>
                     <Label className="text-muted-foreground">Submitted On</Label>
-                    <p className="font-medium">{new Date(payment.created_at).toLocaleString("id-ID")}</p>
+                    <p className="font-medium">{new Date(initialPayment.created_at).toLocaleString("id-ID")}</p>
                   </div>
 
                   {/* Action Buttons */}
-                  {payment.payment_status === "rejected" && (
+                  {initialPayment.payment_status === "rejected" && (
                     <Button
                       onClick={() => setShowResubmitForm(true)}
                       className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
@@ -329,18 +331,18 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
               href="/my-purchases"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <Upload className="w-4 h-4" />
               Back to My Purchases
             </Link>
 
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle>Order Details</CardTitle>
-                <CardDescription>Order #{order.id.slice(0, 8)}</CardDescription>
+                <CardDescription>Order #{initialOrder.id.slice(0, 8)}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
-                  {order.order_items?.map((item: any, index: number) => (
+                  {initialOrder.order_items?.map((item: any, index: number) => (
                     <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
@@ -390,6 +392,95 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                 <div className="flex justify-between items-center pt-3 border-t">
                   <p className="font-semibold text-lg">Total Amount</p>
                   <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mb-6 border-cyan-200 bg-cyan-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-cyan-900">
+                  <FileText className="w-5 h-5" />
+                  Payment Instructions
+                </CardTitle>
+                <CardDescription>Please transfer the total amount to the following bank account</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Bank Name */}
+                <div className="bg-white rounded-lg p-4 border border-cyan-100">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Bank Name</Label>
+                      <p className="font-bold text-lg text-cyan-900">Bank Syariah Indonesia (BSI)</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard("Bank Syariah Indonesia", "bank")}
+                      className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
+                      aria-label="Copy bank name"
+                    >
+                      {copiedField === "bank" ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-cyan-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Account Number */}
+                <div className="bg-white rounded-lg p-4 border border-cyan-100">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Account Number</Label>
+                      <p className="font-bold text-2xl text-cyan-900 tracking-wider">7207681363</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard("7207681363", "account")}
+                      className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
+                      aria-label="Copy account number"
+                    >
+                      {copiedField === "account" ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-cyan-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Account Name */}
+                <div className="bg-white rounded-lg p-4 border border-cyan-100">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <Label className="text-xs text-muted-foreground mb-1 block">Account Name</Label>
+                      <p className="font-bold text-lg text-cyan-900">PT Tombo Farma Indonesia</p>
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard("PT Tombo Farma Indonesia", "name")}
+                      className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
+                      aria-label="Copy account name"
+                    >
+                      {copiedField === "name" ? (
+                        <Check className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <Copy className="w-4 h-4 text-cyan-600" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Important Notes */}
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                  <div className="flex gap-3">
+                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-2 text-sm">
+                      <p className="font-semibold text-amber-900">Important:</p>
+                      <ul className="list-disc list-inside space-y-1 text-amber-800">
+                        <li>Transfer the exact total amount shown above</li>
+                        <li>Save your payment receipt for verification</li>
+                        <li>Upload your payment proof after completing the transfer</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

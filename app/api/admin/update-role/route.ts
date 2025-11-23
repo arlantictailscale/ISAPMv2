@@ -4,6 +4,11 @@ import { type NextRequest, NextResponse } from "next/server"
 export async function POST(request: NextRequest) {
   try {
     console.log("[v0] Update role API called")
+    console.log("[v0] Environment check:", {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      hasServiceRole: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    })
 
     // Get the authorization header
     const authHeader = request.headers.get("authorization")
@@ -57,27 +62,51 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Update request:", { userId, newRole })
 
     if (!userId || !newRole) {
+      console.log("[v0] Missing parameters")
       return NextResponse.json({ error: "Missing userId or newRole" }, { status: 400 })
     }
 
     if (newRole !== "admin" && newRole !== "user") {
+      console.log("[v0] Invalid role provided:", newRole)
       return NextResponse.json({ error: 'Invalid role. Must be "admin" or "user"' }, { status: 400 })
     }
 
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       console.error("[v0] SUPABASE_SERVICE_ROLE_KEY is not set")
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 })
+      console.error(
+        "[v0] Available env vars:",
+        Object.keys(process.env).filter((k) => k.includes("SUPABASE")),
+      )
+      return NextResponse.json(
+        {
+          error: "Server configuration error",
+          details: "SUPABASE_SERVICE_ROLE_KEY environment variable is missing",
+        },
+        { status: 500 },
+      )
+    }
+
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      console.error("[v0] NEXT_PUBLIC_SUPABASE_URL is not set")
+      return NextResponse.json(
+        {
+          error: "Server configuration error",
+          details: "NEXT_PUBLIC_SUPABASE_URL environment variable is missing",
+        },
+        { status: 500 },
+      )
     }
 
     // Create admin client with service role key to bypass RLS
-    const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    console.log("[v0] Creating admin Supabase client")
+    const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     })
 
-    console.log("[v0] Attempting to update role in database")
+    console.log("[v0] Attempting to update role in database for user:", userId, "to role:", newRole)
 
     // Update the user's role
     const { data, error: updateError } = await supabaseAdmin
@@ -88,10 +117,12 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       console.error("[v0] Error updating role:", updateError)
+      console.error("[v0] Error code:", updateError.code)
+      console.error("[v0] Error hint:", updateError.hint)
       return NextResponse.json(
         {
           error: "Failed to update user role",
-          details: updateError.message,
+          details: `${updateError.message} (Code: ${updateError.code})`,
         },
         { status: 500 },
       )
@@ -102,9 +133,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `User role updated to ${newRole} successfully`,
+      data: data,
     })
   } catch (error) {
-    console.error("[v0] Error in update-role API:", error)
+    console.error("[v0] Unexpected error in update-role API:", error)
+    console.error("[v0] Error stack:", error instanceof Error ? error.stack : "No stack trace")
     return NextResponse.json(
       {
         error: "Internal server error",

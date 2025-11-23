@@ -1,14 +1,14 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ShieldCheck, User, UserCog, RefreshCw } from 'lucide-react'
+import { Loader2, ShieldCheck, User, UserCog, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import {
   Dialog,
@@ -18,14 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface UserProfile {
   id: string
@@ -69,11 +62,7 @@ export default function AdminUsersPage() {
         return
       }
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single()
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
 
       if (!profile || profile.role !== "admin") {
         toast.error("Unauthorized access")
@@ -92,23 +81,25 @@ export default function AdminUsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
       if (!session) {
         toast.error("Session expired. Please login again.")
-        router.push('/auth/login')
+        router.push("/auth/login")
         return
       }
 
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch("/api/admin/users", {
         headers: {
-          'Authorization': `Bearer ${session.access_token}`
-        }
+          Authorization: `Bearer ${session.access_token}`,
+        },
       })
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to fetch users')
+        throw new Error(errorData.error || "Failed to fetch users")
       }
 
       const data = await response.json()
@@ -132,38 +123,55 @@ export default function AdminUsersPage() {
     setIsProcessing(true)
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      
+      console.log("[v0] Starting role change for user:", selectedUser.id, "to", newRole)
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
       if (!session) {
         toast.error("Session expired. Please login again.")
-        router.push('/auth/login')
+        router.push("/auth/login")
         return
       }
 
-      const response = await fetch('/api/admin/update-role', {
-        method: 'POST',
+      console.log("[v0] Making API request to update-role")
+
+      const response = await fetch("/api/admin/update-role", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           userId: selectedUser.id,
-          newRole: newRole
-        })
+          newRole: newRole,
+        }),
       })
 
+      console.log("[v0] Response status:", response.status)
+
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to update role')
+        let errorMessage = "Failed to update role"
+        try {
+          const errorData = await response.json()
+          console.error("[v0] Error data:", errorData)
+          errorMessage = errorData.details || errorData.error || errorMessage
+        } catch (e) {
+          console.error("[v0] Could not parse error response:", e)
+          errorMessage = `Server error (${response.status}): ${response.statusText}`
+        }
+        throw new Error(errorMessage)
       }
 
       const result = await response.json()
+      console.log("[v0] Success result:", result)
       toast.success(result.message || `User role updated to ${newRole} successfully`)
       setShowRoleDialog(false)
       setSelectedUser(null)
       await fetchUsers()
     } catch (err) {
-      console.error("Error updating user role:", err)
+      console.error("[v0] Error updating user role:", err)
       toast.error(err instanceof Error ? err.message : "Failed to update user role")
     } finally {
       setIsProcessing(false)
@@ -259,20 +267,12 @@ export default function AdminUsersPage() {
                           <TableCell className="text-center">{user.posterCount}</TableCell>
                           <TableCell className="text-center">
                             {user.role === "admin" ? (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleRoleChange(user, "user")}
-                              >
+                              <Button size="sm" variant="outline" onClick={() => handleRoleChange(user, "user")}>
                                 <User className="w-3 h-3 mr-1" />
                                 Demote
                               </Button>
                             ) : (
-                              <Button
-                                size="sm"
-                                variant="default"
-                                onClick={() => handleRoleChange(user, "admin")}
-                              >
+                              <Button size="sm" variant="default" onClick={() => handleRoleChange(user, "admin")}>
                                 <ShieldCheck className="w-3 h-3 mr-1" />
                                 Promote
                               </Button>
@@ -294,15 +294,14 @@ export default function AdminUsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirm Role Change</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to change this user's role?
-            </DialogDescription>
+            <DialogDescription>Are you sure you want to change this user's role?</DialogDescription>
           </DialogHeader>
           {selectedUser && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <p className="text-sm">
-                  <span className="font-semibold">User:</span> {selectedUser.first_name} {selectedUser.last_name} ({selectedUser.email})
+                  <span className="font-semibold">User:</span> {selectedUser.first_name} {selectedUser.last_name} (
+                  {selectedUser.email})
                 </p>
                 <p className="text-sm">
                   <span className="font-semibold">Current Role:</span> {getRoleBadge(selectedUser.role)}
@@ -314,7 +313,8 @@ export default function AdminUsersPage() {
               {newRole === "admin" && (
                 <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <p className="text-sm text-yellow-800">
-                    ⚠️ <strong>Warning:</strong> Admins have full access to all payment validations, user management, and poster submissions.
+                    ⚠️ <strong>Warning:</strong> Admins have full access to all payment validations, user management, and
+                    poster submissions.
                   </p>
                 </div>
               )}

@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 
 export async function cancelOrder(orderId: string) {
@@ -44,8 +45,23 @@ export async function cancelOrder(orderId: string) {
     return { success: false, error: "Cannot cancel order with submitted payment" }
   }
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("[v0] Missing Supabase credentials")
+    return { success: false, error: "Configuration error" }
+  }
+
+  const serviceClient = createServiceClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
+
   console.log("[v0] Updating order status to cancelled")
-  const { data: updateData, error: updateError } = await supabase
+  const { data: updateData, error: updateError } = await serviceClient
     .from("orders")
     .update({
       status: "cancelled",

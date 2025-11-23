@@ -34,7 +34,7 @@ export default async function RoomAvailabilityPage() {
     .select("hotel_room_type, orders!inner(status)")
     .in("hotel_room_type", ["deluxe", "premier"])
     .not("hotel_room_type", "is", null)
-    .in("orders.status", ["paid", "confirmed"])
+    .neq("orders.status", "cancelled")
 
   const deluxeBooked = bookings?.filter((b) => b.hotel_room_type === "deluxe").length || 0
   const premierBooked = bookings?.filter((b) => b.hotel_room_type === "premier").length || 0

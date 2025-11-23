@@ -268,8 +268,11 @@ export default function ConfirmedAttendeesPage() {
               <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-50">
                 Confirmed Attendees & Bookings
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
                 View verified attendees for events and hotel reservations.
+                <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/20 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-400">
+                  Auto-syncs hourly
+                </span>
               </p>
             </div>
             <Button onClick={syncToGoogleSheets} disabled={isSyncing} size="lg" className="gap-2">
@@ -281,7 +284,7 @@ export default function ConfirmedAttendeesPage() {
               ) : (
                 <>
                   <RefreshCw className="w-4 h-4" />
-                  Sync to Google Sheets
+                  Sync Now
                 </>
               )}
             </Button>

@@ -18,6 +18,9 @@ export function CartItemCard({ item }: CartItemCardProps) {
   const [isRemoving, setIsRemoving] = useState(false)
   const router = useRouter()
 
+  const itemTotal =
+    item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
+
   const handleRemove = async () => {
     setIsRemoving(true)
     const result = await removeFromCart(item.id)
@@ -76,11 +79,12 @@ export function CartItemCard({ item }: CartItemCardProps) {
                 <p>
                   {item.nights} {item.nights === 1 ? "night" : "nights"}
                 </p>
+                <p className="text-xs">{formatCurrency(item.unit_price, item.currency)} per night</p>
               </div>
             )}
 
             {/* Price */}
-            <p className="text-lg font-bold text-primary">{formatCurrency(item.unit_price, item.currency)}</p>
+            <p className="text-lg font-bold text-primary">{formatCurrency(itemTotal, item.currency)}</p>
           </div>
 
           {/* Remove Button */}

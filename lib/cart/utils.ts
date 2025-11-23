@@ -5,7 +5,12 @@ import type { CartItem, CartSummary } from "./types"
  */
 export function calculateCartTotal(items: CartItem[]): CartSummary {
   const subtotal = items.reduce((sum, item) => {
-    return sum + (item.unit_price || 0)
+    // For hotel bookings, multiply unit price by number of nights
+    // For event registrations, use unit price as-is
+    const itemTotal =
+      item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
+
+    return sum + itemTotal
   }, 0)
 
   const currency = items.length > 0 ? items[0].currency : "IDR"

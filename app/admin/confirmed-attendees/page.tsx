@@ -271,7 +271,7 @@ export default function ConfirmedAttendeesPage() {
               <p className="text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
                 View verified attendees for events and hotel reservations.
                 <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/20 px-2.5 py-0.5 text-xs font-medium text-green-800 dark:text-green-400">
-                  Auto-syncs hourly
+                  Auto-syncs daily
                 </span>
               </p>
             </div>

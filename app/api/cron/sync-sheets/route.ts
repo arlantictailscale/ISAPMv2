@@ -31,6 +31,25 @@ export async function GET(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabaseAdmin = createSupabaseAdmin(supabaseUrl, supabaseServiceKey)
 
+    const { data: postersData, error: postersError } = await supabaseAdmin
+      .from("abstracts")
+      .select(`
+        *,
+        profiles:user_id (
+          full_name,
+          email,
+          institution,
+          phone
+        )
+      `)
+      .order("created_at", { ascending: false })
+
+    if (postersError) {
+      console.error("[v0] Error fetching posters:", postersError)
+    }
+
+    console.log("[v0] Found poster submissions:", postersData?.length || 0)
+
     // Fetch confirmed attendees data
     const { data: paymentsData, error: paymentsError } = await supabaseAdmin
       .from("order_payments")
@@ -186,6 +205,15 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    updateRequests.push({
+      addSheet: {
+        properties: {
+          sheetId: EVENT_OPTIONS.length + 2,
+          title: "E-Poster Submissions",
+        },
+      },
+    })
+
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId,
       requestBody: { requests: updateRequests },
@@ -287,10 +315,53 @@ export async function GET(request: NextRequest) {
       requestBody: { values: hotelValues },
     })
 
+    const posterHeaders = [
+      "Poster Title",
+      "Presenter Name",
+      "Contact Email",
+      "Institution",
+      "Authors",
+      "Category",
+      "Topic",
+      "Submission Status",
+      "Submission Date",
+      "Updated Date",
+      "Abstract File URL",
+      "Poster File URL",
+    ]
+
+    const posterRows = (postersData || []).map((poster) => {
+      const profile = poster.profiles || {}
+      return [
+        poster.title || "",
+        profile.full_name || "",
+        poster.email || profile.email || "",
+        profile.institution || "",
+        poster.authors || "",
+        poster.category || "",
+        poster.keywords || "",
+        poster.submission_status || "Pending",
+        poster.created_at ? new Date(poster.created_at).toLocaleDateString() : "",
+        poster.updated_at ? new Date(poster.updated_at).toLocaleDateString() : "",
+        poster.content || "",
+        poster.file_url || "",
+      ]
+    })
+
+    const posterValues = [posterHeaders, ...posterRows]
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: "'E-Poster Submissions'!A1",
+      valueInputOption: "RAW",
+      requestBody: { values: posterValues },
+    })
+
     const stats = {
       events: Object.keys(grouped).length,
       totalAttendees: comprehensiveAttendees.length,
       hotelBookings: hotelList.length,
+      posterSubmissions: postersData?.length || 0,
       syncedAt: new Date().toISOString(),
     }
 

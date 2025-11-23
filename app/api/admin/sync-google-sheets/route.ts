@@ -45,14 +45,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
-    // Fetch confirmed attendees data
     const { data: paymentsData, error: paymentsError } = await supabaseAdmin
       .from("order_payments")
       .select(`
         *,
         orders (
           *,
-          order_items (*)
+          order_items (*),
+          profiles:user_id (
+            title_degree,
+            full_name,
+            satu_sehat_name,
+            satu_sehat_email,
+            nik,
+            institution,
+            phone
+          )
         )
       `)
       .eq("payment_status", "verified")
@@ -63,6 +71,8 @@ export async function POST(request: NextRequest) {
     }
 
     console.log("[v0] Found verified payments:", paymentsData?.length || 0)
+
+    const comprehensiveAttendees: any[] = []
 
     // Process Event Attendees
     const grouped: Record<string, any[]> = {}
@@ -77,6 +87,8 @@ export async function POST(request: NextRequest) {
       const order = payment.orders
       if (!order || !order.order_items) return
 
+      const profile = order.profiles || {}
+
       order.order_items.forEach((item: any) => {
         if (item.item_type === "event") {
           const eventId = item.event_id
@@ -86,14 +98,23 @@ export async function POST(request: NextRequest) {
             grouped[matchedEventId] = []
           }
 
-          grouped[matchedEventId].push({
+          const attendeeData = {
             ...order,
+            ...profile,
             participant_type_label: item.participant_type_label,
+            event_label: item.event_label,
             verified_at: payment.verified_at,
-          })
+          }
+
+          grouped[matchedEventId].push(attendeeData)
+
+          if (!comprehensiveAttendees.find((a) => a.user_id === order.user_id && a.event_label === item.event_label)) {
+            comprehensiveAttendees.push(attendeeData)
+          }
         } else if (item.item_type === "hotel") {
           hotelList.push({
             ...order,
+            ...profile,
             order_items: [item],
             verified_at: payment.verified_at,
           })
@@ -121,14 +142,11 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Syncing to spreadsheet:", spreadsheetId)
 
     // Clear existing sheets and create new ones
-    const requests: any[] = []
-    let sheetId = 0
-
-    // First, get existing sheets to delete them
     const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId })
     const existingSheets = spreadsheet.data.sheets || []
 
     // Delete all sheets except the first one (we'll keep it to avoid errors)
+    const requests: any[] = []
     for (let i = 1; i < existingSheets.length; i++) {
       requests.push({
         deleteSheet: {
@@ -145,31 +163,26 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Now create new sheets for each event
     const updateRequests: any[] = []
 
-    // Update first sheet with CPD data
-    const firstEvent = EVENT_OPTIONS[0]
-    const firstEventData = grouped[firstEvent.id] || []
+    // Update first sheet to be Comprehensive Attendees
     updateRequests.push({
       updateSheetProperties: {
         properties: {
           sheetId: existingSheets[0].properties?.sheetId,
-          title: firstEvent.label.substring(0, 100),
+          title: "All Attendees - Comprehensive",
         },
         fields: "title",
       },
     })
 
-    // Create sheets for remaining events
-    for (let i = 1; i < EVENT_OPTIONS.length; i++) {
+    // Create sheets for each event
+    for (let i = 0; i < EVENT_OPTIONS.length; i++) {
       const event = EVENT_OPTIONS[i]
-      sheetId = i
-
       updateRequests.push({
         addSheet: {
           properties: {
-            sheetId: sheetId,
+            sheetId: i + 1,
             title: event.label.substring(0, 100),
           },
         },
@@ -180,7 +193,7 @@ export async function POST(request: NextRequest) {
     updateRequests.push({
       addSheet: {
         properties: {
-          sheetId: EVENT_OPTIONS.length,
+          sheetId: EVENT_OPTIONS.length + 1,
           title: "Hotel Bookings",
         },
       },
@@ -191,7 +204,40 @@ export async function POST(request: NextRequest) {
       requestBody: { requests: updateRequests },
     })
 
-    // Now populate data
+    const comprehensiveHeaders = [
+      "Full Name with Titles/Degrees",
+      "Name on Satu Sehat Account",
+      "Email Registered on Satu Sehat Account",
+      "National ID Number (NIK)",
+      "Institution/Organization",
+      "Mobile Phone Number",
+      "Validated Event Purchased",
+      "Participant Type",
+      "Verified Date",
+    ]
+
+    const comprehensiveRows = comprehensiveAttendees.map((attendee) => [
+      attendee.title_degree ? `${attendee.title_degree} ${attendee.full_name || ""}`.trim() : attendee.full_name || "",
+      attendee.satu_sehat_name || "",
+      attendee.satu_sehat_email || attendee.email || "",
+      attendee.nik || "",
+      attendee.institution || "",
+      attendee.phone || "",
+      attendee.event_label || "",
+      attendee.participant_type_label || "",
+      attendee.verified_at ? new Date(attendee.verified_at).toLocaleDateString() : "",
+    ])
+
+    const comprehensiveValues = [comprehensiveHeaders, ...comprehensiveRows]
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: "'All Attendees - Comprehensive'!A1",
+      valueInputOption: "RAW",
+      requestBody: { values: comprehensiveValues },
+    })
+
+    // Now populate data for individual event sheets
     for (const event of EVENT_OPTIONS) {
       const list = grouped[event.id] || []
       const sheetName = event.label.substring(0, 100)
@@ -217,11 +263,11 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Populate hotel bookings
     const hotelHeaders = [
-      "Guest Name",
+      "Full Name with Titles/Degrees",
       "Email",
       "Phone",
+      "Institution",
       "Room Type",
       "Check-in",
       "Check-out",
@@ -232,9 +278,10 @@ export async function POST(request: NextRequest) {
     const hotelRows = hotelList.map((booking) => {
       const item = booking.order_items[0]
       return [
-        booking.full_name || "",
+        booking.title_degree ? `${booking.title_degree} ${booking.full_name || ""}`.trim() : booking.full_name || "",
         booking.email || "",
         booking.phone || "",
+        booking.institution || "",
         item?.hotel_room_type || "",
         item?.check_in_date ? new Date(item.check_in_date).toLocaleDateString() : "",
         item?.check_out_date ? new Date(item.check_out_date).toLocaleDateString() : "",
@@ -260,7 +307,7 @@ export async function POST(request: NextRequest) {
       message: "Successfully synced to Google Sheets",
       stats: {
         events: Object.keys(grouped).length,
-        totalAttendees: Object.values(grouped).reduce((sum, list) => sum + list.length, 0),
+        totalAttendees: comprehensiveAttendees.length,
         hotelBookings: hotelList.length,
       },
     })

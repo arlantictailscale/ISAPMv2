@@ -329,8 +329,8 @@ export default function SubmitPosterPage() {
                   <li>Abstract must be in English</li>
                   <li>Add authors names</li>
                   <li>Specify your university/institution</li>
-                  <li>Select topic category</li>
-                  <li>Enter topic keywords</li>
+                  <li>Select submission type</li>
+                  <li>Select medical specialty topic</li>
                   <li>Upload abstract PDF file (required)</li>
                   <li>Upload poster PDF file (required)</li>
                 </ul>
@@ -426,21 +426,15 @@ export default function SubmitPosterPage() {
                       className="w-full max-w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
                     >
                       <option value="">Select a category</option>
-                      <option value="Emergencies (Kegawatdaruratan)">Emergencies (Kegawatdaruratan)</option>
-                      <option value="Pain Management (Manajemen Nyeri)">Pain Management (Manajemen Nyeri)</option>
-                      <option value="ICU Management (Manajemen ICU)">ICU Management (Manajemen ICU)</option>
-                      <option value="Anesthesia Management (Manajemen Anestesi)">
-                        Anesthesia Management (Manajemen Anestesi)
-                      </option>
+                      <option value="Case Report">Case Report</option>
+                      <option value="Research">Research</option>
                     </select>
-                    <p className="text-xs text-muted-foreground mt-1 break-words">
-                      Select the topic category for your poster submission
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1 break-words">Select the type of submission</p>
                   </div>
 
                   <div className="min-w-0 w-full">
                     <label htmlFor="topic" className="block text-sm font-semibold mb-2">
-                      Topic Category *
+                      Topic *
                     </label>
                     <select
                       id="topic"
@@ -450,7 +444,7 @@ export default function SubmitPosterPage() {
                       required
                       className="w-full max-w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
                     >
-                      <option value="">Select a topic category</option>
+                      <option value="">Select a topic</option>
                       <option value="Emergencies (Kegawatdaruratan)">Emergencies (Kegawatdaruratan)</option>
                       <option value="Pain Management (Manajemen Nyeri)">Pain Management (Manajemen Nyeri)</option>
                       <option value="ICU Management (Manajemen ICU)">ICU Management (Manajemen ICU)</option>
@@ -458,6 +452,7 @@ export default function SubmitPosterPage() {
                         Anesthesia Management (Manajemen Anestesi)
                       </option>
                     </select>
+                    <p className="text-xs text-muted-foreground mt-1 break-words">Select the medical specialty topic</p>
                   </div>
 
                   <div className="min-w-0 w-full">

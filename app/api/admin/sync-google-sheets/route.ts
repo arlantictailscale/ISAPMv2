@@ -360,8 +360,8 @@ export async function POST(request: NextRequest) {
       "Contact Email",
       "Institution",
       "Authors",
-      "Category",
-      "Topic/Keywords",
+      "Category", // Case Report or Research
+      "Topic", // Medical specialty (Emergencies/Pain Management/ICU/Anesthesia)
       "Submission Status",
       "Submission Date",
       "Updated Date",
@@ -377,8 +377,8 @@ export async function POST(request: NextRequest) {
         poster.email || profile.email || "",
         profile.institution || "", // Get institution from profile
         poster.authors || "",
-        poster.category || "",
-        poster.keywords || "", // keywords field contains the topic
+        poster.category || "", // Category field: Case Report or Research
+        poster.keywords || "", // Keywords field: Medical specialty topic
         poster.submission_status || "Pending",
         poster.created_at ? new Date(poster.created_at).toLocaleDateString() : "",
         poster.updated_at ? new Date(poster.updated_at).toLocaleDateString() : "",

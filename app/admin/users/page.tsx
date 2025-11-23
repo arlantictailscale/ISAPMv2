@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Loader2, ShieldCheck, User, UserCog, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
+import { updateUserRole } from "@/app/actions/update-user-role"
 import {
   Dialog,
   DialogContent,
@@ -125,48 +126,15 @@ export default function AdminUsersPage() {
     try {
       console.log("[v0] Starting role change for user:", selectedUser.id, "to", newRole)
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      const result = await updateUserRole(selectedUser.id, newRole)
 
-      if (!session) {
-        toast.error("Session expired. Please login again.")
-        router.push("/auth/login")
-        return
+      console.log("[v0] Server action result:", result)
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update role")
       }
 
-      console.log("[v0] Making API request to update-role")
-
-      const response = await fetch("/api/admin/update-role", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: selectedUser.id,
-          newRole: newRole,
-        }),
-      })
-
-      console.log("[v0] Response status:", response.status)
-
-      if (!response.ok) {
-        let errorMessage = "Failed to update role"
-        try {
-          const errorData = await response.json()
-          console.error("[v0] Error data:", errorData)
-          errorMessage = errorData.details || errorData.error || errorMessage
-        } catch (e) {
-          console.error("[v0] Could not parse error response:", e)
-          errorMessage = `Server error (${response.status}): ${response.statusText}`
-        }
-        throw new Error(errorMessage)
-      }
-
-      const result = await response.json()
-      console.log("[v0] Success result:", result)
-      toast.success(result.message || `User role updated to ${newRole} successfully`)
+      toast.success(`User role updated to ${newRole} successfully`)
       setShowRoleDialog(false)
       setSelectedUser(null)
       await fetchUsers()

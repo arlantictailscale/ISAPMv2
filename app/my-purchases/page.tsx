@@ -395,14 +395,18 @@ export default async function MyPurchasesPage() {
                             </div>
                           </div>
 
-                          <div className="flex gap-2 pt-2">
+                          <div className="flex flex-col sm:flex-row gap-2 pt-2">
                             <Link href={`/payment/order/${order.id}`} className="flex-1">
                               <Button className="w-full flex items-center gap-2" variant={actionButton.variant}>
                                 <ActionIcon className="w-4 h-4" />
                                 {actionButton.text}
                               </Button>
                             </Link>
-                            {canCancel && <CancelOrderButton orderId={order.id} />}
+                            {canCancel && (
+                              <div className="shrink-0">
+                                <CancelOrderButton orderId={order.id} />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </CardContent>

@@ -53,10 +53,10 @@ export function CancelOrderButton({ orderId }: CancelOrderButtonProps) {
         variant="outline"
         size="default"
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+        className="flex items-center gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 w-full sm:w-auto whitespace-nowrap"
       >
-        <Trash2 className="w-4 h-4" />
-        Cancel Order
+        <Trash2 className="w-4 h-4 shrink-0" />
+        <span className="truncate sm:inline">Cancel Order</span>
       </Button>
 
       <AlertDialog open={open} onOpenChange={setOpen}>

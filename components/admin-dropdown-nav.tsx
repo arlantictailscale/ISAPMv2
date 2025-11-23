@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { ShoppingCart, FileText, Users, Hotel, ChevronDown, CheckCircle } from "lucide-react"
+import { ShoppingCart, FileText, Users, ChevronDown, CheckCircle, Settings } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,12 +28,6 @@ const adminNavItems = [
     description: "Review and approve payments",
   },
   {
-    title: "Hotel Bookings",
-    href: "/admin/hotel-bookings",
-    icon: Hotel,
-    description: "Manage hotel reservations",
-  },
-  {
     title: "E-Poster Submissions",
     href: "/admin/posters",
     icon: FileText,
@@ -44,6 +38,12 @@ const adminNavItems = [
     href: "/admin/users",
     icon: Users,
     description: "Manage user accounts",
+  },
+  {
+    title: "Room Availability",
+    href: "/admin/room-availability",
+    icon: Settings,
+    description: "Configure hotel room inventory",
   },
 ]
 

@@ -13,11 +13,11 @@ import {
   Users,
   Presentation,
   LayoutDashboard,
-  Hotel,
   ShoppingCart,
   ShoppingBag,
   Calendar,
   CheckCircle,
+  Settings,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -177,12 +177,6 @@ export default function Navigation() {
                         My E-Posters
                       </DropdownMenuItem>
                     </Link>
-                    <Link href="/my-hotel-bookings">
-                      <DropdownMenuItem>
-                        <Hotel className="w-4 h-4 mr-2" />
-                        My Hotel Bookings
-                      </DropdownMenuItem>
-                    </Link>
                     <Link href="/my-purchases">
                       <DropdownMenuItem>
                         <ShoppingBag className="w-4 h-4 mr-2" />
@@ -216,10 +210,10 @@ export default function Navigation() {
                             Confirmed Attendees (Admin)
                           </DropdownMenuItem>
                         </Link>
-                        <Link href="/admin/hotel-bookings">
+                        <Link href="/admin/room-availability">
                           <DropdownMenuItem className="text-primary">
-                            <Hotel className="w-4 h-4 mr-2" />
-                            Hotel Booking Management (Admin)
+                            <Settings className="w-4 h-4 mr-2" />
+                            Room Availability (Admin)
                           </DropdownMenuItem>
                         </Link>
                         <Link href="/admin/carts">
@@ -318,13 +312,6 @@ export default function Navigation() {
                     My E-Posters
                   </Link>
                   <Link
-                    href="/my-hotel-bookings"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Hotel Bookings
-                  </Link>
-                  <Link
                     href="/my-purchases"
                     className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
                     onClick={() => setIsOpen(false)}
@@ -362,11 +349,11 @@ export default function Navigation() {
                         Confirmed Attendees (Admin)
                       </Link>
                       <Link
-                        href="/admin/hotel-bookings"
+                        href="/admin/room-availability"
                         className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
                         onClick={() => setIsOpen(false)}
                       >
-                        Hotel Booking Management (Admin)
+                        Room Availability (Admin)
                       </Link>
                       <Link
                         href="/admin/carts"

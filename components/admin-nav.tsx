@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { ShoppingCart, FileText, Users, Hotel, Menu, CheckCircle } from "lucide-react"
+import { ShoppingCart, FileText, Users, Menu, CheckCircle, Settings } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 
@@ -19,11 +19,6 @@ const adminNavItems = [
     icon: CheckCircle,
   },
   {
-    title: "Hotel Bookings",
-    href: "/admin/hotel-bookings",
-    icon: Hotel,
-  },
-  {
     title: "E-Poster Submissions",
     href: "/admin/posters",
     icon: FileText,
@@ -32,6 +27,11 @@ const adminNavItems = [
     title: "User Management",
     href: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Room Availability",
+    href: "/admin/room-availability",
+    icon: Settings,
   },
 ]
 

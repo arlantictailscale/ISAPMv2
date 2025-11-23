@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Loader2, FileDown, Users, Hotel, Calendar } from "lucide-react"
+import { Loader2, FileDown, Users, Hotel, Calendar, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import { format } from "date-fns"
@@ -31,6 +31,7 @@ export default function ConfirmedAttendeesPage() {
   const router = useRouter()
   const supabase = createClient()
   const [isLoading, setIsLoading] = useState(true)
+  const [isSyncing, setIsSyncing] = useState(false)
   const [attendees, setAttendees] = useState<Record<string, any[]>>({})
   const [hotelBookings, setHotelBookings] = useState<any[]>([])
 
@@ -162,7 +163,17 @@ export default function ConfirmedAttendeesPage() {
       XLSX.utils.book_append_sheet(wb, ws, sheetName)
     })
 
-    XLSX.writeFile(wb, `confirmed-attendees-${new Date().toISOString().split("T")[0]}.xlsx`)
+    // Create a blob and trigger download in browser
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
+    const blob = new Blob([wbout], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `confirmed-attendees-${new Date().toISOString().split("T")[0]}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   const exportHotelBookings = () => {
@@ -184,7 +195,55 @@ export default function ConfirmedAttendeesPage() {
     const ws = XLSX.utils.json_to_sheet(exportData)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, "Hotel Bookings")
-    XLSX.writeFile(wb, `confirmed-hotel-bookings-${new Date().toISOString().split("T")[0]}.xlsx`)
+
+    // Create a blob and trigger download in browser
+    const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" })
+    const blob = new Blob([wbout], { type: "application/octet-stream" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `confirmed-hotel-bookings-${new Date().toISOString().split("T")[0]}.xlsx`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const syncToGoogleSheets = async () => {
+    setIsSyncing(true)
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session) {
+        toast.error("Not authenticated")
+        return
+      }
+
+      const response = await fetch("/api/admin/sync-google-sheets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to sync")
+      }
+
+      toast.success(
+        `Successfully synced! ${data.stats.totalAttendees} attendees and ${data.stats.hotelBookings} hotel bookings.`,
+      )
+    } catch (error: any) {
+      console.error("[v0] Sync error:", error)
+      toast.error(error.message || "Failed to sync to Google Sheets")
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
   if (isLoading) {
@@ -213,6 +272,19 @@ export default function ConfirmedAttendeesPage() {
                 View verified attendees for events and hotel reservations.
               </p>
             </div>
+            <Button onClick={syncToGoogleSheets} disabled={isSyncing} size="lg" className="gap-2">
+              {isSyncing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Sync to Google Sheets
+                </>
+              )}
+            </Button>
           </div>
 
           <Tabs defaultValue="events" className="space-y-6">

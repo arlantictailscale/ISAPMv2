@@ -1,26 +1,19 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Search, FileSpreadsheet, Mail, FileText, Calendar, UserIcon, Trash2 } from 'lucide-react'
+import { Loader2, Search, FileSpreadsheet, FileText } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,16 +23,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import * as XLSX from 'xlsx'
+import * as XLSX from "xlsx"
 
 interface PosterSubmission {
   id: string
   user_id: string
   title: string
-  content: string
+  content: string // Now stores abstract PDF URL or text
   authors: string
+  university?: string
   keywords: string
   category: string
   submission_status: string
@@ -109,51 +102,43 @@ export default function AdminPostersPage() {
 
   const fetchSubmissions = async () => {
     try {
-      const { data: abstractsData, error: abstractsError } = await supabase
-        .from("abstracts")
-        .select("*")
-        .order("created_at", { ascending: false })
+      setIsLoading(true)
+      console.log("[v0] Fetching poster submissions for admin via API...")
 
-      if (abstractsError) throw abstractsError
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      const userIds = abstractsData?.map(a => a.user_id).filter(Boolean) || []
-      
-      const { data: profilesData, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, first_name, last_name")
-        .in("id", userIds)
-
-      if (profilesError) {
-        console.error("[v0] Error fetching profiles:", profilesError)
+      if (!session) {
+        throw new Error("No active session")
       }
 
-      const transformedData = abstractsData?.map((submission: any) => {
-        const profile = profilesData?.find(p => p.id === submission.user_id)
-        const userName = profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : ''
-        const userEmail = submission.email || ''
-        
-        let topic = ''
-        let cleanKeywords = submission.keywords || ''
-        
-        const topicMatch = submission.keywords?.match(/^\[(.*?)\]\s*(.*)/)
-        if (topicMatch) {
-          topic = topicMatch[1]
-          cleanKeywords = topicMatch[2]
-        }
-        
-        return {
-          ...submission,
-          user_email: userEmail,
-          user_name: userName,
-          topic: topic,
-          keywords: cleanKeywords
-        }
-      }) || []
+      const response = await fetch("/api/admin/posters", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      })
 
-      setSubmissions(transformedData)
-    } catch (err) {
-      console.error("[v0] Error fetching submissions:", err)
-      toast.error("Failed to load submissions")
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || "Failed to fetch submissions")
+      }
+
+      const { submissions: transformedData } = await response.json()
+
+      console.log("[v0] Fetched submissions via API:", transformedData?.length || 0)
+
+      setSubmissions(transformedData || [])
+    } catch (error: any) {
+      console.error("[v0] Error fetching poster submissions:", error)
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load poster submissions",
+        variant: "destructive",
+      })
+      setSubmissions([])
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -163,58 +148,58 @@ export default function AdminPostersPage() {
 
       const { error } = await supabase
         .from("abstracts")
-        .update({ 
+        .update({
           submission_status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", id)
 
       if (error) throw error
 
-      if (newStatus === 'accepted') {
-        const submission = submissions.find(s => s.id === id)
+      if (newStatus === "accepted") {
+        const submission = submissions.find((s) => s.id === id)
         if (submission) {
-          console.log('[v0] Found submission for acceptance:', {
+          console.log("[v0] Found submission for acceptance:", {
             id: submission.id,
             title: submission.title,
             user_email: submission.user_email,
             user_name: submission.user_name,
-            user_id: submission.user_id
+            user_id: submission.user_id,
           })
-          
-          if (!submission.user_email || submission.user_email === 'Unknown') {
-            console.error('[v0] Cannot send email - no valid email address found')
-            toast.error('Cannot send email - no email address found')
+
+          if (!submission.user_email || submission.user_email === "Unknown") {
+            console.error("[v0] Cannot send email - no valid email address found")
+            toast.error("Cannot send email - no email address found")
           } else {
             try {
-              console.log('[v0] Sending acceptance email to:', submission.user_email)
-              const response = await fetch('/api/send-poster-review-email', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+              console.log("[v0] Sending acceptance email to:", submission.user_email)
+              const response = await fetch("/api/send-poster-review-email", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   email: submission.user_email,
-                  userName: submission.user_name || 'Participant',
+                  userName: submission.user_name || "Participant",
                   posterTitle: submission.title,
-                  status: 'accepted',
+                  status: "accepted",
                 }),
               })
 
               const result = await response.json()
-              
+
               if (!response.ok) {
-                console.error('[v0] Failed to send acceptance email:', result)
-                toast.error('Failed to send acceptance email')
+                console.error("[v0] Failed to send acceptance email:", result)
+                toast.error("Failed to send acceptance email")
               } else {
-                console.log('[v0] Acceptance email sent successfully')
-                toast.success('Acceptance email sent')
+                console.log("[v0] Acceptance email sent successfully")
+                toast.success("Acceptance email sent")
               }
             } catch (emailError) {
-              console.error('[v0] Error sending acceptance email:', emailError)
-              toast.error('Error sending acceptance email')
+              console.error("[v0] Error sending acceptance email:", emailError)
+              toast.error("Error sending acceptance email")
             }
           }
         } else {
-          console.error('[v0] Submission not found in local state')
+          console.error("[v0] Submission not found in local state")
         }
       }
 
@@ -236,66 +221,66 @@ export default function AdminPostersPage() {
 
       const { error } = await supabase
         .from("abstracts")
-        .update({ 
+        .update({
           submission_status: "rejected",
           rejection_comment: rejectionComment || null,
           can_resubmit: allowResubmit,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", rejectingId)
 
       if (error) throw error
 
-      const submission = submissions.find(s => s.id === rejectingId)
+      const submission = submissions.find((s) => s.id === rejectingId)
       if (submission) {
-        console.log('[v0] Found submission for rejection:', {
+        console.log("[v0] Found submission for rejection:", {
           id: submission.id,
           title: submission.title,
           user_email: submission.user_email,
           user_name: submission.user_name,
-          user_id: submission.user_id
+          user_id: submission.user_id,
         })
-        
-        if (!submission.user_email || submission.user_email === 'Unknown') {
-          console.error('[v0] Cannot send email - no valid email address found')
-          toast.error('Cannot send email - no email address found')
+
+        if (!submission.user_email || submission.user_email === "Unknown") {
+          console.error("[v0] Cannot send email - no valid email address found")
+          toast.error("Cannot send email - no email address found")
         } else {
           try {
-            console.log('[v0] Sending rejection email to:', submission.user_email)
-            const response = await fetch('/api/send-poster-review-email', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            console.log("[v0] Sending rejection email to:", submission.user_email)
+            const response = await fetch("/api/send-poster-review-email", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
                 email: submission.user_email,
-                userName: submission.user_name || 'Participant',
+                userName: submission.user_name || "Participant",
                 posterTitle: submission.title,
-                status: 'rejected',
+                status: "rejected",
                 rejectionComment: rejectionComment || undefined,
                 canResubmit: allowResubmit,
               }),
             })
 
             const result = await response.json()
-            
+
             if (!response.ok) {
-              console.error('[v0] Failed to send rejection email:', result)
-              toast.error('Failed to send rejection email')
+              console.error("[v0] Failed to send rejection email:", result)
+              toast.error("Failed to send rejection email")
             } else {
-              console.log('[v0] Rejection email sent successfully')
-              toast.success('Rejection email sent')
+              console.log("[v0] Rejection email sent successfully")
+              toast.success("Rejection email sent")
             }
           } catch (emailError) {
-            console.error('[v0] Error sending rejection email:', emailError)
-            toast.error('Error sending rejection email')
+            console.error("[v0] Error sending rejection email:", emailError)
+            toast.error("Error sending rejection email")
           }
         }
       } else {
-        console.error('[v0] Submission not found in local state')
+        console.error("[v0] Submission not found in local state")
       }
 
       toast.success("Submission rejected")
       await fetchSubmissions()
-      
+
       setRejectingId(null)
       setRejectionComment("")
       setAllowResubmit(true)
@@ -311,29 +296,26 @@ export default function AdminPostersPage() {
     try {
       setUpdatingId(id)
 
-      const submission = submissions.find(s => s.id === id)
-      
+      const submission = submissions.find((s) => s.id === id)
+
       if (submission?.file_url) {
         try {
-          const deleteResponse = await fetch('/api/delete-blob', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: submission.file_url })
+          const deleteResponse = await fetch("/api/delete-blob", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: submission.file_url }),
           })
-          
+
           if (!deleteResponse.ok) {
-            console.error('[v0] Failed to delete blob file')
+            console.error("[v0] Failed to delete blob file")
           }
         } catch (blobError) {
-          console.error('[v0] Error deleting blob:', blobError)
+          console.error("[v0] Error deleting blob:", blobError)
           // Continue with submission deletion even if blob deletion fails
         }
       }
 
-      const { error } = await supabase
-        .from("abstracts")
-        .delete()
-        .eq("id", id)
+      const { error } = await supabase.from("abstracts").delete().eq("id", id)
 
       if (error) throw error
 
@@ -389,39 +371,41 @@ export default function AdminPostersPage() {
 
   const stats = {
     total: filteredSubmissions.length,
-    pending: filteredSubmissions.filter(s => s.submission_status === 'pending').length,
-    accepted: filteredSubmissions.filter(s => s.submission_status === 'accepted').length,
-    rejected: filteredSubmissions.filter(s => s.submission_status === 'rejected').length,
-    emergencies: filteredSubmissions.filter(s => s.topic === 'Emergencies (Kegawatdaruratan)').length,
-    pain_management: filteredSubmissions.filter(s => s.topic === 'Pain Management (Manajemen Nyeri)').length,
-    icu_management: filteredSubmissions.filter(s => s.topic === 'ICU Management (Manajemen ICU)').length,
-    anesthesia_management: filteredSubmissions.filter(s => s.topic === 'Anesthesia Management (Manajemen Anestesi)').length,
+    pending: filteredSubmissions.filter((s) => s.submission_status === "pending").length,
+    accepted: filteredSubmissions.filter((s) => s.submission_status === "accepted").length,
+    rejected: filteredSubmissions.filter((s) => s.submission_status === "rejected").length,
+    emergencies: filteredSubmissions.filter((s) => s.topic === "Emergencies (Kegawatdaruratan)").length,
+    pain_management: filteredSubmissions.filter((s) => s.topic === "Pain Management (Manajemen Nyeri)").length,
+    icu_management: filteredSubmissions.filter((s) => s.topic === "ICU Management (Manajemen ICU)").length,
+    anesthesia_management: filteredSubmissions.filter((s) => s.topic === "Anesthesia Management (Manajemen Anestesi)")
+      .length,
   }
 
   const exportToExcel = () => {
     try {
       // Prepare data for Excel
       const excelData = filteredSubmissions.map((sub) => ({
-        'Title': sub.title,
-        'Authors': sub.authors,
-        'Topic': sub.topic || '-',
-        'Category': sub.category,
-        'Keywords': sub.keywords || '',
-        'Abstract': sub.content,
-        'Status': sub.submission_status,
-        'Submitted By': sub.user_name || 'N/A',
-        'Email': sub.user_email || 'N/A',
-        'Has File': sub.file_url ? 'Yes' : 'No',
-        'Can Resubmit': sub.can_resubmit ? 'Yes' : 'No',
-        'Rejection Comment': sub.rejection_comment || '',
-        'Submission Date': new Date(sub.created_at).toLocaleDateString(),
-        'Last Updated': new Date(sub.updated_at).toLocaleDateString()
+        Title: sub.title,
+        Authors: sub.authors,
+        Topic: sub.topic || "-",
+        Category: sub.category,
+        Keywords: sub.keywords || "",
+        Abstract: sub.content,
+        Status: sub.submission_status,
+        "Submitted By": sub.user_name || "N/A",
+        Email: sub.user_email || "N/A",
+        "Has File": sub.file_url ? "Yes" : "No",
+        "Can Resubmit": sub.can_resubmit ? "Yes" : "No",
+        "Rejection Comment": sub.rejection_comment || "",
+        "Submission Date": new Date(sub.created_at).toLocaleDateString(),
+        "Last Updated": new Date(sub.updated_at).toLocaleDateString(),
+        University: sub.university || "-",
       }))
 
       // Create workbook and worksheet
       const ws = XLSX.utils.json_to_sheet(excelData)
       const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'E-Poster Submissions')
+      XLSX.utils.book_append_sheet(wb, ws, "E-Poster Submissions")
 
       // Set column widths for better readability
       const colWidths = [
@@ -439,19 +423,20 @@ export default function AdminPostersPage() {
         { wch: 50 }, // Rejection Comment
         { wch: 15 }, // Submission Date
         { wch: 15 }, // Last Updated
+        { wch: 30 }, // University
       ]
-      ws['!cols'] = colWidths
+      ws["!cols"] = colWidths
 
       // Generate filename with current date
-      const filename = `ISAPM2026-Posters-${new Date().toISOString().split('T')[0]}.xlsx`
-      
+      const filename = `ISAPM2026-Posters-${new Date().toISOString().split("T")[0]}.xlsx`
+
       // Write file
       XLSX.writeFile(wb, filename)
 
       toast.success(`Exported ${filteredSubmissions.length} submissions to Excel`)
     } catch (error) {
-      console.error('[v0] Error exporting to Excel:', error)
-      toast.error('Failed to export to Excel')
+      console.error("[v0] Error exporting to Excel:", error)
+      toast.error("Failed to export to Excel")
     }
   }
 
@@ -494,7 +479,7 @@ export default function AdminPostersPage() {
                   className="pl-10 w-full"
                 />
               </div>
-              <Button onClick={exportToExcel} variant="outline" className="whitespace-nowrap gap-2">
+              <Button onClick={exportToExcel} variant="outline" className="whitespace-nowrap gap-2 bg-transparent">
                 <FileSpreadsheet className="w-4 h-4" />
                 Export to Excel
               </Button>
@@ -520,21 +505,21 @@ export default function AdminPostersPage() {
                       size="sm"
                       onClick={() => setFilterStatus("pending")}
                     >
-                      Pending ({submissions.filter(s => s.submission_status === "pending").length})
+                      Pending ({submissions.filter((s) => s.submission_status === "pending").length})
                     </Button>
                     <Button
                       variant={filterStatus === "accepted" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setFilterStatus("accepted")}
                     >
-                      Accepted ({submissions.filter(s => s.submission_status === "accepted").length})
+                      Accepted ({submissions.filter((s) => s.submission_status === "accepted").length})
                     </Button>
                     <Button
                       variant={filterStatus === "rejected" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setFilterStatus("rejected")}
                     >
-                      Rejected ({submissions.filter(s => s.submission_status === "rejected").length})
+                      Rejected ({submissions.filter((s) => s.submission_status === "rejected").length})
                     </Button>
                   </div>
                 </div>
@@ -601,7 +586,6 @@ export default function AdminPostersPage() {
               </CardContent>
             </Card>
 
-
             <div className="space-y-3 w-full max-w-full overflow-x-hidden">
               {filteredSubmissions.length === 0 ? (
                 <Card>
@@ -614,32 +598,59 @@ export default function AdminPostersPage() {
                   <Card key={submission.id} className="w-full max-w-full overflow-x-hidden">
                     <CardContent className="p-4 overflow-x-hidden">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 w-full min-w-0">
-                        <div className="flex-1 min-w-0 space-y-1 overflow-x-hidden">
+                        <div className="flex-1 min-w-0 space-y-2 overflow-x-hidden">
                           <h3 className="font-semibold text-base leading-tight break-words overflow-wrap-anywhere">
                             {submission.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground truncate">{submission.authors}</p>
+                          <div className="space-y-1 text-sm">
+                            <p className="text-muted-foreground">
+                              <span className="font-medium">Authors:</span> {submission.authors}
+                            </p>
+                            {submission.university && (
+                              <p className="text-muted-foreground">
+                                <span className="font-medium">University:</span> {submission.university}
+                              </p>
+                            )}
+                            <p className="text-muted-foreground">
+                              <span className="font-medium">Category:</span> {submission.category}
+                            </p>
+                            <p className="text-muted-foreground">
+                              <span className="font-medium">Submitted:</span>{" "}
+                              {new Date(submission.created_at).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              })}
+                            </p>
+                            {submission.user_name && (
+                              <p className="text-muted-foreground truncate">
+                                <span className="font-medium">Submitter:</span> {submission.user_name}
+                              </p>
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-2 items-center">
                             {getStatusBadge(submission.submission_status)}
                             {submission.topic && (
                               <Badge variant="secondary" className="text-xs">
-                                {submission.topic.split('(')[0].trim()}
+                                {submission.topic.split("(")[0].trim()}
+                              </Badge>
+                            )}
+                            {submission.content && submission.content.includes("blob.vercel-storage.com") && (
+                              <Badge variant="outline" className="text-xs">
+                                <FileText className="w-3 h-3 mr-1" />
+                                Abstract PDF
                               </Badge>
                             )}
                             {submission.file_url && (
                               <Badge variant="outline" className="text-xs">
                                 <FileText className="w-3 h-3 mr-1" />
-                                File
+                                Poster File
                               </Badge>
                             )}
                           </div>
                         </div>
                         <div className="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setViewingSubmission(submission)}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => setViewingSubmission(submission)}>
                             View Details
                           </Button>
                           {submission.submission_status === "pending" && (
@@ -650,11 +661,7 @@ export default function AdminPostersPage() {
                                 onClick={() => updateSubmissionStatus(submission.id, "accepted")}
                                 disabled={updatingId === submission.id}
                               >
-                                {updatingId === submission.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  "Accept"
-                                )}
+                                {updatingId === submission.id ? <Loader2 className="w-4 h-4 animate-spin" /> : "Accept"}
                               </Button>
                               <Button
                                 variant="destructive"
@@ -682,18 +689,13 @@ export default function AdminPostersPage() {
               <AlertDialogTitle className="text-xl break-words overflow-wrap-anywhere">
                 {viewingSubmission?.title}
               </AlertDialogTitle>
-              <AlertDialogDescription className="break-words">
-                {viewingSubmission?.authors}
-              </AlertDialogDescription>
             </AlertDialogHeader>
-            
+
             {viewingSubmission && (
               <div className="space-y-4 py-4 overflow-x-hidden">
                 <div className="flex flex-wrap gap-2">
                   {getStatusBadge(viewingSubmission.submission_status)}
-                  {viewingSubmission.topic && (
-                    <Badge variant="secondary">{viewingSubmission.topic}</Badge>
-                  )}
+                  {viewingSubmission.topic && <Badge variant="secondary">{viewingSubmission.topic}</Badge>}
                   {viewingSubmission.submission_status === "rejected" && viewingSubmission.can_resubmit && (
                     <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
                       Resubmission Allowed
@@ -701,34 +703,66 @@ export default function AdminPostersPage() {
                   )}
                 </div>
 
-                <div>
-                  <Label className="text-sm font-medium">Abstract:</Label>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words mt-1">
-                    {viewingSubmission.content}
-                  </p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium">Authors:</Label>
+                    <p className="text-sm text-muted-foreground break-words mt-1">{viewingSubmission.authors}</p>
+                  </div>
+                  {viewingSubmission.university && (
+                    <div>
+                      <Label className="text-sm font-medium">University/Institution:</Label>
+                      <p className="text-sm text-muted-foreground break-words mt-1">{viewingSubmission.university}</p>
+                    </div>
+                  )}
+                  <div>
+                    <Label className="text-sm font-medium">Category:</Label>
+                    <p className="text-sm text-muted-foreground break-words mt-1">{viewingSubmission.category}</p>
+                  </div>
+                  {viewingSubmission.keywords && (
+                    <div>
+                      <Label className="text-sm font-medium">Keywords:</Label>
+                      <p className="text-sm text-muted-foreground break-words mt-1">{viewingSubmission.keywords}</p>
+                    </div>
+                  )}
                 </div>
 
-                {viewingSubmission.keywords && (
-                  <div>
-                    <Label className="text-sm font-medium">Keywords:</Label>
-                    <p className="text-sm text-muted-foreground break-words mt-1">
-                      {viewingSubmission.keywords}
+                <div className="border-t pt-4">
+                  <Label className="text-sm font-medium">Abstract:</Label>
+                  {viewingSubmission.content && viewingSubmission.content.includes("blob.vercel-storage.com") ? (
+                    <div className="mt-2">
+                      <Button variant="outline" size="sm" asChild className="w-full sm:w-auto bg-transparent">
+                        <a href={viewingSubmission.content} target="_blank" rel="noopener noreferrer" download>
+                          <FileText className="w-4 h-4 mr-2" />
+                          Download Abstract PDF
+                        </a>
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap break-words mt-1">
+                      {viewingSubmission.content}
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <div className="grid sm:grid-cols-2 gap-4 pt-2 border-t">
                   <div>
                     <Label className="text-sm font-medium">Submitted by:</Label>
                     <p className="text-sm text-muted-foreground break-all mt-1">
-                      {viewingSubmission.user_name}<br />
-                      {viewingSubmission.user_email}
+                      {viewingSubmission.user_name || "Unknown"}
+                      <br />
+                      {viewingSubmission.user_email || "No email"}
                     </p>
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Submission date:</Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {new Date(viewingSubmission.created_at).toLocaleDateString()}
+                      {new Date(viewingSubmission.created_at).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
                   </div>
                 </div>
@@ -744,10 +778,11 @@ export default function AdminPostersPage() {
 
                 {viewingSubmission.file_url && (
                   <div className="border-t pt-4">
-                    <Button variant="outline" size="sm" asChild className="w-full sm:w-auto">
-                      <a href={viewingSubmission.file_url} target="_blank" rel="noopener noreferrer">
+                    <Label className="text-sm font-medium mb-2 block">Poster File:</Label>
+                    <Button variant="outline" size="sm" asChild className="w-full sm:w-auto bg-transparent">
+                      <a href={viewingSubmission.file_url} target="_blank" rel="noopener noreferrer" download>
                         <FileText className="w-4 h-4 mr-2" />
-                        Download Attached File
+                        Download Poster File
                       </a>
                     </Button>
                   </div>
@@ -765,9 +800,7 @@ export default function AdminPostersPage() {
                         }}
                         disabled={updatingId === viewingSubmission.id}
                       >
-                        {updatingId === viewingSubmission.id ? (
-                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                        ) : null}
+                        {updatingId === viewingSubmission.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                         Accept
                       </Button>
                       <Button
@@ -793,9 +826,7 @@ export default function AdminPostersPage() {
                       }}
                       disabled={updatingId === viewingSubmission.id}
                     >
-                      {updatingId === viewingSubmission.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : null}
+                      {updatingId === viewingSubmission.id ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                       Reset to Pending
                     </Button>
                   )}
@@ -809,13 +840,16 @@ export default function AdminPostersPage() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <AlertDialog open={!!rejectingId} onOpenChange={(open) => {
-          if (!open) {
-            setRejectingId(null)
-            setRejectionComment("")
-            setAllowResubmit(true)
-          }
-        }}>
+        <AlertDialog
+          open={!!rejectingId}
+          onOpenChange={(open) => {
+            if (!open) {
+              setRejectingId(null)
+              setRejectionComment("")
+              setAllowResubmit(true)
+            }
+          }}
+        >
           <AlertDialogContent className="max-w-2xl">
             <AlertDialogHeader>
               <AlertDialogTitle>Reject Submission</AlertDialogTitle>
@@ -858,9 +892,7 @@ export default function AdminPostersPage() {
                 className="bg-red-600 hover:bg-red-700"
                 disabled={updatingId === rejectingId}
               >
-                {updatingId === rejectingId ? (
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                ) : null}
+                {updatingId === rejectingId ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                 Reject Submission
               </AlertDialogAction>
             </AlertDialogFooter>

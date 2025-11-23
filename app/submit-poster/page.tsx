@@ -1,13 +1,15 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Send, AlertCircle, Upload, X } from 'lucide-react'
+import { Loader2, Send, AlertCircle, Upload, X, FileText } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 
@@ -15,9 +17,8 @@ export default function SubmitPosterPage() {
   const [formData, setFormData] = useState({
     title: "",
     authors: "",
-    keywords: "",
-    content: "",
-    category: "",
+    university: "", // Added university field
+    category: "", // Added category field (Case report or Research)
     topic: "",
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -27,6 +28,9 @@ export default function SubmitPosterPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null)
+  const [selectedAbstractFile, setSelectedAbstractFile] = useState<File | null>(null)
+  const [uploadedAbstractUrl, setUploadedAbstractUrl] = useState<string | null>(null)
+  const [isUploadingAbstract, setIsUploadingAbstract] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -50,9 +54,7 @@ export default function SubmitPosterPage() {
     checkUser()
   }, [supabase, router])
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
@@ -64,14 +66,10 @@ export default function SubmitPosterPage() {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = [
-      "image/tiff",
-      "image/jpeg",
-      "image/jpg"
-    ]
-    
+    const allowedTypes = ["application/pdf"]
+
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Invalid file type. Only TIFF (*.tif/*.tiff) and JPEG files are allowed.")
+      toast.error("Invalid file type. Only PDF files are allowed.")
       return
     }
 
@@ -88,6 +86,32 @@ export default function SubmitPosterPage() {
   const handleRemoveFile = () => {
     setSelectedFile(null)
     setUploadedFileUrl(null)
+  }
+
+  const handleAbstractFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowedTypes = ["application/pdf"]
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Only PDF files are allowed.")
+      return
+    }
+
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error("File size exceeds 10MB limit")
+      return
+    }
+
+    setSelectedAbstractFile(file)
+    setUploadedAbstractUrl(null)
+  }
+
+  const handleRemoveAbstractFile = () => {
+    setSelectedAbstractFile(null)
+    setUploadedAbstractUrl(null)
   }
 
   const handleFileUpload = async () => {
@@ -110,7 +134,7 @@ export default function SubmitPosterPage() {
 
       const data = await response.json()
       setUploadedFileUrl(data.url)
-      toast.success("File uploaded successfully!")
+      toast.success("Poster file uploaded successfully!")
       return data.url
     } catch (err: any) {
       console.error("[v0] Upload error:", err)
@@ -118,6 +142,37 @@ export default function SubmitPosterPage() {
       return null
     } finally {
       setIsUploading(false)
+    }
+  }
+
+  const handleAbstractUpload = async () => {
+    if (!selectedAbstractFile) return null
+
+    setIsUploadingAbstract(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", selectedAbstractFile)
+
+      const response = await fetch("/api/upload-poster", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
+
+      const data = await response.json()
+      setUploadedAbstractUrl(data.url)
+      toast.success("Abstract file uploaded successfully!")
+      return data.url
+    } catch (err: any) {
+      console.error("[v0] Abstract upload error:", err)
+      toast.error(err.message || "Failed to upload abstract file")
+      return null
+    } finally {
+      setIsUploadingAbstract(false)
     }
   }
 
@@ -133,8 +188,15 @@ export default function SubmitPosterPage() {
       }
 
       if (!selectedFile && !uploadedFileUrl) {
-        setError("Poster file is required. Please upload a TIFF or JPEG file before submitting.")
+        setError("Poster file is required. Please upload a PDF file before submitting.")
         toast.error("Poster file is required")
+        setIsLoading(false)
+        return
+      }
+
+      if (!selectedAbstractFile && !uploadedAbstractUrl) {
+        setError("Abstract file is required. Please upload a PDF file before submitting.")
+        toast.error("Abstract file is required")
         setIsLoading(false)
         return
       }
@@ -143,7 +205,16 @@ export default function SubmitPosterPage() {
       if (selectedFile && !uploadedFileUrl) {
         fileUrl = await handleFileUpload()
         if (!fileUrl) {
-          setError("Failed to upload file. Please try again.")
+          setError("Failed to upload poster file. Please try again.")
+          return
+        }
+      }
+
+      let abstractUrl = uploadedAbstractUrl
+      if (selectedAbstractFile && !uploadedAbstractUrl) {
+        abstractUrl = await handleAbstractUpload()
+        if (!abstractUrl) {
+          setError("Failed to upload abstract file. Please try again.")
           return
         }
       }
@@ -154,8 +225,8 @@ export default function SubmitPosterPage() {
           email: user.email,
           title: formData.title,
           authors: formData.authors,
-          keywords: formData.keywords,
-          content: formData.content,
+          keywords: `${formData.category} | ${formData.university}`, // Store category and university in keywords field temporarily
+          content: abstractUrl, // Store abstract PDF URL in content field
           category: formData.topic,
           submission_status: "pending",
           file_url: fileUrl,
@@ -176,13 +247,13 @@ export default function SubmitPosterPage() {
           .eq("id", user.id)
           .single()
 
-        const userName = profileData 
-          ? `${profileData.first_name} ${profileData.last_name || ''}`.trim()
-          : user.email?.split('@')[0] || 'Participant'
+        const userName = profileData
+          ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
+          : user.email?.split("@")[0] || "Participant"
 
-        const response = await fetch('/api/send-poster-submission-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const response = await fetch("/api/send-poster-submission-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: user.email,
             userName,
@@ -192,10 +263,10 @@ export default function SubmitPosterPage() {
         })
 
         if (!response.ok) {
-          console.error('[v0] Failed to send confirmation email')
+          console.error("[v0] Failed to send confirmation email")
         }
       } catch (emailError) {
-        console.error('[v0] Error sending email:', emailError)
+        console.error("[v0] Error sending email:", emailError)
       }
 
       toast.success("E-poster submitted successfully!")
@@ -253,10 +324,10 @@ export default function SubmitPosterPage() {
                 </p>
                 <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside break-words">
                   <li>Abstract must be in English</li>
-                  <li>Maximum 300 words for abstract</li>
                   <li>Include full author names and institutions</li>
-                  <li>Select one topic category</li>
-                  <li>Upload poster file (TIFF (*.tif/*.tiff) or JPEG - max 10MB)</li>
+                  <li>Select category (Case Report or Research)</li>
+                  <li>Upload abstract as PDF (max 10MB)</li>
+                  <li>Upload poster file as PDF (max 10MB)</li>
                 </ul>
               </div>
             </div>
@@ -319,21 +390,42 @@ export default function SubmitPosterPage() {
                   </div>
 
                   <div className="min-w-0 w-full">
-                    <label htmlFor="keywords" className="block text-sm font-semibold mb-2">
-                      Keywords *
+                    <label htmlFor="university" className="block text-sm font-semibold mb-2">
+                      University/Institution *
                     </label>
                     <input
                       type="text"
-                      id="keywords"
-                      name="keywords"
-                      value={formData.keywords}
+                      id="university"
+                      name="university"
+                      value={formData.university}
                       onChange={handleChange}
                       required
-                      placeholder="keyword1, keyword2, keyword3"
+                      placeholder="Enter your university or institution name"
                       className="w-full max-w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
                     />
                     <p className="text-xs text-muted-foreground mt-1 break-words">
-                      Separate keywords with commas (3-5 keywords recommended)
+                      Name of the primary affiliated institution
+                    </p>
+                  </div>
+
+                  <div className="min-w-0 w-full">
+                    <label htmlFor="category" className="block text-sm font-semibold mb-2">
+                      Category *
+                    </label>
+                    <select
+                      id="category"
+                      name="category"
+                      value={formData.category}
+                      onChange={handleChange}
+                      required
+                      className="w-full max-w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
+                    >
+                      <option value="">Select a category</option>
+                      <option value="Case Report">Case Report</option>
+                      <option value="Research">Research</option>
+                    </select>
+                    <p className="text-xs text-muted-foreground mt-1 break-words">
+                      Select whether this is a case report or research study
                     </p>
                   </div>
 
@@ -353,52 +445,106 @@ export default function SubmitPosterPage() {
                       <option value="Emergencies (Kegawatdaruratan)">Emergencies (Kegawatdaruratan)</option>
                       <option value="Pain Management (Manajemen Nyeri)">Pain Management (Manajemen Nyeri)</option>
                       <option value="ICU Management (Manajemen ICU)">ICU Management (Manajemen ICU)</option>
-                      <option value="Anesthesia Management (Manajemen Anestesi)">Anesthesia Management (Manajemen Anestesi)</option>
+                      <option value="Anesthesia Management (Manajemen Anestesi)">
+                        Anesthesia Management (Manajemen Anestesi)
+                      </option>
                     </select>
                   </div>
 
                   <div className="min-w-0 w-full">
-                    <label htmlFor="content" className="block text-sm font-semibold mb-2">
-                      Abstract *
-                    </label>
-                    <textarea
-                      id="content"
-                      name="content"
-                      value={formData.content}
-                      onChange={handleChange}
-                      required
-                      rows={12}
-                      placeholder="Enter your abstract here...&#10;&#10;Include:&#10;- Background&#10;- Objective&#10;- Methods&#10;- Results&#10;- Conclusion&#10;&#10;Maximum 300 words"
-                      className="w-full max-w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary resize-none font-mono text-sm min-w-0"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1 break-words">
-                      Structure: Background, Objective, Methods, Results, Conclusion (max 300 words)
+                    <label className="block text-sm font-semibold mb-2">Abstract (PDF) *</label>
+
+                    {!selectedAbstractFile && !uploadedAbstractUrl && (
+                      <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:border-primary/50 transition-colors min-w-0 w-full max-w-full">
+                        <input
+                          type="file"
+                          id="abstract-file"
+                          accept=".pdf"
+                          onChange={handleAbstractFileChange}
+                          className="hidden"
+                        />
+                        <label htmlFor="abstract-file" className="cursor-pointer flex flex-col items-center gap-2">
+                          <FileText className="w-8 h-8 text-muted-foreground" />
+                          <p className="text-sm font-medium break-words">Click to upload abstract PDF</p>
+                          <p className="text-xs text-muted-foreground break-words">PDF only (max 10MB)</p>
+                        </label>
+                      </div>
+                    )}
+
+                    {selectedAbstractFile && !uploadedAbstractUrl && (
+                      <div className="border border-input rounded-lg p-4 flex items-center justify-between gap-2 min-w-0 w-full max-w-full">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="bg-primary/10 p-2 rounded flex-shrink-0">
+                            <FileText className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{selectedAbstractFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedAbstractFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveAbstractFile}
+                          className="flex-shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {uploadedAbstractUrl && (
+                      <div className="border border-green-500/30 bg-green-500/5 rounded-lg p-4 flex items-center justify-between gap-2 min-w-0 w-full max-w-full">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="bg-green-500/10 p-2 rounded flex-shrink-0">
+                            <FileText className="w-5 h-5 text-green-500" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-green-700 break-words">
+                              Abstract uploaded successfully
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {selectedAbstractFile?.name || "Uploaded file"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveAbstractFile}
+                          className="flex-shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground mt-2 break-words">
+                      Upload your abstract as a PDF file (max 10MB). Include Background, Objective, Methods, Results,
+                      and Conclusion.
                     </p>
                   </div>
 
                   <div className="min-w-0 w-full">
-                    <label className="block text-sm font-semibold mb-2">
-                      Poster File *
-                    </label>
-                    
+                    <label className="block text-sm font-semibold mb-2">Poster File (PDF) *</label>
+
                     {!selectedFile && !uploadedFileUrl && (
                       <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:border-primary/50 transition-colors min-w-0 w-full max-w-full">
                         <input
                           type="file"
                           id="poster-file"
-                          accept=".tif,.tiff,.jpg,.jpeg"
+                          accept=".pdf"
                           onChange={handleFileChange}
                           className="hidden"
                         />
-                        <label
-                          htmlFor="poster-file"
-                          className="cursor-pointer flex flex-col items-center gap-2"
-                        >
+                        <label htmlFor="poster-file" className="cursor-pointer flex flex-col items-center gap-2">
                           <Upload className="w-8 h-8 text-muted-foreground" />
                           <p className="text-sm font-medium break-words">Click to upload poster file</p>
-                          <p className="text-xs text-muted-foreground break-words">
-                            TIFF (*.tif/*.tiff) or JPEG (max 10MB)
-                          </p>
+                          <p className="text-xs text-muted-foreground break-words">PDF only (max 10MB)</p>
                         </label>
                       </div>
                     )}
@@ -435,7 +581,9 @@ export default function SubmitPosterPage() {
                             <Upload className="w-5 h-5 text-green-500" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-green-700 break-words">File uploaded successfully</p>
+                            <p className="text-sm font-medium text-green-700 break-words">
+                              Poster uploaded successfully
+                            </p>
                             <p className="text-xs text-muted-foreground truncate">
                               {selectedFile?.name || "Uploaded file"}
                             </p>
@@ -454,7 +602,7 @@ export default function SubmitPosterPage() {
                     )}
 
                     <p className="text-xs text-muted-foreground mt-2 break-words">
-                      Poster file is required. Accepted formats: TIFF (*.tif/*.tiff) or JPEG (max 10MB)
+                      Poster file is required. Accepted format: PDF (max 10MB)
                     </p>
                   </div>
 
@@ -467,11 +615,15 @@ export default function SubmitPosterPage() {
                     >
                       View Guidelines
                     </Button>
-                    <Button type="submit" disabled={isLoading || isUploading} className="w-full sm:flex-1">
-                      {isLoading || isUploading ? (
+                    <Button
+                      type="submit"
+                      disabled={isLoading || isUploading || isUploadingAbstract}
+                      className="w-full sm:flex-1"
+                    >
+                      {isLoading || isUploading || isUploadingAbstract ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {isUploading ? "Uploading..." : "Submitting..."}
+                          {isUploading || isUploadingAbstract ? "Uploading..." : "Submitting..."}
                         </>
                       ) : (
                         <>
@@ -483,8 +635,8 @@ export default function SubmitPosterPage() {
                   </div>
 
                   <p className="text-xs text-center text-muted-foreground break-words">
-                    By submitting, you agree to the conference terms. You will receive a confirmation email
-                    after review.
+                    By submitting, you agree to the conference terms. You will receive a confirmation email after
+                    review.
                   </p>
                 </form>
               </CardContent>

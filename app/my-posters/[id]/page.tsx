@@ -1,13 +1,15 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, CheckCircle2, XCircle, Clock, Download, Upload, ArrowLeft, AlertCircle, Plus } from 'lucide-react'
+import { Loader2, CheckCircle2, XCircle, Clock, Download, Upload, ArrowLeft, AlertCircle, Plus } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -19,9 +21,10 @@ interface Abstract {
   id: string
   title: string
   authors: string
-  keywords: string
-  content: string
+  university?: string
   category: string
+  topic?: string
+  content: string
   submission_status: string
   created_at: string
   updated_at: string
@@ -83,11 +86,11 @@ export default function PosterDetailPage() {
   }, [supabase, router, params.id])
 
   const validateFile = (file: File) => {
-    const validTypes = ['image/tiff', 'image/jpeg', 'image/jpg']
+    const validTypes = ["application/pdf"]
     const maxSize = 10 * 1024 * 1024 // 10MB
 
     if (!validTypes.includes(file.type)) {
-      toast.error("Invalid file type. Please upload a TIFF or JPEG file.")
+      toast.error("Invalid file type. Please upload a PDF file.")
       return false
     }
 
@@ -115,17 +118,17 @@ export default function PosterDetailPage() {
       if (abstract.file_url) {
         setUploadProgress("Deleting old file...")
         try {
-          const deleteResponse = await fetch('/api/delete-blob', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: abstract.file_url })
+          const deleteResponse = await fetch("/api/delete-blob", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: abstract.file_url }),
           })
-          
+
           if (!deleteResponse.ok) {
-            console.error('[v0] Failed to delete old blob file')
+            console.error("[v0] Failed to delete old blob file")
           }
         } catch (deleteError) {
-          console.error('[v0] Error deleting old blob:', deleteError)
+          console.error("[v0] Error deleting old blob:", deleteError)
           // Continue with upload even if delete fails
         }
       }
@@ -134,16 +137,16 @@ export default function PosterDetailPage() {
 
       // Upload new file
       const formData = new FormData()
-      formData.append('file', selectedFile)
+      formData.append("file", selectedFile)
 
-      const uploadResponse = await fetch('/api/upload-poster', {
-        method: 'POST',
-        body: formData
+      const uploadResponse = await fetch("/api/upload-poster", {
+        method: "POST",
+        body: formData,
       })
 
       if (!uploadResponse.ok) {
         const errorData = await uploadResponse.json()
-        throw new Error(errorData.error || 'Upload failed')
+        throw new Error(errorData.error || "Upload failed")
       }
 
       const { url: newFileUrl } = await uploadResponse.json()
@@ -152,23 +155,23 @@ export default function PosterDetailPage() {
 
       // Update abstract with new file URL
       const { error: updateError } = await supabase
-        .from('abstracts')
-        .update({ 
+        .from("abstracts")
+        .update({
           file_url: newFileUrl,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
-        .eq('id', abstract.id)
+        .eq("id", abstract.id)
 
       if (updateError) throw updateError
 
       toast.success("Poster file updated successfully!")
-      
+
       // Update local state
       setAbstract({ ...abstract, file_url: newFileUrl })
       setSelectedFile(null)
       setUploadProgress("")
     } catch (error) {
-      console.error('[v0] Error reuploading file:', error)
+      console.error("[v0] Error reuploading file:", error)
       toast.error("Failed to update poster file. Please try again.")
     } finally {
       setIsUploading(false)
@@ -279,14 +282,15 @@ export default function PosterDetailPage() {
                     </AlertDescription>
                   </Alert>
                 )}
-                
+
                 {abstract.can_resubmit && (
                   <Alert>
                     <AlertCircle className="h-4 w-4" />
                     <AlertTitle>Resubmission Available</AlertTitle>
                     <AlertDescription className="space-y-3">
                       <p>
-                        You are allowed to revise and resubmit this abstract. Please address the feedback provided above before submitting a new version.
+                        You are allowed to revise and resubmit this abstract. Please address the feedback provided above
+                        before submitting a new version.
                       </p>
                       <Button asChild>
                         <Link href="/submit-poster">
@@ -318,24 +322,37 @@ export default function PosterDetailPage() {
               </CardContent>
             </Card>
 
+            {abstract.university && (
+              <Card className="overflow-x-hidden">
+                <CardHeader>
+                  <CardTitle>University/Institution</CardTitle>
+                </CardHeader>
+                <CardContent className="min-w-0">
+                  <p className="break-words">{abstract.university}</p>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="grid sm:grid-cols-2 gap-6 overflow-x-hidden">
               <Card className="overflow-x-hidden">
                 <CardHeader>
                   <CardTitle>Category</CardTitle>
                 </CardHeader>
                 <CardContent className="min-w-0">
-                  <p className="capitalize break-words">{abstract.category}</p>
+                  <p className="capitalize break-words">{abstract.category || "Not specified"}</p>
                 </CardContent>
               </Card>
 
-              <Card className="overflow-x-hidden">
-                <CardHeader>
-                  <CardTitle>Keywords</CardTitle>
-                </CardHeader>
-                <CardContent className="min-w-0">
-                  <p className="break-words overflow-wrap-anywhere">{abstract.keywords}</p>
-                </CardContent>
-              </Card>
+              {abstract.topic && (
+                <Card className="overflow-x-hidden">
+                  <CardHeader>
+                    <CardTitle>Topic</CardTitle>
+                  </CardHeader>
+                  <CardContent className="min-w-0">
+                    <p className="capitalize break-words">{abstract.topic}</p>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <Card className="overflow-x-hidden">
@@ -343,7 +360,21 @@ export default function PosterDetailPage() {
                 <CardTitle>Abstract</CardTitle>
               </CardHeader>
               <CardContent className="min-w-0">
-                <p className="whitespace-pre-wrap break-words">{abstract.content}</p>
+                {abstract.content && abstract.content.startsWith("http") ? (
+                  <div className="space-y-3">
+                    <p className="text-sm text-muted-foreground">Abstract submitted as PDF file</p>
+                    <Button asChild variant="outline" size="sm">
+                      <a href={abstract.content} target="_blank" rel="noopener noreferrer" download>
+                        <Download className="w-4 h-4 mr-2 shrink-0" />
+                        Download Abstract PDF
+                      </a>
+                    </Button>
+                  </div>
+                ) : abstract.content ? (
+                  <p className="whitespace-pre-wrap break-words">{abstract.content}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No abstract provided</p>
+                )}
               </CardContent>
             </Card>
 
@@ -358,7 +389,7 @@ export default function PosterDetailPage() {
                       <CheckCircle2 className="w-4 h-4 shrink-0" />
                       <span>File uploaded successfully</span>
                     </div>
-                    <Button asChild variant="outline" className="w-full sm:w-auto">
+                    <Button asChild variant="outline" className="w-full sm:w-auto bg-transparent">
                       <a href={abstract.file_url} target="_blank" rel="noopener noreferrer" download>
                         <Download className="w-4 h-4 mr-2 shrink-0" />
                         Download Current File
@@ -372,20 +403,21 @@ export default function PosterDetailPage() {
                             Replace Poster File
                           </Label>
                           <p className="text-sm text-muted-foreground mt-1 mb-3 break-words">
-                            Upload a new poster file to replace the current one. The old file will be permanently deleted.
+                            Upload a new poster file to replace the current one. The old file will be permanently
+                            deleted.
                           </p>
                         </div>
-                        
+
                         <div className="space-y-3 overflow-x-hidden">
                           <Input
                             id="file-reupload"
                             type="file"
-                            accept=".tif,.tiff,.jpg,.jpeg,image/tiff,image/jpeg"
+                            accept=".pdf,application/pdf"
                             onChange={handleFileChange}
                             disabled={isUploading}
                             className="max-w-full"
                           />
-                          
+
                           {selectedFile && (
                             <div className="flex items-center gap-2 text-sm min-w-0">
                               <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
@@ -422,13 +454,14 @@ export default function PosterDetailPage() {
                         </div>
                       </div>
                     )}
-                    
+
                     {abstract.submission_status === "accepted" && (
                       <Alert>
                         <CheckCircle2 className="h-4 w-4" />
                         <AlertTitle>Submission Accepted</AlertTitle>
                         <AlertDescription>
-                          This submission has been accepted. The poster file cannot be modified or deleted at this stage.
+                          This submission has been accepted. The poster file cannot be modified or deleted at this
+                          stage.
                         </AlertDescription>
                       </Alert>
                     )}

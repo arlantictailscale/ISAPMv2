@@ -1,13 +1,24 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from 'next/navigation'
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, FileText, Plus, CheckCircle2, XCircle, Clock, Download, Upload, AlertCircle, Trash2 } from 'lucide-react'
+import {
+  Loader2,
+  FileText,
+  Plus,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Download,
+  Upload,
+  AlertCircle,
+  Trash2,
+} from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { format } from "date-fns"
@@ -28,6 +39,7 @@ interface Abstract {
   id: string
   title: string
   authors: string
+  university?: string
   keywords: string
   content: string
   category: string
@@ -120,37 +132,33 @@ export default function MyPostersPage() {
     try {
       setDeletingId(id)
 
-      const submission = abstracts.find(a => a.id === id)
-      
+      const submission = abstracts.find((a) => a.id === id)
+
       if (submission?.file_url) {
         try {
-          const deleteResponse = await fetch('/api/delete-blob', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ url: submission.file_url })
+          const deleteResponse = await fetch("/api/delete-blob", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url: submission.file_url }),
           })
-          
+
           if (!deleteResponse.ok) {
-            console.error('[v0] Failed to delete blob file')
+            console.error("[v0] Failed to delete blob file")
           }
         } catch (blobError) {
-          console.error('[v0] Error deleting blob:', blobError)
+          console.error("[v0] Error deleting blob:", blobError)
           // Continue with submission deletion even if blob deletion fails
         }
       }
 
-      const { error } = await supabase
-        .from("abstracts")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id) // Extra security: ensure user owns the submission
+      const { error } = await supabase.from("abstracts").delete().eq("id", id).eq("user_id", user.id) // Extra security: ensure user owns the submission
 
       if (error) throw error
 
       toast.success("Submission deleted successfully")
-      
+
       // Remove from local state
-      setAbstracts(abstracts.filter(a => a.id !== id))
+      setAbstracts(abstracts.filter((a) => a.id !== id))
       setDeletingId(null)
     } catch (err) {
       console.error("Error deleting submission:", err)
@@ -200,7 +208,7 @@ export default function MyPostersPage() {
               <Card>
                 <CardContent className="pt-12 pb-12 text-center">
                   <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="font-semibold text-lg mb-2">No submissions yet</h3>
+                  <h3 className="font-semibold text-lg mb-2 break-words overflow-wrap-anywhere">No submissions yet</h3>
                   <p className="text-muted-foreground mb-6">
                     You haven't submitted any e-posters. Start by submitting your first abstract.
                   </p>
@@ -219,14 +227,21 @@ export default function MyPostersPage() {
                     <CardHeader>
                       <div className="flex flex-col sm:flex-row justify-between items-start gap-4 min-w-0">
                         <div className="flex-1 min-w-0 w-full">
-                          <CardTitle className="text-xl mb-2 break-words overflow-wrap-anywhere">{abstract.title}</CardTitle>
-                          <CardDescription className="break-words overflow-wrap-anywhere">
-                            <span className="font-semibold">Authors:</span> {abstract.authors}
+                          <CardTitle className="text-xl mb-2 break-words overflow-wrap-anywhere">
+                            {abstract.title}
+                          </CardTitle>
+                          <CardDescription className="break-words overflow-wrap-anywhere space-y-1">
+                            <div>
+                              <span className="font-semibold">Authors:</span> {abstract.authors}
+                            </div>
+                            {abstract.university && (
+                              <div>
+                                <span className="font-semibold">University:</span> {abstract.university}
+                              </div>
+                            )}
                           </CardDescription>
                         </div>
-                        <div className="shrink-0">
-                          {getStatusBadge(abstract.submission_status)}
-                        </div>
+                        <div className="shrink-0">{getStatusBadge(abstract.submission_status)}</div>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4 min-w-0">
@@ -245,7 +260,8 @@ export default function MyPostersPage() {
                           <AlertCircle className="h-4 w-4" />
                           <AlertTitle>Resubmission Allowed</AlertTitle>
                           <AlertDescription className="break-words">
-                            You can submit a revised version of this abstract. Please address the feedback above before resubmitting.
+                            You can submit a revised version of this abstract. Please address the feedback above before
+                            resubmitting.
                           </AlertDescription>
                         </Alert>
                       )}
@@ -255,10 +271,14 @@ export default function MyPostersPage() {
                           <span className="text-muted-foreground">Category:</span>
                           <span className="ml-2 font-medium capitalize break-words">{abstract.category}</span>
                         </div>
-                        <div className="min-w-0">
-                          <span className="text-muted-foreground">Keywords:</span>
-                          <span className="ml-2 font-medium break-words overflow-wrap-anywhere">{abstract.keywords}</span>
-                        </div>
+                        {abstract.keywords && (
+                          <div className="min-w-0">
+                            <span className="text-muted-foreground">Keywords:</span>
+                            <span className="ml-2 font-medium break-words overflow-wrap-anywhere">
+                              {abstract.keywords}
+                            </span>
+                          </div>
+                        )}
                         <div className="min-w-0">
                           <span className="text-muted-foreground">Submitted:</span>
                           <span className="ml-2 font-medium">
@@ -277,25 +297,24 @@ export default function MyPostersPage() {
 
                       <div className="min-w-0">
                         <p className="text-sm text-muted-foreground mb-2">Abstract:</p>
-                        <p className="text-sm line-clamp-3 break-words overflow-wrap-anywhere">{abstract.content}</p>
+                        {abstract.content && abstract.content.includes("blob.vercel-storage.com") ? (
+                          <Button variant="outline" size="sm" asChild>
+                            <a href={abstract.content} target="_blank" rel="noopener noreferrer" download>
+                              <Download className="w-4 h-4 mr-2" />
+                              Download Abstract PDF
+                            </a>
+                          </Button>
+                        ) : (
+                          <p className="text-sm line-clamp-3 break-words overflow-wrap-anywhere">{abstract.content}</p>
+                        )}
                       </div>
 
                       <div className="pt-2 border-t min-w-0">
                         <p className="text-sm text-muted-foreground mb-2">Poster File:</p>
                         {abstract.file_url ? (
                           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              asChild
-                              className="w-full sm:w-auto"
-                            >
-                              <a 
-                                href={abstract.file_url} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                download
-                              >
+                            <Button variant="outline" size="sm" asChild className="w-full sm:w-auto bg-transparent">
+                              <a href={abstract.file_url} target="_blank" rel="noopener noreferrer" download>
                                 <Download className="w-4 h-4 mr-2" />
                                 Download Poster File
                               </a>
@@ -316,7 +335,7 @@ export default function MyPostersPage() {
                       </div>
 
                       <div className="flex flex-wrap gap-2 pt-2">
-                        <Button variant="outline" size="sm" asChild className="flex-1 min-w-[120px]">
+                        <Button variant="outline" size="sm" asChild className="flex-1 min-w-[120px] bg-transparent">
                           <Link href={`/my-posters/${abstract.id}`}>View Details</Link>
                         </Button>
                         {abstract.submission_status === "rejected" && abstract.can_resubmit && (
@@ -334,7 +353,7 @@ export default function MyPostersPage() {
                                 variant="outline"
                                 size="sm"
                                 disabled={deletingId === abstract.id}
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-1 min-w-[120px]"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 flex-1 min-w-[120px] bg-transparent"
                               >
                                 {deletingId === abstract.id ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />

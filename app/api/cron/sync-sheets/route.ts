@@ -33,22 +33,40 @@ export async function GET(request: NextRequest) {
 
     const { data: postersData, error: postersError } = await supabaseAdmin
       .from("abstracts")
-      .select(`
-        *,
-        profiles!abstracts_user_id_fkey (
-          full_name,
-          email,
-          institution,
-          phone
-        )
-      `)
+      .select("*")
       .order("created_at", { ascending: false })
 
     if (postersError) {
       console.error("[v0] Error fetching posters:", postersError)
+      throw postersError
     }
 
     console.log("[v0] Found poster submissions:", postersData?.length || 0)
+
+    const posterUserIds = postersData?.map((p) => p.user_id).filter(Boolean) as string[]
+
+    const { data: posterProfilesData, error: posterProfilesError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .in("id", posterUserIds)
+
+    if (posterProfilesError) {
+      console.error("[v0] Error fetching poster profiles:", posterProfilesError)
+    }
+
+    const posterProfilesMap = new Map(posterProfilesData?.map((p) => [p.id, p]) || [])
+
+    if (postersData && postersData.length > 0) {
+      console.log("[v0] First poster sample:", {
+        id: postersData[0].id,
+        title: postersData[0].title,
+        user_id: postersData[0].user_id,
+        hasProfile: posterProfilesMap.has(postersData[0].user_id),
+        profileEmail: posterProfilesMap.get(postersData[0].user_id)?.email,
+      })
+    } else {
+      console.log("[v0] No poster submissions found in database")
+    }
 
     // Fetch confirmed attendees data
     const { data: paymentsData, error: paymentsError } = await supabaseAdmin
@@ -338,7 +356,7 @@ export async function GET(request: NextRequest) {
     ]
 
     const posterRows = (postersData || []).map((poster) => {
-      const profile = poster.profiles || {}
+      const profile = posterProfilesMap.get(poster.user_id) || {}
       return [
         poster.title || "",
         profile.full_name || "",
@@ -356,6 +374,8 @@ export async function GET(request: NextRequest) {
     })
 
     const posterValues = [posterHeaders, ...posterRows]
+
+    console.log("[v0] Writing poster data to sheet. Rows:", posterRows.length)
 
     await sheets.spreadsheets.values.update({
       spreadsheetId,

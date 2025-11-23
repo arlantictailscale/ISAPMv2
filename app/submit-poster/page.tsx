@@ -225,11 +225,11 @@ export default function SubmitPosterPage() {
           email: user.email,
           title: formData.title,
           authors: formData.authors,
-          keywords: `${formData.category} | ${formData.university}`, // Store category and university in keywords field temporarily
+          keywords: formData.topic, // Store topic in keywords field
           content: abstractUrl, // Store abstract PDF URL in content field
-          category: formData.topic,
+          category: formData.category, // Store category (Case Report/Research) in category field
           submission_status: "pending",
-          file_url: fileUrl,
+          file_url: fileUrl, // Store poster PDF URL in file_url field
         },
       ])
 

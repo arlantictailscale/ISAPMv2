@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/cart/utils"
 import { formatDistanceToNow } from "date-fns"
-import { CheckCircle, XCircle, Eye, Clock, RefreshCw, FileX } from "lucide-react"
+import { CheckCircle, XCircle, Eye, Clock, RefreshCw, FileX, AlertCircle, CheckCircle2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import Navigation from "@/components/navigation"
@@ -203,13 +203,41 @@ export default function PaymentValidationPage() {
     }
   }
 
+  const calculateOrderTotal = (items: any[]) => {
+    return items.reduce((sum, item) => {
+      const nights = item.nights || 1
+      return sum + (item.unit_price || 0) * nights
+    }, 0)
+  }
+
   const handleApprove = async () => {
     if (!selectedPayment) return
+
+    const order = selectedPayment.orders
+    const items = order?.order_items || []
+    const calculatedTotal = calculateOrderTotal(items)
+    const submittedAmount = selectedPayment.amount
+
+    console.log("[v0] Calculated total:", calculatedTotal)
+    console.log("[v0] Submitted amount:", submittedAmount)
+    console.log("[v0] Difference:", Math.abs(calculatedTotal - submittedAmount))
+
+    // Check if there's a significant discrepancy (more than 1 IDR due to rounding)
+    if (Math.abs(calculatedTotal - submittedAmount) > 1) {
+      toast({
+        title: "Amount Mismatch Detected",
+        description: `Submitted amount (${formatCurrency(submittedAmount, selectedPayment.currency)}) does not match calculated order total (${formatCurrency(calculatedTotal, selectedPayment.currency)}). Please verify before approving.`,
+        variant: "destructive",
+      })
+      setIsProcessing(false)
+      return
+    }
+
     setIsProcessing(true)
 
     console.log("[v0] Approving payment:", selectedPayment.id)
 
-    const result = await approvePayment(selectedPayment.id, selectedPayment.order_id)
+    const result = await approvePayment(selectedPayment.id, selectedPayment.order_id, calculatedTotal)
 
     if (!result.success) {
       toast({
@@ -311,10 +339,7 @@ export default function PaymentValidationPage() {
     const order = payment.orders
     const items = order?.order_items || []
 
-    const calculatedTotal = items.reduce((sum, item) => {
-      const nights = item.nights || 1
-      return sum + (item.unit_price || 0) * nights
-    }, 0)
+    const calculatedTotal = calculateOrderTotal(items)
 
     return (
       <Card className="hover:shadow-lg transition-shadow">
@@ -632,20 +657,86 @@ export default function PaymentValidationPage() {
               to access their event registrations.
             </DialogDescription>
           </DialogHeader>
-          {selectedPayment && (
-            <div className="space-y-2 py-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                <div className="text-muted-foreground">Order ID:</div>
-                <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
-                <div className="text-muted-foreground">Amount:</div>
-                <div className="font-semibold break-all">
-                  {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
+          {selectedPayment &&
+            (() => {
+              const order = selectedPayment.orders
+              const items = order?.order_items || []
+              const calculatedTotal = calculateOrderTotal(items)
+              const submittedAmount = selectedPayment.amount
+              const hasMismatch = Math.abs(calculatedTotal - submittedAmount) > 1
+
+              return (
+                <div className="space-y-4 py-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    <div className="text-muted-foreground">Order ID:</div>
+                    <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
+                    <div className="text-muted-foreground">Customer:</div>
+                    <div className="truncate">{order?.full_name}</div>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="text-sm font-medium">Payment Details:</div>
+
+                    {/* Order Items */}
+                    <div className="space-y-2">
+                      {items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {item.item_type === "event"
+                              ? item.event_label
+                              : `${item.hotel_room_type} (${item.nights} nights)`}
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(
+                              item.item_type === "hotel" && item.nights
+                                ? item.unit_price * item.nights
+                                : item.unit_price,
+                              selectedPayment.currency,
+                            )}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Calculated vs Submitted comparison */}
+                    <div className="border-t pt-3 space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Calculated Total:</span>
+                        <span className="font-semibold">
+                          {formatCurrency(calculatedTotal, selectedPayment.currency)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Submitted Amount:</span>
+                        <span className={`font-semibold ${hasMismatch ? "text-destructive" : "text-green-600"}`}>
+                          {formatCurrency(submittedAmount, selectedPayment.currency)}
+                        </span>
+                      </div>
+
+                      {hasMismatch && (
+                        <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2">
+                          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                          <div>
+                            <div className="font-semibold">Amount Mismatch!</div>
+                            <div className="text-xs mt-1">
+                              The submitted payment amount does not match the calculated order total. Difference:{" "}
+                              {formatCurrency(Math.abs(calculatedTotal - submittedAmount), selectedPayment.currency)}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {!hasMismatch && (
+                        <div className="bg-green-50 text-green-700 text-sm p-3 rounded-md flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 shrink-0" />
+                          <span>Amount verified - matches order total</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-muted-foreground">Customer:</div>
-                <div className="truncate">{selectedPayment.orders?.full_name}</div>
-              </div>
-            </div>
-          )}
+              )
+            })()}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsApproveDialogOpen(false)} disabled={isProcessing}>
               Cancel

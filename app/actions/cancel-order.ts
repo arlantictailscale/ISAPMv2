@@ -45,11 +45,14 @@ export async function cancelOrder(orderId: string) {
     return { success: false, error: "Cannot cancel order with submitted payment" }
   }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("[v0] Missing Supabase credentials")
+    console.error("[v0] Missing Supabase credentials:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey,
+    })
     return { success: false, error: "Configuration error" }
   }
 

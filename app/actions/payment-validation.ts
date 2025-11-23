@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendPaymentVerificationEmail } from "@/lib/email"
 
-export async function approvePayment(paymentId: string, orderId: string) {
+export async function approvePayment(paymentId: string, orderId: string, calculatedTotal?: number) {
   try {
     const supabase = await createClient()
 
@@ -29,7 +29,6 @@ export async function approvePayment(paymentId: string, orderId: string) {
       return { success: false, error: "Payment not found" }
     }
 
-    // Update payment status to verified
     const { error: paymentError } = await supabase
       .from("order_payments")
       .update({
@@ -37,6 +36,8 @@ export async function approvePayment(paymentId: string, orderId: string) {
         verified_at: new Date().toISOString(),
         verified_by: user.id,
         rejection_reason: null,
+        // Update amount to calculated total if provided (fixes incorrect amounts)
+        ...(calculatedTotal !== undefined && { amount: calculatedTotal }),
       })
       .eq("id", paymentId)
 
@@ -45,8 +46,13 @@ export async function approvePayment(paymentId: string, orderId: string) {
       return { success: false, error: "Failed to approve payment" }
     }
 
-    // Update order status to paid
-    const { error: orderError } = await supabase.from("orders").update({ status: "paid" }).eq("id", orderId)
+    const orderUpdateData: any = { status: "paid" }
+    if (calculatedTotal !== undefined) {
+      orderUpdateData.total_amount = calculatedTotal
+      console.log("[v0] Updating order total_amount to calculated value:", calculatedTotal)
+    }
+
+    const { error: orderError } = await supabase.from("orders").update(orderUpdateData).eq("id", orderId)
 
     if (orderError) {
       console.error("[v0] Error updating order status:", orderError)
@@ -54,13 +60,15 @@ export async function approvePayment(paymentId: string, orderId: string) {
 
     try {
       const order = payment.orders as any
+      const emailTotalAmount = calculatedTotal !== undefined ? calculatedTotal : order.total_amount
+
       await sendPaymentVerificationEmail({
         email: order.email,
         userName: order.full_name,
         status: "verified",
         orderId: order.id,
         orderItems: order.order_items,
-        totalAmount: order.total_amount,
+        totalAmount: emailTotalAmount,
         currency: order.currency,
       })
       console.log("[v0] Payment verification email sent to:", order.email)

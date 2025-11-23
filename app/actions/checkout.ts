@@ -51,8 +51,10 @@ export async function createOrderFromCart(guestInfo: {
     return { error: "Cart is empty" }
   }
 
-  // Calculate total
-  const totalAmount = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+  const totalAmount = items.reduce((sum, item) => {
+    const nights = item.nights || 1
+    return sum + (item.unit_price || 0) * nights
+  }, 0)
   const currency = items[0].currency
 
   // Create order

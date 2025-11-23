@@ -192,6 +192,12 @@ export default async function MyPurchasesPage() {
                   const actionButton = getActionButton(order)
                   const ActionIcon = actionButton.icon
 
+                  const calculatedTotal =
+                    order.order_items?.reduce((sum: number, item: any) => {
+                      const nights = item.nights || 1
+                      return sum + (item.unit_price || 0) * nights
+                    }, 0) || 0
+
                   return (
                     <Card key={order.id}>
                       <CardHeader>
@@ -314,7 +320,7 @@ export default async function MyPurchasesPage() {
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Total:</span>
                                 <span className="font-bold text-primary">
-                                  {order.currency} {order.total_amount.toLocaleString("id-ID")}
+                                  {order.currency} {calculatedTotal.toLocaleString("id-ID")}
                                 </span>
                               </div>
                             </div>

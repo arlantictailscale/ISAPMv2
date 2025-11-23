@@ -295,6 +295,11 @@ export default function PaymentValidationPage() {
     const order = payment.orders
     const items = order?.order_items || []
 
+    const calculatedTotal = items.reduce((sum, item) => {
+      const nights = item.nights || 1
+      return sum + (item.unit_price || 0) * nights
+    }, 0)
+
     return (
       <Card className="hover:shadow-lg transition-shadow">
         <CardContent className="p-6">
@@ -368,12 +373,14 @@ export default function PaymentValidationPage() {
                 <p className="text-muted-foreground">Account Name</p>
                 <p className="font-medium truncate">{payment.account_name || "N/A"}</p>
               </div>
-              <div className="min-w-0">
-                <p className="text-muted-foreground">Total Amount</p>
-                <p className="font-bold text-primary text-lg break-all">
-                  {formatCurrency(payment.amount, payment.currency)}
-                </p>
-              </div>
+            </div>
+
+            {/* Total */}
+            <div className="pt-4 border-t flex justify-between items-center">
+              <span className="font-semibold">Total Amount:</span>
+              <span className="text-xl font-bold text-primary">
+                {formatCurrency(calculatedTotal, payment.currency)}
+              </span>
             </div>
 
             {/* Payment Proof Thumbnail */}

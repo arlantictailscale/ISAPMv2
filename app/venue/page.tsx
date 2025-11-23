@@ -5,10 +5,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
+import { getRoomAvailability } from "@/app/actions/get-room-availability"
 
-export default function Venue() {
+export default async function VenuePage() {
+  const roomAvailability = await getRoomAvailability()
+
   return (
-    <>
+    <div className="min-h-screen">
       <Navigation />
       <main className="pt-24 overflow-x-hidden">
         {/* Hero Section with Stunning Pool Image Backdrop */}
@@ -312,6 +315,12 @@ export default function Venue() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
+                        <span className="text-sm font-medium text-cyan-900">Rooms Available:</span>
+                        <span className="text-lg font-bold text-cyan-600">
+                          {roomAvailability.deluxe.available} / {roomAvailability.deluxe.total}
+                        </span>
+                      </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-cyan-600">Rp 1,250,000</span>
                         <span className="text-muted-foreground">/ night</span>
@@ -344,6 +353,12 @@ export default function Venue() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
+                        <span className="text-sm font-medium text-cyan-900">Rooms Available:</span>
+                        <span className="text-lg font-bold text-cyan-600">
+                          {roomAvailability.premier.available} / {roomAvailability.premier.total}
+                        </span>
+                      </div>
                       <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-bold text-cyan-600">Rp 1,350,000</span>
                         <span className="text-muted-foreground">/ night</span>
@@ -451,6 +466,6 @@ export default function Venue() {
         </section>
       </main>
       <Footer />
-    </>
+    </div>
   )
 }

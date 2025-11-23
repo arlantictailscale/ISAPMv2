@@ -35,5 +35,5 @@ export default async function PaymentOrderPage({
 
   const payment = orderData.order_payments?.[0] || null
 
-  return <PaymentOrderClient order={orderData} userId={userId} payment={payment} />
+  return <PaymentOrderClient initialOrder={orderData} initialPayment={payment} />
 }

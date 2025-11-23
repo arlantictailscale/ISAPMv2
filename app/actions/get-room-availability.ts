@@ -23,10 +23,17 @@ export async function getRoomAvailability() {
 
     const { data: bookings, error: bookingsError } = await supabase
       .from("order_items")
-      .select("hotel_room_type, orders!inner(status)")
+      .select(`
+        hotel_room_type,
+        orders!inner (
+          status
+        )
+      `)
       .in("hotel_room_type", ["deluxe", "premier"])
-      .not("hotel_room_type", "is", null)
-      .not("orders.status", "eq", "cancelled")
+      .neq("orders.status", "cancelled")
+
+    console.log("[v0] Bookings query result:", bookings)
+    console.log("[v0] Bookings error:", bookingsError)
 
     if (bookingsError) {
       console.error("[v0] Error fetching bookings:", bookingsError)
@@ -36,6 +43,9 @@ export async function getRoomAvailability() {
     // Count bookings by room type
     const deluxeBookings = bookings?.filter((b) => b.hotel_room_type === "deluxe").length || 0
     const premierBookings = bookings?.filter((b) => b.hotel_room_type === "premier").length || 0
+
+    console.log("[v0] Deluxe bookings count:", deluxeBookings)
+    console.log("[v0] Premier bookings count:", premierBookings)
 
     // Get default capacities
     const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120

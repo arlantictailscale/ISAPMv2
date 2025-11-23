@@ -144,7 +144,7 @@ export default function AdminHotelBookingsPage() {
         "Check-in": item?.check_in_date || "",
         "Check-out": item?.check_out_date || "",
         Nights: item?.nights || 0,
-        "Total Amount": booking.total_amount,
+        "Total Amount": (item?.unit_price || 0) * (item?.nights || 1),
         Status: booking.status,
         "Booked At": new Date(booking.created_at).toLocaleString("id-ID"),
       }
@@ -256,7 +256,9 @@ export default function AdminHotelBookingsPage() {
                           </div>
                           <div className="space-y-1">
                             <p className="text-muted-foreground">Payment</p>
-                            <p className="font-bold text-lg">Rp {booking.total_amount.toLocaleString("id-ID")}</p>
+                            <p className="font-bold text-lg">
+                              Rp {((item?.unit_price || 0) * (item?.nights || 1)).toLocaleString("id-ID")}
+                            </p>
                             <p className="text-xs">
                               Booked: {new Date(booking.created_at).toLocaleDateString("id-ID")}
                             </p>

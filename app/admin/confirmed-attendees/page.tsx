@@ -410,6 +410,9 @@ export default function ConfirmedAttendeesPage() {
                         <TableBody>
                           {hotelBookings.map((booking) => {
                             const item = booking.order_items[0]
+                            const totalAmount = item?.nights
+                              ? (item.unit_price || 0) * item.nights
+                              : booking.total_amount
                             return (
                               <TableRow key={booking.id}>
                                 <TableCell className="font-medium">
@@ -425,7 +428,7 @@ export default function ConfirmedAttendeesPage() {
                                 </TableCell>
                                 <TableCell>{item?.nights}</TableCell>
                                 <TableCell className="text-right font-medium">
-                                  Rp {booking.total_amount.toLocaleString("id-ID")}
+                                  Rp {totalAmount.toLocaleString("id-ID")}
                                 </TableCell>
                                 <TableCell className="text-right font-medium">
                                   {booking.verified_at ? format(new Date(booking.verified_at), "MMM dd, yyyy") : ""}

@@ -57,7 +57,10 @@ export default async function AdminCartsPage() {
 
   // Calculate metrics
   const totalCartValue = activeCarts.reduce((sum, cart) => {
-    const cartTotal = (cart.cart_items || []).reduce((itemSum, item) => itemSum + (item.unit_price || 0), 0)
+    const cartTotal = (cart.cart_items || []).reduce((itemSum, item) => {
+      const nights = item.nights || 1
+      return itemSum + (item.unit_price || 0) * nights
+    }, 0)
     return sum + cartTotal
   }, 0)
 
@@ -211,7 +214,13 @@ export default async function AdminCartsPage() {
                               <div className="flex items-center justify-between text-sm">
                                 <span className="text-muted-foreground">{items.length} items</span>
                                 <span className="font-bold text-primary">
-                                  {formatCurrency(order.total_amount || 0, order.currency || "IDR")}
+                                  {formatCurrency(
+                                    items.reduce((sum, item) => {
+                                      const nights = item.nights || 1
+                                      return sum + (item.unit_price || 0) * nights
+                                    }, 0),
+                                    order.currency || "IDR",
+                                  )}
                                 </span>
                               </div>
                               <div className="text-xs text-muted-foreground">
@@ -255,7 +264,10 @@ export default async function AdminCartsPage() {
                       <div className="space-y-4">
                         {abandonedCarts.map((cart) => {
                           const items = cart.cart_items || []
-                          const total = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+                          const total = items.reduce((sum, item) => {
+                            const nights = item.nights || 1
+                            return sum + (item.unit_price || 0) * nights
+                          }, 0)
                           const cartProfile = cart.profile
 
                           return (
@@ -314,7 +326,10 @@ export default async function AdminCartsPage() {
                       <div className="space-y-4">
                         {activeCarts.map((cart) => {
                           const items = cart.cart_items || []
-                          const total = items.reduce((sum, item) => sum + (item.unit_price || 0), 0)
+                          const total = items.reduce((sum, item) => {
+                            const nights = item.nights || 1
+                            return sum + (item.unit_price || 0) * nights
+                          }, 0)
                           const cartProfile = cart.profile
                           const isEmpty = items.length === 0
 

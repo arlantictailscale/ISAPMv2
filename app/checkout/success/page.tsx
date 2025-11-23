@@ -26,11 +26,22 @@ export default async function CheckoutSuccessPage({
   }
 
   // Verify order belongs to user
-  const { data: order } = await supabase.from("orders").select("*").eq("id", orderId).eq("user_id", user.id).single()
+  const { data: order } = await supabase
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("id", orderId)
+    .eq("user_id", user.id)
+    .single()
 
   if (!order) {
     redirect("/cart")
   }
+
+  // Calculate correct total from order items
+  const calculatedTotal = (order.order_items || []).reduce((sum: number, item: any) => {
+    const nights = item.nights || 1
+    return sum + (item.unit_price || 0) * nights
+  }, 0)
 
   return (
     <div className="min-h-screen bg-muted/30 py-24">
@@ -53,7 +64,7 @@ export default async function CheckoutSuccessPage({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Total Amount:</span>
-                <span className="font-bold text-primary">Rp {order.total_amount.toLocaleString("id-ID")}</span>
+                <span className="font-bold text-primary">Rp {calculatedTotal.toLocaleString("id-ID")}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Status:</span>

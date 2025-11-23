@@ -114,6 +114,10 @@ export default function MyOrdersPage() {
               <div className="space-y-4">
                 {orders.map((order) => {
                   const item = order.order_items[0]
+                  const totalAmount = order.order_items.reduce((sum: number, item: any) => {
+                    const nights = item.nights || 1
+                    return sum + (item.unit_price || 0) * nights
+                  }, 0)
                   return (
                     <Card key={order.id}>
                       <CardHeader>
@@ -163,9 +167,7 @@ export default function MyOrdersPage() {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-muted-foreground">Total:</span>
-                              <span className="font-bold text-primary">
-                                Rp {order.total_amount.toLocaleString("id-ID")}
-                              </span>
+                              <span className="font-bold text-primary">Rp {totalAmount.toLocaleString("id-ID")}</span>
                             </div>
                           </div>
                         </div>

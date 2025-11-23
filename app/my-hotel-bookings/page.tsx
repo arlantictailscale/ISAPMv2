@@ -291,9 +291,16 @@ export default function MyHotelBookingsPage() {
                                     </Badge>
                                   </div>
                                 </div>
-                                <span className="text-lg font-bold text-primary">
-                                  {item.currency} {item.unit_price.toLocaleString("id-ID")}
-                                </span>
+                                <div className="text-right">
+                                  <span className="text-lg font-bold text-primary">
+                                    {item.currency} {(item.unit_price * item.nights).toLocaleString("id-ID")}
+                                  </span>
+                                  {item.nights > 1 && (
+                                    <p className="text-xs text-muted-foreground">
+                                      {item.currency} {item.unit_price.toLocaleString("id-ID")} × {item.nights} nights
+                                    </p>
+                                  )}
+                                </div>
                               </div>
 
                               <div className="grid gap-4 sm:grid-cols-2 text-sm bg-muted/50 p-4 rounded-lg">

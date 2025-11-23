@@ -346,7 +346,9 @@ export default function PaymentValidationPage() {
                     )}
                   </div>
                   <span className="font-medium whitespace-nowrap">
-                    {formatCurrency(item.unit_price, payment.currency)}
+                    {item.item_type === "hotel" && item.nights
+                      ? formatCurrency(item.unit_price * item.nights, payment.currency)
+                      : formatCurrency(item.unit_price, payment.currency)}
                   </span>
                 </div>
               ))}

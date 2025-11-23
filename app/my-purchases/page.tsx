@@ -365,8 +365,16 @@ export default async function MyPurchasesPage() {
                                   </div>
                                   <div className="text-right">
                                     <p className="font-medium">
-                                      {item.currency} {item.unit_price.toLocaleString("id-ID")}
+                                      {item.currency}{" "}
+                                      {item.item_type === "hotel" && item.nights
+                                        ? (item.unit_price * item.nights).toLocaleString("id-ID")
+                                        : item.unit_price.toLocaleString("id-ID")}
                                     </p>
+                                    {item.item_type === "hotel" && item.nights && item.nights > 1 && (
+                                      <p className="text-xs text-muted-foreground">
+                                        {item.currency} {item.unit_price.toLocaleString("id-ID")} × {item.nights} nights
+                                      </p>
+                                    )}
                                     <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                                   </div>
                                 </div>

@@ -71,6 +71,49 @@ export default function PricingPage() {
     "Nurse Anesthetist": ["penata_anestesi"],
   }
 
+  const getEventColorScheme = (eventId: string) => {
+    if (eventId === "cpd") {
+      return {
+        bgGradient: "from-purple-50 to-violet-50",
+        borderColor: "border-purple-200",
+        hoverBorder: "hover:border-purple-400",
+        textColor: "text-purple-900",
+        badgeBg: "bg-purple-100",
+        badgeText: "text-purple-700",
+        categoryLabel: "CPD",
+      }
+    } else if (eventId.startsWith("ws")) {
+      return {
+        bgGradient: "from-orange-50 to-amber-50",
+        borderColor: "border-orange-200",
+        hoverBorder: "hover:border-orange-400",
+        textColor: "text-orange-900",
+        badgeBg: "bg-orange-100",
+        badgeText: "text-orange-700",
+        categoryLabel: "Workshop",
+      }
+    } else if (eventId === "symposium") {
+      return {
+        bgGradient: "from-teal-50 to-emerald-50",
+        borderColor: "border-teal-200",
+        hoverBorder: "hover:border-teal-400",
+        textColor: "text-teal-900",
+        badgeBg: "bg-teal-100",
+        badgeText: "text-teal-700",
+        categoryLabel: "Symposium",
+      }
+    }
+    return {
+      bgGradient: "from-gray-50 to-slate-50",
+      borderColor: "border-gray-200",
+      hoverBorder: "hover:border-primary",
+      textColor: "text-gray-900",
+      badgeBg: "bg-gray-100",
+      badgeText: "text-gray-700",
+      categoryLabel: "Event",
+    }
+  }
+
   const registrationOptions = [
     {
       id: "cpd",
@@ -415,76 +458,100 @@ export default function PricingPage() {
             )}
 
             <div className="space-y-4">
-              {filteredEvents.map((event) => (
-                <Dialog key={event.id}>
-                  <DialogTrigger asChild>
-                    <button className="w-full bg-card border border-border rounded-xl p-4 hover:border-primary transition-colors text-left flex items-center justify-between group">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display text-lg font-bold text-primary mb-1 truncate">{event.label}</h3>
-                        <p className="text-sm text-muted-foreground">{event.date}</p>
-                      </div>
-                      <ChevronRight className="ml-4 h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                    </button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto overflow-x-hidden w-[95vw] sm:w-full">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl pr-8 break-words">{event.label}</DialogTitle>
-                      <DialogDescription className="break-words">{event.date}</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 mt-4">
-                      {event.participantTypes.map((pt) => {
-                        const currentPrice = isEarlyBirdPeriod ? pt.earlyBirdPrice : pt.normalPrice
+              {filteredEvents.map((event) => {
+                const colorScheme = getEventColorScheme(event.id)
 
-                        return (
-                          <div key={pt.id} className="border border-border rounded-lg p-4 space-y-3">
-                            <h4 className="font-semibold text-foreground break-words">{pt.label}</h4>
-                            <div className="space-y-2">
-                              {isEarlyBirdPeriod && (
+                return (
+                  <Dialog key={event.id}>
+                    <DialogTrigger asChild>
+                      <button
+                        className={`w-full bg-gradient-to-br ${colorScheme.bgGradient} border-2 ${colorScheme.borderColor} ${colorScheme.hoverBorder} rounded-xl p-4 transition-all duration-200 text-left flex items-center justify-between group shadow-sm hover:shadow-md`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span
+                              className={`text-xs font-semibold px-2 py-1 rounded-full ${colorScheme.badgeBg} ${colorScheme.badgeText}`}
+                            >
+                              {colorScheme.categoryLabel}
+                            </span>
+                          </div>
+                          <h3 className={`font-display text-lg font-bold ${colorScheme.textColor} mb-1 truncate`}>
+                            {event.label}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">{event.date}</p>
+                        </div>
+                        <ChevronRight
+                          className={`ml-4 h-5 w-5 text-muted-foreground group-hover:${colorScheme.textColor} transition-colors flex-shrink-0`}
+                        />
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto overflow-x-hidden w-[95vw] sm:w-full">
+                      <DialogHeader>
+                        <div className="mb-2">
+                          <span
+                            className={`text-xs font-semibold px-2 py-1 rounded-full ${colorScheme.badgeBg} ${colorScheme.badgeText}`}
+                          >
+                            {colorScheme.categoryLabel}
+                          </span>
+                        </div>
+                        <DialogTitle className="text-xl pr-8 break-words">{event.label}</DialogTitle>
+                        <DialogDescription className="break-words">{event.date}</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 mt-4">
+                        {event.participantTypes.map((pt) => {
+                          const currentPrice = isEarlyBirdPeriod ? pt.earlyBirdPrice : pt.normalPrice
+
+                          return (
+                            <div key={pt.id} className="border border-border rounded-lg p-4 space-y-3">
+                              <h4 className="font-semibold text-foreground break-words">{pt.label}</h4>
+                              <div className="space-y-2">
+                                {isEarlyBirdPeriod && (
+                                  <div className="flex justify-between items-center gap-3">
+                                    <span className="text-sm text-muted-foreground min-w-0">Early Bird Price</span>
+                                    <span className="font-bold text-primary text-base sm:text-lg whitespace-nowrap">
+                                      {formatPrice(pt.earlyBirdPrice, pt.currency)}
+                                    </span>
+                                  </div>
+                                )}
                                 <div className="flex justify-between items-center gap-3">
-                                  <span className="text-sm text-muted-foreground min-w-0">Early Bird Price</span>
-                                  <span className="font-bold text-primary text-base sm:text-lg whitespace-nowrap">
-                                    {formatPrice(pt.earlyBirdPrice, pt.currency)}
+                                  <span className="text-sm text-muted-foreground min-w-0">Regular Price</span>
+                                  <span
+                                    className={`whitespace-nowrap ${isEarlyBirdPeriod ? "text-muted-foreground line-through" : "font-bold text-primary text-base sm:text-lg"}`}
+                                  >
+                                    {formatPrice(pt.normalPrice, pt.currency)}
                                   </span>
                                 </div>
-                              )}
-                              <div className="flex justify-between items-center gap-3">
-                                <span className="text-sm text-muted-foreground min-w-0">Regular Price</span>
-                                <span
-                                  className={`whitespace-nowrap ${isEarlyBirdPeriod ? "text-muted-foreground line-through" : "font-bold text-primary text-base sm:text-lg"}`}
-                                >
-                                  {formatPrice(pt.normalPrice, pt.currency)}
-                                </span>
+                                <div className="flex justify-between items-center gap-3">
+                                  <span className="text-sm text-muted-foreground min-w-0">On-site Price</span>
+                                  <span className="font-semibold text-foreground whitespace-nowrap">
+                                    {formatPrice(pt.onSitePrice, pt.currency)}
+                                  </span>
+                                </div>
                               </div>
-                              <div className="flex justify-between items-center gap-3">
-                                <span className="text-sm text-muted-foreground min-w-0">On-site Price</span>
-                                <span className="font-semibold text-foreground whitespace-nowrap">
-                                  {formatPrice(pt.onSitePrice, pt.currency)}
-                                </span>
+                              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                                <AddToCartButton
+                                  item={{
+                                    item_type: "event",
+                                    event_id: event.id,
+                                    event_label: event.label,
+                                    participant_type_id: pt.id,
+                                    participant_type_label: pt.label,
+                                    unit_price: currentPrice,
+                                    currency: pt.currency,
+                                  }}
+                                  variant="default"
+                                  size="default"
+                                  className="w-full"
+                                />
                               </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                              <AddToCartButton
-                                item={{
-                                  item_type: "event",
-                                  event_id: event.id,
-                                  event_label: event.label,
-                                  participant_type_id: pt.id,
-                                  participant_type_label: pt.label,
-                                  unit_price: currentPrice,
-                                  currency: pt.currency,
-                                }}
-                                variant="default"
-                                size="default"
-                                className="w-full"
-                              />
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              ))}
+                          )
+                        })}
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )
+              })}
             </div>
           </div>
         </section>

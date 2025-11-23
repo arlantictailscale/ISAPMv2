@@ -529,6 +529,35 @@ export default function EventsPage() {
     ],
   }
 
+  const congressSchedule = {
+    title: "ISAPM Congress",
+    date: "Friday, April 17, 2026",
+    time: "15:00 - 21:00 WIB",
+    leader: "TBD",
+    participants: "All ISAPM Members",
+    description:
+      "The ISAPM Congress is the highest organizational forum attended by all members of the Indonesian Society of Anesthesiologist for Pain Management (ISAPM). This activity includes a series of meetings to discuss organizational policy directions, performance evaluations, and strategic program planning for the future.",
+    mainAgenda: [
+      {
+        title: "Member Meeting",
+        description:
+          "Discussion of strategic issues, organizational policy refinement, and determining important decisions that will become ISAPM's work foundation.",
+      },
+      {
+        title: "Accountability Report",
+        description:
+          "Submission of activity reports, program achievements, and performance evaluation during the past term as a form of organizational transparency and accountability.",
+      },
+      {
+        title: "Election of New Leadership",
+        description:
+          "Democratic process to elect ISAPM leadership for the next period as a manifestation of leadership regeneration and organizational sustainability.",
+      },
+    ],
+    conclusion:
+      "The congress is expected to be a consolidation momentum for all ISAPM members in strengthening position, role, and scientific and professional contributions in the field of pain management in Indonesia.",
+  }
+
   const getAgendaItemClasses = (event: string) => {
     if (
       event.includes("REGISTRATION") ||
@@ -561,33 +590,39 @@ export default function EventsPage() {
           <div className="max-w-7xl mx-auto">
             <Tabs defaultValue="program" className="w-full">
               <div className="flex justify-center mb-12">
-                <TabsList className="grid grid-cols-3 h-14 bg-card border border-border shadow-sm p-1 rounded-xl">
+                <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto md:h-14 bg-card border border-border shadow-sm p-1 rounded-xl">
                   <TabsTrigger
                     value="program"
-                    className="text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 transition-all duration-200 rounded-lg px-6"
+                    className="text-sm md:text-base font-semibold data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-purple-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
                   >
                     CPD Courses
                   </TabsTrigger>
                   <TabsTrigger
                     value="workshop"
-                    className="text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 transition-all duration-200 rounded-lg px-6"
+                    className="text-sm md:text-base font-semibold data-[state=active]:bg-orange-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-orange-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
                   >
                     Workshops
                   </TabsTrigger>
                   <TabsTrigger
                     value="symposium"
-                    className="text-base font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:bg-accent/50 transition-all duration-200 rounded-lg px-6"
+                    className="text-sm md:text-base font-semibold data-[state=active]:bg-cyan-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-cyan-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
                   >
                     Symposium
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="congress"
+                    className="text-sm md:text-base font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-emerald-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
+                  >
+                    ISAPM Congress
                   </TabsTrigger>
                 </TabsList>
               </div>
 
               <TabsContent value="program" className="space-y-8 animate-in fade-in-50 duration-500">
-                <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl border border-primary/20 p-8 shadow-sm">
+                <div className="bg-gradient-to-br from-purple-500/10 via-purple-500/5 to-transparent rounded-2xl border border-purple-500/20 p-8 shadow-sm">
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="rounded-full bg-primary/20 p-3">
-                      <Clock className="h-6 w-6 text-primary" />
+                    <div className="rounded-full bg-purple-500/20 p-3">
+                      <Clock className="h-6 w-6 text-purple-600" />
                     </div>
                     <div className="flex-1">
                       <h2 className="text-3xl font-bold text-foreground mb-3 font-display">
@@ -603,57 +638,57 @@ export default function EventsPage() {
 
                   <div className="grid md:grid-cols-2 gap-6 mb-6">
                     <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                        <span className="inline-block w-1 h-6 bg-primary rounded-full"></span>
+                      <h3 className="text-lg font-semibold text-purple-600 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-purple-600 rounded-full"></span>
                         What You'll Learn:
                       </h3>
                       <ul className="space-y-2 text-foreground/90">
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Advanced pain assessment and diagnosis techniques</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Pharmacological and non-pharmacological interventions</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Interventional pain management procedures</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Management of acute, chronic, and cancer-related pain</span>
                         </li>
                       </ul>
                     </div>
 
                     <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                        <span className="inline-block w-1 h-6 bg-primary rounded-full"></span>
+                      <h3 className="text-lg font-semibold text-purple-600 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-purple-600 rounded-full"></span>
                         Who Should Attend:
                       </h3>
                       <ul className="space-y-2 text-foreground/90">
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Anesthesiologists and pain specialists</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>General practitioners and healthcare providers</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Nurses and allied health professionals</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-purple-600 mt-1">•</span>
                           <span>Medical students and residents</span>
                         </li>
                       </ul>
                     </div>
                   </div>
 
-                  <p className="text-sm italic text-muted-foreground border-t border-primary/20 pt-4">
+                  <p className="text-sm italic text-muted-foreground border-t border-purple-500/20 pt-4">
                     Each session combines theoretical knowledge with hands-on skill stations, providing practical
                     experience in modern pain management techniques.
                   </p>
@@ -663,7 +698,7 @@ export default function EventsPage() {
                   <div className="space-y-12">
                     {programSchedule.map((day, dayIndex) => (
                       <div key={dayIndex} className="space-y-6">
-                        <div className="border-l-4 border-primary pl-4">
+                        <div className="border-l-4 border-purple-600 pl-4">
                           <h2 className="text-2xl font-bold">{day.day}</h2>
                           <p className="text-muted-foreground">{day.title}</p>
                         </div>
@@ -671,7 +706,7 @@ export default function EventsPage() {
                         <div className="space-y-4">
                           {day.sessions.map((session, sessionIndex) => (
                             <div key={sessionIndex}>
-                              <h3 className="font-display text-lg font-bold text-primary mb-4 pb-2 border-b-2 border-primary/30">
+                              <h3 className="font-display text-lg font-bold text-purple-600 mb-4 pb-2 border-b-2 border-purple-500/30">
                                 {session.sesi}
                               </h3>
                               <div className="space-y-2">
@@ -681,11 +716,11 @@ export default function EventsPage() {
                                     className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${
                                       session.sesi === "Break"
                                         ? "bg-accent/10 border-accent/30"
-                                        : "bg-card border-border hover:border-primary/50"
+                                        : "bg-card border-border hover:border-purple-500/50"
                                     } transition-colors`}
                                   >
                                     <div className="md:col-span-2">
-                                      <p className="text-sm font-bold text-primary">{item.time}</p>
+                                      <p className="text-sm font-bold text-purple-600">{item.time}</p>
                                     </div>
                                     <div className="md:col-span-7">
                                       <p className="font-semibold text-foreground">{item.title}</p>
@@ -707,18 +742,93 @@ export default function EventsPage() {
                 )}
               </TabsContent>
 
-              <TabsContent value="workshop">
+              <TabsContent value="workshop" className="space-y-8 animate-in fade-in-50 duration-500">
+                <div className="bg-gradient-to-br from-orange-500/10 via-orange-500/5 to-transparent rounded-2xl border border-orange-500/20 p-8 shadow-sm">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="rounded-full bg-orange-500/20 p-3">
+                      <Clock className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-bold text-foreground mb-3 font-display">
+                        Pain Management Workshops
+                      </h2>
+                      <p className="text-base text-foreground/80 leading-relaxed">
+                        Explore our comprehensive workshop offerings designed for healthcare professionals at all
+                        levels. Each workshop provides hands-on training and practical skills in specialized areas of
+                        pain management, led by experienced course directors and expert practitioners.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold text-orange-600 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-orange-600 rounded-full"></span>
+                        Workshop Features:
+                      </h3>
+                      <ul className="space-y-2 text-foreground/90">
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Interactive hands-on training sessions</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Small group learning for personalized attention</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Real-world clinical case discussions</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Practical skill development and demonstration</span>
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold text-orange-600 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-orange-600 rounded-full"></span>
+                        Who Should Attend:
+                      </h3>
+                      <ul className="space-y-2 text-foreground/90">
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Pain management specialists</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Anesthesiologists and physicians</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Healthcare practitioners seeking advanced training</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <span className="text-orange-600 mt-1">•</span>
+                          <span>Medical professionals expanding their expertise</span>
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  <p className="text-sm italic text-muted-foreground border-t border-orange-500/20 pt-4">
+                    Each workshop is carefully designed to provide practical, immediately applicable knowledge and
+                    skills to enhance your clinical practice in pain management.
+                  </p>
+                </div>
+
                 {selectedWorkshop ? (
                   <div>
                     <Button variant="outline" onClick={() => setSelectedWorkshop(null)} className="mb-6">
                       <ArrowLeft className="w-4 h-4 mr-2" />
                       Back to all workshops
                     </Button>
-                    <h2 className="text-4xl font-bold text-primary mb-2">{selectedWorkshop.title}</h2>
+                    <h2 className="text-4xl font-bold text-orange-600 mb-2">{selectedWorkshop.title}</h2>
                     <p className="text-lg text-muted-foreground mb-4">Course Director: {selectedWorkshop.director}</p>
                     <p className="text-md text-muted-foreground mb-8">Date: {selectedWorkshop.date}</p>
 
-                    <h3 className="font-display text-3xl font-bold text-primary mb-6">Agenda</h3>
+                    <h3 className="font-display text-3xl font-bold text-orange-600 mb-6">Agenda</h3>
                     <div className="space-y-4">
                       {selectedWorkshop.agenda.map((item, index) => (
                         <div
@@ -726,7 +836,7 @@ export default function EventsPage() {
                           className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${getAgendaItemClasses(item.event)} transition-colors`}
                         >
                           <div className="md:col-span-2">
-                            <p className="text-sm font-bold text-primary">{item.time}</p>
+                            <p className="text-sm font-bold text-orange-600">{item.time}</p>
                           </div>
                           <div className="md:col-span-7">
                             <p className="font-semibold text-foreground whitespace-pre-wrap">{item.event}</p>
@@ -742,23 +852,20 @@ export default function EventsPage() {
                   </div>
                 ) : (
                   <>
-                    <div className="mb-8">
-                      <p className="text-lg text-muted-foreground">
-                        Explore our comprehensive workshop offerings designed for healthcare professionals at all
-                        levels. Each workshop is led by experienced course directors.
-                      </p>
-                    </div>
+                    <div className="mb-8"></div>
 
                     {/* Desktop Table View */}
                     <div className="hidden md:block overflow-x-auto rounded-lg border border-border">
                       <table className="w-full">
                         <thead>
-                          <tr className="bg-primary/10 border-b border-border">
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-primary w-12">No</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-primary">Workshop</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-primary">Participant</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-primary">Course Director</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-primary">Actions</th>
+                          <tr className="bg-orange-500/10 border-b border-border">
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600 w-12">No</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Workshop</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Participant</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">
+                              Course Director
+                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -784,18 +891,18 @@ export default function EventsPage() {
                       {workshopDetails.map((workshop, idx) => (
                         <div key={idx} className="border border-border rounded-lg p-6 bg-muted/30">
                           <div className="flex items-start gap-4 mb-4">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary text-white font-bold text-sm">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 text-white font-bold text-sm">
                               {workshop.no}
                             </div>
                             <h3 className="font-semibold text-foreground text-lg">{workshop.title}</h3>
                           </div>
                           <div className="space-y-3">
                             <div>
-                              <p className="text-xs font-semibold text-primary mb-1">Participant</p>
+                              <p className="text-xs font-semibold text-orange-600 mb-1">Participant</p>
                               <p className="text-sm text-muted-foreground">{workshop.participant}</p>
                             </div>
                             <div>
-                              <p className="text-xs font-semibold text-primary mb-1">Course Director</p>
+                              <p className="text-xs font-semibold text-orange-600 mb-1">Course Director</p>
                               <p className="text-sm text-muted-foreground">{workshop.director}</p>
                             </div>
                           </div>
@@ -815,10 +922,10 @@ export default function EventsPage() {
               </TabsContent>
 
               <TabsContent value="symposium" className="space-y-8 animate-in fade-in-50 duration-500">
-                <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-2xl border border-primary/20 p-8 shadow-sm">
+                <div className="bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-transparent rounded-2xl border border-cyan-500/20 p-8 shadow-sm">
                   <div className="flex items-start gap-4 mb-6">
-                    <div className="rounded-full bg-primary/20 p-3">
-                      <Clock className="h-6 w-6 text-primary" />
+                    <div className="rounded-full bg-cyan-500/20 p-3">
+                      <Clock className="h-6 w-6 text-cyan-600" />
                     </div>
                     <div className="flex-1">
                       <h2 className="text-3xl font-bold text-foreground mb-3 font-display">
@@ -833,57 +940,57 @@ export default function EventsPage() {
 
                   <div className="grid md:grid-cols-2 gap-6 mb-6">
                     <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                        <span className="inline-block w-1 h-6 bg-primary rounded-full"></span>
+                      <h3 className="text-lg font-semibold text-cyan-600 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-cyan-600 rounded-full"></span>
                         What You'll Learn:
                       </h3>
                       <ul className="space-y-2 text-foreground/90">
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>Ethics and Patient Safety in Pain Management</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>Realizing Integrated Pain Services</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>The Role of BPJS Kesehatan in Pain Services</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>Ultrasound-Guided Pain Interventions</span>
                         </li>
                       </ul>
                     </div>
 
                     <div className="space-y-3">
-                      <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
-                        <span className="inline-block w-1 h-6 bg-primary rounded-full"></span>
+                      <h3 className="text-lg font-semibold text-cyan-600 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-cyan-600 rounded-full"></span>
                         Who Should Attend:
                       </h3>
                       <ul className="space-y-2 text-foreground/90">
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>Anesthesiologists and pain specialists</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>General practitioners and healthcare providers</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>Nurses and allied health professionals</span>
                         </li>
                         <li className="flex items-start gap-2">
-                          <span className="text-primary mt-1">•</span>
+                          <span className="text-cyan-600 mt-1">•</span>
                           <span>Hospital management</span>
                         </li>
                       </ul>
                     </div>
                   </div>
 
-                  <p className="text-sm italic text-muted-foreground border-t border-primary/20 pt-4">
+                  <p className="text-sm italic text-muted-foreground border-t border-cyan-500/20 pt-4">
                     This symposium offers a platform for discussing current challenges and best practices in pain
                     management.
                   </p>
@@ -895,7 +1002,7 @@ export default function EventsPage() {
                 </div>
 
                 <div>
-                  <h3 className="font-display text-3xl font-bold text-primary mb-6">Agenda</h3>
+                  <h3 className="font-display text-3xl font-bold text-cyan-600 mb-6">Agenda</h3>
                   <div className="space-y-4">
                     {symposiumSchedule.agenda.map((item, index) => (
                       <div
@@ -903,7 +1010,7 @@ export default function EventsPage() {
                         className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${getAgendaItemClasses(item.activity)} transition-colors`}
                       >
                         <div className="md:col-span-2">
-                          <p className="text-sm font-bold text-primary">{item.time}</p>
+                          <p className="text-sm font-bold text-cyan-600">{item.time}</p>
                         </div>
                         <div className="md:col-span-7">
                           <p className="font-semibold text-foreground">{item.activity}</p>
@@ -916,6 +1023,66 @@ export default function EventsPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="congress" className="space-y-8 animate-in fade-in-50 duration-500">
+                <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent rounded-2xl border border-emerald-500/20 p-8 shadow-sm">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="rounded-full bg-emerald-500/20 p-3">
+                      <Clock className="h-6 w-6 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-bold text-foreground mb-3 font-display">{congressSchedule.title}</h2>
+                      <p className="text-base text-foreground/80 leading-relaxed mb-4">
+                        {congressSchedule.description}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6 mb-6 p-6 bg-card/50 rounded-lg border border-emerald-500/20">
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-emerald-600">Event Date</p>
+                      <p className="text-base text-foreground">{congressSchedule.date}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-emerald-600">Time</p>
+                      <p className="text-base text-foreground">{congressSchedule.time}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-emerald-600">Congress Leader</p>
+                      <p className="text-base text-foreground">{congressSchedule.leader}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-emerald-600">Participants</p>
+                      <p className="text-base text-foreground">{congressSchedule.participants}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <h3 className="text-2xl font-bold text-foreground border-l-4 border-emerald-500 pl-4">Main Agenda</h3>
+
+                  {congressSchedule.mainAgenda.map((item, index) => (
+                    <div
+                      key={index}
+                      className="bg-card border border-border rounded-lg p-6 hover:border-emerald-500/50 transition-colors"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-600 font-bold text-lg flex-shrink-0">
+                          {index + 1}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-xl font-bold text-foreground mb-2">{item.title}</h4>
+                          <p className="text-base text-muted-foreground leading-relaxed">{item.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="bg-gradient-to-r from-emerald-500/10 to-primary/10 rounded-lg p-6 border border-emerald-500/20">
+                  <p className="text-base text-foreground/90 leading-relaxed italic">{congressSchedule.conclusion}</p>
                 </div>
               </TabsContent>
             </Tabs>

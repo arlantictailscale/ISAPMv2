@@ -57,16 +57,7 @@ export async function GET(request: NextRequest) {
         *,
         orders!order_payments_order_id_fkey (
           *,
-          order_items (*),
-          profiles!orders_user_id_fkey (
-            title_degree,
-            full_name,
-            satu_sehat_name,
-            satu_sehat_email,
-            nik,
-            institution,
-            phone
-          )
+          order_items (*)
         )
       `)
       .eq("payment_status", "verified")
@@ -77,6 +68,21 @@ export async function GET(request: NextRequest) {
     }
 
     console.log("[v0] Found verified payments:", paymentsData?.length || 0)
+
+    // Fetch all profiles for the users in the orders
+    const userIds = paymentsData?.map((p) => p.orders?.user_id).filter(Boolean) as string[]
+
+    const { data: profilesData, error: profilesError } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .in("id", userIds)
+
+    if (profilesError) {
+      console.error("[v0] Error fetching profiles:", profilesError)
+    }
+
+    // Create a map of user_id to profile for quick lookup
+    const profilesMap = new Map(profilesData?.map((p) => [p.id, p]) || [])
 
     // Process Event Attendees
     const grouped: Record<string, any[]> = {}
@@ -93,7 +99,7 @@ export async function GET(request: NextRequest) {
       const order = payment.orders
       if (!order || !order.order_items) return
 
-      const profile = order.profiles || {}
+      const profile = profilesMap.get(order.user_id) || {}
 
       order.order_items.forEach((item: any) => {
         if (item.item_type === "event") {

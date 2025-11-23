@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         orders!order_payments_order_id_fkey (
           *,
           order_items (*),
-          profiles (
+          profiles!orders_user_id_fkey (
             title_degree,
             full_name,
             satu_sehat_name,

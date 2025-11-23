@@ -298,6 +298,7 @@ export async function GET(request: NextRequest) {
     ]
     const hotelRows = hotelList.map((booking) => {
       const item = booking.order_items[0]
+      const hotelTotal = item ? (item.unit_price || 0) * (item.nights || 1) : 0
       return [
         booking.title_degree ? `${booking.title_degree} ${booking.full_name || ""}`.trim() : booking.full_name || "",
         booking.email || "",
@@ -307,7 +308,7 @@ export async function GET(request: NextRequest) {
         item?.check_in_date ? new Date(item.check_in_date).toLocaleDateString() : "",
         item?.check_out_date ? new Date(item.check_out_date).toLocaleDateString() : "",
         item?.nights || 0,
-        booking.total_amount || 0,
+        hotelTotal,
         booking.verified_at ? new Date(booking.verified_at).toLocaleDateString() : "",
       ]
     })
@@ -349,7 +350,7 @@ export async function GET(request: NextRequest) {
         poster.submission_status || "Pending",
         poster.created_at ? new Date(poster.created_at).toLocaleDateString() : "",
         poster.updated_at ? new Date(poster.updated_at).toLocaleDateString() : "",
-        poster.content || "",
+        poster.abstract_url || "",
         poster.file_url || "",
       ]
     })

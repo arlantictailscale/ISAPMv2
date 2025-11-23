@@ -21,13 +21,12 @@ export async function getRoomAvailability() {
       }
     }
 
-    // Get count of booked rooms from order_items (only from confirmed orders)
     const { data: bookings, error: bookingsError } = await supabase
       .from("order_items")
       .select("hotel_room_type, orders!inner(status)")
       .in("hotel_room_type", ["deluxe", "premier"])
       .not("hotel_room_type", "is", null)
-      .in("orders.status", ["paid", "confirmed"])
+      .not("orders.status", "eq", "cancelled")
 
     if (bookingsError) {
       console.error("[v0] Error fetching bookings:", bookingsError)

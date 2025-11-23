@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { CancelOrderButton } from "@/components/cancel-order-button"
 
 export default async function MyPurchasesPage() {
   const supabase = await createClient()
@@ -185,12 +186,18 @@ export default async function MyPurchasesPage() {
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => {
+                  if (order.status === "cancelled") {
+                    return null
+                  }
+
                   const totalItems = order.order_items?.length || 0
                   const hasHotelItems = order.order_items?.some((item: any) => item.item_type === "hotel")
                   const hasEventItems = order.order_items?.some((item: any) => item.item_type === "event")
                   const payment = order.order_payments?.[0]
                   const actionButton = getActionButton(order)
                   const ActionIcon = actionButton.icon
+
+                  const canCancel = !payment
 
                   const calculatedTotal =
                     order.order_items?.reduce((sum: number, item: any) => {
@@ -395,6 +402,7 @@ export default async function MyPurchasesPage() {
                                 {actionButton.text}
                               </Button>
                             </Link>
+                            {canCancel && <CancelOrderButton orderId={order.id} />}
                           </div>
                         </div>
                       </CardContent>

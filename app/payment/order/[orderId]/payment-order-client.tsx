@@ -140,6 +140,23 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
 
   const hasSubmittedPayment = payment && !showResubmitForm
 
+  const getBadgeColors = (itemType: string, eventLabel: string, eventId: string) => {
+    if (itemType === "hotel") {
+      return "bg-purple-100 text-purple-700"
+    }
+
+    const eventType = getEventType(eventLabel, eventId)
+
+    if (eventType === "WORKSHOP") {
+      return "bg-orange-100 text-orange-700"
+    }
+    if (eventType === "SYMPOSIUM") {
+      return "bg-cyan-100 text-cyan-700"
+    }
+    // CPD COURSE
+    return "bg-violet-100 text-violet-700"
+  }
+
   if (hasSubmittedPayment) {
     return (
       <>
@@ -207,7 +224,9 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                       <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cyan-100 text-cyan-700">
+                            <span
+                              className={`text-xs font-semibold px-2 py-0.5 rounded ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "")}`}
+                            >
                               {item.item_type === "hotel"
                                 ? "HOTEL"
                                 : getEventType(item.event_label || "", item.event_id || "")}
@@ -363,7 +382,9 @@ export default function PaymentOrderClient({ order, userId, payment }: PaymentOr
                     <div key={index} className="flex justify-between items-start p-3 bg-gray-50 rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-cyan-100 text-cyan-700">
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded ${getBadgeColors(item.item_type, item.event_label || "", item.event_id || "")}`}
+                          >
                             {item.item_type === "hotel"
                               ? "HOTEL"
                               : getEventType(item.event_label || "", item.event_id || "")}

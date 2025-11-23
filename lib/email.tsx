@@ -182,6 +182,9 @@ export async function sendOrderConfirmationEmail({
         let itemName = ""
         const itemType = item.item_type.replace("_", " ").toUpperCase()
 
+        // Calculate correct item price (multiply by nights for hotels)
+        const itemPrice = item.item_type === "hotel" && item.nights ? item.unit_price * item.nights : item.unit_price
+
         if (item.item_type === "workshop" || item.item_type === "symposium") {
           const eventName = item.event_label || `${itemType}`
           const participantType = item.participant_type_label || "General Participant"
@@ -202,6 +205,12 @@ export async function sendOrderConfirmationEmail({
           }
         }
 
+        // Show price breakdown for multi-night hotel bookings
+        const priceDisplay =
+          item.item_type === "hotel" && item.nights && item.nights > 1
+            ? `${currency} ${item.unit_price.toLocaleString()} × ${item.nights} nights = ${currency} ${itemPrice.toLocaleString()}`
+            : `${currency} ${itemPrice.toLocaleString()}`
+
         return `
           <div style="padding: 15px; margin: 10px 0; background: #f8f9fa; border-left: 3px solid #00A9E0; border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -212,7 +221,7 @@ export async function sendOrderConfirmationEmail({
                 </div>
               </div>
               <div style="text-align: right; font-weight: 600; color: #00A9E0; white-space: nowrap; margin-left: 15px;">
-                ${currency} ${item.unit_price.toLocaleString()}
+                ${priceDisplay}
               </div>
             </div>
           </div>
@@ -241,7 +250,7 @@ export async function sendOrderConfirmationEmail({
               .order-info-label { color: #64748b; font-size: 14px; }
               .order-info-value { font-weight: 600; color: #1e293b; }
               .alert { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px 20px; margin: 25px 0; border-radius: 4px; }
-              .alert-title { font-weight: 600; color: #1e40af; margin-bottom: 8px; }
+              .alert-title { font-weight: 600; color: #1e40af; margin-bottom: 8px; font-size: 16px; }
               .alert-text { color: #1e40af; font-size: 14px; line-height: 1.6; }
               .items-section { margin: 30px 0; }
               .items-title { font-size: 18px; font-weight: 600; color: #1a202c; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }

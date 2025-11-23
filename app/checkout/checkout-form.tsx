@@ -69,7 +69,7 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
       await refreshCart()
 
       toast.success("Order created successfully!")
-      router.push(`/payment/order/${result.data.id}`)
+      router.push("/my-purchases")
     } catch (error) {
       console.error("[v0] Checkout error:", error)
       toast.error("An unexpected error occurred")

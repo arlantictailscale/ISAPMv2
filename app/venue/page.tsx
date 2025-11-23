@@ -1,31 +1,206 @@
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { MapPin, Phone, Mail, Clock, Hotel, Calendar } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, Hotel, Calendar, ExternalLink, Dumbbell, Utensils, Wifi } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Image from "next/image"
 
 export default function Venue() {
   return (
     <>
       <Navigation />
       <main className="pt-24 overflow-x-hidden">
-        <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <div className="max-w-6xl mx-auto">
-            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Venue & Accommodations</h1>
-            <p className="text-lg text-muted-foreground">The Singhasari Resort & Convention Batu, Malang, Jawa Timur</p>
+        {/* Hero Section with Stunning Pool Image Backdrop */}
+        <section className="relative h-[60vh] min-h-[500px] overflow-hidden">
+          <Image
+            src="/images/edt.jpg"
+            alt="The Singhasari Resort Pool and Mountain View"
+            fill
+            className="object-cover"
+            priority
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
+          <div className="relative h-full max-w-6xl mx-auto px-4 flex flex-col justify-center items-start">
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 text-white text-balance">
+              Welcome to The Singhasari Resort
+            </h1>
+            <p className="text-lg sm:text-xl text-white/90 mb-6 max-w-2xl text-pretty">
+              Experience world-class conference facilities nestled in the breathtaking mountain landscape of Batu,
+              Malang
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <Button size="lg" asChild className="bg-white text-primary hover:bg-white/90 shadow-lg">
+                <Link href="/hotel-booking">
+                  <Hotel className="w-5 h-5 mr-2" />
+                  Book Your Stay
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                asChild
+                className="border-white text-white hover:bg-white/10 backdrop-blur-sm bg-transparent"
+              >
+                <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
+                  Visit Resort Website
+                  <ExternalLink className="w-4 h-4 ml-2" />
+                </a>
+              </Button>
+            </div>
           </div>
         </section>
 
-        <section className="py-16 px-4">
+        {/* Photo Gallery Section Showing Resort Amenities */}
+        <section className="py-20 px-4 bg-gradient-to-br from-slate-50 to-slate-100">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Resort Facilities & Amenities</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Discover our premium facilities designed to enhance your conference experience
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Elegant Lobby */}
+              <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src="/images/img-0192.jpeg"
+                    alt="Elegant Resort Lobby"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle>Elegant Reception & Lobby</CardTitle>
+                  <CardDescription>
+                    Stunning traditional Indonesian design with modern luxury and warm hospitality
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Luxurious Rooms */}
+              <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src="/images/img-9900.jpg"
+                    alt="Luxurious Hotel Room with Pool View"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle>Luxurious Accommodations</CardTitle>
+                  <CardDescription>
+                    Spacious rooms with pool views, modern furnishings, and premium amenities
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Pool Evening */}
+              <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src="/images/aw.jpg"
+                    alt="Evening Pool with Lighting"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle>Stunning Pool Areas</CardTitle>
+                  <CardDescription>
+                    Beautiful pools with ambient lighting, perfect for relaxation after conference sessions
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Fitness Center */}
+              <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src="/images/img-9667ed.jpg"
+                    alt="Modern Fitness Center"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle>Modern Fitness Center</CardTitle>
+                  <CardDescription>
+                    State-of-the-art gym equipment in a contemporary, climate-controlled environment
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Sports Facilities */}
+              <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src="/images/img-0010.jpg"
+                    alt="Outdoor Sports Facilities"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle>Outdoor Recreation</CardTitle>
+                  <CardDescription>
+                    Basketball courts, adventure activities, and outdoor sports facilities
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Resort Features Card */}
+              <Card className="bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Hotel className="w-6 h-6 text-cyan-600" />
+                    Premium Amenities
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3 text-sm">
+                    <li className="flex items-start gap-3">
+                      <Wifi className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                      <span>High-speed WiFi throughout the resort</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Utensils className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                      <span>Multiple restaurants and dining options</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Dumbbell className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                      <span>Spa, wellness center, and fitness facilities</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <Hotel className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                      <span>24-hour room service and concierge</span>
+                    </li>
+                  </ul>
+                  <Button asChild className="w-full mt-6 bg-cyan-600 hover:bg-cyan-700">
+                    <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
+                      Explore Resort Website
+                      <ExternalLink className="w-4 h-4 ml-2" />
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* Venue Details Section with Improved Styling */}
+        <section className="py-20 px-4 bg-white">
           <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
             {/* Venue Information */}
             <div>
-              <h2 className="font-display text-2xl font-bold mb-8">Venue Details</h2>
+              <h2 className="font-display text-3xl font-bold mb-8">Venue Details</h2>
 
               <div className="space-y-6">
                 <div className="flex gap-4">
-                  <MapPin className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <MapPin className="w-6 h-6 text-cyan-600 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Address</h3>
                     <p className="text-muted-foreground">
@@ -41,13 +216,13 @@ export default function Venue() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Phone className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <Phone className="w-6 h-6 text-cyan-600 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Phone</h3>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">
                         <strong>Resort:</strong>{" "}
-                        <a href="tel:+62341513333" className="text-primary hover:underline">
+                        <a href="tel:+62341513333" className="text-cyan-600 hover:underline">
                           (62-341) 513333
                         </a>
                       </p>
@@ -57,7 +232,7 @@ export default function Venue() {
                           href="https://wa.me/6289602626709"
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline"
+                          className="text-cyan-600 hover:underline"
                         >
                           +62 896-0262-6709 (WhatsApp)
                         </a>
@@ -67,17 +242,17 @@ export default function Venue() {
                 </div>
 
                 <div className="flex gap-4">
-                  <Mail className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <Mail className="w-6 h-6 text-cyan-600 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Email</h3>
-                    <a href="mailto:admin@isapm2026.org" className="text-primary hover:underline">
+                    <a href="mailto:admin@isapm2026.org" className="text-cyan-600 hover:underline">
                       admin@isapm2026.org
                     </a>
                   </div>
                 </div>
 
                 <div className="flex gap-4">
-                  <Clock className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+                  <Clock className="w-6 h-6 text-cyan-600 flex-shrink-0 mt-1" />
                   <div>
                     <h3 className="font-semibold mb-1">Conference Dates</h3>
                     <p className="text-muted-foreground">April 16-18, 2026</p>
@@ -88,7 +263,7 @@ export default function Venue() {
 
             {/* Location Map & Info */}
             <div className="space-y-6">
-              <div className="bg-card border border-border rounded-xl overflow-hidden h-80">
+              <div className="bg-card border border-border rounded-xl overflow-hidden h-80 shadow-md">
                 <iframe
                   src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5209!3d-7.8774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e78819b8b8b8b8b%3A0x1234567890abcdef!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
                   width="100%"
@@ -100,7 +275,7 @@ export default function Venue() {
                 ></iframe>
               </div>
 
-              <div className="bg-primary/10 border border-primary/20 rounded-xl p-6">
+              <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-6">
                 <h3 className="font-semibold mb-3">Getting There</h3>
                 <ul className="space-y-4 text-sm text-muted-foreground">
                   <li>
@@ -135,20 +310,20 @@ export default function Venue() {
         </section>
 
         {/* Accommodations & Hotel Booking */}
-        <section className="py-16 px-4 bg-card">
+        <section className="py-20 px-4 bg-gradient-to-br from-slate-50 to-cyan-50">
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-3 mb-8">
-              <Hotel className="w-8 h-8 text-primary" />
-              <h2 className="font-display text-2xl font-bold">Hotel Accommodations & Booking</h2>
+              <Hotel className="w-8 h-8 text-cyan-600" />
+              <h2 className="font-display text-3xl font-bold">Hotel Accommodations & Booking</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8 mb-8">
               {/* Room Types & Pricing */}
               <div className="space-y-6">
-                <Card>
+                <Card className="border-cyan-200 shadow-md">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-primary" />
+                      <Calendar className="w-5 h-5 text-cyan-600" />
                       Deluxe Room
                     </CardTitle>
                     <CardDescription>Spacious comfort with modern amenities</CardDescription>
@@ -156,31 +331,31 @@ export default function Venue() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-primary">Rp 1,250,000</span>
+                        <span className="text-3xl font-bold text-cyan-600">Rp 1,250,000</span>
                         <span className="text-muted-foreground">/ night</span>
                       </div>
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> King or twin beds
+                          <span className="text-cyan-600 font-bold">•</span> King or twin beds
                         </li>
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Mountain or garden view
+                          <span className="text-cyan-600 font-bold">•</span> Mountain or garden view
                         </li>
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Modern bathroom with amenities
+                          <span className="text-cyan-600 font-bold">•</span> Modern bathroom with amenities
                         </li>
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Complimentary WiFi & breakfast
+                          <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi & breakfast
                         </li>
                       </ul>
                     </div>
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-cyan-200 shadow-md">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-primary" />
+                      <Calendar className="w-5 h-5 text-cyan-600" />
                       Premier Room
                     </CardTitle>
                     <CardDescription>Enhanced luxury and exclusive amenities</CardDescription>
@@ -188,21 +363,21 @@ export default function Venue() {
                   <CardContent>
                     <div className="space-y-4">
                       <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-primary">Rp 1,350,000</span>
+                        <span className="text-3xl font-bold text-cyan-600">Rp 1,350,000</span>
                         <span className="text-muted-foreground">/ night</span>
                       </div>
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Larger room with premium furnishings
+                          <span className="text-cyan-600 font-bold">•</span> Larger room with premium furnishings
                         </li>
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Panoramic mountain views
+                          <span className="text-cyan-600 font-bold">•</span> Panoramic mountain views
                         </li>
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Executive bathroom with bathtub
+                          <span className="text-cyan-600 font-bold">•</span> Executive bathroom with bathtub
                         </li>
                         <li className="flex gap-2">
-                          <span className="text-primary font-bold">•</span> Complimentary WiFi, breakfast & minibar
+                          <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi, breakfast & minibar
                         </li>
                       </ul>
                     </div>
@@ -212,34 +387,34 @@ export default function Venue() {
 
               {/* Resort Facilities & Booking CTA */}
               <div className="space-y-6">
-                <Card className="bg-primary/5 border-primary/20">
+                <Card className="bg-gradient-to-br from-cyan-600 to-teal-600 text-white border-0 shadow-xl">
                   <CardHeader>
-                    <CardTitle>Book Your Stay</CardTitle>
-                    <CardDescription>Reserve your room for ISAPM 2026</CardDescription>
+                    <CardTitle className="text-white">Book Your Stay</CardTitle>
+                    <CardDescription className="text-white/90">Reserve your room for ISAPM 2026</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-white/90">
                       Stay at the conference venue for maximum convenience. Book your room now and enjoy easy access to
                       all sessions, networking opportunities, and resort amenities.
                     </p>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Conference Dates:</span>
+                        <span className="text-white/80">Conference Dates:</span>
                         <span className="font-medium">April 16-18, 2026</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Check-in:</span>
+                        <span className="text-white/80">Check-in:</span>
                         <span className="font-medium">2:00 PM</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Check-out:</span>
+                        <span className="text-white/80">Check-out:</span>
                         <span className="font-medium">12:00 PM</span>
                       </div>
                     </div>
                     <Link href="/hotel-booking" className="block">
                       <Button
                         size="lg"
-                        className="w-full bg-primary hover:bg-primary/90 shadow-md hover:shadow-lg transition-all"
+                        className="w-full bg-white text-cyan-600 hover:bg-white/90 shadow-md hover:shadow-lg transition-all"
                       >
                         <Hotel className="w-5 h-5 mr-2" />
                         Book Hotel Room
@@ -248,34 +423,44 @@ export default function Venue() {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="shadow-md">
                   <CardHeader>
                     <CardTitle>Resort Facilities</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2 text-muted-foreground text-sm">
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> Modern convention center & conference rooms
+                        <span className="text-cyan-600 font-bold">•</span> Modern convention center & conference rooms
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> High-speed WiFi throughout the resort
+                        <span className="text-cyan-600 font-bold">•</span> High-speed WiFi throughout the resort
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> Multiple on-site restaurants & cafes
+                        <span className="text-cyan-600 font-bold">•</span> Multiple on-site restaurants & cafes
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> Business center & meeting facilities
+                        <span className="text-cyan-600 font-bold">•</span> Business center & meeting facilities
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> Swimming pool, fitness center & spa
+                        <span className="text-cyan-600 font-bold">•</span> Swimming pool, fitness center & spa
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> Beautiful mountain views and resort grounds
+                        <span className="text-cyan-600 font-bold">•</span> Beautiful mountain views and resort grounds
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-primary font-bold">•</span> 24-hour room service & concierge
+                        <span className="text-cyan-600 font-bold">•</span> 24-hour room service & concierge
                       </li>
                     </ul>
+                    <Button
+                      variant="outline"
+                      asChild
+                      className="w-full mt-6 border-cyan-600 text-cyan-600 hover:bg-cyan-50 bg-transparent"
+                    >
+                      <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
+                        Visit Resort Website
+                        <ExternalLink className="w-4 h-4 ml-2" />
+                      </a>
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

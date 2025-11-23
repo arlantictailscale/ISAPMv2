@@ -62,12 +62,12 @@ export default function Venue() {
             </div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Elegant Lobby */}
+              {/* Grand Lobby */}
               <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
                 <div className="relative h-64 overflow-hidden">
                   <Image
-                    src="/images/img-0192.jpeg"
-                    alt="Elegant Resort Lobby"
+                    src="/images/sgh-153.jpg"
+                    alt="Grand Lobby with Traditional Indonesian Architecture"
                     fill
                     className="object-cover group-hover:scale-110 transition-transform duration-500"
                   />
@@ -148,6 +148,24 @@ export default function Venue() {
                   <CardTitle>Outdoor Recreation</CardTitle>
                   <CardDescription>
                     Basketball courts, adventure activities, and outdoor sports facilities
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+
+              {/* Kayuputih Family Reflexology */}
+              <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <div className="relative h-64 overflow-hidden">
+                  <Image
+                    src="/images/img-8942e.jpg"
+                    alt="Kayuputih Family Reflexology Spa Treatment"
+                    fill
+                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                </div>
+                <CardHeader>
+                  <CardTitle>Kayuputih Family Reflexology</CardTitle>
+                  <CardDescription>
+                    Traditional reflexology and spa treatments for complete relaxation and rejuvenation
                   </CardDescription>
                 </CardHeader>
               </Card>

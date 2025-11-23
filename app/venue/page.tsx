@@ -1,6 +1,6 @@
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { MapPin, Phone, Mail, Clock, Hotel, Calendar, ExternalLink, Dumbbell, Utensils, Wifi } from "lucide-react"
+import { MapPin, Phone, Mail, Clock, Hotel, Calendar, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -168,42 +168,6 @@ export default function Venue() {
                     Traditional reflexology and spa treatments for complete relaxation and rejuvenation
                   </CardDescription>
                 </CardHeader>
-              </Card>
-
-              {/* Resort Features Card */}
-              <Card className="bg-gradient-to-br from-cyan-50 to-teal-50 border-cyan-200">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Hotel className="w-6 h-6 text-cyan-600" />
-                    Premium Amenities
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 text-sm">
-                    <li className="flex items-start gap-3">
-                      <Wifi className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span>High-speed WiFi throughout the resort</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Utensils className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span>Multiple restaurants and dining options</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Dumbbell className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span>Spa, wellness center, and fitness facilities</span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Hotel className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
-                      <span>24-hour room service and concierge</span>
-                    </li>
-                  </ul>
-                  <Button asChild className="w-full mt-6 bg-cyan-600 hover:bg-cyan-700">
-                    <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
-                      Explore Resort Website
-                      <ExternalLink className="w-4 h-4 ml-2" />
-                    </a>
-                  </Button>
-                </CardContent>
               </Card>
             </div>
           </div>

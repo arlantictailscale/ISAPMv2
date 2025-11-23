@@ -17,8 +17,8 @@ export default function SubmitPosterPage() {
   const [formData, setFormData] = useState({
     title: "",
     authors: "",
-    university: "", // Added university field
-    category: "", // Added category field (Case report or Research)
+    university: "", // This will be pulled from user profile
+    category: "", // Updated to match database constraint values
     topic: "",
   })
   const [isLoading, setIsLoading] = useState(false)
@@ -219,6 +219,14 @@ export default function SubmitPosterPage() {
         }
       }
 
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, university")
+        .eq("id", user.id)
+        .single()
+
+      const university = profileData?.university || ""
+
       const { error: insertError } = await supabase.from("abstracts").insert([
         {
           user_id: user.id,
@@ -230,6 +238,7 @@ export default function SubmitPosterPage() {
           category: formData.category, // Store category (Case Report/Research) in category field
           submission_status: "pending",
           file_url: fileUrl, // Store poster PDF URL in file_url field
+          university: university, // Pulled from user profile
         },
       ])
 
@@ -241,12 +250,6 @@ export default function SubmitPosterPage() {
       }
 
       try {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("first_name, last_name")
-          .eq("id", user.id)
-          .single()
-
         const userName = profileData
           ? `${profileData.first_name} ${profileData.last_name || ""}`.trim()
           : user.email?.split("@")[0] || "Participant"
@@ -324,10 +327,12 @@ export default function SubmitPosterPage() {
                 </p>
                 <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside break-words">
                   <li>Abstract must be in English</li>
-                  <li>Include full author names and institutions</li>
-                  <li>Select category (Case Report or Research)</li>
-                  <li>Upload abstract as PDF (max 10MB)</li>
-                  <li>Upload poster file as PDF (max 10MB)</li>
+                  <li>Add authors names</li>
+                  <li>Specify your university/institution</li>
+                  <li>Select topic category</li>
+                  <li>Enter topic keywords</li>
+                  <li>Upload abstract PDF file (required)</li>
+                  <li>Upload poster PDF file (required)</li>
                 </ul>
               </div>
             </div>
@@ -421,11 +426,15 @@ export default function SubmitPosterPage() {
                       className="w-full max-w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary min-w-0"
                     >
                       <option value="">Select a category</option>
-                      <option value="Case Report">Case Report</option>
-                      <option value="Research">Research</option>
+                      <option value="Emergencies (Kegawatdaruratan)">Emergencies (Kegawatdaruratan)</option>
+                      <option value="Pain Management (Manajemen Nyeri)">Pain Management (Manajemen Nyeri)</option>
+                      <option value="ICU Management (Manajemen ICU)">ICU Management (Manajemen ICU)</option>
+                      <option value="Anesthesia Management (Manajemen Anestesi)">
+                        Anesthesia Management (Manajemen Anestesi)
+                      </option>
                     </select>
                     <p className="text-xs text-muted-foreground mt-1 break-words">
-                      Select whether this is a case report or research study
+                      Select the topic category for your poster submission
                     </p>
                   </div>
 

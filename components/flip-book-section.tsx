@@ -35,10 +35,11 @@ export default function FlipBookSection() {
       setTimeLeft({ days, hours, minutes, seconds })
     }, 1000)
 
-    return () => clearInterval(timer)
+    return () => {
+      clearInterval(timer)
+    }
   }, [])
 
-  // Prevent hydration mismatch by not rendering content until mounted
   if (!mounted) {
     return (
       <section className="py-16 px-4 bg-white">
@@ -66,7 +67,6 @@ export default function FlipBookSection() {
           />
         </div>
 
-        {/* Countdown Timer and Register Button */}
         <div className="flex flex-col items-center justify-center gap-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center">
             <div className="bg-primary/5 p-4 rounded-lg min-w-[100px]">

@@ -7,14 +7,19 @@ import AboutSection from "@/components/about-section"
 import ImportantInfo from "@/components/important-info"
 import CTA from "@/components/cta"
 import Footer from "@/components/footer"
+import { getRegisteredCount } from "@/app/actions/public-stats"
+import RegistrationStats from "@/components/registration-stats"
 
-export default function Home() {
+export default async function Home() {
+  const registeredCount = await getRegisteredCount()
+
   return (
     <main className="overflow-x-hidden">
       <Navigation />
       <LandingHero />
       <div id="content">
         <FlipBookSection />
+        <RegistrationStats initialCount={registeredCount} />
         <WelcomeSection />
         <ConferenceHighlights />
         <AboutSection />

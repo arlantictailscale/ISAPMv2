@@ -210,6 +210,12 @@ export default function Navigation() {
                             E-Poster Submissions (Admin)
                           </DropdownMenuItem>
                         </Link>
+                        <Link href="/admin/confirmed-attendees">
+                          <DropdownMenuItem className="text-primary">
+                            <Users className="w-4 h-4 mr-2" />
+                            Confirmed Attendees (Admin)
+                          </DropdownMenuItem>
+                        </Link>
                         <Link href="/admin/hotel-bookings">
                           <DropdownMenuItem className="text-primary">
                             <Hotel className="w-4 h-4 mr-2" />
@@ -347,6 +353,13 @@ export default function Navigation() {
                         onClick={() => setIsOpen(false)}
                       >
                         E-Poster Submissions (Admin)
+                      </Link>
+                      <Link
+                        href="/admin/confirmed-attendees"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Confirmed Attendees (Admin)
                       </Link>
                       <Link
                         href="/admin/hotel-bookings"

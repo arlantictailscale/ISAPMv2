@@ -21,16 +21,27 @@ export async function getRoomAvailability() {
       }
     }
 
+    // First, get all non-cancelled order IDs
+    const { data: activeOrders, error: ordersError } = await supabase
+      .from("orders")
+      .select("id")
+      .neq("status", "cancelled")
+
+    console.log("[v0] Active orders:", activeOrders)
+
+    if (ordersError) {
+      console.error("[v0] Error fetching orders:", ordersError)
+      throw ordersError
+    }
+
+    const activeOrderIds = activeOrders?.map((o) => o.id) || []
+
+    // Now get order_items for these active orders
     const { data: bookings, error: bookingsError } = await supabase
       .from("order_items")
-      .select(`
-        hotel_room_type,
-        orders!inner (
-          status
-        )
-      `)
+      .select("hotel_room_type, order_id")
       .in("hotel_room_type", ["deluxe", "premier"])
-      .neq("orders.status", "cancelled")
+      .in("order_id", activeOrderIds.length > 0 ? activeOrderIds : [-1]) // Use -1 if no active orders
 
     console.log("[v0] Bookings query result:", bookings)
     console.log("[v0] Bookings error:", bookingsError)

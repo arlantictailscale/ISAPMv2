@@ -36,7 +36,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const [additionalNotes, setAdditionalNotes] = useState("")
 
   const calculateTotal = () => {
-    if (!initialOrder.order_items) return 0
+    if (!initialOrder?.order_items) return 0
     return initialOrder.order_items.reduce((sum: number, item: any) => {
       const nights = item.item_type === "hotel" && item.nights ? item.nights : 1
       return sum + (item.unit_price || 0) * nights
@@ -70,9 +70,18 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   }
 
   const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedField(field)
-    setTimeout(() => setCopiedField(null), 2000)
+    if (navigator?.clipboard) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          setCopiedField(field)
+          toast.success("Copied to clipboard!")
+          setTimeout(() => setCopiedField(null), 2000)
+        })
+        .catch(() => {
+          toast.error("Failed to copy")
+        })
+    }
   }
 
   const handleSubmit = async () => {

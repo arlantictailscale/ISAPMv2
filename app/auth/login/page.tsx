@@ -7,9 +7,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from 'next/navigation'
-import { useState } from "react"
-import { ArrowLeft } from 'lucide-react'
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { ArrowLeft } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -18,43 +20,103 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const urlError = searchParams.get("error")
+    if (urlError) {
+      setError(decodeURIComponent(urlError))
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
+    console.log("[v0] Starting email login for:", email)
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const supabase = createClient()
+
+      console.log("[v0] Supabase client created, attempting sign in...")
+
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
-      if (error) throw error
-      
+
+      console.log("[v0] Sign in response:", {
+        hasData: !!data,
+        hasUser: !!data?.user,
+        hasSession: !!data?.session,
+        error: signInError,
+      })
+
+      if (signInError) {
+        console.error("[v0] Sign in error:", signInError)
+        throw signInError
+      }
+
+      if (!data.session) {
+        throw new Error("No session created. Please check your credentials.")
+      }
+
+      console.log("[v0] Login successful, redirecting to dashboard")
       router.push("/dashboard")
+      router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("[v0] Login error:", error)
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("An unexpected error occurred during login")
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleGoogleLogin = async () => {
-    const supabase = createClient()
     setIsGoogleLoading(true)
     setError(null)
 
+    console.log("[v0] Starting Google OAuth login")
+
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const supabase = createClient()
+
+      const redirectUrl =
+        process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/api/auth/callback`
+
+      console.log("[v0] OAuth redirect URL:", redirectUrl)
+
+      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
         options: {
-          redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
         },
       })
-      if (error) throw error
+
+      console.log("[v0] OAuth response:", { hasData: !!data, error: oauthError })
+
+      if (oauthError) {
+        console.error("[v0] OAuth error:", oauthError)
+        throw oauthError
+      }
+
+      // OAuth redirect will happen automatically
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred")
+      console.error("[v0] Google login error:", error)
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError("Failed to initiate Google login")
+      }
       setIsGoogleLoading(false)
     }
   }
@@ -86,6 +148,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading || isGoogleLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -96,6 +159,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading || isGoogleLoading}
                 />
                 <div className="text-right">
                   <Link href="/auth/forgot-password" className="text-xs text-primary hover:underline">
@@ -103,7 +167,14 @@ export default function LoginPage() {
                   </Link>
                 </div>
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
               <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
@@ -113,16 +184,14 @@ export default function LoginPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full bg-transparent"
                 onClick={handleGoogleLogin}
                 disabled={isLoading || isGoogleLoading}
               >

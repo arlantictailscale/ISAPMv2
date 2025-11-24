@@ -85,7 +85,6 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   }
 
   const handleSubmit = async () => {
-    // Validate required fields
     if (!paymentMethod || !bankName || !accountName || !transactionRef) {
       toast.error("Please fill in all required fields")
       return
@@ -93,6 +92,12 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
     if (!selectedFile) {
       toast.error("Please upload a payment proof image")
+      return
+    }
+
+    if (!initialOrder?.id || !initialOrder?.user_id) {
+      toast.error("Order information is missing")
+      console.error("[v0] Missing order data:", { orderId: initialOrder?.id, userId: initialOrder?.user_id })
       return
     }
 
@@ -109,33 +114,44 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
       formData.append("additionalNotes", additionalNotes)
       formData.append("userId", initialOrder.user_id)
 
-      console.log("[v0] Submitting payment proof for order:", initialOrder.id, "user:", initialOrder.user_id)
+      console.log("[v0] Submitting payment proof:", {
+        orderId: initialOrder.id,
+        userId: initialOrder.user_id,
+        fileSize: selectedFile.size,
+        fileType: selectedFile.type,
+      })
 
       const response = await fetch("/api/upload-payment-proof", {
         method: "POST",
         body: formData,
       })
 
-      const result = await response.json()
+      console.log("[v0] Response status:", response.status)
 
       if (!response.ok) {
+        const result = await response.json()
         console.error("[v0] Payment upload failed:", result)
         throw new Error(result.error || "Failed to upload payment proof")
       }
 
-      console.log("[v0] Payment proof uploaded successfully")
+      const result = await response.json()
+      console.log("[v0] Payment proof uploaded successfully:", result)
+
       toast.success("Payment proof submitted successfully! Awaiting verification.")
 
       router.refresh()
 
-      // Small delay to ensure revalidation completes
       await new Promise((resolve) => setTimeout(resolve, 300))
 
-      // Redirect to my purchases page
       router.push("/my-purchases")
     } catch (error: any) {
       console.error("[v0] Payment submission error:", error)
-      toast.error(error.message || "Failed to submit payment proof")
+
+      if (error.message === "Failed to fetch") {
+        toast.error("Network error. Please check your connection and try again.")
+      } else {
+        toast.error(error.message || "Failed to submit payment proof")
+      }
     } finally {
       setIsUploading(false)
     }

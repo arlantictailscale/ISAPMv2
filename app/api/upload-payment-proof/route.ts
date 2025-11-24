@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache"
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[v0] Payment proof upload request received")
+
     const formData = await request.formData()
     const file = formData.get("file") as File
     const orderId = formData.get("orderId") as string
@@ -15,35 +17,54 @@ export async function POST(request: NextRequest) {
     const additionalNotes = formData.get("additionalNotes") as string
     const userId = formData.get("userId") as string
 
+    console.log("[v0] Form data extracted:", {
+      hasFile: !!file,
+      orderId,
+      userId,
+      paymentMethod,
+      fileType: file?.type,
+      fileSize: file?.size,
+    })
+
     if (!file) {
+      console.error("[v0] No file provided")
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
     if (!orderId || !userId) {
+      console.error("[v0] Missing required information:", { orderId, userId })
       return NextResponse.json({ error: "Missing required information" }, { status: 400 })
     }
 
     // Validate file type
     if (file.type !== "image/jpeg" && file.type !== "image/jpg" && file.type !== "image/png") {
+      console.error("[v0] Invalid file type:", file.type)
       return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
     }
 
     // Validate file size (1MB)
     if (file.size > 1048576) {
+      console.error("[v0] File too large:", file.size)
       return NextResponse.json({ error: "File size must not exceed 1MB" }, { status: 400 })
     }
 
-    console.log("[v0] Uploading payment proof for order:", orderId)
+    console.log("[v0] Uploading to Vercel Blob...")
 
-    const blob = await put(`payment-proofs/${orderId}-${Date.now()}.jpg`, file, {
-      access: "public",
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    })
-
-    console.log("[v0] File uploaded to blob:", blob.url)
+    let blob
+    try {
+      blob = await put(`payment-proofs/${orderId}-${Date.now()}.jpg`, file, {
+        access: "public",
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      })
+      console.log("[v0] File uploaded to blob:", blob.url)
+    } catch (blobError) {
+      console.error("[v0] Blob upload error:", blobError)
+      return NextResponse.json({ error: "Failed to upload file to storage" }, { status: 500 })
+    }
 
     const supabase = await createClient()
 
+    console.log("[v0] Fetching order details...")
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .select("total_amount, currency")
@@ -55,6 +76,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 })
     }
 
+    console.log("[v0] Checking for existing payment...")
     const { data: existingPayment } = await supabase
       .from("order_payments")
       .select("id")
@@ -62,6 +84,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (existingPayment) {
+      console.log("[v0] Updating existing payment record...")
       const { error: updateError } = await supabase
         .from("order_payments")
         .update({
@@ -83,6 +106,7 @@ export async function POST(request: NextRequest) {
 
       console.log("[v0] Payment record updated successfully")
     } else {
+      console.log("[v0] Creating new payment record...")
       const { error: insertError } = await supabase.from("order_payments").insert({
         order_id: orderId,
         user_id: userId,
@@ -108,6 +132,7 @@ export async function POST(request: NextRequest) {
     revalidatePath("/my-purchases")
     revalidatePath(`/payment/order/${orderId}`)
 
+    console.log("[v0] Payment proof upload completed successfully")
     return NextResponse.json({ url: blob.url, success: true })
   } catch (error) {
     console.error("[v0] Upload error:", error)

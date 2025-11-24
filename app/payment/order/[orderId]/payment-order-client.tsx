@@ -47,9 +47,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"]
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
     if (!allowedTypes.includes(file.type)) {
-      toast.error("Please upload a valid file (.jpg, .png, or .pdf)")
+      toast.error("Please upload a valid image file (.jpg or .png)")
       return
     }
 
@@ -61,12 +61,8 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
     setSelectedFile(file)
 
-    if (file.type.startsWith("image/")) {
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
-    } else {
-      setPreviewUrl(null)
-    }
+    const url = URL.createObjectURL(file)
+    setPreviewUrl(url)
   }
 
   const handleRemoveFile = () => {
@@ -523,7 +519,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
               <CardHeader>
                 <CardTitle>Upload Payment Proof</CardTitle>
                 <CardDescription>
-                  Upload your payment receipt or transfer confirmation (Max 5MB, .jpg, .png, or .pdf)
+                  Upload your payment receipt or transfer confirmation (Max 5MB, .jpg or .png only)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -595,11 +591,11 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                         <p className="text-sm text-muted-foreground mb-2">
                           Upload payment receipt or transfer confirmation
                         </p>
-                        <p className="text-xs text-muted-foreground mb-4">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
+                        <p className="text-xs text-muted-foreground mb-4">Supported formats: JPG, PNG only (Max 5MB)</p>
                         <Input
                           id="payment-proof"
                           type="file"
-                          accept="image/jpeg,image/jpg,image/png,application/pdf"
+                          accept="image/jpeg,image/jpg,image/png"
                           onChange={handleFileChange}
                           className="hidden"
                         />
@@ -639,12 +635,6 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                               alt="Payment proof preview"
                               className="w-full h-auto max-h-64 object-contain rounded"
                             />
-                          </div>
-                        )}
-                        {selectedFile.type === "application/pdf" && (
-                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
-                            <FileText className="w-5 h-5 text-blue-600" />
-                            <p className="text-sm text-blue-900">PDF file selected. Preview not available.</p>
                           </div>
                         )}
                       </div>

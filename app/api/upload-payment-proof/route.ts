@@ -37,10 +37,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"]
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
     if (!allowedTypes.includes(file.type)) {
       console.error("[v0] Invalid file type:", file.type)
-      return NextResponse.json({ error: "Only .jpg, .png, and .pdf files are allowed" }, { status: 400 })
+      return NextResponse.json({ error: "Only .jpg and .png files are allowed" }, { status: 400 })
     }
 
     // Validate file size (5MB)

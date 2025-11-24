@@ -27,7 +27,7 @@ export default function HotelBookingPage() {
   const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
 
-  const [checkInDate, setCheckInDate] = useState("2026-04-15")
+  const [checkInDate, setCheckInDate] = useState("2026-04-16")
   const [checkOutDate, setCheckOutDate] = useState("2026-04-19")
   const [roomType, setRoomType] = useState("")
   const [guestName, setGuestName] = useState("")
@@ -55,7 +55,9 @@ export default function HotelBookingPage() {
 
       if (profileData) {
         setProfile(profileData)
-        setGuestName(`${profileData.first_name} ${profileData.last_name}`)
+        const fullName =
+          profileData.full_name || `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim()
+        setGuestName(fullName)
         setGuestEmail(user.email || "")
         setGuestPhone(profileData.phone || "")
       }

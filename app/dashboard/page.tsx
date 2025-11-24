@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { User, FileText, ShoppingBag, Users, Presentation, Hotel, ShoppingCart, CheckCircle } from "lucide-react"
 import Link from "next/link"
+import { checkProfileCompleteness } from "@/lib/profile/validation"
+import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -26,6 +28,9 @@ export default async function DashboardPage() {
     .single()
 
   const isAdmin = profile?.role === "admin"
+
+  const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const profileStatus = checkProfileCompleteness(fullProfile)
 
   let stats = {
     posterCount: 0,
@@ -198,9 +203,11 @@ export default async function DashboardPage() {
                 </p>
               </div>
               {!isAdmin && (
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <Link href="/pricing">
-                    <Button size="lg">Browse Events</Button>
+                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700">
+                      Browse Events
+                    </Button>
                   </Link>
                   <Link href="/submit-poster">
                     <Button size="lg" variant="outline">
@@ -208,7 +215,7 @@ export default async function DashboardPage() {
                     </Button>
                   </Link>
                   <Link href="/hotel-booking">
-                    <Button size="lg" variant="outline">
+                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700">
                       Book a Hotel
                     </Button>
                   </Link>
@@ -217,6 +224,19 @@ export default async function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {!isAdmin && !profileStatus.isComplete && (
+          <section className="py-6 px-4">
+            <div className="max-w-7xl mx-auto">
+              <ProfileIncompleteAlert
+                missingFields={profileStatus.missingFields}
+                completionPercentage={profileStatus.completionPercentage}
+                variant="destructive"
+                showButton={true}
+              />
+            </div>
+          </section>
+        )}
 
         <section className="py-8 px-4">
           <div className="max-w-7xl mx-auto">

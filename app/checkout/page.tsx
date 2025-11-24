@@ -35,8 +35,21 @@ export default async function CheckoutPage() {
 
   const items = cart?.cart_items || []
 
-  // Redirect if cart is empty
-  if (items.length === 0) {
+  // Check if user just came from a successful checkout by looking for recent orders
+  const { data: recentOrders } = await supabase
+    .from("orders")
+    .select("id, created_at")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+
+  const hasRecentOrder =
+    recentOrders &&
+    recentOrders.length > 0 &&
+    new Date().getTime() - new Date(recentOrders[0].created_at).getTime() < 5000 // Within last 5 seconds
+
+  // Only redirect if cart is empty AND no recent order
+  if (items.length === 0 && !hasRecentOrder) {
     redirect("/cart")
   }
 

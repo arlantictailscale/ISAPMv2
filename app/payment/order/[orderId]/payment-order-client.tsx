@@ -47,21 +47,26 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
     const file = e.target.files?.[0]
     if (!file) return
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please upload an image file (JPG, PNG, JPEG)")
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"]
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please upload a valid file (.jpg, .png, or .pdf)")
       return
     }
 
-    // Validate file size (max 1MB)
-    if (file.size > 1024 * 1024) {
-      toast.error("File size must be less than 1MB")
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      toast.error("File size must be less than 5MB")
       return
     }
 
     setSelectedFile(file)
-    const url = URL.createObjectURL(file)
-    setPreviewUrl(url)
+
+    if (file.type.startsWith("image/")) {
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+    } else {
+      setPreviewUrl(null)
+    }
   }
 
   const handleRemoveFile = () => {
@@ -91,7 +96,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
     }
 
     if (!selectedFile) {
-      toast.error("Please upload a payment proof image")
+      toast.error("Please upload a payment proof file")
       return
     }
 
@@ -516,132 +521,154 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
             <Card>
               <CardHeader>
-                <CardTitle>Confirm Your Payment</CardTitle>
+                <CardTitle>Upload Payment Proof</CardTitle>
                 <CardDescription>
-                  After making the transfer, please fill in the details below to help us verify your payment faster.
+                  Upload your payment receipt or transfer confirmation (Max 5MB, .jpg, .png, or .pdf)
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Payment Method */}
+              <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="payment-method">
-                    Payment Method <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="payment-method">Payment Method *</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
                     <SelectTrigger id="payment-method">
-                      <SelectValue placeholder="Select payment method" />
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Virtual Account">Virtual Account</SelectItem>
                       <SelectItem value="E-Wallet">E-Wallet</SelectItem>
-                      <SelectItem value="Credit Card">Credit Card</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {/* Bank Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="bank-name">
-                    Bank Name <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="bank-name">Bank Name *</Label>
                   <Input
                     id="bank-name"
-                    placeholder="e.g., Bank Mandiri"
+                    placeholder="e.g., Bank Syariah Indonesia"
                     value={bankName}
                     onChange={(e) => setBankName(e.target.value)}
+                    required
                   />
                 </div>
 
-                {/* Account Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="account-name">
-                    Account Name <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="account-name">Account Name *</Label>
                   <Input
                     id="account-name"
-                    placeholder="Name on the bank account"
+                    placeholder="Name on the account"
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
+                    required
                   />
                 </div>
 
-                {/* Transaction Reference */}
                 <div className="space-y-2">
-                  <Label htmlFor="transaction-ref">
-                    Transaction Reference / Receipt Number <span className="text-red-500">*</span>
-                  </Label>
+                  <Label htmlFor="transaction-ref">Transaction Reference / ID *</Label>
                   <Input
                     id="transaction-ref"
-                    placeholder="Transaction ID or receipt number"
+                    placeholder="e.g., TRX123456789"
                     value={transactionRef}
                     onChange={(e) => setTransactionRef(e.target.value)}
+                    required
                   />
                 </div>
 
-                {/* Additional Notes */}
                 <div className="space-y-2">
                   <Label htmlFor="additional-notes">Additional Notes (Optional)</Label>
                   <Textarea
                     id="additional-notes"
-                    placeholder="Any additional information..."
+                    placeholder="Any additional information about your payment"
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
                     rows={3}
                   />
                 </div>
 
-                {/* Payment Proof Upload */}
                 <div className="space-y-2">
-                  <Label htmlFor="payment-proof">
-                    Payment Proof (.jpg only, max 1MB) <span className="text-red-500">*</span>
-                  </Label>
-
-                  {!selectedFile ? (
-                    <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                      <input
-                        type="file"
-                        id="payment-proof"
-                        accept="image/jpeg,image/jpg"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                      <label htmlFor="payment-proof" className="cursor-pointer">
-                        <Upload className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
-                        <p className="font-medium mb-1">Click to upload payment proof</p>
-                        <p className="text-sm text-muted-foreground">.jpg only, max 1MB</p>
-                      </label>
-                    </div>
-                  ) : (
-                    <div className="relative border rounded-lg p-4">
-                      <button
-                        onClick={handleRemoveFile}
-                        className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      {previewUrl && (
-                        <img
-                          src={previewUrl || "/placeholder.svg"}
-                          alt="Payment proof preview"
-                          className="w-full h-48 object-contain rounded"
+                  <Label htmlFor="payment-proof">Payment Proof File *</Label>
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
+                    {!selectedFile ? (
+                      <div className="text-center">
+                        <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground mb-2">
+                          Upload payment receipt or transfer confirmation
+                        </p>
+                        <p className="text-xs text-muted-foreground mb-4">Supported formats: JPG, PNG, PDF (Max 5MB)</p>
+                        <Input
+                          id="payment-proof"
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,application/pdf"
+                          onChange={handleFileChange}
+                          className="hidden"
                         />
-                      )}
-                      <p className="text-sm text-center mt-2 text-muted-foreground">
-                        {selectedFile?.name || "File selected"}
-                      </p>
-                    </div>
-                  )}
+                        <Label
+                          htmlFor="payment-proof"
+                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
+                        >
+                          Choose File
+                        </Label>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleRemoveFile}
+                            className="flex-shrink-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        {previewUrl && (
+                          <div className="border rounded-lg p-4">
+                            <img
+                              src={previewUrl || "/placeholder.svg"}
+                              alt="Payment proof preview"
+                              className="w-full h-auto max-h-64 object-contain rounded"
+                            />
+                          </div>
+                        )}
+                        {selectedFile.type === "application/pdf" && (
+                          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-2">
+                            <FileText className="w-5 h-5 text-blue-600" />
+                            <p className="text-sm text-blue-900">PDF file selected. Preview not available.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Submit Button */}
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isUploading}
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-                  size="lg"
-                >
-                  {isUploading ? "Submitting..." : "Submit Payment Information"}
+                <Button onClick={handleSubmit} disabled={isUploading} className="w-full" size="lg">
+                  {isUploading ? (
+                    <>
+                      <Upload className="w-4 h-4 mr-2 animate-pulse" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Submit Payment Proof
+                    </>
+                  )}
                 </Button>
+
+                <p className="text-xs text-center text-muted-foreground">
+                  Your payment will be verified within 1-2 business days
+                </p>
               </CardContent>
             </Card>
           </div>

@@ -5,20 +5,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import {
-  User,
-  FileText,
-  ShoppingBag,
-  Users,
-  Presentation,
-  Hotel,
-  ShoppingCart,
-  Settings,
-  BarChart3,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-} from "lucide-react"
+import { User, FileText, ShoppingBag, Users, Presentation, Hotel, ShoppingCart, CheckCircle } from "lucide-react"
 import Link from "next/link"
 
 export default async function DashboardPage() {
@@ -184,30 +171,16 @@ export default async function DashboardPage() {
       stats: null,
     },
     {
-      title: "Hotel Bookings",
-      description: "Manage hotel reservations",
+      title: "Room Availability",
+      description: "Manage hotel room capacity",
       icon: Hotel,
-      href: "/admin/hotel-bookings",
+      href: "/admin/room-availability",
       color: "from-cyan-500 to-cyan-600",
       stats: null,
     },
   ]
 
   const cards = isAdmin ? adminCards : userCards
-
-  const quickStats = isAdmin
-    ? [
-        { label: "Total Users", value: adminStats.totalUsers, icon: Users, color: "text-blue-600" },
-        { label: "Total Orders", value: adminStats.totalOrders, icon: ShoppingBag, color: "text-green-600" },
-        { label: "Pending Reviews", value: adminStats.pendingPosters, icon: Clock, color: "text-amber-600" },
-        { label: "Pending Payments", value: adminStats.pendingPayments, icon: TrendingUp, color: "text-purple-600" },
-      ]
-    : [
-        { label: "My Orders", value: stats.orderCount, icon: ShoppingBag, color: "text-green-600" },
-        { label: "My Posters", value: stats.posterCount, icon: FileText, color: "text-purple-600" },
-        { label: "Cart Items", value: stats.activeCart, icon: ShoppingCart, color: "text-cyan-600" },
-        { label: "Pending Payments", value: stats.pendingPayments, icon: Clock, color: "text-amber-600" },
-      ]
 
   return (
     <>
@@ -234,33 +207,13 @@ export default async function DashboardPage() {
                       Submit Poster
                     </Button>
                   </Link>
+                  <Link href="/hotel-booking">
+                    <Button size="lg" variant="outline">
+                      Book a Hotel
+                    </Button>
+                  </Link>
                 </div>
               )}
-            </div>
-          </div>
-        </section>
-
-        <section className="py-8 px-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {quickStats.map((stat) => {
-                const Icon = stat.icon
-                return (
-                  <Card key={stat.label}>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">{stat.label}</p>
-                          <p className="text-3xl font-bold mt-2">{stat.value}</p>
-                        </div>
-                        <div className={`p-3 rounded-lg bg-muted/50 ${stat.color}`}>
-                          <Icon className="w-6 h-6" />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
             </div>
           </div>
         </section>
@@ -298,10 +251,7 @@ export default async function DashboardPage() {
                       </CardHeader>
                       <CardContent>
                         {card.stats && (
-                          <div className="mb-3 text-sm font-medium text-muted-foreground">
-                            <BarChart3 className="w-4 h-4 inline mr-1" />
-                            {card.stats}
-                          </div>
+                          <div className="mb-3 text-sm font-medium text-muted-foreground">{card.stats}</div>
                         )}
                         <div className="flex items-center text-sm text-primary font-medium group-hover:translate-x-1 transition-transform">
                           View details
@@ -342,7 +292,7 @@ export default async function DashboardPage() {
                     </Link>
                     <Link href="/venue">
                       <Button variant="outline" className="w-full justify-start bg-transparent">
-                        <Settings className="w-4 h-4 mr-2" />
+                        <Hotel className="w-4 h-4 mr-2" />
                         Venue Info
                       </Button>
                     </Link>

@@ -37,22 +37,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Validate file type
-    if (file.type !== "image/jpeg" && file.type !== "image/jpg" && file.type !== "image/png") {
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"]
+    if (!allowedTypes.includes(file.type)) {
       console.error("[v0] Invalid file type:", file.type)
-      return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 })
+      return NextResponse.json({ error: "Only .jpg, .png, and .pdf files are allowed" }, { status: 400 })
     }
 
-    // Validate file size (1MB)
-    if (file.size > 1048576) {
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
       console.error("[v0] File too large:", file.size)
-      return NextResponse.json({ error: "File size must not exceed 1MB" }, { status: 400 })
+      return NextResponse.json({ error: "File size must not exceed 5MB" }, { status: 400 })
     }
 
     console.log("[v0] Uploading to Vercel Blob...")
 
     let blob
     try {
-      blob = await put(`payment-proofs/${orderId}-${Date.now()}.jpg`, file, {
+      const extension = file.name.split(".").pop() || "jpg"
+      blob = await put(`payment-proofs/${orderId}-${Date.now()}.${extension}`, file, {
         access: "public",
         token: process.env.BLOB_READ_WRITE_TOKEN,
       })

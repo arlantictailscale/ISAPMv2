@@ -4,6 +4,7 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { isBefore, parseISO, format } from "date-fns"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 import {
   Dialog,
   DialogContent,
@@ -368,7 +369,8 @@ export default function PricingPage() {
           <div className="max-w-6xl mx-auto">
             <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Register for ISAPM 2026</h1>
             <p className="text-lg text-muted-foreground">
-              Choose your registration package and secure your spot at ISAPM 8th National Meeting 2026. Select from CPD courses, workshops, and symposium options.
+              Choose your registration package and secure your spot at ISAPM 8th National Meeting 2026. Select from CPD
+              courses, workshops, and symposium options.
             </p>
 
             {isEarlyBirdPeriod && (
@@ -552,6 +554,32 @@ export default function PricingPage() {
                 )
               })}
             </div>
+          </div>
+        </section>
+
+        <section className="py-16 px-4 bg-gradient-to-br from-cyan-500/10 to-teal-500/10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block p-3 bg-cyan-100 rounded-full mb-4">
+              <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              </svg>
+            </div>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 text-balance">Need Accommodation?</h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto text-balance">
+              Book your hotel room now and enjoy convenient access to all conference events. Special rates available for
+              ISAPM 2026 attendees.
+            </p>
+            <Link href="/hotel-booking">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto">
+                Book a Hotel Room
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
         </section>
       </main>

@@ -107,7 +107,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
       formData.append("accountName", accountName)
       formData.append("transactionRef", transactionRef)
       formData.append("additionalNotes", additionalNotes)
-      formData.append("userId", "userId") // Added userId to formData
+      formData.append("userId", initialOrder.user_id)
+
+      console.log("[v0] Submitting payment proof for order:", initialOrder.id, "user:", initialOrder.user_id)
 
       const response = await fetch("/api/upload-payment-proof", {
         method: "POST",
@@ -117,9 +119,11 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
       const result = await response.json()
 
       if (!response.ok) {
+        console.error("[v0] Payment upload failed:", result)
         throw new Error(result.error || "Failed to upload payment proof")
       }
 
+      console.log("[v0] Payment proof uploaded successfully")
       toast.success("Payment proof submitted successfully! Awaiting verification.")
 
       router.refresh()

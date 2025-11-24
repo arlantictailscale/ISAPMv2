@@ -70,7 +70,12 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
 
       toast.success("Order created successfully!")
 
-      router.replace("/my-purchases")
+      if (result.data?.id) {
+        router.replace(`/payment/order/${result.data.id}`)
+      } else {
+        // Fallback to my-purchases if order ID is not available
+        router.replace("/my-purchases")
+      }
     } catch (error) {
       console.error("[v0] Checkout error:", error)
       toast.error("An unexpected error occurred")

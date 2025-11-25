@@ -54,17 +54,6 @@ export default function Footer() {
               The Indonesian Society of Anesthesiology for Pain Management National Meeting brings together healthcare
               professionals to advance pain management practices with equity and excellence.
             </p>
-            <div className="mt-6">
-              <a href="https://www.positivessl.com/" target="_blank" rel="noopener noreferrer" className="inline-block">
-                <Image
-                  src="/images/positivessl-seal-sm.png"
-                  alt="Secured by PositiveSSL"
-                  width={124}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </a>
-            </div>
           </div>
 
           {/* Contact */}
@@ -111,6 +100,24 @@ export default function Footer() {
               Terms of Service
             </Link>
           </div>
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-primary-foreground/10 flex justify-center">
+          <a
+            href="https://www.positivessl.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block transition-transform hover:scale-105"
+            aria-label="Secured by PositiveSSL"
+          >
+            <Image
+              src="/images/positivessl-seal-sm.jpg"
+              alt="Secured by PositiveSSL - Site security certified"
+              width={124}
+              height={32}
+              className="opacity-90 hover:opacity-100 transition-opacity"
+            />
+          </a>
         </div>
       </div>
     </footer>

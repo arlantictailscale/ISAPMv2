@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { getRoomAvailability } from "@/app/actions/get-room-availability"
+import { DeluxeRoomGallery } from "@/components/deluxe-room-gallery"
 
 export default async function VenuePage() {
   const roomAvailability = await getRoomAvailability()
@@ -244,51 +245,53 @@ export default async function VenuePage() {
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Location Map & Info */}
-            <div className="space-y-6">
-              <div className="bg-card border border-border rounded-xl overflow-hidden h-80 shadow-md">
-                <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5209!3d-7.8774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e78819b8b8b8b8b%3A0x1234567890abcdef!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen={true}
-                  loading="lazy"
-                  title="The Singhasari Resort & Convention Batu Map"
-                ></iframe>
-              </div>
+              {/* Location Map & Info */}
+              <div className="space-y-6">
+                <div className="bg-card border border-border rounded-xl overflow-hidden h-80 shadow-md">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5209!3d-7.8774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e78819b8b8b8b8b%3A0x1234567890abcdef!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen={true}
+                    loading="lazy"
+                    title="The Singhasari Resort & Convention Batu Map"
+                  ></iframe>
+                </div>
 
-              <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-6">
-                <h3 className="font-semibold mb-3">Getting There</h3>
-                <ul className="space-y-4 text-sm text-muted-foreground">
-                  <li>
-                    <strong className="text-foreground block mb-1">By Air (International/Major):</strong>
-                    Juanda International Airport (SUB), Surabaya. The most common entry point for international and many
-                    domestic flights.
-                    <br />
-                    <span className="italic">Travel time: approx. 2-3 hours to Batu via Pandaan-Malang Toll Road.</span>
-                  </li>
-                  <li>
-                    <strong className="text-foreground block mb-1">By Air (Regional):</strong>
-                    Abdul Rachman Saleh Airport (MLG), Malang. Closer option for select domestic flights.
-                    <br />
-                    <span className="italic">Travel time: approx. 45-60 minutes to the resort.</span>
-                  </li>
-                  <li>
-                    <strong className="text-foreground block mb-1">By Train:</strong>
-                    Malang Kota Baru Station. Scenic train routes available from Jakarta, Bandung, Yogyakarta, and
-                    Surabaya.
-                    <br />
-                    <span className="italic">Travel time: approx. 30-45 minutes by car to Batu.</span>
-                  </li>
-                  <li>
-                    <strong className="text-foreground block mb-1">Ground Transport:</strong>
-                    Ride-hailing apps (Grab, Gojek) and official airport taxis are widely available. Private car rentals
-                    can also be arranged from airports or stations.
-                  </li>
-                </ul>
+                <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-6">
+                  <h3 className="font-semibold mb-3">Getting There</h3>
+                  <ul className="space-y-4 text-sm text-muted-foreground">
+                    <li>
+                      <strong className="text-foreground block mb-1">By Air (International/Major):</strong>
+                      Juanda International Airport (SUB), Surabaya. The most common entry point for international and
+                      many domestic flights.
+                      <br />
+                      <span className="italic">
+                        Travel time: approx. 2-3 hours to Batu via Pandaan-Malang Toll Road.
+                      </span>
+                    </li>
+                    <li>
+                      <strong className="text-foreground block mb-1">By Air (Regional):</strong>
+                      Abdul Rachman Saleh Airport (MLG), Malang. Closer option for select domestic flights.
+                      <br />
+                      <span className="italic">Travel time: approx. 45-60 minutes to the resort.</span>
+                    </li>
+                    <li>
+                      <strong className="text-foreground block mb-1">By Train:</strong>
+                      Malang Kota Baru Station. Scenic train routes available from Jakarta, Bandung, Yogyakarta, and
+                      Surabaya.
+                      <br />
+                      <span className="italic">Travel time: approx. 30-45 minutes by car to Batu.</span>
+                    </li>
+                    <li>
+                      <strong className="text-foreground block mb-1">Ground Transport:</strong>
+                      Ride-hailing apps (Grab, Gojek) and official airport taxis are widely available. Private car
+                      rentals can also be arranged from airports or stations.
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
@@ -339,6 +342,7 @@ export default async function VenuePage() {
                           <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi & breakfast
                         </li>
                       </ul>
+                      <DeluxeRoomGallery />
                     </div>
                   </CardContent>
                 </Card>

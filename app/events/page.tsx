@@ -4,13 +4,17 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, ChevronRight, Ticket } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Clock } from "lucide-react"
 import Link from "next/link"
+import { getPricingByEventId, getWorkshopPricing, formatPrice, EARLY_BIRD_DEADLINE } from "@/lib/data/event-pricing"
+import { EventPricingCard, PricingBadge } from "@/components/event-pricing-card"
+import { isBefore, parseISO } from "date-fns"
 
 export default function EventsPage() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
+  const isEarlyBirdPeriod = isBefore(new Date(), parseISO(EARLY_BIRD_DEADLINE))
 
   const programSchedule = [
     {
@@ -695,6 +699,13 @@ export default function EventsPage() {
                   </p>
                 </div>
 
+                {(() => {
+                  const cpdPricing = getPricingByEventId("cpd")
+                  return cpdPricing ? (
+                    <EventPricingCard pricing={cpdPricing} colorScheme="purple" showFullTable={true} />
+                  ) : null
+                })()}
+
                 {selectedWorkshop === null && (
                   <div className="space-y-12">
                     {programSchedule.map((day, dayIndex) => (
@@ -827,7 +838,16 @@ export default function EventsPage() {
                     </Button>
                     <h2 className="text-4xl font-bold text-orange-600 mb-2">{selectedWorkshop.title}</h2>
                     <p className="text-lg text-muted-foreground mb-4">Course Director: {selectedWorkshop.director}</p>
-                    <p className="text-md text-muted-foreground mb-8">Date: {selectedWorkshop.date}</p>
+                    <p className="text-md text-muted-foreground mb-4">Date: {selectedWorkshop.date}</p>
+
+                    {(() => {
+                      const workshopPricing = getWorkshopPricing(selectedWorkshop.no)
+                      return workshopPricing ? (
+                        <div className="mb-8">
+                          <EventPricingCard pricing={workshopPricing} colorScheme="orange" showFullTable={true} />
+                        </div>
+                      ) : null
+                    })()}
 
                     <h3 className="font-display text-3xl font-bold text-orange-600 mb-6">Agenda</h3>
                     <div className="space-y-4">
@@ -863,60 +883,123 @@ export default function EventsPage() {
                             <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600 w-12">No</th>
                             <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Workshop</th>
                             <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Participant</th>
-                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">
-                              Course Director
-                            </th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Price</th>
                             <th className="px-6 py-4 text-left text-sm font-semibold text-orange-600">Actions</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {workshopDetails.map((workshop, idx) => (
-                            <tr key={idx} className={idx % 2 === 0 ? "bg-muted/30" : "bg-background"}>
-                              <td className="px-6 py-4 text-sm font-medium text-foreground">{workshop.no}</td>
-                              <td className="px-6 py-4 text-sm font-medium text-foreground">{workshop.title}</td>
-                              <td className="px-6 py-4 text-sm text-muted-foreground">{workshop.participant}</td>
-                              <td className="px-6 py-4 text-sm text-muted-foreground">{workshop.director}</td>
-                              <td className="px-6 py-4 text-sm">
-                                <Button variant="outline" size="sm" onClick={() => setSelectedWorkshop(workshop)}>
-                                  View Details
-                                </Button>
-                              </td>
-                            </tr>
-                          ))}
+                          {workshopDetails.map((workshop, idx) => {
+                            const workshopPricing = getWorkshopPricing(workshop.no)
+                            return (
+                              <tr key={idx} className={idx % 2 === 0 ? "bg-muted/30" : "bg-background"}>
+                                <td className="px-6 py-4 text-sm font-medium text-foreground">{workshop.no}</td>
+                                <td className="px-6 py-4 text-sm font-medium text-foreground">{workshop.title}</td>
+                                <td className="px-6 py-4 text-sm text-muted-foreground">{workshop.participant}</td>
+                                <td className="px-6 py-4 text-sm">
+                                  {workshopPricing && (
+                                    <div className="flex flex-col gap-1">
+                                      <span className="font-semibold text-orange-600">
+                                        {workshopPricing.participantTypes.length > 1 ? "From " : ""}
+                                        {formatPrice(
+                                          Math.min(
+                                            ...workshopPricing.participantTypes.map((pt) =>
+                                              isEarlyBirdPeriod ? pt.earlyBirdPrice : pt.normalPrice,
+                                            ),
+                                          ),
+                                        )}
+                                      </span>
+                                      {isEarlyBirdPeriod && (
+                                        <span className="text-xs text-green-600 font-medium">Early Bird</span>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-6 py-4 text-sm">
+                                  <div className="flex gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setSelectedWorkshop(workshop)}>
+                                      View Details
+                                    </Button>
+                                    <Button asChild size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
+                                      <Link href={`/pricing?event=ws${workshop.no}`}>
+                                        <Ticket className="h-3 w-3 mr-1" />
+                                        Register
+                                      </Link>
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                          })}
                         </tbody>
                       </table>
                     </div>
 
                     {/* Mobile Card View */}
                     <div className="md:hidden space-y-4">
-                      {workshopDetails.map((workshop, idx) => (
-                        <div key={idx} className="border border-border rounded-lg p-6 bg-muted/30">
-                          <div className="flex items-start gap-4 mb-4">
-                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 text-white font-bold text-sm">
-                              {workshop.no}
+                      {workshopDetails.map((workshop, idx) => {
+                        const workshopPricing = getWorkshopPricing(workshop.no)
+                        return (
+                          <div key={idx} className="border border-border rounded-lg p-6 bg-muted/30">
+                            <div className="flex items-start gap-4 mb-4">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-600 text-white font-bold text-sm">
+                                {workshop.no}
+                              </div>
+                              <h3 className="font-semibold text-foreground text-lg">{workshop.title}</h3>
+                              {workshopPricing && (
+                                <PricingBadge
+                                  eventId={`ws${workshop.no}`}
+                                  pricing={workshopPricing}
+                                  colorScheme="orange"
+                                />
+                              )}
                             </div>
-                            <h3 className="font-semibold text-foreground text-lg">{workshop.title}</h3>
+                            <div className="space-y-3">
+                              <div>
+                                <p className="text-xs font-semibold text-orange-600 mb-1">Participant</p>
+                                <p className="text-sm text-muted-foreground">{workshop.participant}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-semibold text-orange-600 mb-1">Course Director</p>
+                                <p className="text-sm text-muted-foreground">{workshop.director}</p>
+                              </div>
+                              {workshopPricing && (
+                                <div>
+                                  <p className="text-xs font-semibold text-orange-600 mb-1">Registration Fee</p>
+                                  <p className="text-sm font-semibold text-foreground">
+                                    {workshopPricing.participantTypes.length > 1 ? "From " : ""}
+                                    {formatPrice(
+                                      Math.min(
+                                        ...workshopPricing.participantTypes.map((pt) =>
+                                          isEarlyBirdPeriod ? pt.earlyBirdPrice : pt.normalPrice,
+                                        ),
+                                      ),
+                                    )}
+                                    {isEarlyBirdPeriod && (
+                                      <span className="ml-2 text-xs text-green-600">(Early Bird)</span>
+                                    )}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedWorkshop(workshop)}
+                                className="flex-1"
+                              >
+                                View Details
+                              </Button>
+                              <Button asChild size="sm" className="flex-1 bg-orange-600 hover:bg-orange-700 text-white">
+                                <Link href={`/pricing?event=ws${workshop.no}`}>
+                                  <Ticket className="h-3 w-3 mr-1" />
+                                  Register
+                                </Link>
+                              </Button>
+                            </div>
                           </div>
-                          <div className="space-y-3">
-                            <div>
-                              <p className="text-xs font-semibold text-orange-600 mb-1">Participant</p>
-                              <p className="text-sm text-muted-foreground">{workshop.participant}</p>
-                            </div>
-                            <div>
-                              <p className="text-xs font-semibold text-orange-600 mb-1">Course Director</p>
-                              <p className="text-sm text-muted-foreground">{workshop.director}</p>
-                            </div>
-                          </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedWorkshop(workshop)}
-                            className="mt-4 w-full"
-                          >
-                            View Details
-                          </Button>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </>
                 )}
@@ -996,6 +1079,13 @@ export default function EventsPage() {
                     management.
                   </p>
                 </div>
+
+                {(() => {
+                  const symposiumPricing = getPricingByEventId("symposium")
+                  return symposiumPricing ? (
+                    <EventPricingCard pricing={symposiumPricing} colorScheme="cyan" showFullTable={true} />
+                  ) : null
+                })()}
 
                 <div>
                   <p className="text-lg text-muted-foreground mb-2">{symposiumSchedule.grandTheme}</p>

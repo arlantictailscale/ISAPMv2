@@ -11,6 +11,8 @@ import Link from "next/link"
 import { getPricingByEventId, getWorkshopPricing, formatPrice, EARLY_BIRD_DEADLINE } from "@/lib/data/event-pricing"
 import { EventPricingCard, PricingBadge } from "@/components/event-pricing-card"
 import { isBefore, parseISO } from "date-fns"
+import Image from "next/image" // Import Image component
+import { MapPin } from "lucide-react" // Added MapPin icon for City Tour tab
 
 export default function EventsPage() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
@@ -595,7 +597,7 @@ export default function EventsPage() {
           <div className="max-w-7xl mx-auto">
             <Tabs defaultValue="program" className="w-full">
               <div className="flex justify-center mb-12">
-                <TabsList className="grid grid-cols-2 md:grid-cols-4 h-auto md:h-14 bg-card border border-border shadow-sm p-1 rounded-xl">
+                <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto md:h-14 bg-card border border-border shadow-sm p-1 rounded-xl">
                   <TabsTrigger
                     value="program"
                     className="text-sm md:text-base font-semibold data-[state=active]:bg-purple-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-purple-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
@@ -619,6 +621,12 @@ export default function EventsPage() {
                     className="text-sm md:text-base font-semibold data-[state=active]:bg-emerald-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-emerald-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
                   >
                     ISAPM Congress
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="city-tour"
+                    className="text-sm md:text-base font-semibold data-[state=active]:bg-rose-600 data-[state=active]:text-white data-[state=active]:shadow-md hover:bg-rose-50 transition-all duration-200 rounded-lg px-3 md:px-6 py-2"
+                  >
+                    City Tour
                   </TabsTrigger>
                 </TabsList>
               </div>
@@ -1174,6 +1182,59 @@ export default function EventsPage() {
 
                 <div className="bg-gradient-to-r from-emerald-500/10 to-primary/10 rounded-lg p-6 border border-emerald-500/20">
                   <p className="text-base text-foreground/90 leading-relaxed italic">{congressSchedule.conclusion}</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="city-tour" className="space-y-8 animate-in fade-in-50 duration-500">
+                <div className="bg-gradient-to-br from-rose-500/10 via-rose-500/5 to-transparent rounded-2xl border border-rose-500/20 p-8 shadow-sm">
+                  <div className="flex items-start gap-4 mb-6">
+                    <div className="rounded-full bg-rose-500/20 p-3">
+                      <MapPin className="h-6 w-6 text-rose-600" />
+                    </div>
+                    <div className="flex-1">
+                      <h2 className="text-3xl font-bold text-foreground mb-3 font-display">City Tour Experience</h2>
+                      <p className="text-base text-foreground/80 leading-relaxed">
+                        Explore the beautiful city of Batu, Malang and its surroundings during ISAPM 2026. Our curated
+                        city tour will take you through scenic destinations, cultural landmarks, and local attractions
+                        that showcase the best of East Java.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* City Tour Map Image */}
+                  <div className="relative w-full mb-8 rounded-xl overflow-hidden border border-rose-500/20 shadow-lg">
+                    <Image
+                      src="/images/city-tour-map.svg"
+                      alt="ISAPM 2026 City Tour Map - Explore Batu, Malang and surrounding attractions"
+                      width={800}
+                      height={600}
+                      className="w-full h-auto object-contain bg-white"
+                      priority
+                    />
+                  </div>
+
+                  {/* Coming Soon Notice */}
+                  <div className="flex flex-col items-center justify-center py-12 px-6 bg-gradient-to-r from-rose-500/5 to-orange-500/5 rounded-xl border border-rose-500/20">
+                    <div className="w-20 h-20 rounded-full bg-rose-500/20 flex items-center justify-center mb-6">
+                      <MapPin className="h-10 w-10 text-rose-600" />
+                    </div>
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground mb-4 text-center">Coming Soon</h3>
+                    <p className="text-base text-muted-foreground text-center max-w-xl leading-relaxed">
+                      We're preparing an exciting city tour program for ISAPM 2026 attendees. Detailed itineraries,
+                      booking information, and tour packages will be announced soon. Stay tuned for updates!
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-3 justify-center">
+                      <span className="px-4 py-2 bg-rose-100 text-rose-700 rounded-full text-sm font-medium">
+                        Scenic Destinations
+                      </span>
+                      <span className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm font-medium">
+                        Cultural Experiences
+                      </span>
+                      <span className="px-4 py-2 bg-amber-100 text-amber-700 rounded-full text-sm font-medium">
+                        Local Cuisine
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>

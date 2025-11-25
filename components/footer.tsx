@@ -13,37 +13,19 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 gap-12 mb-12">
           {/* About */}
           <div>
-            <div className="mb-4 space-y-3">
-              {/* Top row: Conference logo on left, ISAPM org + PERDATIN logos on right */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <Link href="/" className="inline-block">
-                  <Image
-                    src="/images/isapm-2026-logo.png"
-                    alt="ISAPM 2026 - 8th Indonesian Society of Anesthesiology for Pain Management National Meeting"
-                    width={280}
-                    height={80}
-                    className="h-14 md:h-16 w-auto"
-                  />
-                </Link>
-                <div className="flex items-center gap-3">
-                  <Image
-                    src="/images/isapm-org-logo.png"
-                    alt="ISAPM - Indonesian Society of Anesthesiology for Pain Management"
-                    width={80}
-                    height={80}
-                    className="h-12 md:h-14 w-auto"
-                  />
-                  <Image
-                    src="/images/perdatin-logo.png"
-                    alt="PERDATIN - Perhimpunan Dokter Spesialis Anestesiologi dan Terapi Intensif Indonesia"
-                    width={80}
-                    height={80}
-                    className="h-12 md:h-14 w-auto"
-                  />
-                </div>
-              </div>
-              {/* Bottom row: Kemenkes logo */}
-              <div>
+            <div className="mb-4">
+              {/* Main conference logo */}
+              <Link href="/" className="inline-block mb-4">
+                <Image
+                  src="/images/isapm-2026-logo.png"
+                  alt="ISAPM 2026 - 8th Indonesian Society of Anesthesiology for Pain Management National Meeting"
+                  width={280}
+                  height={80}
+                  className="h-14 md:h-16 w-auto"
+                />
+              </Link>
+              {/* Partner logos in horizontal row */}
+              <div className="flex flex-wrap items-center gap-4 md:gap-6">
                 <Image
                   src="/images/kemenkes-logo.png"
                   alt="Kementerian Kesehatan Republik Indonesia"
@@ -51,9 +33,23 @@ export default function Footer() {
                   height={80}
                   className="h-10 md:h-12 w-auto"
                 />
+                <Image
+                  src="/images/isapm-org-logo.png"
+                  alt="ISAPM - Indonesian Society of Anesthesiology for Pain Management"
+                  width={80}
+                  height={80}
+                  className="h-10 md:h-12 w-auto"
+                />
+                <Image
+                  src="/images/perdatin-logo.png"
+                  alt="PERDATIN - Perhimpunan Dokter Spesialis Anestesiologi dan Terapi Intensif Indonesia"
+                  width={80}
+                  height={80}
+                  className="h-10 md:h-12 w-auto"
+                />
               </div>
             </div>
-            {/* End of logo layout changes */}
+            {/* End of logo rearrangement */}
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               The Indonesian Society of Anesthesiology for Pain Management National Meeting brings together healthcare
               professionals to advance pain management practices with equity and excellence.

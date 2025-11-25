@@ -9,6 +9,7 @@ import CTA from "@/components/cta"
 import Footer from "@/components/footer"
 import { getRegisteredCount } from "@/app/actions/public-stats"
 import RegistrationStats from "@/components/registration-stats"
+import { ScrollSection } from "@/components/scroll-section"
 
 export default async function Home() {
   const registeredCount = await getRegisteredCount()
@@ -18,13 +19,33 @@ export default async function Home() {
       <Navigation />
       <LandingHero />
       <div id="content">
-        <FlipBookSection registeredCount={registeredCount} />
-        <RegistrationStats initialCount={registeredCount} />
-        <WelcomeSection />
-        <ConferenceHighlights />
-        <AboutSection />
-        <ImportantInfo />
-        <CTA />
+        <ScrollSection animation="fade-up">
+          <FlipBookSection registeredCount={registeredCount} />
+        </ScrollSection>
+
+        <ScrollSection animation="zoom" delay={0.1}>
+          <RegistrationStats initialCount={registeredCount} />
+        </ScrollSection>
+
+        <ScrollSection animation="slide-left">
+          <WelcomeSection />
+        </ScrollSection>
+
+        <ScrollSection animation="flip">
+          <ConferenceHighlights />
+        </ScrollSection>
+
+        <ScrollSection animation="glow">
+          <AboutSection />
+        </ScrollSection>
+
+        <ScrollSection animation="slide-right">
+          <ImportantInfo />
+        </ScrollSection>
+
+        <ScrollSection animation="scale">
+          <CTA />
+        </ScrollSection>
       </div>
       <Footer />
     </main>

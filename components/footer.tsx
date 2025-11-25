@@ -13,15 +13,39 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 gap-12 mb-12">
           {/* About */}
           <div>
-            <Link href="/" className="inline-block mb-4">
+            <div className="flex flex-wrap items-center gap-4 mb-4">
+              <Link href="/" className="inline-block">
+                <Image
+                  src="/images/isapm-2026-logo.png"
+                  alt="ISAPM 2026 - 8th Indonesian Society of Anesthesiology for Pain Management National Meeting"
+                  width={280}
+                  height={80}
+                  className="h-14 md:h-16 w-auto"
+                />
+              </Link>
               <Image
-                src="/images/isapm-2026-logo.png"
-                alt="ISAPM 2026 - 8th Indonesian Society of Anesthesiology for Pain Management National Meeting"
-                width={280}
+                src="/images/isapm-org-logo.png"
+                alt="ISAPM - Indonesian Society of Anesthesiology for Pain Management"
+                width={80}
                 height={80}
-                className="h-16 md:h-20 w-auto"
+                className="h-12 md:h-14 w-auto"
               />
-            </Link>
+              <Image
+                src="/images/perdatin-logo.png"
+                alt="PERDATIN - Perhimpunan Dokter Spesialis Anestesiologi dan Terapi Intensif Indonesia"
+                width={80}
+                height={80}
+                className="h-12 md:h-14 w-auto"
+              />
+              <Image
+                src="/images/kemenkes-logo.png"
+                alt="Kementerian Kesehatan Republik Indonesia"
+                width={160}
+                height={80}
+                className="h-10 md:h-12 w-auto"
+              />
+            </div>
+            {/* End of logo changes */}
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               The Indonesian Society of Anesthesiology for Pain Management National Meeting brings together healthcare
               professionals to advance pain management practices with equity and excellence.

@@ -8,6 +8,8 @@ import { ArrowLeft, ChevronRight } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Clock } from "lucide-react"
 import Link from "next/link"
+import { ScrollSection } from "@/components/scroll-section"
+import { ParallaxSection } from "@/components/parallax-section"
 
 export default function EventsPage() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
@@ -579,14 +581,16 @@ export default function EventsPage() {
 
       <main className="flex-1 pt-24">
         <div className="container mx-auto px-4 py-12">
-          <div className="text-center mb-12 space-y-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground font-display">
-              Events & Programs
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Explore our comprehensive program of CPD courses, hands-on workshops, and symposium sessions
-            </p>
-          </div>
+          <ScrollSection animation="fade-up">
+            <div className="text-center mb-12 space-y-4">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground font-display">
+                Events & Programs
+              </h1>
+              <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+                Explore our comprehensive program of CPD courses, hands-on workshops, and symposium sessions
+              </p>
+            </div>
+          </ScrollSection>
 
           <div className="max-w-7xl mx-auto">
             <Tabs defaultValue="program" className="w-full">
@@ -1091,7 +1095,11 @@ export default function EventsPage() {
         </div>
       </main>
 
-      <section className="py-16 bg-gradient-to-br from-cyan-600 via-teal-600 to-blue-700 relative overflow-hidden">
+      <ParallaxSection
+        speed={0.3}
+        direction="up"
+        className="py-16 bg-gradient-to-br from-cyan-600 via-teal-600 to-blue-700 relative overflow-hidden"
+      >
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-10">
           <div
@@ -1103,7 +1111,7 @@ export default function EventsPage() {
           />
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
+        <ScrollSection animation="zoom" className="container mx-auto px-4 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-block mb-2">
               <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-semibold">
@@ -1174,8 +1182,8 @@ export default function EventsPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </ScrollSection>
+      </ParallaxSection>
 
       <Footer />
     </div>

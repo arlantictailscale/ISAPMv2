@@ -65,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body className={`${_geist.className} ${_geistMono.className} antialiased overflow-x-hidden`}>
         <ScrollProgressBar />
         <CartProvider>{children}</CartProvider>

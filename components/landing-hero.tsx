@@ -2,26 +2,40 @@
 
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
+import Image from "next/image"
 
 export default function LandingHero() {
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-cyan-50">
+    <section className="relative min-h-screen w-full overflow-hidden">
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/images/surgical-background.jpg"
+          alt="Medical professionals in surgery"
+          fill
+          className="object-cover object-center"
+          priority
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-white"></div>
+      </div>
+
       {/* Decorative Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 left-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-0 left-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl"></div>
       </div>
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-32 md:pt-40 pb-20 md:pb-32">
         {/* Main Headline - Large bold headline matching reference style */}
-        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight text-slate-900 mb-8 max-w-6xl">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight text-white drop-shadow-2xl mb-8 max-w-6xl">
           The Biggest Pain Management & Intervention Event in Indonesia
         </h1>
 
         {/* Event Details - Italicized elegant details matching reference */}
         <div className="space-y-2 mb-12 text-lg sm:text-xl md:text-2xl lg:text-3xl">
-          <p className="italic text-slate-700 font-light">16-18 April, 2026 / The Singhasari Hotel, Batu, Malang</p>
+          <p className="italic text-white/90 font-light drop-shadow-lg">
+            16-18 April, 2026 / The Singhasari Hotel, Batu, Malang
+          </p>
         </div>
 
         {/* CTA Buttons */}

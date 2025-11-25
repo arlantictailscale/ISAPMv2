@@ -119,10 +119,17 @@ export default function Navigation() {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between h-16">
-          <Link href="/" className="flex items-center gap-3">
-            <Image src="/images/isapm-logo.png" alt="ISAPM Logo" width={40} height={40} className="w-10 h-10" />
-            <span className="font-display text-xl font-bold text-primary inline whitespace-nowrap">ISAPM 2026</span>
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/images/isapm-2026-banner.png"
+              alt="ISAPM 2026 - Indonesian Society of Anesthesiology for Pain Management National Meeting, April 16-18, 2026, The Singhasari Hotel, Batu, Malang"
+              width={200}
+              height={50}
+              className="h-10 w-auto object-contain"
+              priority
+            />
           </Link>
+          {/* </CHANGE> */}
 
           <div className="hidden md:flex flex-grow justify-end items-center gap-8">
             {navItems.map((item) => (

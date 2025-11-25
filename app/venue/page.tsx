@@ -180,11 +180,11 @@ export default async function VenuePage() {
 
         {/* Venue Details Section with Improved Styling */}
         <section className="py-20 px-4 bg-white">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12">
-            {/* Venue Information */}
-            <div>
-              <h2 className="font-display text-3xl font-bold mb-8">Venue Details</h2>
+          <div className="max-w-6xl mx-auto">
+            <h2 className="font-display text-3xl font-bold mb-8 text-center">Venue Details</h2>
 
+            <div className="grid md:grid-cols-2 gap-12">
+              {/* Venue Information - Left Column */}
               <div className="space-y-6">
                 <div className="flex gap-4">
                   <MapPin className="w-6 h-6 text-cyan-600 flex-shrink-0 mt-1" />
@@ -245,22 +245,8 @@ export default async function VenuePage() {
                     <p className="text-muted-foreground">April 16-18, 2026</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Location Map & Info */}
-              <div className="space-y-6">
-                <div className="bg-card border border-border rounded-xl overflow-hidden h-80 shadow-md">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5209!3d-7.8774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e78819b8b8b8b8b%3A0x1234567890abcdef!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen={true}
-                    loading="lazy"
-                    title="The Singhasari Resort & Convention Batu Map"
-                  ></iframe>
-                </div>
-
+                {/* Getting There info moved to left column for better balance */}
                 <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-6">
                   <h3 className="font-semibold mb-3">Getting There</h3>
                   <ul className="space-y-4 text-sm text-muted-foreground">
@@ -293,6 +279,50 @@ export default async function VenuePage() {
                     </li>
                   </ul>
                 </div>
+              </div>
+
+              {/* Location Map - Right Column */}
+              <div className="space-y-6">
+                <div className="bg-card border border-border rounded-xl overflow-hidden h-[400px] shadow-md">
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5209!3d-7.8774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e78819b8b8b8b8b%3A0x1234567890abcdef!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    allowFullScreen={true}
+                    loading="lazy"
+                    title="The Singhasari Resort & Convention Batu Map"
+                  ></iframe>
+                </div>
+
+                <Card className="border-cyan-200 shadow-md">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <ExternalLink className="w-5 h-5 text-cyan-600" />
+                      Quick Links
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button asChild variant="outline" className="w-full justify-start bg-transparent">
+                      <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
+                        <Hotel className="w-4 h-4 mr-2" />
+                        Visit Resort Website
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" className="w-full justify-start bg-transparent">
+                      <a href="https://goo.gl/maps/singhasari" target="_blank" rel="noopener noreferrer">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        Open in Google Maps
+                      </a>
+                    </Button>
+                    <Button asChild className="w-full justify-start bg-cyan-600 hover:bg-cyan-700">
+                      <Link href="/hotel-booking">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Book Your Room
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>

@@ -1,8 +1,8 @@
 "use client"
 
 import Link from "next/link"
-import { Mail, Phone, MapPin } from 'lucide-react'
-import Image from 'next/image'
+import { Mail, Phone, MapPin } from "lucide-react"
+import Image from "next/image"
 
 export default function Footer() {
   const currentYear = new Date().getFullYear()
@@ -13,18 +13,21 @@ export default function Footer() {
         <div className="grid md:grid-cols-2 gap-12 mb-12">
           {/* About */}
           <div>
-            <h3 className="font-display text-lg font-bold mb-4">ISAPM 2026</h3>
+            <Link href="/" className="inline-block mb-4">
+              <Image
+                src="/images/isapm-2026-logo.png"
+                alt="ISAPM 2026 - 8th Indonesian Society of Anesthesiology for Pain Management National Meeting"
+                width={280}
+                height={80}
+                className="h-16 md:h-20 w-auto"
+              />
+            </Link>
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               The Indonesian Society of Anesthesiology for Pain Management National Meeting brings together healthcare
               professionals to advance pain management practices with equity and excellence.
             </p>
             <div className="mt-6">
-              <a 
-                href="https://www.positivessl.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-block"
-              >
+              <a href="https://www.positivessl.com/" target="_blank" rel="noopener noreferrer" className="inline-block">
                 <Image
                   src="/images/positivessl-seal-sm.png"
                   alt="Secured by PositiveSSL"
@@ -42,8 +45,8 @@ export default function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3">
                 <Mail size={18} className="mt-0.5 flex-shrink-0" />
-                <a 
-                  href="mailto:admin@isapm2026.org" 
+                <a
+                  href="mailto:admin@isapm2026.org"
                   className="text-primary-foreground/80 hover:text-primary-foreground hover:underline"
                 >
                   admin@isapm2026.org
@@ -52,8 +55,8 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <Phone size={18} className="mt-0.5 flex-shrink-0" />
                 <div className="space-y-1">
-                  <a 
-                    href="https://wa.me/6289602626709" 
+                  <a
+                    href="https://wa.me/6289602626709"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary-foreground/80 hover:text-primary-foreground hover:underline block"

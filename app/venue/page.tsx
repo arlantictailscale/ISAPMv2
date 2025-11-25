@@ -152,7 +152,7 @@ export default async function VenuePage() {
                 <CardHeader>
                   <CardTitle>Outdoor Recreation</CardTitle>
                   <CardDescription>
-                    Basketball courts, adventure activities, and outdoor sports facilities
+                    Basketball courts, adventure activities, and outdoor sports facilities including Padel (coming soon)
                   </CardDescription>
                 </CardHeader>
               </Card>

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import Image from "next/image"
 import { getRoomAvailability } from "@/app/actions/get-room-availability"
 import { DeluxeRoomGallery } from "@/components/deluxe-room-gallery"
+import { PremierRoomGallery } from "@/components/premier-room-gallery"
 
 export default async function VenuePage() {
   const roomAvailability = await getRoomAvailability()
@@ -381,6 +382,7 @@ export default async function VenuePage() {
                           <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi, breakfast & minibar
                         </li>
                       </ul>
+                      <PremierRoomGallery />
                     </div>
                   </CardContent>
                 </Card>

@@ -54,31 +54,6 @@ export default function Footer() {
               The Indonesian Society of Anesthesiology for Pain Management National Meeting brings together healthcare
               professionals to advance pain management practices with equity and excellence.
             </p>
-
-            <div className="mt-6 flex items-center gap-4">
-              <span className="text-sm font-medium">Follow Us:</span>
-              <a
-                href="https://www.instagram.com/isapm_id/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors"
-                aria-label="Follow ISAPM on Instagram"
-              >
-                <Instagram size={20} className="text-primary-foreground" />
-              </a>
-            </div>
-
-            <div className="mt-6">
-              <a href="https://www.positivessl.com/" target="_blank" rel="noopener noreferrer" className="inline-block">
-                <Image
-                  src="/images/positivessl-seal-sm.png"
-                  alt="Secured by PositiveSSL"
-                  width={124}
-                  height={32}
-                  className="hover:opacity-80 transition-opacity"
-                />
-              </a>
-            </div>
           </div>
 
           {/* Contact */}
@@ -120,6 +95,22 @@ export default function Footer() {
                   className="text-primary-foreground/80 hover:text-primary-foreground hover:underline"
                 >
                   @isapm_id
+                </a>
+              </div>
+              <div className="pt-2">
+                <a
+                  href="https://www.positivessl.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block"
+                >
+                  <Image
+                    src="/images/positivessl-seal-sm.png"
+                    alt="Secured by PositiveSSL"
+                    width={124}
+                    height={32}
+                    className="hover:opacity-80 transition-opacity"
+                  />
                 </a>
               </div>
             </div>

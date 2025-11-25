@@ -26,7 +26,7 @@ export default async function VenuePage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
           <div className="relative h-full max-w-6xl mx-auto px-4 flex flex-col justify-center items-start">
             <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 text-white text-balance">
-              Welcome to The Singhasari Resort
+              Welcome to The Singhasari Hotel
             </h1>
             <p className="text-lg sm:text-xl text-white/90 mb-6 max-w-2xl text-pretty">
               Experience world-class conference facilities nestled in the breathtaking mountain landscape of Batu,

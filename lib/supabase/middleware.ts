@@ -42,6 +42,8 @@ export async function updateSession(request: NextRequest) {
       !request.nextUrl.pathname.startsWith("/pricing") &&
       !request.nextUrl.pathname.startsWith("/venue") &&
       !request.nextUrl.pathname.startsWith("/hotel-booking") &&
+      !request.nextUrl.pathname.startsWith("/events") &&
+      !request.nextUrl.pathname.startsWith("/call-for-papers") &&
       request.nextUrl.pathname !== "/"
     ) {
       const url = request.nextUrl.clone()

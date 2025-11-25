@@ -1,73 +1,70 @@
-'use client'
+"use client"
 
-import Link from 'next/link'
-import { Play } from 'lucide-react'
+import Link from "next/link"
+import { ArrowRight } from "lucide-react"
 
 export default function LandingHero() {
   return (
-    <section className="relative h-screen w-full overflow-hidden bg-black">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img
-          src="/images/landing-bg.jpg"
-          alt="ISAPM Medical Background"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/40"></div>
+    <section className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-cyan-50">
+      {/* Decorative Background Pattern */}
+      <div className="absolute inset-0 opacity-5">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-orange-500 rounded-full blur-3xl"></div>
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full w-full flex flex-col">
-        {/* Top Section - 8th National Meeting */}
-        <div className="p-8 md:p-12 pt-24 md:pt-[70px]">
-          <div className="flex items-start gap-1">
-            <span className="text-6xl md:text-7xl font-bold text-orange-400">8</span>
-            <div className="flex flex-col text-white mt-2">
-              <span className="text-xl md:text-2xl text-orange-400 font-semibold">Th</span>
-              <span className="text-lg md:text-xl text-orange-400 font-semibold">National Meeting</span>
-            </div>
-          </div>
+      <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-32 md:pt-40 pb-20 md:pb-32">
+        {/* Main Headline - Large bold headline matching reference style */}
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight text-slate-900 mb-8 max-w-6xl">
+          The Biggest Pain Management & Intervention Event in Indonesia
+        </h1>
+
+        {/* Event Details - Italicized elegant details matching reference */}
+        <div className="space-y-2 mb-12 text-lg sm:text-xl md:text-2xl lg:text-3xl">
+          <p className="italic text-slate-700 font-light">16-18 April, 2026 / The Singhasari Hotel, Batu, Malang</p>
         </div>
 
-        {/* Center Section - ISAPM */}
-        <div className="flex-1 flex items-center justify-center px-4">
-          <div className="text-center">
-            <h1 className="text-8xl md:text-[12rem] lg:text-[16rem] font-black leading-none tracking-tighter text-black">
-              ISAPM
-            </h1>
-            <div className="text-right pr-0 md:pr-8 -mt-4 md:-mt-8">
-              <span className="text-4xl md:text-6xl lg:text-7xl font-bold text-black">Vol. 8</span>
-            </div>
-          </div>
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 mt-12">
+          <Link
+            href="/events"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-full transition-colors shadow-lg hover:shadow-xl"
+          >
+            Register Now
+            <ArrowRight className="w-5 h-5" />
+          </Link>
+
+          <Link
+            href="#content"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-cyan-700 bg-white hover:bg-slate-50 border-2 border-cyan-600 rounded-full transition-colors"
+          >
+            Learn More
+          </Link>
         </div>
 
-        {/* Bottom Section */}
-        <div className="p-8 md:p-12 flex flex-col md:flex-row justify-between items-end gap-8 md:px-12 md:py-8">
-          {/* Left - Date and Location */}
-          <div className="text-left">
-            <p className="text-2xl md:text-3xl lg:text-4xl text-orange-300 font-semibold">APRIL 2026</p>
-            <p className="text-2xl md:text-3xl lg:text-4xl text-orange-300 font-semibold">MALANG</p>
+        {/* Additional Info Badge */}
+        <div className="mt-16 inline-flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full shadow-md border border-slate-200">
+          <div className="flex items-center gap-2">
+            <span className="text-3xl font-bold text-orange-500">8</span>
+            <span className="text-sm font-semibold text-slate-700">
+              <span className="text-orange-500">TH</span> National Meeting
+            </span>
           </div>
-
-          {/* Right - Organization Name and CTA */}
-          <div className="text-right">
-            <div className="mb-6">
-              <p className="text-lg md:text-xl lg:text-2xl text-cyan-400 font-bold">Indonesian Society</p>
-              <p className="text-lg md:text-xl lg:text-2xl text-cyan-400 font-bold">Anesthesiology for</p>
-              <p className="text-lg md:text-xl lg:text-2xl text-cyan-400 font-bold">Pain Management</p>
-            </div>
-            
-            <Link 
-              href="#content"
-              className="inline-flex items-center gap-3 text-xl md:text-2xl hover:text-cyan-400 transition-colors group text-red-600"
-            >
-              <span className="tracking-wider font-bold">START NOW</span>
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 group-hover:border-cyan-400 flex items-center justify-center transition-colors text-red-600 border-red-600">
-                <Play className="w-5 h-5 md:w-6 md:h-6 fill-white group-hover:fill-cyan-400 text-red-600" />
-              </div>
-            </Link>
+          <div className="w-px h-8 bg-slate-300"></div>
+          <div className="text-sm font-medium text-slate-700">
+            Indonesian Society of Anesthesiology for Pain Management
           </div>
         </div>
+      </div>
+
+      {/* Bottom Decorative Wave */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-24 text-white">
+          <path
+            d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"
+            fill="currentColor"
+          />
+        </svg>
       </div>
     </section>
   )

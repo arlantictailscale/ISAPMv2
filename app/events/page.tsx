@@ -4,9 +4,10 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ChevronRight } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Clock } from "lucide-react"
+import Link from "next/link"
 
 export default function EventsPage() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
@@ -1089,6 +1090,93 @@ export default function EventsPage() {
           </div>
         </div>
       </main>
+
+      <section className="py-16 bg-gradient-to-br from-cyan-600 via-teal-600 to-blue-700 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
+              backgroundSize: "32px 32px",
+            }}
+          />
+        </div>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-6">
+            <div className="inline-block mb-2">
+              <span className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-semibold">
+                🎯 Ready to Join?
+              </span>
+            </div>
+
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white font-display leading-tight">
+              Secure Your Spot at ISAPM 2026
+            </h2>
+
+            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+              Don't miss Indonesia's biggest pain management event. Register now and enjoy early bird pricing!
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  className="bg-white text-cyan-700 hover:bg-gray-50 text-lg px-8 py-6 h-auto shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 font-semibold"
+                >
+                  Register Now
+                  <ChevronRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+
+              <Link href="/venue">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="bg-transparent border-2 border-white text-white hover:bg-white hover:text-cyan-700 text-lg px-8 py-6 h-auto transition-all duration-300 font-semibold"
+                >
+                  View Venue Details
+                </Button>
+              </Link>
+            </div>
+
+            <div className="pt-6 flex flex-wrap justify-center gap-6 text-white/90 text-sm">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Early Bird Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>7 Workshops Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Limited Seats</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   )

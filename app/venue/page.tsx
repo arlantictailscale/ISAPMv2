@@ -310,11 +310,7 @@ export default async function VenuePage() {
                       </a>
                     </Button>
                     <Button asChild variant="outline" className="w-full justify-start bg-transparent">
-                      <a
-                        href="https://www.google.com/maps/place/The+Singhasari+Resort+%26+Convention+Batu/@-7.8774,112.5209,17z/data=!3m1!4b1!4m6!3m5!1s0x2e7883f3c8d8f8f9:0x7f8b9a8c7d6e5f4a!8m2!3d-7.8774!4d112.5209!16s%2Fg%2F11c1qxqxqx"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href="https://maps.app.goo.gl/r7TpkvgHrMEzmU6" target="_blank" rel="noopener noreferrer">
                         <MapPin className="w-4 h-4 mr-2" />
                         Open in Google Maps
                       </a>

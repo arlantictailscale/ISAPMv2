@@ -285,7 +285,7 @@ export default async function VenuePage() {
               <div className="space-y-6">
                 <div className="bg-card border border-border rounded-xl overflow-hidden h-[400px] shadow-md">
                   <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5209!3d-7.8774!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2e7883f3c8d8f8f9:0x7f8b9a8c7d6e5f4a!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3951.3445!2d112.5500174!3d-7.8930086!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd629b8b0c0c0c1:0x7f8b9a8c7d6e5f4a!2sThe%20Singhasari%20Resort%20Batu!5e0!3m2!1sen!2sid!4v1234567890123!5m2!1sen!2sid"
                     width="100%"
                     height="100%"
                     style={{ border: 0 }}
@@ -310,7 +310,11 @@ export default async function VenuePage() {
                       </a>
                     </Button>
                     <Button asChild variant="outline" className="w-full justify-start bg-transparent">
-                      <a href="https://maps.app.goo.gl/r7TpkvgHrMEzmU6" target="_blank" rel="noopener noreferrer">
+                      <a
+                        href="https://www.google.com/maps/search/?api=1&query=-7.8930086,112.5500174"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <MapPin className="w-4 h-4 mr-2" />
                         Open in Google Maps
                       </a>

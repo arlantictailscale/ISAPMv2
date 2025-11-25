@@ -19,7 +19,6 @@ import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { ScrollSection } from "@/components/scroll-section"
 
 export default function PricingPage() {
   const earlyBirdDeadline = parseISO("2027-01-20T23:59:59")
@@ -366,87 +365,85 @@ export default function PricingPage() {
     <>
       <Navigation />
       <main className="pt-24 overflow-x-hidden">
-        <ScrollSection animation="fade-up">
-          <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5 pt-20 pb-[30px]">
-            <div className="max-w-6xl mx-auto">
-              <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Register for ISAPM 2026</h1>
-              <p className="text-lg text-muted-foreground">
-                Choose your registration package and secure your spot at ISAPM 8th National Meeting 2026. Select from
-                CPD courses, workshops, and symposium options.
-              </p>
+        <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5 pt-20 pb-[30px]">
+          <div className="max-w-6xl mx-auto">
+            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">Register for ISAPM 2026</h1>
+            <p className="text-lg text-muted-foreground">
+              Choose your registration package and secure your spot at ISAPM 8th National Meeting 2026. Select from CPD
+              courses, workshops, and symposium options.
+            </p>
 
-              {isEarlyBirdPeriod && (
-                <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg text-blue-900">
-                  <h2 className="font-display text-2xl font-bold mb-3">Early Bird Discount Available!</h2>
-                  <p className="text-lg">
-                    Register before <span className="font-semibold">{format(earlyBirdDeadline, "MMMM dd, yyyy")}</span>{" "}
-                    to secure special reduced rates. Don't miss out!
-                  </p>
-                </div>
-              )}
-
-              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-900">
-                  <strong>Important:</strong> On-site registration is available at a higher rate. Register online now to
-                  secure the best price and guarantee your participation.
+            {isEarlyBirdPeriod && (
+              <div className="mt-6 p-6 bg-blue-50 border border-blue-200 rounded-lg text-blue-900">
+                <h2 className="font-display text-2xl font-bold mb-3">Early Bird Discount Available!</h2>
+                <p className="text-lg">
+                  Register before <span className="font-semibold">{format(earlyBirdDeadline, "MMMM dd, yyyy")}</span> to
+                  secure special reduced rates. Don't miss out!
                 </p>
               </div>
+            )}
 
-              {user && userProfession && (
-                <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-3">
-                  <User className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-primary mb-1">Showing options for: {userProfession}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Registration options are tailored to your profession. If you need to access options for a
-                      different profession, please update your profile.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {user && !userProfession && (
-                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-900 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-yellow-900 mb-1">Complete Your Profile</p>
-                    <p className="text-xs text-yellow-800 mb-2">
-                      Please complete your profile with your profession to see personalized registration options.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-white hover:bg-yellow-50"
-                      onClick={() => router.push("/profile")}
-                    >
-                      Complete Profile
-                    </Button>
-                  </div>
-                </div>
-              )}
-
-              {!user && (
-                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-900 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-semibold text-blue-900 mb-1">Login Required</p>
-                    <p className="text-xs text-blue-800 mb-2">
-                      Please login to see profession-specific pricing and registration options tailored for you.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="bg-white hover:bg-blue-50"
-                      onClick={() => router.push("/auth/login")}
-                    >
-                      Login
-                    </Button>
-                  </div>
-                </div>
-              )}
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-900">
+                <strong>Important:</strong> On-site registration is available at a higher rate. Register online now to
+                secure the best price and guarantee your participation.
+              </p>
             </div>
-          </section>
-        </ScrollSection>
+
+            {user && userProfession && (
+              <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg flex items-start gap-3">
+                <User className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-primary mb-1">Showing options for: {userProfession}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Registration options are tailored to your profession. If you need to access options for a different
+                    profession, please update your profile.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {user && !userProfession && (
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-yellow-900 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-yellow-900 mb-1">Complete Your Profile</p>
+                  <p className="text-xs text-yellow-800 mb-2">
+                    Please complete your profile with your profession to see personalized registration options.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white hover:bg-yellow-50"
+                    onClick={() => router.push("/profile")}
+                  >
+                    Complete Profile
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!user && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-900 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900 mb-1">Login Required</p>
+                  <p className="text-xs text-blue-800 mb-2">
+                    Please login to see profession-specific pricing and registration options tailored for you.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="bg-white hover:bg-blue-50"
+                    onClick={() => router.push("/auth/login")}
+                  >
+                    Login
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="py-16 px-4 pt-[30px]">
           <div className="max-w-6xl mx-auto space-y-12">
@@ -461,7 +458,7 @@ export default function PricingPage() {
               </div>
             )}
 
-            <ScrollSection animation="stagger" className="space-y-4">
+            <div className="space-y-4">
               {filteredEvents.map((event) => {
                 const colorScheme = getEventColorScheme(event.id)
 
@@ -556,37 +553,35 @@ export default function PricingPage() {
                   </Dialog>
                 )
               })}
-            </ScrollSection>
+            </div>
           </div>
         </section>
 
-        <ScrollSection animation="scale">
-          <section className="py-16 px-4 bg-gradient-to-br from-cyan-500/10 to-teal-500/10">
-            <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-block p-3 bg-cyan-100 rounded-full mb-4">
-                <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                  />
-                </svg>
-              </div>
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 text-balance">Need Accommodation?</h2>
-              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto text-balance">
-                Book your hotel room now and enjoy convenient access to all conference events. Special rates available
-                for ISAPM 2026 attendees.
-              </p>
-              <Link href="/hotel-booking">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto">
-                  Book a Hotel Room
-                  <ChevronRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+        <section className="py-16 px-4 bg-gradient-to-br from-cyan-500/10 to-teal-500/10">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-block p-3 bg-cyan-100 rounded-full mb-4">
+              <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              </svg>
             </div>
-          </section>
-        </ScrollSection>
+            <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4 text-balance">Need Accommodation?</h2>
+            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto text-balance">
+              Book your hotel room now and enjoy convenient access to all conference events. Special rates available for
+              ISAPM 2026 attendees.
+            </p>
+            <Link href="/hotel-booking">
+              <Button size="lg" className="text-lg px-8 py-6 h-auto">
+                Book a Hotel Room
+                <ChevronRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </section>
       </main>
       <Footer />
     </>

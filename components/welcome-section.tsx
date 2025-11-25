@@ -1,5 +1,4 @@
 import Image from "next/image"
-import { ScrollSection } from "@/components/scroll-section"
 
 export default function WelcomeSection() {
   return (
@@ -8,7 +7,7 @@ export default function WelcomeSection() {
       <div className="relative z-10 max-w-7xl mx-auto">
         <div className="grid md:grid-cols-2 items-start gap-0">
           {/* Left Side - Photo with Name Badge - Hidden on mobile, visible on desktop */}
-          <ScrollSection animation="slide-left" className="hidden md:flex flex-col items-center md:items-start">
+          <div className="hidden md:flex flex-col items-center md:items-start">
             <div className="relative w-full md:w-auto">
               <div className="relative w-full md:w-[500px] lg:w-[600px] h-[700px] lg:h-[800px] overflow-hidden">
                 <Image
@@ -20,12 +19,12 @@ export default function WelcomeSection() {
                 />
               </div>
             </div>
-          </ScrollSection>
+          </div>
 
           {/* Right Side - Welcome Message */}
-          <ScrollSection animation="slide-right" className="space-y-6">
+          <div className="space-y-6">
             <div>
-              <h2 className="text-3xl md:text-5xl font-light text-slate-700 tracking-wide mt-0 pt-4 md:pt-10 scroll-underline">
+              <h2 className="text-3xl md:text-5xl font-light text-slate-700 tracking-wide mt-0 pt-4 md:pt-10">
                 WELCOME MESSAGE
               </h2>
               <h3 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-wide">FROM ORGANIZING</h3>
@@ -36,7 +35,7 @@ export default function WelcomeSection() {
             {/* Welcome Message Content */}
             <div className="space-y-4">
               <h4 className="text-xl md:text-2xl font-bold text-slate-800">Welcome Message</h4>
-              <div className="text-slate-700 leading-relaxed space-y-4 text-justify stagger-children">
+              <div className="text-slate-700 leading-relaxed space-y-4 text-justify">
                 <p>
                   Along with the rapid advancements in medicine—accelerating exponentially in the 21st century—we must
                   not become complacent with the technologies that have benefited our patients and eased our daily work
@@ -67,7 +66,7 @@ export default function WelcomeSection() {
                 </div>
               </div>
             </div>
-          </ScrollSection>
+          </div>
         </div>
       </div>
     </section>

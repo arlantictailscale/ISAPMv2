@@ -9,7 +9,8 @@ import CTA from "@/components/cta"
 import Footer from "@/components/footer"
 import { getRegisteredCount } from "@/app/actions/public-stats"
 import RegistrationStats from "@/components/registration-stats"
-import { ScrollSection } from "@/components/scroll-section"
+import { ParallaxSection } from "@/components/parallax-section"
+import { ScrollReveal } from "@/components/scroll-reveal"
 
 export default async function Home() {
   const registeredCount = await getRegisteredCount()
@@ -19,33 +20,39 @@ export default async function Home() {
       <Navigation />
       <LandingHero />
       <div id="content">
-        <ScrollSection animation="fade-up">
+        <ScrollReveal direction="up" duration={800}>
           <FlipBookSection registeredCount={registeredCount} />
-        </ScrollSection>
+        </ScrollReveal>
 
-        <ScrollSection animation="zoom" delay={0.1}>
-          <RegistrationStats initialCount={registeredCount} />
-        </ScrollSection>
+        <ParallaxSection speed={0.15}>
+          <ScrollReveal direction="up" delay={100}>
+            <RegistrationStats initialCount={registeredCount} />
+          </ScrollReveal>
+        </ParallaxSection>
 
-        <ScrollSection animation="slide-left">
+        <ScrollReveal direction="up" duration={900}>
           <WelcomeSection />
-        </ScrollSection>
+        </ScrollReveal>
 
-        <ScrollSection animation="flip">
-          <ConferenceHighlights />
-        </ScrollSection>
+        <ParallaxSection speed={0.2}>
+          <ScrollReveal direction="left" duration={800}>
+            <ConferenceHighlights />
+          </ScrollReveal>
+        </ParallaxSection>
 
-        <ScrollSection animation="glow">
+        <ScrollReveal direction="right" duration={800} delay={50}>
           <AboutSection />
-        </ScrollSection>
+        </ScrollReveal>
 
-        <ScrollSection animation="slide-right">
-          <ImportantInfo />
-        </ScrollSection>
+        <ParallaxSection speed={0.1}>
+          <ScrollReveal direction="up" duration={700}>
+            <ImportantInfo />
+          </ScrollReveal>
+        </ParallaxSection>
 
-        <ScrollSection animation="scale">
+        <ScrollReveal direction="scale" duration={800}>
           <CTA />
-        </ScrollSection>
+        </ScrollReveal>
       </div>
       <Footer />
     </main>

@@ -7,17 +7,6 @@ export default function LandingHero() {
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-slate-50 via-white to-cyan-50">
       <div className="absolute inset-0 overflow-hidden">
-        {/* Video Background */}
-        <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover">
-          <source src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/1764057063397-JH48Uk8xkg2bcMe42BJO8zqYBvRkb6.mp4" type="video/mp4" />
-        </video>
-
-        {/* Dark overlay for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-slate-900/75 to-cyan-900/70"></div>
-
-        {/* Additional animated gradient overlay for visual interest */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-500/10 via-transparent to-orange-500/10 animate-pulse-slow"></div>
-
         {/* Animated gradient orbs */}
         <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-br from-cyan-400/20 to-cyan-600/20 rounded-full blur-3xl animate-float-slow"></div>
         <div className="absolute top-40 right-20 w-80 h-80 bg-gradient-to-br from-orange-300/15 to-orange-500/15 rounded-full blur-3xl animate-float-medium"></div>
@@ -70,22 +59,20 @@ export default function LandingHero() {
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-32 md:pt-40 pb-20 md:pb-32">
         {/* Main Headline - Large bold headline matching reference style */}
-        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight text-white mb-8 max-w-6xl drop-shadow-2xl">
+        <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight text-slate-900 mb-8 max-w-6xl drop-shadow-sm">
           The Biggest Pain Management & Intervention Event in Indonesia
         </h1>
 
         {/* Event Details - Italicized elegant details matching reference */}
         <div className="space-y-2 mb-12 text-lg sm:text-xl md:text-2xl lg:text-3xl">
-          <p className="italic text-cyan-50 font-light drop-shadow-lg">
-            16-18 April, 2026 / The Singhasari Hotel, Batu, Malang
-          </p>
+          <p className="italic text-slate-700 font-light">16-18 April, 2026 / The Singhasari Hotel, Batu, Malang</p>
         </div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-4 mt-12">
           <Link
             href="/events"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-full transition-all shadow-xl hover:shadow-2xl hover:scale-105 backdrop-blur-sm"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-cyan-600 hover:bg-cyan-700 rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105"
           >
             Register Now
             <ArrowRight className="w-5 h-5" />
@@ -93,14 +80,14 @@ export default function LandingHero() {
 
           <Link
             href="#content"
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-white bg-white/20 backdrop-blur-md hover:bg-white/30 border-2 border-white/50 rounded-full transition-all hover:scale-105 shadow-lg"
+            className="inline-flex items-center justify-center gap-2 px-8 py-4 text-lg font-semibold text-cyan-700 bg-white/80 backdrop-blur-sm hover:bg-white border-2 border-cyan-600 rounded-full transition-all hover:scale-105"
           >
             Learn More
           </Link>
         </div>
 
         {/* Additional Info Badge */}
-        <div className="mt-16 inline-flex items-center gap-3 px-6 py-3 bg-white/90 backdrop-blur-md rounded-full shadow-2xl border border-white/30">
+        <div className="mt-16 inline-flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-sm rounded-full shadow-md border border-slate-200">
           <div className="flex items-center gap-2">
             <span className="text-3xl font-bold text-orange-500">8</span>
             <span className="text-sm font-semibold text-slate-700">
@@ -115,7 +102,7 @@ export default function LandingHero() {
       </div>
 
       {/* Bottom Decorative Wave */}
-      <div className="absolute bottom-0 left-0 right-0 z-20">
+      <div className="absolute bottom-0 left-0 right-0">
         <svg viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-24 text-white">
           <path
             d="M0,64L80,69.3C160,75,320,85,480,80C640,75,800,53,960,48C1120,43,1280,53,1360,58.7L1440,64L1440,120L1360,120C1280,120,1120,120,960,120C800,120,640,120,480,120C320,120,160,120,80,120L0,120Z"
@@ -173,10 +160,6 @@ export default function LandingHero() {
           0% { transform: translateX(0); }
           100% { transform: translateX(50px); }
         }
-        @keyframes pulse-slow {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.6; }
-        }
         .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
         .animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
         .animate-float-reverse { animation: float-reverse 7s ease-in-out infinite; }
@@ -189,7 +172,6 @@ export default function LandingHero() {
         .animate-grid-shift { animation: grid-shift 20s ease-in-out infinite; }
         .animate-wave-1 { animation: wave-flow-1 8s linear infinite; }
         .animate-wave-2 { animation: wave-flow-2 10s linear infinite; }
-        .animate-pulse-slow { animation: pulse-slow 8s ease-in-out infinite; }
       `}</style>
     </section>
   )

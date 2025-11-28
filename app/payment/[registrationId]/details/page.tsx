@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useEffect, useState } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -8,10 +10,12 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
-import { Loader2, CheckCircle2, Clock, AlertCircle, ImageIcon } from "lucide-react"
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog"
+import { Loader2, CheckCircle2, Clock, AlertCircle, ImageIcon, Upload, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { reuploadPaymentProof } from "@/app/actions/reupload-payment-proof"
+import { useToast } from "@/hooks/use-toast"
 
 interface Registration {
   id: string
@@ -44,6 +48,11 @@ export default function PaymentDetailsPage() {
   const [payment, setPayment] = useState<Payment | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [showPaymentProof, setShowPaymentProof] = useState(false)
+  const [showReuploadDialog, setShowReuploadDialog] = useState(false)
+  const [reuploadFile, setReuploadFile] = useState<File | null>(null)
+  const [reuploadPreview, setReuploadPreview] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,6 +170,104 @@ export default function PaymentDetailsPage() {
 
   const statusConfig = getStatusConfig()
 
+  const handleReuploadFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"]
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Only .jpg, .png, and .pdf files are allowed",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast({
+        title: "File too large",
+        description: "File size must not exceed 5MB",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setReuploadFile(file)
+
+    // Create preview for images only
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setReuploadPreview(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    } else {
+      setReuploadPreview(null)
+    }
+  }
+
+  const handleRemoveReuploadFile = () => {
+    setReuploadFile(null)
+    setReuploadPreview(null)
+  }
+
+  const handleReuploadSubmit = async () => {
+    if (!reuploadFile || !registrationId) return
+
+    setIsUploading(true)
+
+    try {
+      const formData = new FormData()
+      formData.append("file", reuploadFile)
+      formData.append("registrationId", registrationId)
+
+      const result = await reuploadPaymentProof(formData)
+
+      if (result.error) {
+        toast({
+          title: "Upload failed",
+          description: result.error,
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "Payment proof uploaded successfully",
+        description: "Your payment is now pending verification",
+      })
+
+      // Refresh the page data
+      setShowReuploadDialog(false)
+      setReuploadFile(null)
+      setReuploadPreview(null)
+
+      // Reload payment data
+      const { data: paymentData } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("registration_id", registrationId)
+        .single()
+
+      if (paymentData) {
+        setPayment(paymentData)
+      }
+    } catch (error) {
+      console.error("Error reuploading payment proof:", error)
+      toast({
+        title: "Upload failed",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
   return (
     <>
       <Navigation />
@@ -265,16 +372,30 @@ export default function PaymentDetailsPage() {
                           className="object-contain"
                         />
                       </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowPaymentProof(true)}
-                        className="w-full"
-                      >
-                        <ImageIcon className="w-4 h-4 mr-2" />
-                        View Full Size
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowPaymentProof(true)}
+                          className="flex-1"
+                        >
+                          <ImageIcon className="w-4 h-4 mr-2" />
+                          View Full Size
+                        </Button>
+                        {(payment.payment_status === "pending" || payment.payment_status === "rejected") && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowReuploadDialog(true)}
+                            className="flex-1"
+                          >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Re-upload Proof
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -322,6 +443,106 @@ export default function PaymentDetailsPage() {
                 className="object-contain"
               />
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReuploadDialog} onOpenChange={setShowReuploadDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Re-upload Payment Proof</DialogTitle>
+            <DialogDescription>
+              Upload a new payment proof document. Accepted formats: JPG, PNG, PDF (max 5MB)
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {reuploadPreview ? (
+              <div className="space-y-3">
+                <div className="relative">
+                  <div className="relative w-full h-64 rounded-lg overflow-hidden border bg-muted">
+                    {reuploadFile?.type === "application/pdf" ? (
+                      <div className="flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <ImageIcon className="w-16 h-16 mx-auto text-muted-foreground mb-2" />
+                          <p className="text-sm font-medium">{reuploadFile.name}</p>
+                          <p className="text-xs text-muted-foreground">PDF Document</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <Image
+                        src={reuploadPreview || "/placeholder.svg"}
+                        alt="Payment proof preview"
+                        fill
+                        className="object-contain"
+                      />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleRemoveReuploadFile}
+                    disabled={isUploading}
+                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors disabled:opacity-50"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                {reuploadFile && (
+                  <div className="text-sm text-muted-foreground">
+                    <p>File: {reuploadFile.name}</p>
+                    <p>Size: {(reuploadFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-input rounded-lg cursor-pointer hover:border-primary transition-colors bg-muted/30">
+                <div className="flex flex-col items-center justify-center py-6">
+                  <Upload className="w-12 h-12 text-muted-foreground mb-3" />
+                  <p className="text-sm font-semibold text-muted-foreground mb-1">Click to upload payment proof</p>
+                  <p className="text-xs text-muted-foreground">.jpg, .png, or .pdf (max 5MB)</p>
+                </div>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                  onChange={handleReuploadFileChange}
+                  disabled={isUploading}
+                  className="hidden"
+                />
+              </label>
+            )}
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowReuploadDialog(false)
+                  handleRemoveReuploadFile()
+                }}
+                disabled={isUploading}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleReuploadSubmit}
+                disabled={!reuploadFile || isUploading}
+                className="flex-1"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload Payment Proof
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

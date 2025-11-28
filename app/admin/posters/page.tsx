@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
@@ -61,6 +61,7 @@ export default function AdminPostersPage() {
   const [allowResubmit, setAllowResubmit] = useState(true)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [viewingSubmission, setViewingSubmission] = useState<PosterSubmission | null>(null)
+  const [lastUpdateVersion, setLastUpdateVersion] = useState<number>(0)
 
   useEffect(() => {
     checkAdminAndFetchSubmissions()
@@ -100,7 +101,7 @@ export default function AdminPostersPage() {
     }
   }
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     try {
       setIsLoading(true)
       console.log("[v0] Fetching poster submissions for admin via API...")
@@ -117,6 +118,7 @@ export default function AdminPostersPage() {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
+        cache: "no-store",
       })
 
       if (!response.ok) {
@@ -129,18 +131,15 @@ export default function AdminPostersPage() {
       console.log("[v0] Fetched submissions via API:", transformedData?.length || 0)
 
       setSubmissions(transformedData || [])
+      setLastUpdateVersion((v) => v + 1)
     } catch (error: any) {
       console.error("[v0] Error fetching poster submissions:", error)
-      toast({
-        title: "Error",
-        description: error.message || "Failed to load poster submissions",
-        variant: "destructive",
-      })
+      toast.error(error.message || "Failed to load poster submissions")
       setSubmissions([])
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [supabase])
 
   const updateSubmissionStatus = async (id: string, newStatus: string) => {
     try {
@@ -216,22 +215,69 @@ export default function AdminPostersPage() {
   const handleRejectWithComment = async () => {
     if (!rejectingId) return
 
-    try {
-      setUpdatingId(rejectingId)
+    const submissionIdToReject = rejectingId
+    const currentRejectionComment = rejectionComment
+    const currentAllowResubmit = allowResubmit
 
-      const { error } = await supabase
+    try {
+      setUpdatingId(submissionIdToReject)
+
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s.id === submissionIdToReject
+            ? {
+                ...s,
+                submission_status: "rejected",
+                rejection_comment: currentRejectionComment || null,
+                can_resubmit: currentAllowResubmit,
+                updated_at: new Date().toISOString(),
+              }
+            : s,
+        ),
+      )
+
+      setRejectingId(null)
+      setRejectionComment("")
+      setAllowResubmit(true)
+
+      const submission = submissions.find((s) => s.id === submissionIdToReject)
+
+      const { data: currentData, error: checkError } = await supabase
+        .from("abstracts")
+        .select("submission_status, updated_at")
+        .eq("id", submissionIdToReject)
+        .single()
+
+      if (checkError) {
+        throw new Error("Failed to verify submission state")
+      }
+
+      if (currentData.submission_status !== "pending" && currentData.submission_status !== "rejected") {
+        console.warn("[v0] Submission status changed during rejection attempt:", currentData.submission_status)
+        toast.warning(`Submission status was already changed to "${currentData.submission_status}"`)
+        await fetchSubmissions()
+        return
+      }
+
+      const { error, data: updatedData } = await supabase
         .from("abstracts")
         .update({
           submission_status: "rejected",
-          rejection_comment: rejectionComment || null,
-          can_resubmit: allowResubmit,
+          rejection_comment: currentRejectionComment || null,
+          can_resubmit: currentAllowResubmit,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", rejectingId)
+        .eq("id", submissionIdToReject)
+        .select()
+        .single()
 
-      if (error) throw error
+      if (error) {
+        await fetchSubmissions()
+        throw error
+      }
 
-      const submission = submissions.find((s) => s.id === rejectingId)
+      console.log("[v0] Database updated successfully:", updatedData)
+
       if (submission) {
         console.log("[v0] Found submission for rejection:", {
           id: submission.id,
@@ -255,8 +301,8 @@ export default function AdminPostersPage() {
                 userName: submission.user_name || "Participant",
                 posterTitle: submission.title,
                 status: "rejected",
-                rejectionComment: rejectionComment || undefined,
-                canResubmit: allowResubmit,
+                rejectionComment: currentRejectionComment || undefined,
+                canResubmit: currentAllowResubmit,
               }),
             })
 
@@ -278,15 +324,12 @@ export default function AdminPostersPage() {
         console.error("[v0] Submission not found in local state")
       }
 
-      toast.success("Submission rejected")
+      toast.success("Submission rejected successfully")
       await fetchSubmissions()
-
-      setRejectingId(null)
-      setRejectionComment("")
-      setAllowResubmit(true)
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error rejecting submission:", err)
-      toast.error("Failed to reject submission")
+      toast.error(err.message || "Failed to reject submission")
+      await fetchSubmissions()
     } finally {
       setUpdatingId(null)
     }
@@ -311,7 +354,6 @@ export default function AdminPostersPage() {
           }
         } catch (blobError) {
           console.error("[v0] Error deleting blob:", blobError)
-          // Continue with submission deletion even if blob deletion fails
         }
       }
 
@@ -383,7 +425,6 @@ export default function AdminPostersPage() {
 
   const exportToExcel = () => {
     try {
-      // Prepare data for Excel
       const excelData = filteredSubmissions.map((sub) => ({
         Title: sub.title,
         Authors: sub.authors,
@@ -402,35 +443,31 @@ export default function AdminPostersPage() {
         University: sub.university || "-",
       }))
 
-      // Create workbook and worksheet
       const ws = XLSX.utils.json_to_sheet(excelData)
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, "E-Poster Submissions")
 
-      // Set column widths for better readability
       const colWidths = [
-        { wch: 50 }, // Title
-        { wch: 40 }, // Authors
-        { wch: 30 }, // Topic
-        { wch: 20 }, // Category
-        { wch: 30 }, // Keywords
-        { wch: 80 }, // Abstract
-        { wch: 15 }, // Status
-        { wch: 25 }, // Submitted By
-        { wch: 30 }, // Email
-        { wch: 10 }, // Has File
-        { wch: 12 }, // Can Resubmit
-        { wch: 50 }, // Rejection Comment
-        { wch: 15 }, // Submission Date
-        { wch: 15 }, // Last Updated
-        { wch: 30 }, // University
+        { wch: 50 },
+        { wch: 40 },
+        { wch: 30 },
+        { wch: 20 },
+        { wch: 30 },
+        { wch: 80 },
+        { wch: 15 },
+        { wch: 25 },
+        { wch: 30 },
+        { wch: 10 },
+        { wch: 12 },
+        { wch: 50 },
+        { wch: 15 },
+        { wch: 15 },
+        { wch: 30 },
       ]
       ws["!cols"] = colWidths
 
-      // Generate filename with current date
       const filename = `ISAPM2026-Posters-${new Date().toISOString().split("T")[0]}.xlsx`
 
-      // Write file
       XLSX.writeFile(wb, filename)
 
       toast.success(`Exported ${filteredSubmissions.length} submissions to Excel`)

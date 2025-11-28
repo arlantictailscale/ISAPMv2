@@ -62,6 +62,7 @@ export default function AdminPostersPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [viewingSubmission, setViewingSubmission] = useState<PosterSubmission | null>(null)
   const [lastUpdateVersion, setLastUpdateVersion] = useState<number>(0)
+  let originalSubmission: PosterSubmission | null = null // Declare originalSubmission variable
 
   useEffect(() => {
     checkAdminAndFetchSubmissions()
@@ -145,68 +146,70 @@ export default function AdminPostersPage() {
     try {
       setUpdatingId(id)
 
-      const { error } = await supabase
-        .from("abstracts")
-        .update({
-          submission_status: newStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
+      // Store original for rollback
+      originalSubmission = submissions.find((s) => s.id === id)
 
-      if (error) throw error
+      // Optimistic update
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s.id === id ? { ...s, submission_status: newStatus, updated_at: new Date().toISOString() } : s,
+        ),
+      )
 
-      if (newStatus === "accepted") {
-        const submission = submissions.find((s) => s.id === id)
-        if (submission) {
-          console.log("[v0] Found submission for acceptance:", {
-            id: submission.id,
-            title: submission.title,
-            user_email: submission.user_email,
-            user_name: submission.user_name,
-            user_id: submission.user_id,
-          })
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-          if (!submission.user_email || submission.user_email === "Unknown") {
-            console.error("[v0] Cannot send email - no valid email address found")
-            toast.error("Cannot send email - no email address found")
-          } else {
-            try {
-              console.log("[v0] Sending acceptance email to:", submission.user_email)
-              const response = await fetch("/api/send-poster-review-email", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  email: submission.user_email,
-                  userName: submission.user_name || "Participant",
-                  posterTitle: submission.title,
-                  status: "accepted",
-                }),
-              })
-
-              const result = await response.json()
-
-              if (!response.ok) {
-                console.error("[v0] Failed to send acceptance email:", result)
-                toast.error("Failed to send acceptance email")
-              } else {
-                console.log("[v0] Acceptance email sent successfully")
-                toast.success("Acceptance email sent")
-              }
-            } catch (emailError) {
-              console.error("[v0] Error sending acceptance email:", emailError)
-              toast.error("Error sending acceptance email")
-            }
-          }
-        } else {
-          console.error("[v0] Submission not found in local state")
-        }
+      if (!session) {
+        throw new Error("No active session")
       }
 
-      toast.success(`Submission ${newStatus}`)
+      const response = await fetch("/api/admin/posters", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          id,
+          submission_status: newStatus,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to update submission")
+      }
+
+      // Update with server response
+      if (result.submission) {
+        setSubmissions((prev) => prev.map((s) => (s.id === id ? { ...s, ...result.submission } : s)))
+      }
+
+      toast.success(`Submission ${newStatus} successfully`)
+
+      // Send email notification for accepted status
+      if (newStatus === "accepted" && originalSubmission?.user_email) {
+        try {
+          await fetch("/api/send-poster-review-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: originalSubmission.user_email,
+              posterTitle: originalSubmission.title,
+              status: "accepted",
+            }),
+          })
+        } catch (emailError) {
+          console.error("[v0] Failed to send acceptance email:", emailError)
+        }
+      }
+    } catch (error: any) {
+      console.error("[v0] Error updating submission status:", error)
+      toast.error(error.message || "Failed to update submission")
+      // Refresh to get accurate state
       await fetchSubmissions()
-    } catch (err) {
-      console.error("Error updating submission:", err)
-      toast.error("Failed to update submission status")
     } finally {
       setUpdatingId(null)
     }
@@ -222,6 +225,10 @@ export default function AdminPostersPage() {
     try {
       setUpdatingId(submissionIdToReject)
 
+      // Store the original submission for rollback
+      originalSubmission = submissions.find((s) => s.id === submissionIdToReject)
+
+      // Optimistic UI update
       setSubmissions((prev) =>
         prev.map((s) =>
           s.id === submissionIdToReject
@@ -236,100 +243,79 @@ export default function AdminPostersPage() {
         ),
       )
 
+      // Close dialog immediately for better UX
       setRejectingId(null)
       setRejectionComment("")
       setAllowResubmit(true)
 
-      const submission = submissions.find((s) => s.id === submissionIdToReject)
+      // Get session for API call
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      const { data: currentData, error: checkError } = await supabase
-        .from("abstracts")
-        .select("submission_status, updated_at")
-        .eq("id", submissionIdToReject)
-        .single()
-
-      if (checkError) {
-        throw new Error("Failed to verify submission state")
+      if (!session) {
+        throw new Error("No active session")
       }
 
-      if (currentData.submission_status !== "pending" && currentData.submission_status !== "rejected") {
-        console.warn("[v0] Submission status changed during rejection attempt:", currentData.submission_status)
-        toast.warning(`Submission status was already changed to "${currentData.submission_status}"`)
-        await fetchSubmissions()
-        return
-      }
-
-      const { error, data: updatedData } = await supabase
-        .from("abstracts")
-        .update({
+      // Use API endpoint with service role for guaranteed update
+      const response = await fetch("/api/admin/posters", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          id: submissionIdToReject,
           submission_status: "rejected",
           rejection_comment: currentRejectionComment || null,
           can_resubmit: currentAllowResubmit,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", submissionIdToReject)
-        .select()
-        .single()
+        }),
+      })
 
-      if (error) {
-        await fetchSubmissions()
-        throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to reject submission")
       }
 
-      console.log("[v0] Database updated successfully:", updatedData)
+      console.log("[v0] Rejection API response:", result)
 
-      if (submission) {
-        console.log("[v0] Found submission for rejection:", {
-          id: submission.id,
-          title: submission.title,
-          user_email: submission.user_email,
-          user_name: submission.user_name,
-          user_id: submission.user_id,
-        })
-
-        if (!submission.user_email || submission.user_email === "Unknown") {
-          console.error("[v0] Cannot send email - no valid email address found")
-          toast.error("Cannot send email - no email address found")
-        } else {
-          try {
-            console.log("[v0] Sending rejection email to:", submission.user_email)
-            const response = await fetch("/api/send-poster-review-email", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                email: submission.user_email,
-                userName: submission.user_name || "Participant",
-                posterTitle: submission.title,
-                status: "rejected",
-                rejectionComment: currentRejectionComment || undefined,
-                canResubmit: currentAllowResubmit,
-              }),
-            })
-
-            const result = await response.json()
-
-            if (!response.ok) {
-              console.error("[v0] Failed to send rejection email:", result)
-              toast.error("Failed to send rejection email")
-            } else {
-              console.log("[v0] Rejection email sent successfully")
-              toast.success("Rejection email sent")
-            }
-          } catch (emailError) {
-            console.error("[v0] Error sending rejection email:", emailError)
-            toast.error("Error sending rejection email")
-          }
-        }
-      } else {
-        console.error("[v0] Submission not found in local state")
+      // Update with the actual server response data
+      if (result.submission) {
+        setSubmissions((prev) => prev.map((s) => (s.id === submissionIdToReject ? { ...s, ...result.submission } : s)))
       }
 
       toast.success("Submission rejected successfully")
-      await fetchSubmissions()
-    } catch (err: any) {
-      console.error("Error rejecting submission:", err)
-      toast.error(err.message || "Failed to reject submission")
-      await fetchSubmissions()
+
+      // Send rejection email in background
+      if (originalSubmission?.user_email) {
+        try {
+          await fetch("/api/send-poster-review-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              to: originalSubmission.user_email,
+              posterTitle: originalSubmission.title,
+              status: "rejected",
+              rejectionComment: currentRejectionComment,
+              canResubmit: currentAllowResubmit,
+            }),
+          })
+        } catch (emailError) {
+          console.error("[v0] Failed to send rejection email:", emailError)
+        }
+      }
+    } catch (error: any) {
+      console.error("[v0] Error rejecting submission:", error)
+      toast.error(error.message || "Failed to reject submission")
+
+      // Rollback optimistic update on error
+      if (originalSubmission) {
+        setSubmissions((prev) => prev.map((s) => (s.id === submissionIdToReject ? originalSubmission : s)))
+      } else {
+        // Full refresh as fallback
+        await fetchSubmissions()
+      }
     } finally {
       setUpdatingId(null)
     }

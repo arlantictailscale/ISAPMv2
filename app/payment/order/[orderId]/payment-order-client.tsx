@@ -159,6 +159,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   }
 
   const hasSubmittedPayment = initialPayment && !showResubmitForm
+  const isResubmitting = showResubmitForm && initialPayment
 
   if (hasSubmittedPayment) {
     return (
@@ -333,14 +334,27 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   </div>
 
                   {/* Action Buttons */}
-                  {initialPayment.payment_status === "rejected" && (
-                    <Button
-                      onClick={() => setShowResubmitForm(true)}
-                      className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-                    >
-                      Resubmit Payment Proof
-                    </Button>
-                  )}
+                  <div className="flex gap-2">
+                    {initialPayment.payment_status === "rejected" && (
+                      <Button
+                        onClick={() => setShowResubmitForm(true)}
+                        className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Resubmit Payment Proof
+                      </Button>
+                    )}
+                    {(initialPayment.payment_status === "pending" || initialPayment.payment_status === "verified") && (
+                      <Button
+                        onClick={() => setShowResubmitForm(true)}
+                        variant="outline"
+                        className="flex-1 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Re-upload Payment Proof
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -364,6 +378,30 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
               <Upload className="w-4 h-4" />
               Back to My Purchases
             </Link>
+
+            {isResubmitting && (
+              <div className="mb-6 p-4 rounded-lg bg-cyan-50 border border-cyan-200">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-cyan-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="font-semibold text-cyan-900">Re-uploading Payment Proof</p>
+                    <p className="text-sm text-cyan-700 mt-1">
+                      {initialPayment.payment_status === "rejected"
+                        ? `Your previous payment was rejected. Reason: ${initialPayment.rejection_reason || "No reason provided"}. Please upload a new payment proof.`
+                        : "You are about to replace your current payment proof. The new submission will be reviewed by our team."}
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowResubmitForm(false)}
+                      className="mt-2 text-cyan-600 hover:text-cyan-700 p-0 h-auto"
+                    >
+                      Cancel and go back
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <Card className="mb-6">
               <CardHeader>
@@ -517,12 +555,28 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
             <Card>
               <CardHeader>
-                <CardTitle>Upload Payment Proof</CardTitle>
+                <CardTitle>{isResubmitting ? "Re-upload Payment Proof" : "Upload Payment Proof"}</CardTitle>
                 <CardDescription>
-                  Upload your payment receipt or transfer confirmation (Max 5MB, .jpg or .png only)
+                  {isResubmitting
+                    ? "Replace your current payment proof with a new one"
+                    : "Upload your payment receipt or transfer confirmation (Max 5MB, .jpg or .png only)"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {isResubmitting && initialPayment.payment_proof_url && (
+                  <div className="p-4 border rounded-lg bg-gray-50">
+                    <Label className="text-sm font-medium mb-2 block">Current Payment Proof (for reference)</Label>
+                    <div className="border rounded-lg p-3 bg-white">
+                      <img
+                        src={initialPayment.payment_proof_url || "/placeholder.svg"}
+                        alt="Current payment proof"
+                        className="w-full h-auto max-h-48 object-contain rounded"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">This will be replaced with your new upload</p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label htmlFor="payment-method">Payment Method *</Label>
                   <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -646,12 +700,12 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   {isUploading ? (
                     <>
                       <Upload className="w-4 h-4 mr-2 animate-pulse" />
-                      Uploading...
+                      {isResubmitting ? "Re-uploading..." : "Uploading..."}
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      Submit Payment Proof
+                      {isResubmitting ? "Submit New Payment Proof" : "Submit Payment Proof"}
                     </>
                   )}
                 </Button>

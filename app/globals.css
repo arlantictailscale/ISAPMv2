@@ -138,6 +138,32 @@
   .font-display {
     font-family: var(--font-display);
   }
+
+  /* Add performance optimizations for below-fold content */
+  /* Optimize rendering for sections that are below the fold */
+  section:not(:first-child) {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 500px;
+  }
+
+  /* Optimize image containers */
+  .image-container {
+    contain: layout style paint;
+  }
+
+  /* Hardware acceleration for animated elements */
+  .gpu-accelerated {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  /* Optimize font rendering */
+  body {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 }
 
 /* Scroll animation classes */

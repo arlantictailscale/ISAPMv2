@@ -1,5 +1,3 @@
-"use client"
-
 import Link from "next/link"
 import CountdownTimer from "./countdown-timer"
 import Image from "next/image"
@@ -15,12 +13,13 @@ export default function Hero() {
           fill
           className="object-cover object-center"
           priority
+          sizes="100vw"
+          quality={85}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/60 to-white"></div>
       </div>
 
       {/* Decorative Elements */}
-
       <div className="absolute bottom-0 left-10 w-96 h-96 bg-primary/20 rounded-full blur-3xl"></div>
 
       <div className="max-w-6xl mx-auto relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-1000">

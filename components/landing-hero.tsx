@@ -1,5 +1,3 @@
-"use client"
-
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 
@@ -58,12 +56,12 @@ export default function LandingHero() {
 
       {/* Content */}
       <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-32 md:pt-40 pb-20 md:pb-32">
-        {/* Main Headline - Large bold headline matching reference style */}
+        {/* Main Headline */}
         <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-tight tracking-tight text-slate-900 mb-8 max-w-6xl drop-shadow-sm">
           The Biggest Pain Management & Intervention Event in Indonesia
         </h1>
 
-        {/* Event Details - Italicized elegant details matching reference */}
+        {/* Event Details */}
         <div className="space-y-2 mb-12 text-lg sm:text-xl md:text-2xl lg:text-3xl">
           <p className="italic text-slate-700 font-light">16-18 April, 2026 / The Singhasari Hotel, Batu, Malang</p>
         </div>
@@ -110,69 +108,6 @@ export default function LandingHero() {
           />
         </svg>
       </div>
-
-      <style jsx>{`
-        @keyframes float-slow {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(30px, -30px) scale(1.05); }
-        }
-        @keyframes float-medium {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(-20px, 20px) scale(1.08); }
-        }
-        @keyframes float-reverse {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(25px, 25px) scale(1.03); }
-        }
-        @keyframes particle-float-1 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.4; }
-          50% { transform: translate(20px, -40px); opacity: 0.8; }
-        }
-        @keyframes particle-float-2 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.3; }
-          50% { transform: translate(-30px, -20px); opacity: 0.7; }
-        }
-        @keyframes particle-float-3 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.4; }
-          50% { transform: translate(15px, 30px); opacity: 0.6; }
-        }
-        @keyframes particle-float-4 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.3; }
-          50% { transform: translate(-25px, -35px); opacity: 0.7; }
-        }
-        @keyframes particle-float-5 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.3; }
-          50% { transform: translate(35px, -15px); opacity: 0.6; }
-        }
-        @keyframes particle-float-6 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.4; }
-          50% { transform: translate(-20px, 25px); opacity: 0.8; }
-        }
-        @keyframes grid-shift {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(10px, 10px); }
-        }
-        @keyframes wave-flow-1 {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50px); }
-        }
-        @keyframes wave-flow-2 {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(50px); }
-        }
-        .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-        .animate-float-medium { animation: float-medium 6s ease-in-out infinite; }
-        .animate-float-reverse { animation: float-reverse 7s ease-in-out infinite; }
-        .animate-particle-1 { animation: particle-float-1 4s ease-in-out infinite; }
-        .animate-particle-2 { animation: particle-float-2 5s ease-in-out infinite 0.5s; }
-        .animate-particle-3 { animation: particle-float-3 6s ease-in-out infinite 1s; }
-        .animate-particle-4 { animation: particle-float-4 4.5s ease-in-out infinite 0.3s; }
-        .animate-particle-5 { animation: particle-float-5 5.5s ease-in-out infinite 0.8s; }
-        .animate-particle-6 { animation: particle-float-6 4s ease-in-out infinite 1.2s; }
-        .animate-grid-shift { animation: grid-shift 20s ease-in-out infinite; }
-        .animate-wave-1 { animation: wave-flow-1 8s linear infinite; }
-        .animate-wave-2 { animation: wave-flow-2 10s linear infinite; }
-      `}</style>
     </section>
   )
 }

@@ -15,7 +15,8 @@ export default function WelcomeSection() {
                   alt="Dr.dr. Ristiawan Muji Laksono - Committee Chair of ISAPM 2026"
                   fill
                   className="object-cover object-top"
-                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 500px, 600px"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -58,6 +59,8 @@ export default function WelcomeSection() {
                       alt="Dr.dr. Ristiawan Muji Laksono"
                       fill
                       className="object-cover object-top"
+                      sizes="64px"
+                      loading="lazy"
                     />
                   </div>
                   <p className="text-left font-black tracking-tighter font-serif text-foreground">

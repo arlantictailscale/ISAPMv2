@@ -1,5 +1,3 @@
-"use client"
-
 import Link from "next/link"
 import { Mail, Phone, MapPin, Instagram } from "lucide-react"
 import Image from "next/image"
@@ -22,6 +20,7 @@ export default function Footer() {
                   width={280}
                   height={80}
                   className="h-14 md:h-16 w-auto"
+                  loading="lazy"
                 />
               </Link>
               {/* Partner logos in horizontal row */}
@@ -32,6 +31,7 @@ export default function Footer() {
                   width={160}
                   height={80}
                   className="h-10 md:h-12 w-auto"
+                  loading="lazy"
                 />
                 <Image
                   src="/images/isapm-org-logo.png"
@@ -39,6 +39,7 @@ export default function Footer() {
                   width={80}
                   height={80}
                   className="h-10 md:h-12 w-auto"
+                  loading="lazy"
                 />
                 <Image
                   src="/images/perdatin-logo.png"
@@ -46,10 +47,10 @@ export default function Footer() {
                   width={80}
                   height={80}
                   className="h-10 md:h-12 w-auto"
+                  loading="lazy"
                 />
               </div>
             </div>
-            {/* End of logo rearrangement */}
             <p className="text-primary-foreground/80 text-sm leading-relaxed">
               The Indonesian Society of Anesthesiology for Pain Management National Meeting brings together healthcare
               professionals to advance pain management practices with equity and excellence.
@@ -110,6 +111,7 @@ export default function Footer() {
                     width={124}
                     height={32}
                     className="hover:opacity-80 transition-opacity"
+                    loading="lazy"
                   />
                 </a>
               </div>

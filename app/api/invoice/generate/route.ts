@@ -9,6 +9,7 @@ import {
 
 export async function GET(request: Request) {
   try {
+    console.log("[v0] Invoice generation started")
     const { searchParams } = new URL(request.url)
     const orderId = searchParams.get("orderId")
 
@@ -92,8 +93,13 @@ export async function GET(request: Request) {
       paymentDate: payment.verified_at ? new Date(payment.verified_at) : undefined,
     }
 
+    console.log("[v0] Invoice data prepared, generating PDF...")
+
     // Generate PDF
     const doc = await generateInvoicePDF(invoiceData)
+
+    console.log("[v0] PDF generated successfully")
+
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"))
 
     // Return PDF as download

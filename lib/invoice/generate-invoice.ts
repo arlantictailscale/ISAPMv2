@@ -113,55 +113,76 @@ const IMAGE_URLS = {
   signature: "/images/ttd-20dr.png",
 }
 
-async function fetchImageAsBase64(url: string): Promise<string | null> {
-  try {
-    console.log("[v0] Fetching image from URL:", url)
+async function fetchImageAsBase64(url: string, retries = 3): Promise<string | null> {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      console.log(`[v0] Attempt ${attempt}: Fetching image from URL: ${url}`)
 
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Accept: "image/png,image/jpeg,image/*",
+        },
+        cache: "no-store",
+      })
 
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: {
-        Accept: "image/*",
-        "User-Agent": "ISAPM-Invoice-Generator/1.0",
-      },
-    })
+      if (!response.ok) {
+        console.error(`[v0] Attempt ${attempt}: Failed to fetch image: ${response.status} ${response.statusText}`)
+        if (attempt < retries) continue
+        return null
+      }
 
-    clearTimeout(timeoutId)
+      const arrayBuffer = await response.arrayBuffer()
+      console.log(`[v0] Image fetched, size: ${arrayBuffer.byteLength} bytes`)
 
-    if (!response.ok) {
-      console.error("[v0] Failed to fetch image:", url, "Status:", response.status, response.statusText)
+      if (arrayBuffer.byteLength === 0) {
+        console.error(`[v0] Attempt ${attempt}: Image has zero bytes`)
+        if (attempt < retries) continue
+        return null
+      }
+
+      // Convert to base64
+      const uint8Array = new Uint8Array(arrayBuffer)
+      let binary = ""
+      for (let i = 0; i < uint8Array.byteLength; i++) {
+        binary += String.fromCharCode(uint8Array[i])
+      }
+      const base64 = btoa(binary)
+
+      const contentType = response.headers.get("content-type") || "image/png"
+      console.log(`[v0] Success: Image converted to base64, type: ${contentType}, length: ${base64.length}`)
+
+      return `data:${contentType};base64,${base64}`
+    } catch (error) {
+      console.error(`[v0] Attempt ${attempt}: Error fetching image:`, error instanceof Error ? error.message : error)
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt)) // Exponential backoff
+        continue
+      }
       return null
     }
-
-    const arrayBuffer = await response.arrayBuffer()
-    console.log("[v0] Image fetched successfully, size:", arrayBuffer.byteLength, "bytes")
-
-    if (arrayBuffer.byteLength === 0) {
-      console.error("[v0] Image has zero bytes:", url)
-      return null
-    }
-
-    const base64 = Buffer.from(arrayBuffer).toString("base64")
-    const contentType = response.headers.get("content-type") || "image/png"
-
-    console.log("[v0] Image converted to base64, content-type:", contentType)
-    return `data:${contentType};base64,${base64}`
-  } catch (error) {
-    console.error("[v0] Error fetching image:", url, error instanceof Error ? error.message : error)
-    return null
   }
+  return null
 }
 
 async function fetchAllImages(): Promise<Record<string, string | null>> {
-  const imagePromises = Object.entries(IMAGE_URLS).map(async ([key, url]) => {
-    const base64 = await fetchImageAsBase64(url)
-    return [key, base64] as const
-  })
+  console.log("[v0] Starting to fetch all images...")
 
-  const results = await Promise.all(imagePromises)
-  return Object.fromEntries(results)
+  // Fetch all images in parallel
+  const entries = Object.entries(IMAGE_URLS)
+  const results = await Promise.all(
+    entries.map(async ([key, url]) => {
+      const base64 = await fetchImageAsBase64(url)
+      console.log(`[v0] Image ${key}: ${base64 ? "SUCCESS" : "FAILED"}`)
+      return [key, base64] as const
+    }),
+  )
+
+  const images = Object.fromEntries(results)
+  const successCount = Object.values(images).filter(Boolean).length
+  console.log(`[v0] Finished fetching images: ${successCount}/${entries.length} successful`)
+
+  return images
 }
 
 export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {

@@ -1,121 +1,58 @@
-import PDFDocument from "pdfkit"
-
-// Vercel Blob storage URLs for invoice images
-const IMAGE_URLS = {
-  isapm2026Logo: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/1.png",
-  isapmOrgLogo: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/2.png",
-  kemenkesLogo: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/3.png",
-  perdatinLogo: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/4.png",
-  ubLogo: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/5.png",
-  idiLogo: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/7.png",
-  lunasStamp: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/Lunas.png",
-  signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
-}
-
-// Helper function to fetch image and convert to base64
-async function fetchImageAsBase64(url: string): Promise<string | null> {
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 15000) // 15s timeout
-
-    const response = await fetch(url, {
-      signal: controller.signal,
-    })
-    clearTimeout(timeoutId)
-
-    if (!response.ok) {
-      console.error(`[v0] Failed to fetch image from ${url}: ${response.status}`)
-      return null
-    }
-
-    const arrayBuffer = await response.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
-
-    if (buffer.length === 0) {
-      console.error(`[v0] Empty buffer for ${url}`)
-      return null
-    }
-
-    return buffer.toString("base64")
-  } catch (error) {
-    console.error(`[v0] Error fetching image ${url}:`, error)
-    return null
-  }
-}
-
-// Fetch all images in parallel
-async function fetchAllImages(): Promise<Record<string, string | null>> {
-  const results = await Promise.all([
-    fetchImageAsBase64(IMAGE_URLS.isapm2026Logo),
-    fetchImageAsBase64(IMAGE_URLS.isapmOrgLogo),
-    fetchImageAsBase64(IMAGE_URLS.kemenkesLogo),
-    fetchImageAsBase64(IMAGE_URLS.perdatinLogo),
-    fetchImageAsBase64(IMAGE_URLS.ubLogo),
-    fetchImageAsBase64(IMAGE_URLS.idiLogo),
-    fetchImageAsBase64(IMAGE_URLS.lunasStamp),
-    fetchImageAsBase64(IMAGE_URLS.signature),
-  ])
-
-  return {
-    isapm2026Logo: results[0],
-    isapmOrgLogo: results[1],
-    kemenkesLogo: results[2],
-    perdatinLogo: results[3],
-    ubLogo: results[4],
-    idiLogo: results[5],
-    lunasStamp: results[6],
-    signature: results[7],
-  }
-}
+import { jsPDF } from "jspdf"
 
 // Helper function to convert number to Indonesian words (Terbilang)
 function numberToIndonesianWords(num: number): string {
-  const satuan = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan"]
-  const belasan = [
-    "Sepuluh",
-    "Sebelas",
-    "Dua Belas",
-    "Tiga Belas",
-    "Empat Belas",
-    "Lima Belas",
-    "Enam Belas",
-    "Tujuh Belas",
-    "Delapan Belas",
-    "Sembilan Belas",
+  const units = [
+    "",
+    "satu",
+    "dua",
+    "tiga",
+    "empat",
+    "lima",
+    "enam",
+    "tujuh",
+    "delapan",
+    "sembilan",
+    "sepuluh",
+    "sebelas",
   ]
 
-  if (num === 0) return "Nol"
-  if (num < 10) return satuan[num]
-  if (num >= 10 && num < 20) return belasan[num - 10]
-  if (num < 100) {
-    return `${satuan[Math.floor(num / 10)]} Puluh ${satuan[num % 10]}`.trim()
-  }
-  if (num < 200) {
-    return `Seratus ${numberToIndonesianWords(num - 100)}`.trim()
-  }
-  if (num < 1000) {
-    return `${satuan[Math.floor(num / 100)]} Ratus ${numberToIndonesianWords(num % 100)}`.trim()
-  }
-  if (num < 2000) {
-    return `Seribu ${numberToIndonesianWords(num - 1000)}`.trim()
-  }
-  if (num < 1000000) {
-    return `${numberToIndonesianWords(Math.floor(num / 1000))} Ribu ${numberToIndonesianWords(num % 1000)}`.trim()
-  }
-  if (num < 1000000000) {
-    return `${numberToIndonesianWords(Math.floor(num / 1000000))} Juta ${numberToIndonesianWords(num % 1000000)}`.trim()
-  }
-  return num.toString()
+  if (num < 0) return "minus " + numberToIndonesianWords(Math.abs(num))
+  if (num < 12) return units[num]
+  if (num < 20) return units[num - 10] + " belas"
+  if (num < 100) return units[Math.floor(num / 10)] + " puluh " + units[num % 10]
+  if (num < 200) return "seratus " + numberToIndonesianWords(num - 100)
+  if (num < 1000) return units[Math.floor(num / 100)] + " ratus " + numberToIndonesianWords(num % 100)
+  if (num < 2000) return "seribu " + numberToIndonesianWords(num - 1000)
+  if (num < 1000000)
+    return numberToIndonesianWords(Math.floor(num / 1000)) + " ribu " + numberToIndonesianWords(num % 1000)
+  if (num < 1000000000)
+    return numberToIndonesianWords(Math.floor(num / 1000000)) + " juta " + numberToIndonesianWords(num % 1000000)
+  if (num < 1000000000000)
+    return (
+      numberToIndonesianWords(Math.floor(num / 1000000000)) + " milyar " + numberToIndonesianWords(num % 1000000000)
+    )
+  return (
+    numberToIndonesianWords(Math.floor(num / 1000000000000)) +
+    " triliun " +
+    numberToIndonesianWords(num % 1000000000000)
+  )
 }
 
-// Format number to Rupiah
-export function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount)
+export function formatTerbilang(num: number): string {
+  if (num === 0) return "nol rupiah"
+  const words = numberToIndonesianWords(num).trim().replace(/\s+/g, " ")
+  // Capitalize first letter
+  return words.charAt(0).toUpperCase() + words.slice(1) + " rupiah"
+}
+
+// Generate invoice number based on date and order ID
+export function generateInvoiceNumber(orderId: string, date: Date = new Date()): string {
+  const year = date.getFullYear().toString().slice(-2)
+  const month = (date.getMonth() + 1).toString().padStart(2, "0")
+  const day = date.getDate().toString().padStart(2, "0")
+  const orderSuffix = orderId.slice(0, 4).toUpperCase()
+  return `Natmet-${year}${month}${day}${orderSuffix}`
 }
 
 // Format date to Indonesian format
@@ -134,31 +71,27 @@ export function formatDateIndonesian(date: Date): string {
     "November",
     "Desember",
   ]
-
-  const day = date.getDate()
-  const month = months[date.getMonth()]
-  const year = date.getFullYear()
-
-  return `${day} ${month} ${year}`
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
 }
 
-// Format amount to Terbilang (Indonesian words)
-export function formatTerbilang(amount: number): string {
-  return `${numberToIndonesianWords(amount)} Rupiah`
+// Format currency to Indonesian format
+export function formatRupiah(amount: number): string {
+  return `Rp. ${amount.toLocaleString("id-ID")}`
 }
 
-// Generate invoice number
-export function generateInvoiceNumber(orderId: string, date: Date): string {
-  const year = date.getFullYear().toString().slice(-2)
-  const month = (date.getMonth() + 1).toString().padStart(2, "0")
-  const day = date.getDate().toString().padStart(2, "0")
-  const orderShort = orderId.slice(0, 8).toUpperCase()
-
-  return `${year}${month}${day}${orderShort}`
+export interface InvoiceItem {
+  eventLabel: string
+  unitPrice: number
+  quantity: number
+  nights?: number
+  itemType: string
+  participantTypeLabel?: string
+  hotelRoomType?: string
+  checkInDate?: string
+  checkOutDate?: string
 }
 
-// Main function to generate invoice PDF
-export async function generateInvoicePDF(invoiceData: {
+export interface InvoiceData {
   orderId: string
   invoiceNumber: string
   invoiceDate: Date
@@ -166,134 +99,403 @@ export async function generateInvoicePDF(invoiceData: {
   customerEmail: string
   customerPhone?: string
   customerInstitution?: string
-  items: { eventLabel: string; unitPrice: number; quantity: number; itemType: string }[]
+  items: InvoiceItem[]
   totalAmount: number
   currency: string
   paymentDate?: Date
-}): Promise<PDFDocument> {
-  console.log("[v0] Fetching images from Vercel Blob storage...")
-  const images = await fetchAllImages()
+  paymentMethod?: string
+}
 
-  const doc = new PDFDocument({
-    size: "A4",
-    margins: { top: 50, bottom: 50, left: 50, right: 50 },
+export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
   })
 
-  // Add logos
-  const logoY = 50
-  const logoSize = 50
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 15
+  const contentWidth = pageWidth - margin * 2
 
-  if (images.isapm2026Logo) {
-    doc.image(Buffer.from(images.isapm2026Logo, "base64"), 50, logoY, {
-      width: logoSize,
-      height: logoSize,
-    })
+  // Colors matching ISAPM branding
+  const primaryBlue: [number, number, number] = [0, 169, 224] // ISAPM Cyan/Blue
+  const darkText: [number, number, number] = [33, 37, 41]
+  const grayText: [number, number, number] = [108, 117, 125]
+  const redStamp: [number, number, number] = [220, 53, 69] // For LUNAS stamp
+  const greenStamp: [number, number, number] = [40, 167, 69] // Alternative green for LUNAS
+
+  let yPos = margin
+
+  // ============================================
+  // HEADER SECTION WITH LOGOS
+  // ============================================
+
+  // Main conference logo (left side)
+  // Since we can't load external images in jsPDF easily on server, we'll create a styled header
+  doc.setFillColor(...primaryBlue)
+  doc.rect(margin, yPos, 50, 18, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(14)
+  doc.setFont("helvetica", "bold")
+  doc.text("8", margin + 5, yPos + 12)
+  doc.setFontSize(10)
+  doc.text("ISAPM", margin + 15, yPos + 8)
+  doc.setFontSize(12)
+  doc.setTextColor(124, 179, 66) // Green for 2026
+  doc.text("2026", margin + 33, yPos + 8)
+  doc.setFontSize(6)
+  doc.setTextColor(255, 255, 255)
+  doc.text("Indonesian Society of Anesthesiology", margin + 15, yPos + 13)
+  doc.text("for Pain Management", margin + 15, yPos + 16)
+
+  // Partner logos placeholder (right side) - styled boxes
+  const logoSize = 12
+  const logoY = yPos + 3
+
+  // Kemenkes logo placeholder
+  doc.setFillColor(0, 168, 168) // Teal
+  doc.circle(pageWidth - margin - 45, logoY + logoSize / 2, logoSize / 2, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(5)
+  doc.text("KEMENKES", pageWidth - margin - 50, logoY + logoSize / 2 + 1)
+
+  // ISAPM org logo placeholder
+  doc.setFillColor(220, 53, 69) // Red
+  doc.circle(pageWidth - margin - 25, logoY + logoSize / 2, logoSize / 2, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.text("ISAPM", pageWidth - margin - 29, logoY + logoSize / 2 + 1)
+
+  // PERDATIN logo placeholder
+  doc.setFillColor(220, 53, 69) // Red
+  doc.circle(pageWidth - margin - 5, logoY + logoSize / 2, logoSize / 2, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.text("PDT", pageWidth - margin - 8, logoY + logoSize / 2 + 1)
+
+  yPos += 25
+
+  // ============================================
+  // TITLE
+  // ============================================
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.setTextColor(...primaryBlue)
+  doc.text("TANDA TERIMA PEMBAYARAN", pageWidth / 2, yPos, { align: "center" })
+  yPos += 3
+
+  // Divider line
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.8)
+  doc.line(margin, yPos, pageWidth - margin, yPos)
+  yPos += 10
+
+  // ============================================
+  // INVOICE INFO & CUSTOMER DETAILS
+  // ============================================
+  doc.setFontSize(10)
+  doc.setTextColor(...darkText)
+
+  // Left column - Invoice details
+  doc.setFont("helvetica", "bold")
+  doc.text("No. Kwitansi", margin, yPos)
+  doc.setFont("helvetica", "normal")
+  doc.text(`: ${data.invoiceNumber}`, margin + 28, yPos)
+
+  // Right column - Customer details header
+  doc.setFont("helvetica", "bold")
+  doc.text("Kepada:", pageWidth / 2 + 5, yPos)
+  yPos += 6
+
+  doc.setFont("helvetica", "bold")
+  doc.text("Tanggal", margin, yPos)
+  doc.setFont("helvetica", "normal")
+  doc.text(`: ${formatDateIndonesian(data.invoiceDate)}`, margin + 28, yPos)
+
+  // Customer name
+  doc.setFont("helvetica", "bold")
+  doc.text(data.customerName, pageWidth / 2 + 5, yPos)
+  yPos += 5
+
+  // Customer institution
+  if (data.customerInstitution) {
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(...grayText)
+    doc.text(data.customerInstitution, pageWidth / 2 + 5, yPos)
+    yPos += 5
   }
-  if (images.isapmOrgLogo) {
-    doc.image(Buffer.from(images.isapmOrgLogo, "base64"), 110, logoY, {
-      width: logoSize,
-      height: logoSize,
-    })
-  }
-  if (images.kemenkesLogo) {
-    doc.image(Buffer.from(images.kemenkesLogo, "base64"), 170, logoY, {
-      width: logoSize,
-      height: logoSize,
-    })
-  }
-  if (images.perdatinLogo) {
-    doc.image(Buffer.from(images.perdatinLogo, "base64"), 230, logoY, {
-      width: logoSize,
-      height: logoSize,
-    })
-  }
-  if (images.ubLogo) {
-    doc.image(Buffer.from(images.ubLogo, "base64"), 290, logoY, {
-      width: logoSize,
-      height: logoSize,
-    })
-  }
-  if (images.idiLogo) {
-    doc.image(Buffer.from(images.idiLogo, "base64"), 350, logoY, {
-      width: logoSize,
-      height: logoSize,
-    })
+
+  // Customer email
+  doc.setTextColor(...primaryBlue)
+  doc.text(data.customerEmail, pageWidth / 2 + 5, yPos)
+  yPos += 10
+
+  // ============================================
+  // ITEMS TABLE
+  // ============================================
+  const tableStartY = yPos
+  const colWidths = { no: 12, event: 85, harga: 35, jumlah: 35 }
+  const colX = {
+    no: margin,
+    event: margin + colWidths.no,
+    harga: margin + colWidths.no + colWidths.event,
+    jumlah: margin + colWidths.no + colWidths.event + colWidths.harga,
   }
 
-  // Title
-  doc.fontSize(20).font("Helvetica-Bold").text("KWITANSI", 50, 130, { align: "center" })
+  // Table header
+  doc.setFillColor(...primaryBlue)
+  doc.rect(margin, tableStartY, contentWidth, 8, "F")
 
-  // Invoice number
-  doc.fontSize(12).font("Helvetica").text(`No: ${invoiceData.invoiceNumber}`, 50, 160, { align: "center" })
+  doc.setTextColor(255, 255, 255)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(9)
+  doc.text("No", colX.no + 4, tableStartY + 5.5)
+  doc.text("Event", colX.event + 4, tableStartY + 5.5)
+  doc.text("Harga", colX.harga + 4, tableStartY + 5.5)
+  doc.text("Jumlah", colX.jumlah + 4, tableStartY + 5.5)
 
-  let currentY = 200
+  yPos = tableStartY + 8
 
-  // Receipt details
-  doc.fontSize(11).font("Helvetica").text("Sudah terima dari:", 50, currentY)
-  doc.fontSize(11).font("Helvetica-Bold").text(invoiceData.customerName, 200, currentY)
-  currentY += 25
+  // Table rows
+  doc.setTextColor(...darkText)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
 
-  doc.fontSize(11).font("Helvetica").text("Uang sejumlah:", 50, currentY)
-  doc.fontSize(11).font("Helvetica-Bold").text(formatRupiah(invoiceData.totalAmount), 200, currentY)
-  currentY += 25
+  data.items.forEach((item, index) => {
+    const rowHeight = 10
+    const rowY = yPos
 
-  doc.fontSize(11).font("Helvetica").text("Terbilang:", 50, currentY)
-  doc.fontSize(11).font("Helvetica-Bold").text(formatTerbilang(invoiceData.totalAmount), 200, currentY, { width: 300 })
-  currentY += 40
+    // Alternate row background
+    if (index % 2 === 0) {
+      doc.setFillColor(245, 247, 250)
+      doc.rect(margin, rowY, contentWidth, rowHeight, "F")
+    }
 
-  // List items
-  const itemsDescription = invoiceData.items.map((item) => item.eventLabel).join(", ")
-  doc.fontSize(11).font("Helvetica").text("Untuk pembayaran:", 50, currentY)
-  doc.fontSize(11).font("Helvetica-Bold").text(itemsDescription, 200, currentY, { width: 300 })
-  currentY += 40
+    // Row border
+    doc.setDrawColor(220, 220, 220)
+    doc.setLineWidth(0.1)
+    doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
 
-  if (images.lunasStamp) {
-    doc.image(Buffer.from(images.lunasStamp, "base64"), 400, currentY - 20, {
-      width: 100,
-      height: 100,
-    })
+    // Vertical lines for columns
+    doc.line(colX.event, rowY, colX.event, rowY + rowHeight)
+    doc.line(colX.harga, rowY, colX.harga, rowY + rowHeight)
+    doc.line(colX.jumlah, rowY, colX.jumlah, rowY + rowHeight)
+
+    const textY = rowY + 6.5
+
+    // No column
+    doc.text(`${index + 1}.`, colX.no + 4, textY)
+
+    // Event column
+    let eventText = ""
+    if (item.itemType === "hotel") {
+      eventText = `Hotel: ${item.hotelRoomType || "Room"}`
+      if (item.nights && item.nights > 1) {
+        eventText += ` (${item.nights} malam)`
+      }
+    } else {
+      eventText = item.eventLabel || "Event Registration"
+      if (item.participantTypeLabel) {
+        eventText += ` - ${item.participantTypeLabel}`
+      }
+    }
+    // Truncate if too long
+    if (eventText.length > 50) {
+      eventText = eventText.substring(0, 47) + "..."
+    }
+    doc.text(eventText, colX.event + 4, textY)
+
+    // Unit price
+    doc.text(formatRupiah(item.unitPrice), colX.harga + 4, textY)
+
+    // Total
+    const quantity = item.quantity || 1
+    const nights = item.nights || 1
+    const itemTotal = item.unitPrice * quantity * nights
+    doc.text(formatRupiah(itemTotal), colX.jumlah + 4, textY)
+
+    yPos += rowHeight
+  })
+
+  // Empty rows to fill table (minimum 7 rows)
+  const minRows = 7
+  const currentRows = data.items.length
+  for (let i = currentRows; i < minRows; i++) {
+    const rowHeight = 10
+    const rowY = yPos
+
+    if (i % 2 === 0) {
+      doc.setFillColor(245, 247, 250)
+      doc.rect(margin, rowY, contentWidth, rowHeight, "F")
+    }
+
+    doc.setDrawColor(220, 220, 220)
+    doc.setLineWidth(0.1)
+    doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
+    doc.line(colX.event, rowY, colX.event, rowY + rowHeight)
+    doc.line(colX.harga, rowY, colX.harga, rowY + rowHeight)
+    doc.line(colX.jumlah, rowY, colX.jumlah, rowY + rowHeight)
+
+    yPos += rowHeight
   }
 
-  // Date and signature
-  const paymentDate = invoiceData.paymentDate || invoiceData.invoiceDate
-  currentY += 60
-  doc
-    .fontSize(11)
-    .font("Helvetica")
-    .text(`Malang, ${formatDateIndonesian(paymentDate)}`, 350, currentY, { align: "right" })
+  // Table border
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.5)
+  doc.rect(margin, tableStartY, contentWidth, yPos - tableStartY)
 
-  currentY += 20
-  doc.fontSize(11).font("Helvetica").text("Bendahara", 350, currentY, { align: "right" })
+  // Total row
+  yPos += 2
+  doc.setFillColor(...primaryBlue)
+  doc.rect(margin, yPos, contentWidth, 10, "F")
 
-  if (images.signature) {
-    doc.image(Buffer.from(images.signature, "base64"), 380, currentY + 10, {
-      width: 100,
-      height: 50,
-    })
-  }
+  doc.setTextColor(255, 255, 255)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.text("Total Pembayaran:", colX.harga - 25, yPos + 7)
+  doc.text(formatRupiah(data.totalAmount), colX.jumlah + 4, yPos + 7)
 
-  currentY += 70
-  doc.fontSize(11).font("Helvetica-Bold").text("dr. Widjiati Wangsaputra Nugraha", 350, currentY, { align: "right" })
+  yPos += 18
 
-  doc.end()
+  // ============================================
+  // TERBILANG SECTION
+  // ============================================
+  doc.setTextColor(...darkText)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(10)
+  doc.text("Terbilang:", margin, yPos)
+  yPos += 6
+
+  doc.setFont("helvetica", "italic")
+  doc.setFontSize(9)
+  doc.setTextColor(...grayText)
+  const terbilang = formatTerbilang(data.totalAmount)
+  const splitTerbilang = doc.splitTextToSize(terbilang, contentWidth - 10)
+  doc.text(splitTerbilang, margin, yPos)
+  yPos += splitTerbilang.length * 5 + 8
+
+  // ============================================
+  // PAYMENT INFO BOX
+  // ============================================
+  doc.setFillColor(240, 248, 255) // Light blue background
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(margin, yPos, contentWidth / 2 - 5, 28, 2, 2, "FD")
+
+  doc.setTextColor(...darkText)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(9)
+  doc.text("Telah dibayarkan pada:", margin + 5, yPos + 7)
+
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(8)
+  doc.text("No. Rek. 7207681363 (BSI)", margin + 5, yPos + 14)
+  doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
+
+  // ============================================
+  // LUNAS (PAID) STAMP
+  // ============================================
+  const stampX = margin + contentWidth / 2 + 10
+  const stampY = yPos + 5
+  const stampWidth = 35
+  const stampHeight = 18
+
+  // Stamp border (tilted effect with double border)
+  doc.setDrawColor(...greenStamp)
+  doc.setLineWidth(1.5)
+
+  // Outer rectangle
+  doc.rect(stampX, stampY, stampWidth, stampHeight)
+
+  // Inner rectangle
+  doc.setLineWidth(0.5)
+  doc.rect(stampX + 2, stampY + 2, stampWidth - 4, stampHeight - 4)
+
+  // LUNAS text
+  doc.setTextColor(...greenStamp)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(16)
+  doc.text("LUNAS", stampX + stampWidth / 2, stampY + stampHeight / 2 + 2, { align: "center" })
+
+  // Date under stamp
+  doc.setFontSize(7)
+  doc.setFont("helvetica", "normal")
+  const paymentDateStr = data.paymentDate
+    ? formatDateIndonesian(data.paymentDate)
+    : formatDateIndonesian(data.invoiceDate)
+  doc.text(paymentDateStr, stampX + stampWidth / 2, stampY + stampHeight + 5, { align: "center" })
+
+  yPos += 38
+
+  // ============================================
+  // SIGNATURE SECTION
+  // ============================================
+  const signatureX = pageWidth - margin - 70
+
+  doc.setTextColor(...darkText)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(10)
+  doc.text("Ketua,", signatureX, yPos)
+  yPos += 5
+
+  // Signature line (simulated signature)
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.3)
+  // Draw a simple signature-like curve
+  doc.line(signatureX, yPos + 8, signatureX + 40, yPos + 8)
+  doc.line(signatureX + 5, yPos + 5, signatureX + 15, yPos + 10)
+  doc.line(signatureX + 15, yPos + 10, signatureX + 25, yPos + 3)
+  doc.line(signatureX + 25, yPos + 3, signatureX + 35, yPos + 12)
+
+  yPos += 18
+
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(9)
+  doc.setTextColor(...darkText)
+  doc.text("Dr. dr. Ristiawan Muji Laksono,", signatureX, yPos)
+  yPos += 4
+  doc.text("Sp.An-TI., Subsp. M.N (K)., FIPP", signatureX, yPos)
+
+  yPos += 12
+
+  // ============================================
+  // FOOTER - THANK YOU MESSAGE
+  // ============================================
+  doc.setTextColor(...primaryBlue)
+  doc.setFont("helvetica", "italic")
+  doc.setFontSize(10)
+  doc.text("Terimakasih sudah berpartisipasi pada ISAPM 8th National Meeting 2026", pageWidth / 2, yPos, {
+    align: "center",
+  })
+
+  // ============================================
+  // CONTACT INFO (BOTTOM RIGHT)
+  // ============================================
+  const contactY = pageHeight - 25
+  const contactX = pageWidth - margin
+
+  doc.setTextColor(...grayText)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(7)
+
+  doc.text("Contact:", contactX, contactY, { align: "right" })
+  doc.text("admin@isapm2026.org", contactX, contactY + 4, { align: "right" })
+  doc.text("+62 896-0262-6709 (WhatsApp)", contactX, contactY + 8, { align: "right" })
+  doc.text("www.isapm2026.org", contactX, contactY + 12, { align: "right" })
+
+  // Bottom border line
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(1)
+  doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10)
 
   return doc
 }
 
-// Generate base64 encoded PDF
-export async function generateInvoiceBase64(data: {
-  orderId: string
-  invoiceNumber: string
-  invoiceDate: Date
-  customerName: string
-  customerEmail: string
-  customerPhone?: string
-  customerInstitution?: string
-  items: { eventLabel: string; unitPrice: number; quantity: number; itemType: string }[]
-  totalAmount: number
-  currency: string
-  paymentDate?: Date
-}): Promise<string> {
-  const pdfBuffer = await generateInvoicePDF(data)
-  return pdfBuffer.toString("base64")
+export async function generateInvoiceBase64(data: InvoiceData): Promise<string> {
+  const doc = await generateInvoicePDF(data)
+  return doc.output("datauristring").split(",")[1]
+}
+
+export async function generateInvoiceBlob(data: InvoiceData): Promise<Blob> {
+  const doc = await generateInvoicePDF(data)
+  return doc.output("blob")
 }

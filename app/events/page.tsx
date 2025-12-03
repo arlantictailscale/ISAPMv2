@@ -307,7 +307,8 @@ export default function EventsPage() {
     {
       no: 5,
       title: "Developing a Pain Clinic",
-      participant: "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse, Hospital Management",
+      participant:
+        "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse, Hospital Management (Price based on team of 4 participants)",
       director: "dr. Henny Widyastuti, Sp.An-TI., Subsp. M.N. (K)., FIP",
       date: "Friday, April 17, 2026",
       agenda: [

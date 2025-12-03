@@ -4,10 +4,10 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from "lucide-react"
 
 export default function WorkshopPage() {
-  const [selectedWorkshop, setSelectedWorkshop] = useState<typeof workshopDetails[0] | null>(null)
+  const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
 
   const workshopDetails = [
     {
@@ -20,13 +20,35 @@ export default function WorkshopPage() {
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
         { time: "08.15-08.45", event: "Pathophysiology of Chronic Pain and Tissue Healing Mechanisms", speaker: "TBD" },
-        { time: "08.45– 09.30", event: "Principles and Evidence of Prolotherapy and PRP in Pain Management", speaker: "TBD" },
-        { time: "09.30-10.15", event: "Comparison of Regenerative vs Conventional Steroid Injections (efikasi, keamanan, cost-effectiveness)", speaker: "TBD" },
+        {
+          time: "08.45– 09.30",
+          event: "Principles and Evidence of Prolotherapy and PRP in Pain Management",
+          speaker: "TBD",
+        },
+        {
+          time: "09.30-10.15",
+          event:
+            "Comparison of Regenerative vs Conventional Steroid Injections (efikasi, keamanan, cost-effectiveness)",
+          speaker: "TBD",
+        },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Introduction to Microinvasive Procedures: Dry Needling, Perineural Injection, and Hydrodissection", speaker: "TBD" },
-        { time: "11.15-12.00", event: "Complications and Safety Checklist in Regenerative and Microinvasive Procedures", speaker: "TBD" },
+        {
+          time: "10.30 – 11.15",
+          event: "Introduction to Microinvasive Procedures: Dry Needling, Perineural Injection, and Hydrodissection",
+          speaker: "TBD",
+        },
+        {
+          time: "11.15-12.00",
+          event: "Complications and Safety Checklist in Regenerative and Microinvasive Procedures",
+          speaker: "TBD",
+        },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "Station 1: PRP Preparation and Injection Technique (USG-guided)\nStation 2: Prolotherapy Injection Technique\nStation 3: Microinvasive Needling / Hydrodissection Techniques", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "Station 1: PRP Preparation and Injection Technique (USG-guided)\nStation 2: Prolotherapy Injection Technique\nStation 3: Microinvasive Needling / Hydrodissection Techniques",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
@@ -39,14 +61,35 @@ export default function WorkshopPage() {
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        { time: "08.15-08.45", event: "Principles of Interventional Pain Management in Musculoskeletal Disorders", speaker: "TBD" },
-        { time: "08.45– 09.30", event: "Common Musculoskeletal Pain Syndromes (Shoulder, Neck, Low Back, Knee)", speaker: "TBD" },
-        { time: "09.30-10.15", event: "Ultrasound-Guided Musculoskeletal Procedures: Tips and Pitfalls", speaker: "TBD" },
+        {
+          time: "08.15-08.45",
+          event: "Principles of Interventional Pain Management in Musculoskeletal Disorders",
+          speaker: "TBD",
+        },
+        {
+          time: "08.45– 09.30",
+          event: "Common Musculoskeletal Pain Syndromes (Shoulder, Neck, Low Back, Knee)",
+          speaker: "TBD",
+        },
+        {
+          time: "09.30-10.15",
+          event: "Ultrasound-Guided Musculoskeletal Procedures: Tips and Pitfalls",
+          speaker: "TBD",
+        },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Steroid, PRP, and Regenerative Injections: What’s the Evidence?", speaker: "TBD" },
+        {
+          time: "10.30 – 11.15",
+          event: "Steroid, PRP, and Regenerative Injections: What’s the Evidence?",
+          speaker: "TBD",
+        },
         { time: "11.15-12.00", event: "Case Discussion: Approach to Chronic Musculoskeletal Pain", speaker: "TBD" },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "Station 1: Ultrasound-Guided Shoulder Injection (Suprascapular & Glenohumeral)\nStation 2: Low Back Pain Procedures: Facet Joint, Trigger Point, & Sacroiliac Joint Injection\nStation 3: Knee & Hip Joint Injection Techniques (Sonoanatomy & Practice on Phantom)\nStation 4: Dry Needling, Myofascial Release, and Safe Injection Practices", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "Station 1: Ultrasound-Guided Shoulder Injection (Suprascapular & Glenohumeral)\nStation 2: Low Back Pain Procedures: Facet Joint, Trigger Point, & Sacroiliac Joint Injection\nStation 3: Knee & Hip Joint Injection Techniques (Sonoanatomy & Practice on Phantom)\nStation 4: Dry Needling, Myofascial Release, and Safe Injection Practices",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
@@ -59,14 +102,35 @@ export default function WorkshopPage() {
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        { time: "08.15-08.45", event: "Pain Assessment in Neonates and Children (FLACC, NIPS, Wong-Baker, etc.)", speaker: "TBD" },
-        { time: "08.45– 09.30", event: "Regional Techniques for Pediatric Pain (Caudal, TAP, Peripheral Block)", speaker: "TBD" },
+        {
+          time: "08.15-08.45",
+          event: "Pain Assessment in Neonates and Children (FLACC, NIPS, Wong-Baker, etc.)",
+          speaker: "TBD",
+        },
+        {
+          time: "08.45– 09.30",
+          event: "Regional Techniques for Pediatric Pain (Caudal, TAP, Peripheral Block)",
+          speaker: "TBD",
+        },
         { time: "09.30-10.15", event: "Pharmacological Pain Management in Pediatric Patients", speaker: "TBD" },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Non-Pharmacologic & Behavioral Pain Management (Distraction, Parental Involvement, Comfort Measures)", speaker: "TBD" },
-        { time: "11.15-12.00", event: "Case Discussion: Postoperative Pain Management in Pediatric Surgery", speaker: "TBD" },
+        {
+          time: "10.30 – 11.15",
+          event: "Non-Pharmacologic & Behavioral Pain Management (Distraction, Parental Involvement, Comfort Measures)",
+          speaker: "TBD",
+        },
+        {
+          time: "11.15-12.00",
+          event: "Case Discussion: Postoperative Pain Management in Pediatric Surgery",
+          speaker: "TBD",
+        },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "Station 1: Pediatric Pain Assessment Tools (FLACC, NIPS, Wong-Baker) – Praktik Observasi dan Simulasi Kasus\nStation 2: Caudal & TAP Block on Pediatric Phantom (Ultrasound-Guided)\nStation 3: Pediatric Analgesic Dosing & PCA Setup (Calculation, Safety, Titration)\nStation 4: Non-Pharmacologic Pain Management Simulation (Distraction, Parental Support, Communication)", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "Station 1: Pediatric Pain Assessment Tools (FLACC, NIPS, Wong-Baker) – Praktik Observasi dan Simulasi Kasus\nStation 2: Caudal & TAP Block on Pediatric Phantom (Ultrasound-Guided)\nStation 3: Pediatric Analgesic Dosing & PCA Setup (Calculation, Safety, Titration)\nStation 4: Non-Pharmacologic Pain Management Simulation (Distraction, Parental Support, Communication)",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
@@ -79,34 +143,77 @@ export default function WorkshopPage() {
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        { time: "08.15-08.45", event: "Three in one methode technique (massage, TENS, Shock wave therapy)", speaker: "Willy Halim MD, PhD, FIPP" },
+        {
+          time: "08.15-08.45",
+          event: "Three in one methode technique (massage, TENS, Shock wave therapy)",
+          speaker: "Willy Halim MD, PhD, FIPP",
+        },
         { time: "08.45– 09.30", event: "SEFT (Spiritual Emotional Freedom Technique)", speaker: "Rahmaya Nova" },
-        { time: "09.30-10.15", event: "Psychological and Behavioral Approach: Mindfulness and Coping Strategies", speaker: "dr. Arif Alamsyah dan tim" },
+        {
+          time: "09.30-10.15",
+          event: "Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
+          speaker: "dr. Arif Alamsyah dan tim",
+        },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Psychological and Behavioral Approach: Mindfulness and Coping Strategies", speaker: "TBD" },
-        { time: "11.15-12.00", event: "Case Discussion: Integrating Adjunct Therapies in Acute and Chronic Pain Patients", speaker: "TBD" },
+        {
+          time: "10.30 – 11.15",
+          event: "Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
+          speaker: "TBD",
+        },
+        {
+          time: "11.15-12.00",
+          event: "Case Discussion: Integrating Adjunct Therapies in Acute and Chronic Pain Patients",
+          speaker: "TBD",
+        },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "Station 1: Three in one methode technique (massage, TENS, Shock wave therapy)\nStation 2: SEFT (Spiritual Emotional Freedom Technique)\nStation 3: Psychological and Behavioral Approach: Mindfulness and Coping Strategies", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "Station 1: Three in one methode technique (massage, TENS, Shock wave therapy)\nStation 2: SEFT (Spiritual Emotional Freedom Technique)\nStation 3: Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
     {
       no: 5,
       title: "Developing a Pain Clinic",
-      participant: "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse, Hospital Management",
+      participant:
+        "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse, Hospital Management (Price based on team of 4 participants)",
       director: "dr. Henny Widyastuti, Sp.An-TI., Subsp. M.N. (K)., FIP",
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        { time: "08.15-08.45", event: "The Concept and Philosophy of Pain Medicine: From Acute to Chronic Pain Service", speaker: "TBD" },
+        {
+          time: "08.15-08.45",
+          event: "The Concept and Philosophy of Pain Medicine: From Acute to Chronic Pain Service",
+          speaker: "TBD",
+        },
         { time: "08.45– 09.30", event: "Designing a Pain Clinic: Scope, Structure, and Staffing", speaker: "TBD" },
-        { time: "09.30-10.15", event: "Establishing Multidisciplinary Collaboration: Anesthesia, Neurology, Rehab, and Palliative Teams", speaker: "TBD" },
+        {
+          time: "09.30-10.15",
+          event: "Establishing Multidisciplinary Collaboration: Anesthesia, Neurology, Rehab, and Palliative Teams",
+          speaker: "TBD",
+        },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Workflow and Patient Pathway in Pain Clinic: Assessment to Follow-Up", speaker: "TBD" },
-        { time: "11.15-12.00", event: "Essential Equipment, Documentation, and Coding for Pain Procedures", speaker: "TBD" },
+        {
+          time: "10.30 – 11.15",
+          event: "Workflow and Patient Pathway in Pain Clinic: Assessment to Follow-Up",
+          speaker: "TBD",
+        },
+        {
+          time: "11.15-12.00",
+          event: "Essential Equipment, Documentation, and Coding for Pain Procedures",
+          speaker: "TBD",
+        },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "Station 1: Pain Clinic Setup Simulation: Patient Flow, Documentation, and Scheduling System\nStation 2: Clinical Pathway Simulation: Pain Assessment, Counseling, and Treatment Planning\nStation 3: Basic Interventional Tools Introduction (USG, TENS, Epidural Kit, Phantom)\nStation 4: Multidisciplinary Team Roleplay: Case Conference Between Anesthesiologist, Rehab, and Psychologist", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "Station 1: Pain Clinic Setup Simulation: Patient Flow, Documentation, and Scheduling System\nStation 2: Clinical Pathway Simulation: Pain Assessment, Counseling, and Treatment Planning\nStation 3: Basic Interventional Tools Introduction (USG, TENS, Epidural Kit, Phantom)\nStation 4: Multidisciplinary Team Roleplay: Case Conference Between Anesthesiologist, Rehab, and Psychologist",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
@@ -121,12 +228,21 @@ export default function WorkshopPage() {
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
         { time: "08.15-08.45", event: "Pathophysiology and Classification of Cancer Pain", speaker: "TBD" },
         { time: "08.45– 09.30", event: "WHO Analgesic Ladder in 2025: Still Relevant?", speaker: "TBD" },
-        { time: "09.30-10.15", event: "Pharmacologic Management of Cancer Pain (Opioid & Non-Opioid Strategies)", speaker: "TBD" },
+        {
+          time: "09.30-10.15",
+          event: "Pharmacologic Management of Cancer Pain (Opioid & Non-Opioid Strategies)",
+          speaker: "TBD",
+        },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
         { time: "10.30 – 11.15", event: "Interventional Pain Techniques in Cancer Pain", speaker: "TBD" },
         { time: "11.15-12.00", event: "Psychological & Palliative Aspects in Cancer Pain", speaker: "TBD" },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "Station 1: Ultrasound-Guided Nerve Block for Cancer Pain (Celiac Plexus / TAP / Paravertebral)\nStation 2: Intrathecal & Epidural Catheter Techniques for Chronic Pain\nStation 3: Opioid Rotation and Conversion Workshop (opioid equivalence, dosing, titration)\nStation 4: Communication & Palliative Counseling Skills", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "Station 1: Ultrasound-Guided Nerve Block for Cancer Pain (Celiac Plexus / TAP / Paravertebral)\nStation 2: Intrathecal & Epidural Catheter Techniques for Chronic Pain\nStation 3: Opioid Rotation and Conversion Workshop (opioid equivalence, dosing, titration)\nStation 4: Communication & Palliative Counseling Skills",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
@@ -139,14 +255,36 @@ export default function WorkshopPage() {
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        { time: "08.15-08.45", event: "Neuromodulation Principles: Spinal Cord, Dorsal Root Ganglion, and Peripheral Nerve Stimulation", speaker: "TBD" },
-        { time: "08.45– 09.30", event: "Intrathecal Drug Delivery Systems: Indications, Pump Selection, and Troubleshooting", speaker: "TBD" },
+        {
+          time: "08.15-08.45",
+          event: "Neuromodulation Principles: Spinal Cord, Dorsal Root Ganglion, and Peripheral Nerve Stimulation",
+          speaker: "TBD",
+        },
+        {
+          time: "08.45– 09.30",
+          event: "Intrathecal Drug Delivery Systems: Indications, Pump Selection, and Troubleshooting",
+          speaker: "TBD",
+        },
         { time: "09.30-10.15", event: "Fluoroscopy & Ultrasound Synergy for Advanced Pain Procedures", speaker: "TBD" },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Updates in Radiofrequency Technology: Pulsed, Bipolar, and Cooled RF Applications", speaker: "TBD" },
-        { time: "11.15-12.00", event: "Case-Based Symposium: Comprehensive Algorithm for Refractory Pain Syndromes (FBSS, CRPS, Postherpetic Neuralgia, Cancer Pain)", speaker: "TBD" },
+        {
+          time: "10.30 – 11.15",
+          event: "Updates in Radiofrequency Technology: Pulsed, Bipolar, and Cooled RF Applications",
+          speaker: "TBD",
+        },
+        {
+          time: "11.15-12.00",
+          event:
+            "Case-Based Symposium: Comprehensive Algorithm for Refractory Pain Syndromes (FBSS, CRPS, Postherpetic Neuralgia, Cancer Pain)",
+          speaker: "TBD",
+        },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        { time: "13.00-15.30", event: "DRG Stimulation System (Trial & Permanent Implantation Simulation)\nUltrasound-Guided\nFluoroscopy-Guided Cervical & Lumbar RF Ablation (Medial Branch & DRG)\nSpinal Cord Stimulation (SCS): Lead Placement, Programming, and Troubleshooting (Demo System: Abbott / Medtronic)", speaker: "Instructor" },
+        {
+          time: "13.00-15.30",
+          event:
+            "DRG Stimulation System (Trial & Permanent Implantation Simulation)\nUltrasound-Guided\nFluoroscopy-Guided Cervical & Lumbar RF Ablation (Medial Branch & DRG)\nSpinal Cord Stimulation (SCS): Lead Placement, Programming, and Troubleshooting (Demo System: Abbott / Medtronic)",
+          speaker: "Instructor",
+        },
         { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
       ],
     },
@@ -173,9 +311,7 @@ export default function WorkshopPage() {
                   Back to all workshops
                 </Button>
                 <h1 className="text-4xl font-bold text-primary mb-2">{selectedWorkshop.title}</h1>
-                <p className="text-lg text-muted-foreground mb-4">
-                  Course Director: {selectedWorkshop.director}
-                </p>
+                <p className="text-lg text-muted-foreground mb-4">Course Director: {selectedWorkshop.director}</p>
                 <p className="text-md text-muted-foreground mb-8">Date: {selectedWorkshop.date}</p>
 
                 <h2 className="font-display text-3xl font-bold text-primary mb-6">Agenda</h2>
@@ -206,8 +342,8 @@ export default function WorkshopPage() {
                 <div>
                   <h1 className="text-4xl font-bold text-primary mb-4">Workshops</h1>
                   <p className="text-lg text-muted-foreground">
-                    Explore our comprehensive workshop offerings designed for healthcare professionals at all levels. Each
-                    workshop is led by experienced course directors.
+                    Explore our comprehensive workshop offerings designed for healthcare professionals at all levels.
+                    Each workshop is led by experienced course directors.
                   </p>
                 </div>
 
@@ -261,7 +397,12 @@ export default function WorkshopPage() {
                           <p className="text-sm text-muted-foreground">{workshop.director}</p>
                         </div>
                       </div>
-                      <Button variant="outline" size="sm" onClick={() => setSelectedWorkshop(workshop)} className="mt-4 w-full">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedWorkshop(workshop)}
+                        className="mt-4 w-full"
+                      >
                         View Details
                       </Button>
                     </div>

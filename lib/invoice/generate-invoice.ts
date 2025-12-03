@@ -9,10 +9,12 @@ const IMAGE_URLS = {
   signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
 }
 
+// - logoKemenkes: adjusted to 14x18mm (taller than wide to match the vertical emblem + text)
+// - logoIsapmOrg: adjusted to 16x16mm (perfect square for circular logo)
 const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
-  logoIsapm2026: { width: 83, height: 18 }, // Wide banner logo (actual ratio ~2.8:1)
-  logoKemenkes: { width: 39, height: 18 }, // Kemenkes with text - wider than tall (actual ratio ~1.6:1)
-  logoIsapmOrg: { width: 18, height: 18 }, // Circular logo - square
+  logoIsapm2026: { width: 83, height: 18 }, // Wide banner logo (actual ratio ~4.6:1)
+  logoKemenkes: { width: 14, height: 18 }, // Kemenkes emblem with text - taller than wide
+  logoIsapmOrg: { width: 16, height: 16 }, // Circular gear logo - perfect square
   lunasStamp: { width: 31, height: 28 }, // Wide stamp with LUNAS text
   signature: { width: 50, height: 22 }, // Wide signature
 }
@@ -229,7 +231,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const partnerLogoY = logoY + 2
   const partnerLogoSpacing = 6 // Spacing between the two logos
 
-  const partnerKeys = ["logoIsapmOrg", "logoKemenkes"] as const
+  const partnerKeys = ["logoKemenkes", "logoIsapmOrg"] as const
   const partnerDims = partnerKeys.map((key) => getImageDimensions(key))
   const totalPartnerWidth =
     partnerDims.reduce((sum, d) => sum + d.width, 0) + (partnerKeys.length - 1) * partnerLogoSpacing

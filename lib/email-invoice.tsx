@@ -74,8 +74,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
       paymentDate: paymentVerifiedAt,
     }
 
-    // Generate PDF as base64
-    const pdfBase64 = generateInvoiceBase64(invoiceData)
+    const pdfBase64 = await generateInvoiceBase64(invoiceData)
 
     // Generate items HTML for email body
     const itemsHtml = orderItems

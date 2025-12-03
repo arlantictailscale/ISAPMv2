@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     }
 
     // Generate PDF
-    const doc = generateInvoicePDF(invoiceData)
+    const doc = await generateInvoicePDF(invoiceData)
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"))
 
     // Return PDF as download

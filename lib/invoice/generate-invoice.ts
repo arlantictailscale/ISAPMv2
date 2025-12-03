@@ -106,7 +106,7 @@ export interface InvoiceData {
   paymentMethod?: string
 }
 
-export function generateInvoicePDF(data: InvoiceData): jsPDF {
+export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
@@ -114,79 +114,144 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   })
 
   const pageWidth = doc.internal.pageSize.getWidth()
-  const margin = 20
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const margin = 15
   const contentWidth = pageWidth - margin * 2
 
-  // Colors
-  const primaryColor: [number, number, number] = [0, 169, 224] // ISAPM Blue
+  // Colors matching ISAPM branding
+  const primaryBlue: [number, number, number] = [0, 169, 224] // ISAPM Cyan/Blue
   const darkText: [number, number, number] = [33, 37, 41]
   const grayText: [number, number, number] = [108, 117, 125]
+  const redStamp: [number, number, number] = [220, 53, 69] // For LUNAS stamp
+  const greenStamp: [number, number, number] = [40, 167, 69] // Alternative green for LUNAS
 
   let yPos = margin
 
-  // Header - Title
-  doc.setFontSize(20)
+  // ============================================
+  // HEADER SECTION WITH LOGOS
+  // ============================================
+
+  // Main conference logo (left side)
+  // Since we can't load external images in jsPDF easily on server, we'll create a styled header
+  doc.setFillColor(...primaryBlue)
+  doc.rect(margin, yPos, 50, 18, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(14)
   doc.setFont("helvetica", "bold")
-  doc.setTextColor(...primaryColor)
+  doc.text("8", margin + 5, yPos + 12)
+  doc.setFontSize(10)
+  doc.text("ISAPM", margin + 15, yPos + 8)
+  doc.setFontSize(12)
+  doc.setTextColor(124, 179, 66) // Green for 2026
+  doc.text("2026", margin + 33, yPos + 8)
+  doc.setFontSize(6)
+  doc.setTextColor(255, 255, 255)
+  doc.text("Indonesian Society of Anesthesiology", margin + 15, yPos + 13)
+  doc.text("for Pain Management", margin + 15, yPos + 16)
+
+  // Partner logos placeholder (right side) - styled boxes
+  const logoSize = 12
+  const logoY = yPos + 3
+
+  // Kemenkes logo placeholder
+  doc.setFillColor(0, 168, 168) // Teal
+  doc.circle(pageWidth - margin - 45, logoY + logoSize / 2, logoSize / 2, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.setFontSize(5)
+  doc.text("KEMENKES", pageWidth - margin - 50, logoY + logoSize / 2 + 1)
+
+  // ISAPM org logo placeholder
+  doc.setFillColor(220, 53, 69) // Red
+  doc.circle(pageWidth - margin - 25, logoY + logoSize / 2, logoSize / 2, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.text("ISAPM", pageWidth - margin - 29, logoY + logoSize / 2 + 1)
+
+  // PERDATIN logo placeholder
+  doc.setFillColor(220, 53, 69) // Red
+  doc.circle(pageWidth - margin - 5, logoY + logoSize / 2, logoSize / 2, "F")
+  doc.setTextColor(255, 255, 255)
+  doc.text("PDT", pageWidth - margin - 8, logoY + logoSize / 2 + 1)
+
+  yPos += 25
+
+  // ============================================
+  // TITLE
+  // ============================================
+  doc.setFontSize(16)
+  doc.setFont("helvetica", "bold")
+  doc.setTextColor(...primaryBlue)
   doc.text("TANDA TERIMA PEMBAYARAN", pageWidth / 2, yPos, { align: "center" })
-  yPos += 12
+  yPos += 3
 
   // Divider line
-  doc.setDrawColor(...primaryColor)
-  doc.setLineWidth(0.5)
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.8)
   doc.line(margin, yPos, pageWidth - margin, yPos)
   yPos += 10
 
-  // Invoice info section
+  // ============================================
+  // INVOICE INFO & CUSTOMER DETAILS
+  // ============================================
   doc.setFontSize(10)
-  doc.setFont("helvetica", "normal")
   doc.setTextColor(...darkText)
 
   // Left column - Invoice details
   doc.setFont("helvetica", "bold")
   doc.text("No. Kwitansi", margin, yPos)
   doc.setFont("helvetica", "normal")
-  doc.text(`: ${data.invoiceNumber}`, margin + 30, yPos)
+  doc.text(`: ${data.invoiceNumber}`, margin + 28, yPos)
 
-  // Right column - Customer details
+  // Right column - Customer details header
   doc.setFont("helvetica", "bold")
-  doc.text("Kepada:", pageWidth / 2 + 10, yPos)
+  doc.text("Kepada:", pageWidth / 2 + 5, yPos)
   yPos += 6
 
   doc.setFont("helvetica", "bold")
   doc.text("Tanggal", margin, yPos)
   doc.setFont("helvetica", "normal")
-  doc.text(`: ${formatDateIndonesian(data.invoiceDate)}`, margin + 30, yPos)
+  doc.text(`: ${formatDateIndonesian(data.invoiceDate)}`, margin + 28, yPos)
 
-  doc.setFont("helvetica", "normal")
-  doc.text(data.customerName, pageWidth / 2 + 10, yPos)
+  // Customer name
+  doc.setFont("helvetica", "bold")
+  doc.text(data.customerName, pageWidth / 2 + 5, yPos)
   yPos += 5
 
+  // Customer institution
   if (data.customerInstitution) {
+    doc.setFont("helvetica", "normal")
     doc.setTextColor(...grayText)
-    doc.text(data.customerInstitution, pageWidth / 2 + 10, yPos)
+    doc.text(data.customerInstitution, pageWidth / 2 + 5, yPos)
     yPos += 5
   }
 
-  doc.text(data.customerEmail, pageWidth / 2 + 10, yPos)
+  // Customer email
+  doc.setTextColor(...primaryBlue)
+  doc.text(data.customerEmail, pageWidth / 2 + 5, yPos)
   yPos += 10
 
-  // Table Header
+  // ============================================
+  // ITEMS TABLE
+  // ============================================
   const tableStartY = yPos
-  const colWidths = [10, 75, 40, 40] // No, Event, Harga, Jumlah
-  const colX = [margin, margin + 10, margin + 85, margin + 125]
+  const colWidths = { no: 12, event: 85, harga: 35, jumlah: 35 }
+  const colX = {
+    no: margin,
+    event: margin + colWidths.no,
+    harga: margin + colWidths.no + colWidths.event,
+    jumlah: margin + colWidths.no + colWidths.event + colWidths.harga,
+  }
 
-  // Table header background
-  doc.setFillColor(...primaryColor)
+  // Table header
+  doc.setFillColor(...primaryBlue)
   doc.rect(margin, tableStartY, contentWidth, 8, "F")
 
   doc.setTextColor(255, 255, 255)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(9)
-  doc.text("No", colX[0] + 2, tableStartY + 5.5)
-  doc.text("Event", colX[1] + 2, tableStartY + 5.5)
-  doc.text("Harga", colX[2] + 2, tableStartY + 5.5)
-  doc.text("Jumlah", colX[3] + 2, tableStartY + 5.5)
+  doc.text("No", colX.no + 4, tableStartY + 5.5)
+  doc.text("Event", colX.event + 4, tableStartY + 5.5)
+  doc.text("Harga", colX.harga + 4, tableStartY + 5.5)
+  doc.text("Jumlah", colX.jumlah + 4, tableStartY + 5.5)
 
   yPos = tableStartY + 8
 
@@ -196,27 +261,31 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
   doc.setFontSize(9)
 
   data.items.forEach((item, index) => {
-    const rowHeight = 12
+    const rowHeight = 10
     const rowY = yPos
 
     // Alternate row background
     if (index % 2 === 0) {
-      doc.setFillColor(248, 249, 250)
+      doc.setFillColor(245, 247, 250)
       doc.rect(margin, rowY, contentWidth, rowHeight, "F")
     }
 
     // Row border
-    doc.setDrawColor(222, 226, 230)
+    doc.setDrawColor(220, 220, 220)
     doc.setLineWidth(0.1)
     doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
 
-    // Row content
-    const textY = rowY + 7
+    // Vertical lines for columns
+    doc.line(colX.event, rowY, colX.event, rowY + rowHeight)
+    doc.line(colX.harga, rowY, colX.harga, rowY + rowHeight)
+    doc.line(colX.jumlah, rowY, colX.jumlah, rowY + rowHeight)
+
+    const textY = rowY + 6.5
 
     // No column
-    doc.text((index + 1).toString(), colX[0] + 2, textY)
+    doc.text(`${index + 1}.`, colX.no + 4, textY)
 
-    // Event column - format based on item type
+    // Event column
     let eventText = ""
     if (item.itemType === "hotel") {
       eventText = `Hotel: ${item.hotelRoomType || "Room"}`
@@ -229,60 +298,67 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
         eventText += ` - ${item.participantTypeLabel}`
       }
     }
-
     // Truncate if too long
-    if (eventText.length > 45) {
-      eventText = eventText.substring(0, 42) + "..."
+    if (eventText.length > 50) {
+      eventText = eventText.substring(0, 47) + "..."
     }
-    doc.text(eventText, colX[1] + 2, textY)
+    doc.text(eventText, colX.event + 4, textY)
 
     // Unit price
-    doc.text(formatRupiah(item.unitPrice), colX[2] + 2, textY)
+    doc.text(formatRupiah(item.unitPrice), colX.harga + 4, textY)
 
-    // Total (unit price * quantity * nights)
+    // Total
     const quantity = item.quantity || 1
     const nights = item.nights || 1
     const itemTotal = item.unitPrice * quantity * nights
-    doc.text(formatRupiah(itemTotal), colX[3] + 2, textY)
+    doc.text(formatRupiah(itemTotal), colX.jumlah + 4, textY)
 
     yPos += rowHeight
   })
 
-  // Empty rows to fill table (minimum 6 rows total)
-  const minRows = 6
+  // Empty rows to fill table (minimum 7 rows)
+  const minRows = 7
   const currentRows = data.items.length
-  if (currentRows < minRows) {
-    for (let i = currentRows; i < minRows; i++) {
-      const rowHeight = 12
-      const rowY = yPos
+  for (let i = currentRows; i < minRows; i++) {
+    const rowHeight = 10
+    const rowY = yPos
 
-      if (i % 2 === 0) {
-        doc.setFillColor(248, 249, 250)
-        doc.rect(margin, rowY, contentWidth, rowHeight, "F")
-      }
-
-      doc.setDrawColor(222, 226, 230)
-      doc.setLineWidth(0.1)
-      doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
-
-      yPos += rowHeight
+    if (i % 2 === 0) {
+      doc.setFillColor(245, 247, 250)
+      doc.rect(margin, rowY, contentWidth, rowHeight, "F")
     }
+
+    doc.setDrawColor(220, 220, 220)
+    doc.setLineWidth(0.1)
+    doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
+    doc.line(colX.event, rowY, colX.event, rowY + rowHeight)
+    doc.line(colX.harga, rowY, colX.harga, rowY + rowHeight)
+    doc.line(colX.jumlah, rowY, colX.jumlah, rowY + rowHeight)
+
+    yPos += rowHeight
   }
 
+  // Table border
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.5)
+  doc.rect(margin, tableStartY, contentWidth, yPos - tableStartY)
+
   // Total row
-  const totalRowY = yPos
-  doc.setFillColor(...primaryColor)
-  doc.rect(margin, totalRowY, contentWidth, 10, "F")
+  yPos += 2
+  doc.setFillColor(...primaryBlue)
+  doc.rect(margin, yPos, contentWidth, 10, "F")
 
   doc.setTextColor(255, 255, 255)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(10)
-  doc.text("Total Pembayaran:", colX[1] + 2, totalRowY + 7)
-  doc.text(formatRupiah(data.totalAmount), colX[3] + 2, totalRowY + 7)
+  doc.text("Total Pembayaran:", colX.harga - 25, yPos + 7)
+  doc.text(formatRupiah(data.totalAmount), colX.jumlah + 4, yPos + 7)
 
-  yPos = totalRowY + 18
+  yPos += 18
 
-  // Terbilang section
+  // ============================================
+  // TERBILANG SECTION
+  // ============================================
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "bold")
   doc.setFontSize(10)
@@ -291,59 +367,135 @@ export function generateInvoicePDF(data: InvoiceData): jsPDF {
 
   doc.setFont("helvetica", "italic")
   doc.setFontSize(9)
+  doc.setTextColor(...grayText)
   const terbilang = formatTerbilang(data.totalAmount)
-  const splitTerbilang = doc.splitTextToSize(terbilang, contentWidth)
+  const splitTerbilang = doc.splitTextToSize(terbilang, contentWidth - 10)
   doc.text(splitTerbilang, margin, yPos)
   yPos += splitTerbilang.length * 5 + 8
 
-  // Payment info box
-  doc.setFillColor(248, 249, 250)
-  doc.roundedRect(margin, yPos, contentWidth, 25, 3, 3, "F")
+  // ============================================
+  // PAYMENT INFO BOX
+  // ============================================
+  doc.setFillColor(240, 248, 255) // Light blue background
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(margin, yPos, contentWidth / 2 - 5, 28, 2, 2, "FD")
 
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "bold")
-  doc.setFontSize(10)
-  doc.text("Telah dibayarkan pada:", margin + 5, yPos + 8)
-
-  doc.setFont("helvetica", "normal")
   doc.setFontSize(9)
-  doc.text("No. Rek. 7207681363 (BSI)", margin + 5, yPos + 15)
-  doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 21)
+  doc.text("Telah dibayarkan pada:", margin + 5, yPos + 7)
 
-  yPos += 35
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(8)
+  doc.text("No. Rek. 7207681363 (BSI)", margin + 5, yPos + 14)
+  doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
 
-  // Signature section
+  // ============================================
+  // LUNAS (PAID) STAMP
+  // ============================================
+  const stampX = margin + contentWidth / 2 + 10
+  const stampY = yPos + 5
+  const stampWidth = 35
+  const stampHeight = 18
+
+  // Stamp border (tilted effect with double border)
+  doc.setDrawColor(...greenStamp)
+  doc.setLineWidth(1.5)
+
+  // Outer rectangle
+  doc.rect(stampX, stampY, stampWidth, stampHeight)
+
+  // Inner rectangle
+  doc.setLineWidth(0.5)
+  doc.rect(stampX + 2, stampY + 2, stampWidth - 4, stampHeight - 4)
+
+  // LUNAS text
+  doc.setTextColor(...greenStamp)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(16)
+  doc.text("LUNAS", stampX + stampWidth / 2, stampY + stampHeight / 2 + 2, { align: "center" })
+
+  // Date under stamp
+  doc.setFontSize(7)
+  doc.setFont("helvetica", "normal")
+  const paymentDateStr = data.paymentDate
+    ? formatDateIndonesian(data.paymentDate)
+    : formatDateIndonesian(data.invoiceDate)
+  doc.text(paymentDateStr, stampX + stampWidth / 2, stampY + stampHeight + 5, { align: "center" })
+
+  yPos += 38
+
+  // ============================================
+  // SIGNATURE SECTION
+  // ============================================
+  const signatureX = pageWidth - margin - 70
+
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
-  doc.text("Ketua,", pageWidth - margin - 60, yPos)
-  yPos += 25
+  doc.text("Ketua,", signatureX, yPos)
+  yPos += 5
+
+  // Signature line (simulated signature)
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(0.3)
+  // Draw a simple signature-like curve
+  doc.line(signatureX, yPos + 8, signatureX + 40, yPos + 8)
+  doc.line(signatureX + 5, yPos + 5, signatureX + 15, yPos + 10)
+  doc.line(signatureX + 15, yPos + 10, signatureX + 25, yPos + 3)
+  doc.line(signatureX + 25, yPos + 3, signatureX + 35, yPos + 12)
+
+  yPos += 18
 
   doc.setFont("helvetica", "bold")
-  doc.text("Dr. dr. Ristiawan Muji Laksono,", pageWidth - margin - 60, yPos)
-  yPos += 5
-  doc.text("Sp.An-TI., Subsp. M.N (K)., FIPP", pageWidth - margin - 60, yPos)
-  yPos += 15
+  doc.setFontSize(9)
+  doc.setTextColor(...darkText)
+  doc.text("Dr. dr. Ristiawan Muji Laksono,", signatureX, yPos)
+  yPos += 4
+  doc.text("Sp.An-TI., Subsp. M.N (K)., FIPP", signatureX, yPos)
 
-  // Footer
-  doc.setTextColor(...primaryColor)
+  yPos += 12
+
+  // ============================================
+  // FOOTER - THANK YOU MESSAGE
+  // ============================================
+  doc.setTextColor(...primaryBlue)
   doc.setFont("helvetica", "italic")
   doc.setFontSize(10)
   doc.text("Terimakasih sudah berpartisipasi pada ISAPM 8th National Meeting 2026", pageWidth / 2, yPos, {
     align: "center",
   })
 
+  // ============================================
+  // CONTACT INFO (BOTTOM RIGHT)
+  // ============================================
+  const contactY = pageHeight - 25
+  const contactX = pageWidth - margin
+
+  doc.setTextColor(...grayText)
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(7)
+
+  doc.text("Contact:", contactX, contactY, { align: "right" })
+  doc.text("admin@isapm2026.org", contactX, contactY + 4, { align: "right" })
+  doc.text("+62 896-0262-6709 (WhatsApp)", contactX, contactY + 8, { align: "right" })
+  doc.text("www.isapm2026.org", contactX, contactY + 12, { align: "right" })
+
+  // Bottom border line
+  doc.setDrawColor(...primaryBlue)
+  doc.setLineWidth(1)
+  doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10)
+
   return doc
 }
 
-// Generate invoice as base64 for email attachment
-export function generateInvoiceBase64(data: InvoiceData): string {
-  const doc = generateInvoicePDF(data)
+export async function generateInvoiceBase64(data: InvoiceData): Promise<string> {
+  const doc = await generateInvoicePDF(data)
   return doc.output("datauristring").split(",")[1]
 }
 
-// Generate invoice as blob for download
-export function generateInvoiceBlob(data: InvoiceData): Blob {
-  const doc = generateInvoicePDF(data)
+export async function generateInvoiceBlob(data: InvoiceData): Promise<Blob> {
+  const doc = await generateInvoicePDF(data)
   return doc.output("blob")
 }

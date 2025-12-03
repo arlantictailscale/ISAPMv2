@@ -1,11 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import {
-  generateInvoicePDF,
-  generateInvoiceNumber,
-  type InvoiceData,
-  type InvoiceItem,
-} from "@/lib/invoice/generate-invoice"
+import { generateInvoicePDF, type InvoiceData, type InvoiceItem } from "@/lib/invoice/generate-invoice"
+import { generateSequentialInvoiceNumber } from "@/lib/invoice/invoice-number"
 
 export async function GET(request: Request) {
   try {
@@ -78,9 +74,12 @@ export async function GET(request: Request) {
 
     // Prepare invoice data
     const invoiceDate = payment.verified_at ? new Date(payment.verified_at) : new Date()
+
+    const invoiceNumber = await generateSequentialInvoiceNumber(invoiceDate)
+
     const invoiceData: InvoiceData = {
       orderId: order.id,
-      invoiceNumber: generateInvoiceNumber(order.id, invoiceDate),
+      invoiceNumber,
       invoiceDate,
       customerName: order.full_name,
       customerEmail: order.email,

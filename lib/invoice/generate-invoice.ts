@@ -1,4 +1,5 @@
 import { jsPDF } from "jspdf"
+import { generateSequentialInvoiceNumber, generateFallbackInvoiceNumber } from "./invoice-number"
 
 // Vercel Blob Storage URLs for invoice images
 const IMAGE_URLS = {
@@ -127,12 +128,20 @@ export function formatTerbilang(num: number): string {
 }
 
 // Generate invoice number based on date and order ID
-export function generateInvoiceNumber(orderId: string, date: Date = new Date()): string {
-  const year = date.getFullYear().toString().slice(-2)
-  const month = (date.getMonth() + 1).toString().padStart(2, "0")
-  const day = date.getDate().toString().padStart(2, "0")
-  const orderSuffix = orderId.slice(0, 4).toUpperCase()
-  return `Natmet-${year}${month}${day}${orderSuffix}`
+export async function generateInvoiceNumber(orderId?: string, date: Date = new Date()): Promise<string> {
+  try {
+    // Try sequential generation first
+    return await generateSequentialInvoiceNumber(date)
+  } catch (error) {
+    console.error("Sequential invoice number generation failed, using fallback:", error)
+    // Fall back to order ID-based generation
+    return generateFallbackInvoiceNumber(date, orderId)
+  }
+}
+
+// Keep synchronous version for backward compatibility
+export function generateInvoiceNumberSync(orderId: string, date: Date = new Date()): string {
+  return generateFallbackInvoiceNumber(date, orderId)
 }
 
 // Format date to Indonesian format

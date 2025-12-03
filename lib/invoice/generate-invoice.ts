@@ -1,6 +1,12 @@
 import { jsPDF } from "jspdf"
-import fs from "fs"
-import path from "path"
+import { LOGO_ISAPM_2026 } from "./images-data/logo-isapm-2026"
+import { LOGO_ISAPM_ORG } from "./images-data/logo-isapm-org"
+import { LOGO_KEMENKES } from "./images-data/logo-kemenkes"
+import { LOGO_PERDATIN } from "./images-data/logo-perdatin"
+import { LOGO_UB } from "./images-data/logo-ub"
+import { LOGO_IDI } from "./images-data/logo-idi"
+import { LUNAS_STAMP } from "./images-data/lunas-stamp"
+import { SIGNATURE } from "./images-data/signature"
 
 // Helper function to convert number to Indonesian words (Terbilang)
 function numberToIndonesianWords(num: number): string {
@@ -41,43 +47,17 @@ function numberToIndonesianWords(num: number): string {
   )
 }
 
-// Helper function to load base64 from text file
-function loadBase64FromFile(filename: string): string | null {
-  try {
-    const filePath = path.join(process.cwd(), "lib", "invoice", "images", filename)
-    const content = fs.readFileSync(filePath, "utf-8").trim()
-    // Return the full data URI
-    return content
-  } catch (error) {
-    console.error(`[v0] Error loading image from ${filename}:`, error)
-    return null
-  }
-}
-
-// Load all images from filesystem (cached)
-let cachedImages: Record<string, string | null> | null = null
-
 function getAllImages(): Record<string, string | null> {
-  if (cachedImages) {
-    return cachedImages
+  return {
+    isapm2026Logo: LOGO_ISAPM_2026,
+    isapmOrgLogo: LOGO_ISAPM_ORG,
+    kemenkesLogo: LOGO_KEMENKES,
+    perdatinLogo: LOGO_PERDATIN,
+    ubLogo: LOGO_UB,
+    idiLogo: LOGO_IDI,
+    lunasStamp: LUNAS_STAMP,
+    signature: SIGNATURE,
   }
-
-  console.log("[v0] Loading images from filesystem...")
-  cachedImages = {
-    isapm2026Logo: loadBase64FromFile("logo-isapm-2026.txt"),
-    isapmOrgLogo: loadBase64FromFile("logo-isapm-org.txt"),
-    kemenkesLogo: loadBase64FromFile("logo-kemenkes.txt"),
-    perdatinLogo: loadBase64FromFile("logo-perdatin.txt"),
-    ubLogo: loadBase64FromFile("logo-ub.txt"),
-    idiLogo: loadBase64FromFile("logo-idi.txt"),
-    lunasStamp: loadBase64FromFile("lunas-stamp.txt"),
-    signature: loadBase64FromFile("signature.txt"),
-  }
-
-  const successCount = Object.values(cachedImages).filter(Boolean).length
-  console.log(`[v0] Loaded ${successCount}/8 images from filesystem`)
-
-  return cachedImages
 }
 
 export function formatTerbilang(num: number): string {

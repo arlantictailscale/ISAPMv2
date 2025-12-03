@@ -1,5 +1,67 @@
 import { jsPDF } from "jspdf"
 
+// Vercel Blob Storage URLs for invoice images
+const IMAGE_URLS = {
+  logoIsapm2026: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/1.png",
+  logoKemenkes: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/2.png",
+  logoIsapmOrg: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/3.png",
+  logoPerdatin: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/4.png",
+  logoUB: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/5.png",
+  logoIDI: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/7.png",
+  lunasStamp: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/Lunas.png",
+  signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
+}
+
+// Cache for loaded images
+const imageCache: Map<string, string> = new Map()
+
+// Fetch image and convert to base64
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  // Check cache first
+  if (imageCache.has(url)) {
+    return imageCache.get(url) || null
+  }
+
+  try {
+    const response = await fetch(url, {
+      headers: {
+        Accept: "image/png,image/jpeg,image/*",
+      },
+      cache: "force-cache",
+    })
+
+    if (!response.ok) {
+      console.error(`Failed to fetch image from ${url}: ${response.status}`)
+      return null
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    const base64 = Buffer.from(arrayBuffer).toString("base64")
+    const contentType = response.headers.get("content-type") || "image/png"
+    const dataUri = `data:${contentType};base64,${base64}`
+
+    // Cache the result
+    imageCache.set(url, dataUri)
+
+    return dataUri
+  } catch (error) {
+    console.error(`Error fetching image from ${url}:`, error)
+    return null
+  }
+}
+
+// Load all images in parallel
+async function loadAllImages(): Promise<Record<string, string | null>> {
+  const entries = Object.entries(IMAGE_URLS)
+  const results = await Promise.all(
+    entries.map(async ([key, url]) => {
+      const base64 = await fetchImageAsBase64(url)
+      return [key, base64] as [string, string | null]
+    }),
+  )
+  return Object.fromEntries(results)
+}
+
 // Helper function to convert number to Indonesian words (Terbilang)
 function numberToIndonesianWords(num: number): string {
   const units = [
@@ -113,6 +175,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
     format: "a4",
   })
 
+  // Load all images
+  const images = await loadAllImages()
+
   const pageWidth = doc.internal.pageSize.getWidth()
   const pageHeight = doc.internal.pageSize.getHeight()
   const margin = 15
@@ -122,8 +187,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const primaryBlue: [number, number, number] = [0, 169, 224] // ISAPM Cyan/Blue
   const darkText: [number, number, number] = [33, 37, 41]
   const grayText: [number, number, number] = [108, 117, 125]
-  const redStamp: [number, number, number] = [220, 53, 69] // For LUNAS stamp
-  const greenStamp: [number, number, number] = [40, 167, 69] // Alternative green for LUNAS
+  const greenStamp: [number, number, number] = [40, 167, 69] // For LUNAS stamp
 
   let yPos = margin
 
@@ -131,48 +195,74 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // HEADER SECTION WITH LOGOS
   // ============================================
 
-  // Main conference logo (left side)
-  // Since we can't load external images in jsPDF easily on server, we'll create a styled header
-  doc.setFillColor(...primaryBlue)
-  doc.rect(margin, yPos, 50, 18, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(14)
-  doc.setFont("helvetica", "bold")
-  doc.text("8", margin + 5, yPos + 12)
-  doc.setFontSize(10)
-  doc.text("ISAPM", margin + 15, yPos + 8)
-  doc.setFontSize(12)
-  doc.setTextColor(124, 179, 66) // Green for 2026
-  doc.text("2026", margin + 33, yPos + 8)
-  doc.setFontSize(6)
-  doc.setTextColor(255, 255, 255)
-  doc.text("Indonesian Society of Anesthesiology", margin + 15, yPos + 13)
-  doc.text("for Pain Management", margin + 15, yPos + 16)
+  const logoHeight = 18
+  const logoY = yPos
 
-  // Partner logos placeholder (right side) - styled boxes
-  const logoSize = 12
-  const logoY = yPos + 3
+  // ISAPM 2026 main logo (left side)
+  if (images.logoIsapm2026) {
+    try {
+      doc.addImage(images.logoIsapm2026, "PNG", margin, logoY, 50, logoHeight)
+    } catch (e) {
+      console.error("Failed to add ISAPM 2026 logo:", e)
+    }
+  }
 
-  // Kemenkes logo placeholder
-  doc.setFillColor(0, 168, 168) // Teal
-  doc.circle(pageWidth - margin - 45, logoY + logoSize / 2, logoSize / 2, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(5)
-  doc.text("KEMENKES", pageWidth - margin - 50, logoY + logoSize / 2 + 1)
+  // Partner logos (right side) - Kemenkes, ISAPM Org, Perdatin, UB, IDI
+  const partnerLogoSize = 14
+  const partnerLogoY = logoY + 2
+  const partnerLogoSpacing = 16
+  let partnerLogoX = pageWidth - margin - (partnerLogoSize * 5 + partnerLogoSpacing * 4) / 2 - 10
 
-  // ISAPM org logo placeholder
-  doc.setFillColor(220, 53, 69) // Red
-  doc.circle(pageWidth - margin - 25, logoY + logoSize / 2, logoSize / 2, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.text("ISAPM", pageWidth - margin - 29, logoY + logoSize / 2 + 1)
+  // Kemenkes logo
+  if (images.logoKemenkes) {
+    try {
+      doc.addImage(images.logoKemenkes, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
+    } catch (e) {
+      console.error("Failed to add Kemenkes logo:", e)
+    }
+  }
+  partnerLogoX += partnerLogoSpacing
 
-  // PERDATIN logo placeholder
-  doc.setFillColor(220, 53, 69) // Red
-  doc.circle(pageWidth - margin - 5, logoY + logoSize / 2, logoSize / 2, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.text("PDT", pageWidth - margin - 8, logoY + logoSize / 2 + 1)
+  // ISAPM Org logo
+  if (images.logoIsapmOrg) {
+    try {
+      doc.addImage(images.logoIsapmOrg, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
+    } catch (e) {
+      console.error("Failed to add ISAPM Org logo:", e)
+    }
+  }
+  partnerLogoX += partnerLogoSpacing
 
-  yPos += 25
+  // Perdatin logo
+  if (images.logoPerdatin) {
+    try {
+      doc.addImage(images.logoPerdatin, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
+    } catch (e) {
+      console.error("Failed to add Perdatin logo:", e)
+    }
+  }
+  partnerLogoX += partnerLogoSpacing
+
+  // UB logo
+  if (images.logoUB) {
+    try {
+      doc.addImage(images.logoUB, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
+    } catch (e) {
+      console.error("Failed to add UB logo:", e)
+    }
+  }
+  partnerLogoX += partnerLogoSpacing
+
+  // IDI logo
+  if (images.logoIDI) {
+    try {
+      doc.addImage(images.logoIDI, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
+    } catch (e) {
+      console.error("Failed to add IDI logo:", e)
+    }
+  }
+
+  yPos += logoHeight + 7
 
   // ============================================
   // TITLE
@@ -258,10 +348,26 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // Table rows
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "normal")
-  doc.setFontSize(9)
+  doc.setFontSize(8) // Slightly smaller font to fit longer text
 
   data.items.forEach((item, index) => {
-    const rowHeight = 10
+    let eventText = ""
+    if (item.itemType === "hotel") {
+      eventText = `Hotel: ${item.hotelRoomType || "Room"}`
+      if (item.nights && item.nights > 1) {
+        eventText += ` (${item.nights} malam)`
+      }
+    } else {
+      eventText = item.eventLabel || "Event Registration"
+      if (item.participantTypeLabel) {
+        eventText += ` - ${item.participantTypeLabel}`
+      }
+    }
+
+    const maxEventWidth = colWidths.event - 8
+    const splitEventText = doc.splitTextToSize(eventText, maxEventWidth)
+    const lineHeight = 4
+    const rowHeight = Math.max(10, splitEventText.length * lineHeight + 4)
     const rowY = yPos
 
     // Alternate row background
@@ -280,44 +386,29 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
     doc.line(colX.harga, rowY, colX.harga, rowY + rowHeight)
     doc.line(colX.jumlah, rowY, colX.jumlah, rowY + rowHeight)
 
-    const textY = rowY + 6.5
-
     // No column
-    doc.text(`${index + 1}.`, colX.no + 4, textY)
+    doc.text(`${index + 1}.`, colX.no + 4, rowY + 6)
 
-    // Event column
-    let eventText = ""
-    if (item.itemType === "hotel") {
-      eventText = `Hotel: ${item.hotelRoomType || "Room"}`
-      if (item.nights && item.nights > 1) {
-        eventText += ` (${item.nights} malam)`
-      }
-    } else {
-      eventText = item.eventLabel || "Event Registration"
-      if (item.participantTypeLabel) {
-        eventText += ` - ${item.participantTypeLabel}`
-      }
-    }
-    // Truncate if too long
-    if (eventText.length > 50) {
-      eventText = eventText.substring(0, 47) + "..."
-    }
-    doc.text(eventText, colX.event + 4, textY)
+    let textYOffset = rowY + 5
+    splitEventText.forEach((line: string) => {
+      doc.text(line, colX.event + 4, textYOffset)
+      textYOffset += lineHeight
+    })
 
     // Unit price
-    doc.text(formatRupiah(item.unitPrice), colX.harga + 4, textY)
+    doc.text(formatRupiah(item.unitPrice), colX.harga + 4, rowY + 6)
 
     // Total
     const quantity = item.quantity || 1
     const nights = item.nights || 1
     const itemTotal = item.unitPrice * quantity * nights
-    doc.text(formatRupiah(itemTotal), colX.jumlah + 4, textY)
+    doc.text(formatRupiah(itemTotal), colX.jumlah + 4, rowY + 6)
 
     yPos += rowHeight
   })
 
-  // Empty rows to fill table (minimum 7 rows)
-  const minRows = 7
+  // Empty rows to fill table (minimum 5 rows)
+  const minRows = 5
   const currentRows = data.items.length
   for (let i = currentRows; i < minRows; i++) {
     const rowHeight = 10
@@ -374,7 +465,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   yPos += splitTerbilang.length * 5 + 8
 
   // ============================================
-  // PAYMENT INFO BOX
+  // PAYMENT INFO BOX & LUNAS STAMP
   // ============================================
   doc.setFillColor(240, 248, 255) // Light blue background
   doc.setDrawColor(...primaryBlue)
@@ -391,38 +482,48 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.text("No. Rek. 7207681363 (BSI)", margin + 5, yPos + 14)
   doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
 
-  // ============================================
-  // LUNAS (PAID) STAMP
-  // ============================================
   const stampX = margin + contentWidth / 2 + 10
-  const stampY = yPos + 5
-  const stampWidth = 35
-  const stampHeight = 18
+  const stampY = yPos
+  const stampWidth = 40
+  const stampHeight = 28
 
-  // Stamp border (tilted effect with double border)
-  doc.setDrawColor(...greenStamp)
-  doc.setLineWidth(1.5)
-
-  // Outer rectangle
-  doc.rect(stampX, stampY, stampWidth, stampHeight)
-
-  // Inner rectangle
-  doc.setLineWidth(0.5)
-  doc.rect(stampX + 2, stampY + 2, stampWidth - 4, stampHeight - 4)
-
-  // LUNAS text
-  doc.setTextColor(...greenStamp)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(16)
-  doc.text("LUNAS", stampX + stampWidth / 2, stampY + stampHeight / 2 + 2, { align: "center" })
+  if (images.lunasStamp) {
+    try {
+      doc.addImage(images.lunasStamp, "PNG", stampX, stampY, stampWidth, stampHeight)
+    } catch (e) {
+      console.error("Failed to add LUNAS stamp:", e)
+      // Fallback to drawn stamp
+      doc.setDrawColor(...greenStamp)
+      doc.setLineWidth(1.5)
+      doc.rect(stampX, stampY + 5, 35, 18)
+      doc.setLineWidth(0.5)
+      doc.rect(stampX + 2, stampY + 7, 31, 14)
+      doc.setTextColor(...greenStamp)
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(16)
+      doc.text("LUNAS", stampX + 17.5, stampY + 16, { align: "center" })
+    }
+  } else {
+    // Fallback to drawn stamp
+    doc.setDrawColor(...greenStamp)
+    doc.setLineWidth(1.5)
+    doc.rect(stampX, stampY + 5, 35, 18)
+    doc.setLineWidth(0.5)
+    doc.rect(stampX + 2, stampY + 7, 31, 14)
+    doc.setTextColor(...greenStamp)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(16)
+    doc.text("LUNAS", stampX + 17.5, stampY + 16, { align: "center" })
+  }
 
   // Date under stamp
   doc.setFontSize(7)
   doc.setFont("helvetica", "normal")
+  doc.setTextColor(...grayText)
   const paymentDateStr = data.paymentDate
     ? formatDateIndonesian(data.paymentDate)
     : formatDateIndonesian(data.invoiceDate)
-  doc.text(paymentDateStr, stampX + stampWidth / 2, stampY + stampHeight + 5, { align: "center" })
+  doc.text(paymentDateStr, stampX + stampWidth / 2, stampY + stampHeight + 3, { align: "center" })
 
   yPos += 38
 
@@ -430,23 +531,24 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // SIGNATURE SECTION
   // ============================================
   const signatureX = pageWidth - margin - 70
+  const signatureWidth = 55
+  const signatureHeight = 25
 
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
   doc.text("Ketua,", signatureX, yPos)
-  yPos += 5
+  yPos += 3
 
-  // Signature line (simulated signature)
-  doc.setDrawColor(...primaryBlue)
-  doc.setLineWidth(0.3)
-  // Draw a simple signature-like curve
-  doc.line(signatureX, yPos + 8, signatureX + 40, yPos + 8)
-  doc.line(signatureX + 5, yPos + 5, signatureX + 15, yPos + 10)
-  doc.line(signatureX + 15, yPos + 10, signatureX + 25, yPos + 3)
-  doc.line(signatureX + 25, yPos + 3, signatureX + 35, yPos + 12)
+  if (images.signature) {
+    try {
+      doc.addImage(images.signature, "PNG", signatureX, yPos, signatureWidth, signatureHeight)
+    } catch (e) {
+      console.error("Failed to add signature:", e)
+    }
+  }
 
-  yPos += 18
+  yPos += signatureHeight + 3
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(9)

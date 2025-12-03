@@ -115,23 +115,41 @@ const IMAGE_URLS = {
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
-    console.log("[v0] Fetching image:", url)
+    console.log("[v0] Fetching image from URL:", url)
+
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
     const response = await fetch(url, {
+      signal: controller.signal,
       headers: {
         Accept: "image/*",
+        "User-Agent": "ISAPM-Invoice-Generator/1.0",
       },
     })
+
+    clearTimeout(timeoutId)
+
     if (!response.ok) {
-      console.error("[v0] Failed to fetch image:", url, "Status:", response.status)
+      console.error("[v0] Failed to fetch image:", url, "Status:", response.status, response.statusText)
       return null
     }
+
     const arrayBuffer = await response.arrayBuffer()
+    console.log("[v0] Image fetched successfully, size:", arrayBuffer.byteLength, "bytes")
+
+    if (arrayBuffer.byteLength === 0) {
+      console.error("[v0] Image has zero bytes:", url)
+      return null
+    }
+
     const base64 = Buffer.from(arrayBuffer).toString("base64")
     const contentType = response.headers.get("content-type") || "image/png"
-    console.log("[v0] Successfully fetched image:", url, "Size:", arrayBuffer.byteLength)
+
+    console.log("[v0] Image converted to base64, content-type:", contentType)
     return `data:${contentType};base64,${base64}`
   } catch (error) {
-    console.error("[v0] Error fetching image:", url, error)
+    console.error("[v0] Error fetching image:", url, error instanceof Error ? error.message : error)
     return null
   }
 }

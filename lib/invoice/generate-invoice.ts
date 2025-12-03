@@ -13,12 +13,12 @@ const IMAGE_URLS = {
 }
 
 const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
-  logoIsapm2026: { width: 50, height: 18 }, // Wide banner logo (actual ratio ~2.8:1)
-  logoKemenkes: { width: 10, height: 14 }, // Tall portrait logo (actual ratio ~0.7:1)
-  logoIsapmOrg: { width: 14, height: 14 }, // Square logo
-  logoPerdatin: { width: 12, height: 14 }, // Slightly tall logo
-  logoUB: { width: 14, height: 14 }, // Square logo
-  logoIDI: { width: 12, height: 14 }, // Slightly tall logo
+  logoIsapm2026: { width: 83, height: 18 }, // Wide banner logo (actual ratio ~2.8:1)
+  logoKemenkes: { width: 22, height: 14 }, // Kemenkes with text - wider than tall (actual ratio ~1.6:1)
+  logoIsapmOrg: { width: 14, height: 14 }, // Circular logo - square
+  logoPerdatin: { width: 14, height: 14 }, // Circular logo - square
+  logoUB: { width: 12, height: 14 }, // UB logo - slightly taller
+  logoIDI: { width: 14, height: 14 }, // IDI circular logo - square
   lunasStamp: { width: 38, height: 28 }, // Wide stamp with LUNAS text
   signature: { width: 50, height: 22 }, // Wide signature
 }

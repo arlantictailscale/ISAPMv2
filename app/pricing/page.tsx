@@ -246,10 +246,10 @@ export default function PricingPage() {
       participantTypes: [
         {
           id: "span_team",
-          label: "Anesthesiologist and team, max 3 people",
-          earlyBirdPrice: 4500000,
-          normalPrice: 5000000,
-          onSitePrice: 5500000,
+          label: "Anesthesiologist and team (team of 4 participants)",
+          earlyBirdPrice: 6000000,
+          normalPrice: 6500000,
+          onSitePrice: 7000000,
           currency: "IDR",
         },
       ],

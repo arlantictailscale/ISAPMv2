@@ -12,32 +12,19 @@ const IMAGE_URLS = {
   signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
 }
 
-const IMAGE_DIMENSIONS: Record<string, { aspectRatio: number; maxWidth: number; maxHeight: number }> = {
-  logoIsapm2026: { aspectRatio: 2.8, maxWidth: 50, maxHeight: 18 }, // Wide logo
-  logoKemenkes: { aspectRatio: 0.8, maxWidth: 12, maxHeight: 15 }, // Tall logo
-  logoIsapmOrg: { aspectRatio: 1.0, maxWidth: 14, maxHeight: 14 }, // Square logo
-  logoPerdatin: { aspectRatio: 1.0, maxWidth: 14, maxHeight: 14 }, // Square logo
-  logoUB: { aspectRatio: 1.0, maxWidth: 14, maxHeight: 14 }, // Square logo
-  logoIDI: { aspectRatio: 0.85, maxWidth: 13, maxHeight: 15 }, // Slightly tall logo
-  lunasStamp: { aspectRatio: 1.4, maxWidth: 40, maxHeight: 28 }, // Wide stamp
-  signature: { aspectRatio: 2.2, maxWidth: 55, maxHeight: 25 }, // Wide signature
+const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
+  logoIsapm2026: { width: 50, height: 18 }, // Wide banner logo (actual ratio ~2.8:1)
+  logoKemenkes: { width: 10, height: 14 }, // Tall portrait logo (actual ratio ~0.7:1)
+  logoIsapmOrg: { width: 14, height: 14 }, // Square logo
+  logoPerdatin: { width: 12, height: 14 }, // Slightly tall logo
+  logoUB: { width: 14, height: 14 }, // Square logo
+  logoIDI: { width: 12, height: 14 }, // Slightly tall logo
+  lunasStamp: { width: 38, height: 28 }, // Wide stamp with LUNAS text
+  signature: { width: 50, height: 22 }, // Wide signature
 }
 
-function calculateImageDimensions(key: string): { width: number; height: number } {
-  const config = IMAGE_DIMENSIONS[key]
-  if (!config) return { width: 14, height: 14 }
-
-  if (config.aspectRatio >= 1) {
-    // Wider than tall - constrain by width
-    const width = Math.min(config.maxWidth, config.maxHeight * config.aspectRatio)
-    const height = width / config.aspectRatio
-    return { width, height }
-  } else {
-    // Taller than wide - constrain by height
-    const height = Math.min(config.maxHeight, config.maxWidth / config.aspectRatio)
-    const width = height * config.aspectRatio
-    return { width, height }
-  }
+function getImageDimensions(key: string): { width: number; height: number } {
+  return IMAGE_DIMENSIONS[key] || { width: 14, height: 14 }
 }
 
 // Cache for loaded images (persistent across requests)
@@ -238,7 +225,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   if (images.logoIsapm2026) {
     try {
-      const dims = calculateImageDimensions("logoIsapm2026")
+      const dims = getImageDimensions("logoIsapm2026")
       doc.addImage(images.logoIsapm2026, "PNG", margin, logoY, dims.width, dims.height)
     } catch (e) {
       console.error("Failed to add ISAPM 2026 logo:", e)
@@ -246,25 +233,24 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   }
 
   const partnerLogoY = logoY + 2
-  const partnerLogoSpacing = 3 // Space between logos
+  const partnerLogoSpacing = 4 // Increased spacing between logos for better visual separation
 
-  // Calculate total width of all partner logos
   const partnerKeys = ["logoKemenkes", "logoIsapmOrg", "logoPerdatin", "logoUB", "logoIDI"]
-  const partnerDims = partnerKeys.map((key) => calculateImageDimensions(key))
+  const partnerDims = partnerKeys.map((key) => getImageDimensions(key))
   const totalPartnerWidth =
     partnerDims.reduce((sum, d) => sum + d.width, 0) + (partnerKeys.length - 1) * partnerLogoSpacing
 
   // Start position for partner logos (right-aligned)
   let partnerLogoX = pageWidth - margin - totalPartnerWidth
 
-  // Render each partner logo with correct dimensions
   partnerKeys.forEach((key, index) => {
     const imageKey = key as keyof typeof images
     if (images[imageKey]) {
       try {
         const dims = partnerDims[index]
-        // Center vertically within the header area
-        const centeredY = partnerLogoY + (logoHeight - dims.height) / 2 - 2
+        // Center vertically within the header area based on max height (14mm)
+        const maxLogoHeight = 14
+        const centeredY = partnerLogoY + (maxLogoHeight - dims.height) / 2
         doc.addImage(images[imageKey]!, "PNG", partnerLogoX, centeredY, dims.width, dims.height)
         partnerLogoX += dims.width + partnerLogoSpacing
       } catch (e) {
@@ -497,7 +483,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   const stampX = margin + contentWidth / 2 + 10
   const stampY = yPos
-  const stampDims = calculateImageDimensions("lunasStamp")
+  const stampDims = getImageDimensions("lunasStamp")
 
   if (images.lunasStamp) {
     try {
@@ -526,7 +512,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // SIGNATURE SECTION
   // ============================================
   const signatureX = pageWidth - margin - 70
-  const signatureDims = calculateImageDimensions("signature")
+  const signatureDims = getImageDimensions("signature")
 
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "normal")

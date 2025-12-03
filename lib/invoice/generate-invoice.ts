@@ -1,4 +1,6 @@
 import { jsPDF } from "jspdf"
+import fs from "fs"
+import path from "path"
 
 // Helper function to convert number to Indonesian words (Terbilang)
 function numberToIndonesianWords(num: number): string {
@@ -37,6 +39,45 @@ function numberToIndonesianWords(num: number): string {
     " triliun " +
     numberToIndonesianWords(num % 1000000000000)
   )
+}
+
+// Helper function to load base64 from text file
+function loadBase64FromFile(filename: string): string | null {
+  try {
+    const filePath = path.join(process.cwd(), "lib", "invoice", "images", filename)
+    const content = fs.readFileSync(filePath, "utf-8").trim()
+    // Return the full data URI
+    return content
+  } catch (error) {
+    console.error(`[v0] Error loading image from ${filename}:`, error)
+    return null
+  }
+}
+
+// Load all images from filesystem (cached)
+let cachedImages: Record<string, string | null> | null = null
+
+function getAllImages(): Record<string, string | null> {
+  if (cachedImages) {
+    return cachedImages
+  }
+
+  console.log("[v0] Loading images from filesystem...")
+  cachedImages = {
+    isapm2026Logo: loadBase64FromFile("logo-isapm-2026.txt"),
+    isapmOrgLogo: loadBase64FromFile("logo-isapm-org.txt"),
+    kemenkesLogo: loadBase64FromFile("logo-kemenkes.txt"),
+    perdatinLogo: loadBase64FromFile("logo-perdatin.txt"),
+    ubLogo: loadBase64FromFile("logo-ub.txt"),
+    idiLogo: loadBase64FromFile("logo-idi.txt"),
+    lunasStamp: loadBase64FromFile("lunas-stamp.txt"),
+    signature: loadBase64FromFile("signature.txt"),
+  }
+
+  const successCount = Object.values(cachedImages).filter(Boolean).length
+  console.log(`[v0] Loaded ${successCount}/8 images from filesystem`)
+
+  return cachedImages
 }
 
 export function formatTerbilang(num: number): string {
@@ -102,89 +143,6 @@ export interface InvoiceData {
   paymentMethod?: string
 }
 
-const IMAGE_URLS = {
-  isapm2026Logo: "/images/1.png",
-  isapmOrgLogo: "/images/2.png",
-  kemenkesLogo: "/images/3.png",
-  perdatinLogo: "/images/4.png",
-  ubLogo: "/images/5.png",
-  idiLogo: "/images/7.png",
-  lunasStamp: "/images/lunas.png",
-  signature: "/images/ttd-20dr.png",
-}
-
-async function fetchImageAsBase64(url: string, retries = 3): Promise<string | null> {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      console.log(`[v0] Attempt ${attempt}: Fetching image from URL: ${url}`)
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          Accept: "image/png,image/jpeg,image/*",
-        },
-        cache: "no-store",
-      })
-
-      if (!response.ok) {
-        console.error(`[v0] Attempt ${attempt}: Failed to fetch image: ${response.status} ${response.statusText}`)
-        if (attempt < retries) continue
-        return null
-      }
-
-      const arrayBuffer = await response.arrayBuffer()
-      console.log(`[v0] Image fetched, size: ${arrayBuffer.byteLength} bytes`)
-
-      if (arrayBuffer.byteLength === 0) {
-        console.error(`[v0] Attempt ${attempt}: Image has zero bytes`)
-        if (attempt < retries) continue
-        return null
-      }
-
-      // Convert to base64
-      const uint8Array = new Uint8Array(arrayBuffer)
-      let binary = ""
-      for (let i = 0; i < uint8Array.byteLength; i++) {
-        binary += String.fromCharCode(uint8Array[i])
-      }
-      const base64 = btoa(binary)
-
-      const contentType = response.headers.get("content-type") || "image/png"
-      console.log(`[v0] Success: Image converted to base64, type: ${contentType}, length: ${base64.length}`)
-
-      return `data:${contentType};base64,${base64}`
-    } catch (error) {
-      console.error(`[v0] Attempt ${attempt}: Error fetching image:`, error instanceof Error ? error.message : error)
-      if (attempt < retries) {
-        await new Promise((resolve) => setTimeout(resolve, 1000 * attempt)) // Exponential backoff
-        continue
-      }
-      return null
-    }
-  }
-  return null
-}
-
-async function fetchAllImages(): Promise<Record<string, string | null>> {
-  console.log("[v0] Starting to fetch all images...")
-
-  // Fetch all images in parallel
-  const entries = Object.entries(IMAGE_URLS)
-  const results = await Promise.all(
-    entries.map(async ([key, url]) => {
-      const base64 = await fetchImageAsBase64(url)
-      console.log(`[v0] Image ${key}: ${base64 ? "SUCCESS" : "FAILED"}`)
-      return [key, base64] as const
-    }),
-  )
-
-  const images = Object.fromEntries(results)
-  const successCount = Object.values(images).filter(Boolean).length
-  console.log(`[v0] Finished fetching images: ${successCount}/${entries.length} successful`)
-
-  return images
-}
-
 export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -197,7 +155,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const margin = 15
   const contentWidth = pageWidth - margin * 2
 
-  const images = await fetchAllImages()
+  const images = getAllImages()
 
   // Colors matching ISAPM branding
   const primaryBlue: [number, number, number] = [0, 102, 178]
@@ -208,16 +166,22 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   let yPos = margin
 
   // ============================================
+  // BACKGROUND
   // ============================================
   doc.setFillColor(248, 252, 255)
   doc.rect(0, 0, pageWidth, pageHeight, "F")
 
   // ============================================
+  // HEADER WITH LOGOS
   // ============================================
 
   // Main ISAPM 2026 Logo (left side)
   if (images.isapm2026Logo) {
-    doc.addImage(images.isapm2026Logo, "PNG", margin, yPos, 70, 20)
+    try {
+      doc.addImage(images.isapm2026Logo, "PNG", margin, yPos, 70, 20)
+    } catch (e) {
+      console.error("[v0] Error adding ISAPM 2026 logo:", e)
+    }
   }
 
   // Partner logos row (right side)
@@ -228,31 +192,51 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   // Kemenkes logo
   if (images.kemenkesLogo) {
-    doc.addImage(images.kemenkesLogo, "PNG", logoX, logoY, 22, logoSize)
+    try {
+      doc.addImage(images.kemenkesLogo, "PNG", logoX, logoY, 22, logoSize)
+    } catch (e) {
+      console.error("[v0] Error adding Kemenkes logo:", e)
+    }
   }
   logoX += 24
 
   // ISAPM org logo
   if (images.isapmOrgLogo) {
-    doc.addImage(images.isapmOrgLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    try {
+      doc.addImage(images.isapmOrgLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    } catch (e) {
+      console.error("[v0] Error adding ISAPM org logo:", e)
+    }
   }
   logoX += logoSpacing
 
   // PERDATIN logo
   if (images.perdatinLogo) {
-    doc.addImage(images.perdatinLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    try {
+      doc.addImage(images.perdatinLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    } catch (e) {
+      console.error("[v0] Error adding PERDATIN logo:", e)
+    }
   }
   logoX += logoSpacing
 
   // UB logo
   if (images.ubLogo) {
-    doc.addImage(images.ubLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    try {
+      doc.addImage(images.ubLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    } catch (e) {
+      console.error("[v0] Error adding UB logo:", e)
+    }
   }
   logoX += logoSpacing
 
   // IDI logo
   if (images.idiLogo) {
-    doc.addImage(images.idiLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    try {
+      doc.addImage(images.idiLogo, "PNG", logoX, logoY, logoSize, logoSize)
+    } catch (e) {
+      console.error("[v0] Error adding IDI logo:", e)
+    }
   }
 
   yPos += 28
@@ -474,17 +458,23 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
 
   // ============================================
+  // LUNAS STAMP
   // ============================================
   const stampX = margin + contentWidth / 2 + 15
   const stampY = yPos - 5
 
   if (images.lunasStamp) {
-    doc.addImage(images.lunasStamp, "PNG", stampX, stampY, 40, 35)
+    try {
+      doc.addImage(images.lunasStamp, "PNG", stampX, stampY, 40, 35)
+    } catch (e) {
+      console.error("[v0] Error adding LUNAS stamp:", e)
+    }
   }
 
   yPos += 38
 
   // ============================================
+  // SIGNATURE SECTION
   // ============================================
   const signatureX = pageWidth - margin - 70
 
@@ -496,7 +486,11 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   // Add signature image
   if (images.signature) {
-    doc.addImage(images.signature, "PNG", signatureX - 5, yPos, 45, 25)
+    try {
+      doc.addImage(images.signature, "PNG", signatureX - 5, yPos, 45, 25)
+    } catch (e) {
+      console.error("[v0] Error adding signature:", e)
+    }
   }
 
   yPos += 28
@@ -521,6 +515,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   })
 
   // ============================================
+  // CONTACT INFO (Bottom Right)
   // ============================================
   const contactY = pageHeight - 28
   const contactX = pageWidth - margin

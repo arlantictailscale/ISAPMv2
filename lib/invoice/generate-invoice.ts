@@ -115,14 +115,23 @@ const IMAGE_URLS = {
 
 async function fetchImageAsBase64(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url)
-    if (!response.ok) return null
+    console.log("[v0] Fetching image:", url)
+    const response = await fetch(url, {
+      headers: {
+        Accept: "image/*",
+      },
+    })
+    if (!response.ok) {
+      console.error("[v0] Failed to fetch image:", url, "Status:", response.status)
+      return null
+    }
     const arrayBuffer = await response.arrayBuffer()
     const base64 = Buffer.from(arrayBuffer).toString("base64")
     const contentType = response.headers.get("content-type") || "image/png"
+    console.log("[v0] Successfully fetched image:", url, "Size:", arrayBuffer.byteLength)
     return `data:${contentType};base64,${base64}`
   } catch (error) {
-    console.error("Failed to fetch image:", url, error)
+    console.error("[v0] Error fetching image:", url, error)
     return null
   }
 }

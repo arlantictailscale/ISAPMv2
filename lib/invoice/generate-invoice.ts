@@ -5,9 +5,6 @@ const IMAGE_URLS = {
   logoIsapm2026: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/1.png",
   logoKemenkes: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/2.png",
   logoIsapmOrg: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/3.png",
-  logoPerdatin: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/4.png",
-  logoUB: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/5.png",
-  logoIDI: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/7.png",
   lunasStamp: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/Lunas.png",
   signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
 }
@@ -16,9 +13,6 @@ const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   logoIsapm2026: { width: 83, height: 18 }, // Wide banner logo (actual ratio ~2.8:1)
   logoKemenkes: { width: 22, height: 14 }, // Kemenkes with text - wider than tall (actual ratio ~1.6:1)
   logoIsapmOrg: { width: 14, height: 14 }, // Circular logo - square
-  logoPerdatin: { width: 14, height: 14 }, // Circular logo - square
-  logoUB: { width: 12, height: 14 }, // UB logo - slightly taller
-  logoIDI: { width: 14, height: 14 }, // IDI circular logo - square
   lunasStamp: { width: 38, height: 28 }, // Wide stamp with LUNAS text
   signature: { width: 50, height: 22 }, // Wide signature
 }
@@ -233,9 +227,9 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   }
 
   const partnerLogoY = logoY + 2
-  const partnerLogoSpacing = 4 // Increased spacing between logos for better visual separation
+  const partnerLogoSpacing = 6 // Spacing between the two logos
 
-  const partnerKeys = ["logoKemenkes", "logoIsapmOrg", "logoPerdatin", "logoUB", "logoIDI"]
+  const partnerKeys = ["logoIsapmOrg", "logoKemenkes"] as const
   const partnerDims = partnerKeys.map((key) => getImageDimensions(key))
   const totalPartnerWidth =
     partnerDims.reduce((sum, d) => sum + d.width, 0) + (partnerKeys.length - 1) * partnerLogoSpacing

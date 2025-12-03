@@ -12,11 +12,38 @@ const IMAGE_URLS = {
   signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
 }
 
-// Cache for loaded images
+const IMAGE_DIMENSIONS: Record<string, { aspectRatio: number; maxWidth: number; maxHeight: number }> = {
+  logoIsapm2026: { aspectRatio: 2.8, maxWidth: 50, maxHeight: 18 }, // Wide logo
+  logoKemenkes: { aspectRatio: 0.8, maxWidth: 12, maxHeight: 15 }, // Tall logo
+  logoIsapmOrg: { aspectRatio: 1.0, maxWidth: 14, maxHeight: 14 }, // Square logo
+  logoPerdatin: { aspectRatio: 1.0, maxWidth: 14, maxHeight: 14 }, // Square logo
+  logoUB: { aspectRatio: 1.0, maxWidth: 14, maxHeight: 14 }, // Square logo
+  logoIDI: { aspectRatio: 0.85, maxWidth: 13, maxHeight: 15 }, // Slightly tall logo
+  lunasStamp: { aspectRatio: 1.4, maxWidth: 40, maxHeight: 28 }, // Wide stamp
+  signature: { aspectRatio: 2.2, maxWidth: 55, maxHeight: 25 }, // Wide signature
+}
+
+function calculateImageDimensions(key: string): { width: number; height: number } {
+  const config = IMAGE_DIMENSIONS[key]
+  if (!config) return { width: 14, height: 14 }
+
+  if (config.aspectRatio >= 1) {
+    // Wider than tall - constrain by width
+    const width = Math.min(config.maxWidth, config.maxHeight * config.aspectRatio)
+    const height = width / config.aspectRatio
+    return { width, height }
+  } else {
+    // Taller than wide - constrain by height
+    const height = Math.min(config.maxHeight, config.maxWidth / config.aspectRatio)
+    const width = height * config.aspectRatio
+    return { width, height }
+  }
+}
+
+// Cache for loaded images (persistent across requests)
 const imageCache: Map<string, string> = new Map()
 
-// Fetch image and convert to base64
-async function fetchImageAsBase64(url: string): Promise<string | null> {
+async function fetchImageAsBase64(url: string, compress = false): Promise<string | null> {
   // Check cache first
   if (imageCache.has(url)) {
     return imageCache.get(url) || null
@@ -50,13 +77,23 @@ async function fetchImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
-// Load all images in parallel
+// Load all images in parallel with timeout
 async function loadAllImages(): Promise<Record<string, string | null>> {
   const entries = Object.entries(IMAGE_URLS)
+
+  const timeout = (ms: number) => new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))
+
   const results = await Promise.all(
     entries.map(async ([key, url]) => {
-      const base64 = await fetchImageAsBase64(url)
-      return [key, base64] as [string, string | null]
+      try {
+        const base64 = await Promise.race([
+          fetchImageAsBase64(url),
+          timeout(5000), // 5 second timeout per image
+        ])
+        return [key, base64] as [string, string | null]
+      } catch {
+        return [key, null] as [string, string | null]
+      }
     }),
   )
   return Object.fromEntries(results)
@@ -173,6 +210,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
     orientation: "portrait",
     unit: "mm",
     format: "a4",
+    compress: true, // Enable PDF compression
   })
 
   // Load all images
@@ -198,69 +236,44 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const logoHeight = 18
   const logoY = yPos
 
-  // ISAPM 2026 main logo (left side)
   if (images.logoIsapm2026) {
     try {
-      doc.addImage(images.logoIsapm2026, "PNG", margin, logoY, 50, logoHeight)
+      const dims = calculateImageDimensions("logoIsapm2026")
+      doc.addImage(images.logoIsapm2026, "PNG", margin, logoY, dims.width, dims.height)
     } catch (e) {
       console.error("Failed to add ISAPM 2026 logo:", e)
     }
   }
 
-  // Partner logos (right side) - Kemenkes, ISAPM Org, Perdatin, UB, IDI
-  const partnerLogoSize = 14
   const partnerLogoY = logoY + 2
-  const partnerLogoSpacing = 16
-  let partnerLogoX = pageWidth - margin - (partnerLogoSize * 5 + partnerLogoSpacing * 4) / 2 - 10
+  const partnerLogoSpacing = 3 // Space between logos
 
-  // Kemenkes logo
-  if (images.logoKemenkes) {
-    try {
-      doc.addImage(images.logoKemenkes, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
-    } catch (e) {
-      console.error("Failed to add Kemenkes logo:", e)
-    }
-  }
-  partnerLogoX += partnerLogoSpacing
+  // Calculate total width of all partner logos
+  const partnerKeys = ["logoKemenkes", "logoIsapmOrg", "logoPerdatin", "logoUB", "logoIDI"]
+  const partnerDims = partnerKeys.map((key) => calculateImageDimensions(key))
+  const totalPartnerWidth =
+    partnerDims.reduce((sum, d) => sum + d.width, 0) + (partnerKeys.length - 1) * partnerLogoSpacing
 
-  // ISAPM Org logo
-  if (images.logoIsapmOrg) {
-    try {
-      doc.addImage(images.logoIsapmOrg, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
-    } catch (e) {
-      console.error("Failed to add ISAPM Org logo:", e)
-    }
-  }
-  partnerLogoX += partnerLogoSpacing
+  // Start position for partner logos (right-aligned)
+  let partnerLogoX = pageWidth - margin - totalPartnerWidth
 
-  // Perdatin logo
-  if (images.logoPerdatin) {
-    try {
-      doc.addImage(images.logoPerdatin, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
-    } catch (e) {
-      console.error("Failed to add Perdatin logo:", e)
+  // Render each partner logo with correct dimensions
+  partnerKeys.forEach((key, index) => {
+    const imageKey = key as keyof typeof images
+    if (images[imageKey]) {
+      try {
+        const dims = partnerDims[index]
+        // Center vertically within the header area
+        const centeredY = partnerLogoY + (logoHeight - dims.height) / 2 - 2
+        doc.addImage(images[imageKey]!, "PNG", partnerLogoX, centeredY, dims.width, dims.height)
+        partnerLogoX += dims.width + partnerLogoSpacing
+      } catch (e) {
+        console.error(`Failed to add ${key} logo:`, e)
+      }
+    } else {
+      partnerLogoX += partnerDims[index].width + partnerLogoSpacing
     }
-  }
-  partnerLogoX += partnerLogoSpacing
-
-  // UB logo
-  if (images.logoUB) {
-    try {
-      doc.addImage(images.logoUB, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
-    } catch (e) {
-      console.error("Failed to add UB logo:", e)
-    }
-  }
-  partnerLogoX += partnerLogoSpacing
-
-  // IDI logo
-  if (images.logoIDI) {
-    try {
-      doc.addImage(images.logoIDI, "PNG", partnerLogoX, partnerLogoY, partnerLogoSize, partnerLogoSize)
-    } catch (e) {
-      console.error("Failed to add IDI logo:", e)
-    }
-  }
+  })
 
   yPos += logoHeight + 7
 
@@ -348,7 +361,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // Table rows
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "normal")
-  doc.setFontSize(8) // Slightly smaller font to fit longer text
+  doc.setFontSize(8)
 
   data.items.forEach((item, index) => {
     let eventText = ""
@@ -364,7 +377,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
       }
     }
 
-    const maxEventWidth = colWidths.event - 8
+    const maxEventWidth = colWidths.event - 6
     const splitEventText = doc.splitTextToSize(eventText, maxEventWidth)
     const lineHeight = 4
     const rowHeight = Math.max(10, splitEventText.length * lineHeight + 4)
@@ -484,36 +497,18 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   const stampX = margin + contentWidth / 2 + 10
   const stampY = yPos
-  const stampWidth = 40
-  const stampHeight = 28
+  const stampDims = calculateImageDimensions("lunasStamp")
 
   if (images.lunasStamp) {
     try {
-      doc.addImage(images.lunasStamp, "PNG", stampX, stampY, stampWidth, stampHeight)
+      doc.addImage(images.lunasStamp, "PNG", stampX, stampY, stampDims.width, stampDims.height)
     } catch (e) {
       console.error("Failed to add LUNAS stamp:", e)
       // Fallback to drawn stamp
-      doc.setDrawColor(...greenStamp)
-      doc.setLineWidth(1.5)
-      doc.rect(stampX, stampY + 5, 35, 18)
-      doc.setLineWidth(0.5)
-      doc.rect(stampX + 2, stampY + 7, 31, 14)
-      doc.setTextColor(...greenStamp)
-      doc.setFont("helvetica", "bold")
-      doc.setFontSize(16)
-      doc.text("LUNAS", stampX + 17.5, stampY + 16, { align: "center" })
+      drawFallbackLunasStamp(doc, stampX, stampY, greenStamp)
     }
   } else {
-    // Fallback to drawn stamp
-    doc.setDrawColor(...greenStamp)
-    doc.setLineWidth(1.5)
-    doc.rect(stampX, stampY + 5, 35, 18)
-    doc.setLineWidth(0.5)
-    doc.rect(stampX + 2, stampY + 7, 31, 14)
-    doc.setTextColor(...greenStamp)
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(16)
-    doc.text("LUNAS", stampX + 17.5, stampY + 16, { align: "center" })
+    drawFallbackLunasStamp(doc, stampX, stampY, greenStamp)
   }
 
   // Date under stamp
@@ -523,7 +518,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const paymentDateStr = data.paymentDate
     ? formatDateIndonesian(data.paymentDate)
     : formatDateIndonesian(data.invoiceDate)
-  doc.text(paymentDateStr, stampX + stampWidth / 2, stampY + stampHeight + 3, { align: "center" })
+  doc.text(paymentDateStr, stampX + stampDims.width / 2, stampY + stampDims.height + 3, { align: "center" })
 
   yPos += 38
 
@@ -531,8 +526,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // SIGNATURE SECTION
   // ============================================
   const signatureX = pageWidth - margin - 70
-  const signatureWidth = 55
-  const signatureHeight = 25
+  const signatureDims = calculateImageDimensions("signature")
 
   doc.setTextColor(...darkText)
   doc.setFont("helvetica", "normal")
@@ -542,13 +536,13 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   if (images.signature) {
     try {
-      doc.addImage(images.signature, "PNG", signatureX, yPos, signatureWidth, signatureHeight)
+      doc.addImage(images.signature, "PNG", signatureX, yPos, signatureDims.width, signatureDims.height)
     } catch (e) {
       console.error("Failed to add signature:", e)
     }
   }
 
-  yPos += signatureHeight + 3
+  yPos += signatureDims.height + 3
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(9)
@@ -590,6 +584,18 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10)
 
   return doc
+}
+
+function drawFallbackLunasStamp(doc: jsPDF, x: number, y: number, color: [number, number, number]) {
+  doc.setDrawColor(...color)
+  doc.setLineWidth(1.5)
+  doc.rect(x, y + 5, 35, 18)
+  doc.setLineWidth(0.5)
+  doc.rect(x + 2, y + 7, 31, 14)
+  doc.setTextColor(...color)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(16)
+  doc.text("LUNAS", x + 17.5, y + 16, { align: "center" })
 }
 
 export async function generateInvoiceBase64(data: InvoiceData): Promise<string> {

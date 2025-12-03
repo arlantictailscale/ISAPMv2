@@ -9,11 +9,9 @@ const IMAGE_URLS = {
   signature: "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/ttd%20dr.%20WWN%20new%202024.png",
 }
 
-// - logoKemenkes: adjusted to 14x18mm (taller than wide to match the vertical emblem + text)
-// - logoIsapmOrg: adjusted to 16x16mm (perfect square for circular logo)
 const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   logoIsapm2026: { width: 83, height: 18 }, // Wide banner logo (actual ratio ~4.6:1)
-  logoKemenkes: { width: 14, height: 18 }, // Kemenkes emblem with text - taller than wide
+  logoKemenkes: { width: 20, height: 18 }, // Kemenkes emblem with text - slightly wider
   logoIsapmOrg: { width: 16, height: 16 }, // Circular gear logo - perfect square
   lunasStamp: { width: 31, height: 28 }, // Wide stamp with LUNAS text
   signature: { width: 50, height: 22 }, // Wide signature

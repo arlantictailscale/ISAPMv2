@@ -11,7 +11,7 @@ const IMAGE_URLS = {
 
 const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   logoIsapm2026: { width: 83, height: 18 }, // Wide banner logo (actual ratio ~4.6:1)
-  logoKemenkes: { width: 20, height: 18 }, // Kemenkes emblem with text - slightly wider
+  logoKemenkes: { width: 32, height: 16 }, // Kemenkes emblem with text - wider aspect ratio
   logoIsapmOrg: { width: 16, height: 16 }, // Circular gear logo - perfect square
   lunasStamp: { width: 31, height: 28 }, // Wide stamp with LUNAS text
   signature: { width: 50, height: 22 }, // Wide signature

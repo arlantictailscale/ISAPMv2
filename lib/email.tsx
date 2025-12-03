@@ -1,4 +1,13 @@
 import { Resend } from "resend"
+import {
+  generateInvoiceBase64,
+  generateInvoiceNumber,
+  type InvoiceData,
+  type InvoiceItem,
+  formatRupiah,
+  formatDateIndonesian,
+  formatTerbilang,
+} from "@/lib/invoice/generate-invoice"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -425,6 +434,7 @@ export async function sendPaymentVerificationEmail({
   currency: string
 }) {
   const isVerified = status === "verified"
+  const rejectionComment = rejectionReason // Fix: Declare rejectionComment
 
   // Format order items summary for verified emails
   let itemsSummary = ""
@@ -571,11 +581,11 @@ export async function sendPaymentVerificationEmail({
                   </div>
                   
                   ${
-                    rejectionReason
+                    rejectionComment
                       ? `
                     <div style="background: #fef2f2; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #ef4444;">
                       <h3 style="font-size: 16px; color: #991b1b; margin-top: 0;">Reason for Rejection:</h3>
-                      <p style="color: #7f1d1d; margin: 0;">${rejectionReason}</p>
+                      <p style="color: #7f1d1d; margin: 0;">${rejectionComment}</p>
                     </div>
                   `
                       : ""
@@ -628,6 +638,307 @@ export async function sendPaymentVerificationEmail({
     return { success: true }
   } catch (error) {
     console.error("Error sending payment verification email:", error)
+    return { success: false, error }
+  }
+}
+
+export async function sendPaymentConfirmationWithInvoice({
+  email,
+  userName,
+  orderId,
+  orderItems,
+  totalAmount,
+  currency,
+  customerInstitution,
+  customerPhone,
+  paymentVerifiedAt,
+}: {
+  email: string
+  userName: string
+  orderId: string
+  orderItems: Array<{
+    item_type: string
+    event_label?: string
+    participant_type_label?: string
+    hotel_room_type?: string
+    unit_price: number
+    nights?: number
+    check_in_date?: string
+    check_out_date?: string
+  }>
+  totalAmount: number
+  currency: string
+  customerInstitution?: string
+  customerPhone?: string
+  paymentVerifiedAt: Date
+}) {
+  try {
+    // Prepare invoice items
+    const items: InvoiceItem[] = orderItems.map((item) => ({
+      eventLabel: item.event_label || item.hotel_room_type || "Item",
+      unitPrice: item.unit_price,
+      quantity: 1,
+      nights: item.nights || 1,
+      itemType: item.item_type,
+      participantTypeLabel: item.participant_type_label,
+      hotelRoomType: item.hotel_room_type,
+      checkInDate: item.check_in_date,
+      checkOutDate: item.check_out_date,
+    }))
+
+    // Generate invoice number and data
+    const invoiceNumber = generateInvoiceNumber(orderId, paymentVerifiedAt)
+    const invoiceData: InvoiceData = {
+      orderId,
+      invoiceNumber,
+      invoiceDate: paymentVerifiedAt,
+      customerName: userName,
+      customerEmail: email,
+      customerPhone,
+      customerInstitution,
+      items,
+      totalAmount,
+      currency,
+      paymentDate: paymentVerifiedAt,
+    }
+
+    // Generate PDF invoice
+    let pdfBase64: string | null = null
+    try {
+      pdfBase64 = await generateInvoiceBase64(invoiceData)
+    } catch (pdfError) {
+      console.error("[v0] Failed to generate PDF invoice:", pdfError)
+      // Continue without PDF attachment
+    }
+
+    // Generate items HTML for email body
+    const itemsHtml = orderItems
+      .map((item, index) => {
+        let itemName = ""
+        if (item.item_type === "hotel") {
+          itemName = `Hotel: ${item.hotel_room_type || "Room"}`
+          if (item.nights && item.nights > 1) {
+            itemName += ` (${item.nights} night${item.nights > 1 ? "s" : ""})`
+          }
+        } else {
+          itemName = item.event_label || "Event Registration"
+          if (item.participant_type_label) {
+            itemName += ` - ${item.participant_type_label}`
+          }
+        }
+
+        const itemTotal = item.unit_price * (item.nights || 1)
+
+        return `
+          <tr>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${index + 1}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${itemName}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">${formatRupiah(item.unit_price)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${formatRupiah(itemTotal)}</td>
+          </tr>
+        `
+      })
+      .join("")
+
+    // Items summary for quick overview
+    const itemsSummary = orderItems
+      .map((item) => {
+        if (item.item_type === "workshop" || item.item_type === "symposium") {
+          return `<li style="margin: 8px 0; color: #475569;">${item.event_label} - ${item.participant_type_label}</li>`
+        } else if (item.item_type === "hotel") {
+          return `<li style="margin: 8px 0; color: #475569;">Hotel: ${item.hotel_room_type}${item.nights ? ` (${item.nights} night${item.nights > 1 ? "s" : ""})` : ""}</li>`
+        } else if (item.item_type === "cpd_course") {
+          return `<li style="margin: 8px 0; color: #475569;">CPD Course: ${item.event_label}</li>`
+        }
+        return ""
+      })
+      .join("")
+
+    const emailConfig: any = {
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
+      to: email,
+      subject: `Payment Confirmed & Invoice - ISAPM 2026 (${invoiceNumber})`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #00A9E0 0%, #0088B8 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+              .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 14px; }
+              .content { background: #ffffff; padding: 40px 30px; border: 1px solid #e2e8f0; border-top: none; }
+              .success-badge { display: inline-block; background: #d1fae5; color: #065f46; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-bottom: 20px; }
+              .alert { background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 4px; }
+              .alert-icon { font-size: 24px; margin-bottom: 10px; }
+              .alert-title { font-weight: 700; color: #065f46; margin-bottom: 8px; font-size: 16px; }
+              .alert-text { color: #064e3b; font-size: 14px; line-height: 1.6; }
+              .invoice-info { background: #f7fafc; padding: 20px; margin: 20px 0; border-radius: 8px; border: 1px solid #e2e8f0; }
+              .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+              .invoice-row:last-child { border-bottom: none; }
+              .invoice-label { color: #64748b; font-size: 14px; }
+              .invoice-value { font-weight: 600; color: #1e293b; }
+              .section-title { font-size: 18px; font-weight: 600; color: #1a202c; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
+              .items-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 20px 0; }
+              .items-table th { padding: 12px; text-align: left; border-bottom: 2px solid #00A9E0; background: #f8f9fa; }
+              .items-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+              .total-box { background: linear-gradient(135deg, #00A9E0 0%, #0088B8 100%); color: white; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; }
+              .total-amount { font-size: 28px; font-weight: 700; margin: 10px 0; }
+              .terbilang { font-style: italic; font-size: 12px; opacity: 0.9; }
+              .info-box { background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #00A9E0; }
+              .info-box h3 { font-size: 14px; color: #0369a1; margin-top: 0; }
+              .info-box ul { margin: 10px 0; padding-left: 20px; color: #0c4a6e; }
+              .info-box li { margin: 8px 0; }
+              .button { display: inline-block; background: linear-gradient(135deg, #EF3340 0%, #d92532 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(239, 51, 64, 0.2); }
+              .button:hover { box-shadow: 0 6px 8px rgba(239, 51, 64, 0.3); }
+              .attachment-notice { background: #fef3c7; padding: 15px 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #f59e0b; }
+              .attachment-notice p { margin: 0; font-size: 14px; color: #92400e; }
+              .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
+              .footer-brand { font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>✓ Order Confirmed!</h1>
+                <p>Thank you for your order</p>
+              </div>
+              <div class="content">
+                <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>
+                
+                <div class="alert">
+                  <div class="alert-icon">🎉</div>
+                  <div class="alert-title">Payment Successfully Verified!</div>
+                  <div class="alert-text">
+                    Your payment has been verified by our admin team. Your registration is now complete and confirmed. 
+                    Please find your official invoice/receipt attached to this email.
+                  </div>
+                </div>
+
+                <div class="invoice-info">
+                  <div class="invoice-row">
+                    <span class="invoice-label">Invoice Number</span>
+                    <span class="invoice-value" style="font-family: monospace;">${invoiceNumber}</span>
+                  </div>
+                  <div class="invoice-row">
+                    <span class="invoice-label">Order ID</span>
+                    <span class="invoice-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
+                  </div>
+                  <div class="invoice-row">
+                    <span class="invoice-label">Payment Date</span>
+                    <span class="invoice-value">${formatDateIndonesian(paymentVerifiedAt)}</span>
+                  </div>
+                  <div class="invoice-row">
+                    <span class="invoice-label">Payment Status</span>
+                    <span class="invoice-value" style="color: #10b981;">✓ Verified</span>
+                  </div>
+                </div>
+
+                ${
+                  itemsSummary
+                    ? `
+                <div style="margin: 25px 0;">
+                  <h3 style="font-size: 16px; color: #1a202c; margin-bottom: 10px;">Your Registered Items:</h3>
+                  <ul style="margin: 0; padding-left: 20px;">
+                    ${itemsSummary}
+                  </ul>
+                </div>
+                `
+                    : ""
+                }
+
+                <div class="section-title">Invoice Details</div>
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th style="text-align: center; width: 40px;">No</th>
+                      <th>Description</th>
+                      <th style="text-align: right;">Unit Price</th>
+                      <th style="text-align: right;">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsHtml}
+                  </tbody>
+                </table>
+
+                <div class="total-box">
+                  <div style="font-size: 14px; opacity: 0.9;">Total Amount Paid</div>
+                  <div class="total-amount">${formatRupiah(totalAmount)}</div>
+                  <div class="terbilang">${formatTerbilang(totalAmount)}</div>
+                </div>
+
+                ${
+                  pdfBase64
+                    ? `
+                <div class="attachment-notice">
+                  <p>📎 <strong>Attachment:</strong> Your official invoice (PDF) is attached to this email. You can also download it from your dashboard.</p>
+                </div>
+                `
+                    : ""
+                }
+
+                <div class="info-box">
+                  <h3>What's Next?</h3>
+                  <ul>
+                    <li>Access your verified bookings in your dashboard</li>
+                    <li>Download your conference materials and badges</li>
+                    <li>Check your email for additional event information</li>
+                    <li>Join us on April 16-18, 2026 at Harris Hotel Malang!</li>
+                  </ul>
+                </div>
+
+                <div style="text-align: center;">
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-events" class="button">View My Events</a>
+                </div>
+
+                <p style="font-size: 15px; color: #475569; margin-top: 25px;">
+                  We look forward to seeing you at ISAPM 2026! If you have any questions, feel free to reach out.
+                </p>
+
+                <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none;">admin@isapm2026.org</a> 
+                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none;">+6289602626709</a>
+                </p>
+                
+                <p style="font-size: 15px; color: #1a202c; margin-top: 25px;">
+                  Best regards,<br>
+                  <strong>ISAPM 2026 Team</strong>
+                </p>
+              </div>
+              <div class="footer">
+                <div class="footer-brand">ISAPM 2026 National Meeting</div>
+                <div>The Indonesian Society of Anesthesiology for Pain Management</div>
+                <div style="margin-top: 12px;">
+                  <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Email</a> •
+                  <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Website</a>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    }
+
+    // Add PDF attachment if generated successfully
+    if (pdfBase64) {
+      emailConfig.attachments = [
+        {
+          filename: `Kwitansi-ISAPM-2026-${invoiceNumber}.pdf`,
+          content: pdfBase64,
+        },
+      ]
+    }
+
+    await resend.emails.send(emailConfig)
+
+    console.log("[v0] Payment confirmation with invoice email sent to:", email)
+    return { success: true }
+  } catch (error) {
+    console.error("[v0] Error sending payment confirmation with invoice email:", error)
     return { success: false, error }
   }
 }

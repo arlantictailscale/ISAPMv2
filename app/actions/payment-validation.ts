@@ -2,8 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import { sendPaymentVerificationEmail } from "@/lib/email"
-import { sendInvoiceEmail } from "@/lib/email-invoice"
+import { sendPaymentVerificationEmail, sendPaymentConfirmationWithInvoice } from "@/lib/email"
 
 export async function approvePayment(paymentId: string, orderId: string, calculatedTotal?: number) {
   try {
@@ -61,30 +60,11 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
       console.error("[v0] Error updating order status:", orderError)
     }
 
-    // Send payment verification email
     try {
       const order = payment.orders as any
       const emailTotalAmount = calculatedTotal !== undefined ? calculatedTotal : order.total_amount
 
-      await sendPaymentVerificationEmail({
-        email: order.email,
-        userName: order.full_name,
-        status: "verified",
-        orderId: order.id,
-        orderItems: order.order_items,
-        totalAmount: emailTotalAmount,
-        currency: order.currency,
-      })
-      console.log("[v0] Payment verification email sent to:", order.email)
-    } catch (emailError) {
-      console.error("[v0] Failed to send payment verification email:", emailError)
-    }
-
-    try {
-      const order = payment.orders as any
-      const emailTotalAmount = calculatedTotal !== undefined ? calculatedTotal : order.total_amount
-
-      await sendInvoiceEmail({
+      await sendPaymentConfirmationWithInvoice({
         email: order.email,
         userName: order.full_name,
         orderId: order.id,
@@ -95,10 +75,10 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
         customerPhone: order.phone,
         paymentVerifiedAt: new Date(verifiedAt),
       })
-      console.log("[v0] Invoice email sent to:", order.email)
-    } catch (invoiceError) {
-      console.error("[v0] Failed to send invoice email:", invoiceError)
-      // Don't fail the approval if invoice email fails
+      console.log("[v0] Payment confirmation with invoice email sent to:", order.email)
+    } catch (emailError) {
+      console.error("[v0] Failed to send payment confirmation email:", emailError)
+      // Don't fail the approval if email fails
     }
 
     revalidatePath("/admin/payment-validation")

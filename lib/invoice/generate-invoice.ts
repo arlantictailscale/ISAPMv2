@@ -42,11 +42,9 @@ function numberToIndonesianWords(num: number): string {
 export function formatTerbilang(num: number): string {
   if (num === 0) return "nol rupiah"
   const words = numberToIndonesianWords(num).trim().replace(/\s+/g, " ")
-  // Capitalize first letter
   return words.charAt(0).toUpperCase() + words.slice(1) + " rupiah"
 }
 
-// Generate invoice number based on date and order ID
 export function generateInvoiceNumber(orderId: string, date: Date = new Date()): string {
   const year = date.getFullYear().toString().slice(-2)
   const month = (date.getMonth() + 1).toString().padStart(2, "0")
@@ -55,7 +53,6 @@ export function generateInvoiceNumber(orderId: string, date: Date = new Date()):
   return `Natmet-${year}${month}${day}${orderSuffix}`
 }
 
-// Format date to Indonesian format
 export function formatDateIndonesian(date: Date): string {
   const months = [
     "Januari",
@@ -74,7 +71,6 @@ export function formatDateIndonesian(date: Date): string {
   return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
 }
 
-// Format currency to Indonesian format
 export function formatRupiah(amount: number): string {
   return `Rp. ${amount.toLocaleString("id-ID")}`
 }
@@ -106,6 +102,41 @@ export interface InvoiceData {
   paymentMethod?: string
 }
 
+const IMAGE_URLS = {
+  isapm2026Logo: "/images/1.png",
+  isapmOrgLogo: "/images/2.png",
+  kemenkesLogo: "/images/3.png",
+  perdatinLogo: "/images/4.png",
+  ubLogo: "/images/5.png",
+  idiLogo: "/images/7.png",
+  lunasStamp: "/images/lunas.png",
+  signature: "/images/ttd-20dr.png",
+}
+
+async function fetchImageAsBase64(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return null
+    const arrayBuffer = await response.arrayBuffer()
+    const base64 = Buffer.from(arrayBuffer).toString("base64")
+    const contentType = response.headers.get("content-type") || "image/png"
+    return `data:${contentType};base64,${base64}`
+  } catch (error) {
+    console.error("Failed to fetch image:", url, error)
+    return null
+  }
+}
+
+async function fetchAllImages(): Promise<Record<string, string | null>> {
+  const imagePromises = Object.entries(IMAGE_URLS).map(async ([key, url]) => {
+    const base64 = await fetchImageAsBase64(url)
+    return [key, base64] as const
+  })
+
+  const results = await Promise.all(imagePromises)
+  return Object.fromEntries(results)
+}
+
 export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const doc = new jsPDF({
     orientation: "portrait",
@@ -118,61 +149,65 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const margin = 15
   const contentWidth = pageWidth - margin * 2
 
+  const images = await fetchAllImages()
+
   // Colors matching ISAPM branding
-  const primaryBlue: [number, number, number] = [0, 169, 224] // ISAPM Cyan/Blue
+  const primaryBlue: [number, number, number] = [0, 102, 178]
+  const lightBlue: [number, number, number] = [230, 244, 255]
   const darkText: [number, number, number] = [33, 37, 41]
   const grayText: [number, number, number] = [108, 117, 125]
-  const redStamp: [number, number, number] = [220, 53, 69] // For LUNAS stamp
-  const greenStamp: [number, number, number] = [40, 167, 69] // Alternative green for LUNAS
 
   let yPos = margin
 
   // ============================================
-  // HEADER SECTION WITH LOGOS
+  // ============================================
+  doc.setFillColor(248, 252, 255)
+  doc.rect(0, 0, pageWidth, pageHeight, "F")
+
+  // ============================================
   // ============================================
 
-  // Main conference logo (left side)
-  // Since we can't load external images in jsPDF easily on server, we'll create a styled header
-  doc.setFillColor(...primaryBlue)
-  doc.rect(margin, yPos, 50, 18, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(14)
-  doc.setFont("helvetica", "bold")
-  doc.text("8", margin + 5, yPos + 12)
-  doc.setFontSize(10)
-  doc.text("ISAPM", margin + 15, yPos + 8)
-  doc.setFontSize(12)
-  doc.setTextColor(124, 179, 66) // Green for 2026
-  doc.text("2026", margin + 33, yPos + 8)
-  doc.setFontSize(6)
-  doc.setTextColor(255, 255, 255)
-  doc.text("Indonesian Society of Anesthesiology", margin + 15, yPos + 13)
-  doc.text("for Pain Management", margin + 15, yPos + 16)
+  // Main ISAPM 2026 Logo (left side)
+  if (images.isapm2026Logo) {
+    doc.addImage(images.isapm2026Logo, "PNG", margin, yPos, 70, 20)
+  }
 
-  // Partner logos placeholder (right side) - styled boxes
-  const logoSize = 12
-  const logoY = yPos + 3
+  // Partner logos row (right side)
+  const logoY = yPos + 2
+  const logoSize = 14
+  const logoSpacing = 16
+  let logoX = pageWidth - margin - (logoSize * 5 + logoSpacing * 4)
 
-  // Kemenkes logo placeholder
-  doc.setFillColor(0, 168, 168) // Teal
-  doc.circle(pageWidth - margin - 45, logoY + logoSize / 2, logoSize / 2, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(5)
-  doc.text("KEMENKES", pageWidth - margin - 50, logoY + logoSize / 2 + 1)
+  // Kemenkes logo
+  if (images.kemenkesLogo) {
+    doc.addImage(images.kemenkesLogo, "PNG", logoX, logoY, 22, logoSize)
+  }
+  logoX += 24
 
-  // ISAPM org logo placeholder
-  doc.setFillColor(220, 53, 69) // Red
-  doc.circle(pageWidth - margin - 25, logoY + logoSize / 2, logoSize / 2, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.text("ISAPM", pageWidth - margin - 29, logoY + logoSize / 2 + 1)
+  // ISAPM org logo
+  if (images.isapmOrgLogo) {
+    doc.addImage(images.isapmOrgLogo, "PNG", logoX, logoY, logoSize, logoSize)
+  }
+  logoX += logoSpacing
 
-  // PERDATIN logo placeholder
-  doc.setFillColor(220, 53, 69) // Red
-  doc.circle(pageWidth - margin - 5, logoY + logoSize / 2, logoSize / 2, "F")
-  doc.setTextColor(255, 255, 255)
-  doc.text("PDT", pageWidth - margin - 8, logoY + logoSize / 2 + 1)
+  // PERDATIN logo
+  if (images.perdatinLogo) {
+    doc.addImage(images.perdatinLogo, "PNG", logoX, logoY, logoSize, logoSize)
+  }
+  logoX += logoSpacing
 
-  yPos += 25
+  // UB logo
+  if (images.ubLogo) {
+    doc.addImage(images.ubLogo, "PNG", logoX, logoY, logoSize, logoSize)
+  }
+  logoX += logoSpacing
+
+  // IDI logo
+  if (images.idiLogo) {
+    doc.addImage(images.idiLogo, "PNG", logoX, logoY, logoSize, logoSize)
+  }
+
+  yPos += 28
 
   // ============================================
   // TITLE
@@ -266,12 +301,12 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
     // Alternate row background
     if (index % 2 === 0) {
-      doc.setFillColor(245, 247, 250)
+      doc.setFillColor(...lightBlue)
       doc.rect(margin, rowY, contentWidth, rowHeight, "F")
     }
 
     // Row border
-    doc.setDrawColor(220, 220, 220)
+    doc.setDrawColor(200, 220, 240)
     doc.setLineWidth(0.1)
     doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
 
@@ -298,7 +333,6 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
         eventText += ` - ${item.participantTypeLabel}`
       }
     }
-    // Truncate if too long
     if (eventText.length > 50) {
       eventText = eventText.substring(0, 47) + "..."
     }
@@ -324,11 +358,11 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
     const rowY = yPos
 
     if (i % 2 === 0) {
-      doc.setFillColor(245, 247, 250)
+      doc.setFillColor(...lightBlue)
       doc.rect(margin, rowY, contentWidth, rowHeight, "F")
     }
 
-    doc.setDrawColor(220, 220, 220)
+    doc.setDrawColor(200, 220, 240)
     doc.setLineWidth(0.1)
     doc.line(margin, rowY + rowHeight, pageWidth - margin, rowY + rowHeight)
     doc.line(colX.event, rowY, colX.event, rowY + rowHeight)
@@ -376,7 +410,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // ============================================
   // PAYMENT INFO BOX
   // ============================================
-  doc.setFillColor(240, 248, 255) // Light blue background
+  doc.setFillColor(...lightBlue)
   doc.setDrawColor(...primaryBlue)
   doc.setLineWidth(0.3)
   doc.roundedRect(margin, yPos, contentWidth / 2 - 5, 28, 2, 2, "FD")
@@ -392,42 +426,17 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
 
   // ============================================
-  // LUNAS (PAID) STAMP
   // ============================================
-  const stampX = margin + contentWidth / 2 + 10
-  const stampY = yPos + 5
-  const stampWidth = 35
-  const stampHeight = 18
+  const stampX = margin + contentWidth / 2 + 15
+  const stampY = yPos - 5
 
-  // Stamp border (tilted effect with double border)
-  doc.setDrawColor(...greenStamp)
-  doc.setLineWidth(1.5)
-
-  // Outer rectangle
-  doc.rect(stampX, stampY, stampWidth, stampHeight)
-
-  // Inner rectangle
-  doc.setLineWidth(0.5)
-  doc.rect(stampX + 2, stampY + 2, stampWidth - 4, stampHeight - 4)
-
-  // LUNAS text
-  doc.setTextColor(...greenStamp)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(16)
-  doc.text("LUNAS", stampX + stampWidth / 2, stampY + stampHeight / 2 + 2, { align: "center" })
-
-  // Date under stamp
-  doc.setFontSize(7)
-  doc.setFont("helvetica", "normal")
-  const paymentDateStr = data.paymentDate
-    ? formatDateIndonesian(data.paymentDate)
-    : formatDateIndonesian(data.invoiceDate)
-  doc.text(paymentDateStr, stampX + stampWidth / 2, stampY + stampHeight + 5, { align: "center" })
+  if (images.lunasStamp) {
+    doc.addImage(images.lunasStamp, "PNG", stampX, stampY, 40, 35)
+  }
 
   yPos += 38
 
   // ============================================
-  // SIGNATURE SECTION
   // ============================================
   const signatureX = pageWidth - margin - 70
 
@@ -435,18 +444,14 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.setFont("helvetica", "normal")
   doc.setFontSize(10)
   doc.text("Ketua,", signatureX, yPos)
-  yPos += 5
+  yPos += 2
 
-  // Signature line (simulated signature)
-  doc.setDrawColor(...primaryBlue)
-  doc.setLineWidth(0.3)
-  // Draw a simple signature-like curve
-  doc.line(signatureX, yPos + 8, signatureX + 40, yPos + 8)
-  doc.line(signatureX + 5, yPos + 5, signatureX + 15, yPos + 10)
-  doc.line(signatureX + 15, yPos + 10, signatureX + 25, yPos + 3)
-  doc.line(signatureX + 25, yPos + 3, signatureX + 35, yPos + 12)
+  // Add signature image
+  if (images.signature) {
+    doc.addImage(images.signature, "PNG", signatureX - 5, yPos, 45, 25)
+  }
 
-  yPos += 18
+  yPos += 28
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(9)
@@ -468,16 +473,17 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   })
 
   // ============================================
-  // CONTACT INFO (BOTTOM RIGHT)
   // ============================================
-  const contactY = pageHeight - 25
+  const contactY = pageHeight - 28
   const contactX = pageWidth - margin
 
   doc.setTextColor(...grayText)
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(8)
+  doc.text("Contact:", contactX, contactY, { align: "right" })
+
   doc.setFont("helvetica", "normal")
   doc.setFontSize(7)
-
-  doc.text("Contact:", contactX, contactY, { align: "right" })
   doc.text("admin@isapm2026.org", contactX, contactY + 4, { align: "right" })
   doc.text("+62 896-0262-6709 (WhatsApp)", contactX, contactY + 8, { align: "right" })
   doc.text("www.isapm2026.org", contactX, contactY + 12, { align: "right" })

@@ -148,153 +148,151 @@ export function formatTerbilang(amount: number): string {
 }
 
 // Generate invoice number
-export function generateInvoiceNumber(): string {
-  const now = new Date()
-  const year = now.getFullYear().toString().slice(-2)
-  const month = (now.getMonth() + 1).toString().padStart(2, "0")
-  const day = now.getDate().toString().padStart(2, "0")
-  const random = Math.random().toString(36).substring(2, 10).toUpperCase()
+export function generateInvoiceNumber(orderId: string, date: Date): string {
+  const year = date.getFullYear().toString().slice(-2)
+  const month = (date.getMonth() + 1).toString().padStart(2, "0")
+  const day = date.getDate().toString().padStart(2, "0")
+  const orderShort = orderId.slice(0, 8).toUpperCase()
 
-  return `${year}${month}${day}${random}`
+  return `${year}${month}${day}${orderShort}`
 }
 
 // Main function to generate invoice PDF
-export async function generateInvoicePDF(data: {
-  orderNumber: string
+export async function generateInvoicePDF(invoiceData: {
+  orderId: string
+  invoiceNumber: string
+  invoiceDate: Date
   customerName: string
-  email: string
-  packageName: string
-  amount: number
-  paymentDate: Date
-}): Promise<Buffer> {
+  customerEmail: string
+  customerPhone?: string
+  customerInstitution?: string
+  items: { eventLabel: string; unitPrice: number; quantity: number; itemType: string }[]
+  totalAmount: number
+  currency: string
+  paymentDate?: Date
+}): Promise<PDFDocument> {
   console.log("[v0] Fetching images from Vercel Blob storage...")
   const images = await fetchAllImages()
 
-  const { orderNumber, customerName, email, packageName, amount, paymentDate } = data
-
-  return new Promise((resolve, reject) => {
-    try {
-      const doc = new PDFDocument({
-        size: "A4",
-        margins: { top: 50, bottom: 50, left: 50, right: 50 },
-      })
-
-      const chunks: Buffer[] = []
-      doc.on("data", (chunk) => chunks.push(chunk))
-      doc.on("end", () => resolve(Buffer.concat(chunks)))
-      doc.on("error", reject)
-
-      const logoY = 50
-      const logoSize = 50
-
-      if (images.isapm2026Logo) {
-        doc.image(Buffer.from(images.isapm2026Logo, "base64"), 50, logoY, {
-          width: logoSize,
-          height: logoSize,
-        })
-      }
-      if (images.isapmOrgLogo) {
-        doc.image(Buffer.from(images.isapmOrgLogo, "base64"), 110, logoY, {
-          width: logoSize,
-          height: logoSize,
-        })
-      }
-      if (images.kemenkesLogo) {
-        doc.image(Buffer.from(images.kemenkesLogo, "base64"), 170, logoY, {
-          width: logoSize,
-          height: logoSize,
-        })
-      }
-      if (images.perdatinLogo) {
-        doc.image(Buffer.from(images.perdatinLogo, "base64"), 230, logoY, {
-          width: logoSize,
-          height: logoSize,
-        })
-      }
-      if (images.ubLogo) {
-        doc.image(Buffer.from(images.ubLogo, "base64"), 290, logoY, {
-          width: logoSize,
-          height: logoSize,
-        })
-      }
-      if (images.idiLogo) {
-        doc.image(Buffer.from(images.idiLogo, "base64"), 350, logoY, {
-          width: logoSize,
-          height: logoSize,
-        })
-      }
-
-      // Title
-      doc.fontSize(20).font("Helvetica-Bold").text("KWITANSI", 50, 130, { align: "center" })
-
-      // Invoice number
-      doc.fontSize(12).font("Helvetica").text(`No: ${orderNumber}`, 50, 160, { align: "center" })
-
-      let currentY = 200
-
-      // Receipt details
-      doc.fontSize(11).font("Helvetica").text("Sudah terima dari:", 50, currentY)
-      doc.fontSize(11).font("Helvetica-Bold").text(customerName, 200, currentY)
-      currentY += 25
-
-      doc.fontSize(11).font("Helvetica").text("Uang sejumlah:", 50, currentY)
-      doc.fontSize(11).font("Helvetica-Bold").text(formatRupiah(amount), 200, currentY)
-      currentY += 25
-
-      doc.fontSize(11).font("Helvetica").text("Terbilang:", 50, currentY)
-      doc.fontSize(11).font("Helvetica-Bold").text(formatTerbilang(amount), 200, currentY, { width: 300 })
-      currentY += 40
-
-      doc.fontSize(11).font("Helvetica").text("Untuk pembayaran:", 50, currentY)
-      doc.fontSize(11).font("Helvetica-Bold").text(packageName, 200, currentY)
-      currentY += 40
-
-      if (images.lunasStamp) {
-        doc.image(Buffer.from(images.lunasStamp, "base64"), 400, currentY - 20, {
-          width: 100,
-          height: 100,
-        })
-      }
-
-      // Date and signature
-      currentY += 60
-      doc
-        .fontSize(11)
-        .font("Helvetica")
-        .text(`Malang, ${formatDateIndonesian(paymentDate)}`, 350, currentY, { align: "right" })
-
-      currentY += 20
-      doc.fontSize(11).font("Helvetica").text("Bendahara", 350, currentY, { align: "right" })
-
-      if (images.signature) {
-        doc.image(Buffer.from(images.signature, "base64"), 380, currentY + 10, {
-          width: 100,
-          height: 50,
-        })
-      }
-
-      currentY += 70
-      doc
-        .fontSize(11)
-        .font("Helvetica-Bold")
-        .text("dr. Widjiati Wangsaputra Nugraha", 350, currentY, { align: "right" })
-
-      doc.end()
-    } catch (error) {
-      console.error("[v0] Error generating PDF:", error)
-      reject(error)
-    }
+  const doc = new PDFDocument({
+    size: "A4",
+    margins: { top: 50, bottom: 50, left: 50, right: 50 },
   })
+
+  // Add logos
+  const logoY = 50
+  const logoSize = 50
+
+  if (images.isapm2026Logo) {
+    doc.image(Buffer.from(images.isapm2026Logo, "base64"), 50, logoY, {
+      width: logoSize,
+      height: logoSize,
+    })
+  }
+  if (images.isapmOrgLogo) {
+    doc.image(Buffer.from(images.isapmOrgLogo, "base64"), 110, logoY, {
+      width: logoSize,
+      height: logoSize,
+    })
+  }
+  if (images.kemenkesLogo) {
+    doc.image(Buffer.from(images.kemenkesLogo, "base64"), 170, logoY, {
+      width: logoSize,
+      height: logoSize,
+    })
+  }
+  if (images.perdatinLogo) {
+    doc.image(Buffer.from(images.perdatinLogo, "base64"), 230, logoY, {
+      width: logoSize,
+      height: logoSize,
+    })
+  }
+  if (images.ubLogo) {
+    doc.image(Buffer.from(images.ubLogo, "base64"), 290, logoY, {
+      width: logoSize,
+      height: logoSize,
+    })
+  }
+  if (images.idiLogo) {
+    doc.image(Buffer.from(images.idiLogo, "base64"), 350, logoY, {
+      width: logoSize,
+      height: logoSize,
+    })
+  }
+
+  // Title
+  doc.fontSize(20).font("Helvetica-Bold").text("KWITANSI", 50, 130, { align: "center" })
+
+  // Invoice number
+  doc.fontSize(12).font("Helvetica").text(`No: ${invoiceData.invoiceNumber}`, 50, 160, { align: "center" })
+
+  let currentY = 200
+
+  // Receipt details
+  doc.fontSize(11).font("Helvetica").text("Sudah terima dari:", 50, currentY)
+  doc.fontSize(11).font("Helvetica-Bold").text(invoiceData.customerName, 200, currentY)
+  currentY += 25
+
+  doc.fontSize(11).font("Helvetica").text("Uang sejumlah:", 50, currentY)
+  doc.fontSize(11).font("Helvetica-Bold").text(formatRupiah(invoiceData.totalAmount), 200, currentY)
+  currentY += 25
+
+  doc.fontSize(11).font("Helvetica").text("Terbilang:", 50, currentY)
+  doc.fontSize(11).font("Helvetica-Bold").text(formatTerbilang(invoiceData.totalAmount), 200, currentY, { width: 300 })
+  currentY += 40
+
+  // List items
+  const itemsDescription = invoiceData.items.map((item) => item.eventLabel).join(", ")
+  doc.fontSize(11).font("Helvetica").text("Untuk pembayaran:", 50, currentY)
+  doc.fontSize(11).font("Helvetica-Bold").text(itemsDescription, 200, currentY, { width: 300 })
+  currentY += 40
+
+  if (images.lunasStamp) {
+    doc.image(Buffer.from(images.lunasStamp, "base64"), 400, currentY - 20, {
+      width: 100,
+      height: 100,
+    })
+  }
+
+  // Date and signature
+  const paymentDate = invoiceData.paymentDate || invoiceData.invoiceDate
+  currentY += 60
+  doc
+    .fontSize(11)
+    .font("Helvetica")
+    .text(`Malang, ${formatDateIndonesian(paymentDate)}`, 350, currentY, { align: "right" })
+
+  currentY += 20
+  doc.fontSize(11).font("Helvetica").text("Bendahara", 350, currentY, { align: "right" })
+
+  if (images.signature) {
+    doc.image(Buffer.from(images.signature, "base64"), 380, currentY + 10, {
+      width: 100,
+      height: 50,
+    })
+  }
+
+  currentY += 70
+  doc.fontSize(11).font("Helvetica-Bold").text("dr. Widjiati Wangsaputra Nugraha", 350, currentY, { align: "right" })
+
+  doc.end()
+
+  return doc
 }
 
 // Generate base64 encoded PDF
 export async function generateInvoiceBase64(data: {
-  orderNumber: string
+  orderId: string
+  invoiceNumber: string
+  invoiceDate: Date
   customerName: string
-  email: string
-  packageName: string
-  amount: number
-  paymentDate: Date
+  customerEmail: string
+  customerPhone?: string
+  customerInstitution?: string
+  items: { eventLabel: string; unitPrice: number; quantity: number; itemType: string }[]
+  totalAmount: number
+  currency: string
+  paymentDate?: Date
 }): Promise<string> {
   const pdfBuffer = await generateInvoicePDF(data)
   return pdfBuffer.toString("base64")

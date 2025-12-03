@@ -9,6 +9,7 @@ import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle 
 import Link from "next/link"
 import { CancelOrderButton } from "@/components/cancel-order-button"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
+import { DownloadInvoiceButton } from "@/components/download-invoice-button"
 
 export default async function MyPurchasesPage() {
   const supabase = await createClient()
@@ -186,6 +187,7 @@ export default async function MyPurchasesPage() {
                   const ActionIcon = actionButton.icon
 
                   const canCancel = !payment
+                  const canDownloadInvoice = payment?.payment_status === "verified"
 
                   const calculatedTotal =
                     order.order_items?.reduce((sum: number, item: any) => {
@@ -394,6 +396,9 @@ export default async function MyPurchasesPage() {
                                 {actionButton.text}
                               </Button>
                             </Link>
+                            {canDownloadInvoice && (
+                              <DownloadInvoiceButton orderId={order.id} variant="outline" className="shrink-0" />
+                            )}
                             {canCancel && (
                               <div className="shrink-0">
                                 <CancelOrderButton orderId={order.id} />

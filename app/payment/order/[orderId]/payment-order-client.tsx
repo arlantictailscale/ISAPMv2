@@ -15,6 +15,7 @@ import { FileText, Upload, X, AlertCircle, Copy, Check } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
+import { DownloadInvoiceButton } from "@/components/download-invoice-button"
 
 interface PaymentOrderClientProps {
   initialOrder: any
@@ -160,6 +161,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
   const hasSubmittedPayment = initialPayment && !showResubmitForm
   const isResubmitting = showResubmitForm && initialPayment
+  const canDownloadInvoice = initialPayment?.payment_status === "verified"
 
   if (hasSubmittedPayment) {
     return (
@@ -195,7 +197,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                           : "bg-amber-500"
                     }`}
                   />
-                  <div>
+                  <div className="flex-1">
                     <p className="font-semibold">
                       {initialPayment.payment_status === "verified"
                         ? "Payment Approved"
@@ -211,6 +213,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                           : "Your payment proof has been submitted and is awaiting admin verification."}
                     </p>
                   </div>
+                  {canDownloadInvoice && (
+                    <DownloadInvoiceButton orderId={initialOrder.id} variant="default" size="sm" />
+                  )}
                 </div>
               </div>
 

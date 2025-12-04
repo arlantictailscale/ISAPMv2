@@ -640,10 +640,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="Virtual Account">Virtual Account</SelectItem>
-                      <SelectItem value="E-Wallet">E-Wallet</SelectItem>
                       <SelectItem value="Sponsored">Sponsored</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

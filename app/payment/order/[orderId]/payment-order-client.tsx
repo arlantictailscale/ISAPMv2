@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { FileText, Upload, X, AlertCircle, Copy, Check } from "lucide-react"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FileText, Upload, X, AlertCircle, CreditCard, Gift } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -484,165 +484,37 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
               </CardContent>
             </Card>
 
-            {paymentMethod !== "Sponsored" && (
-              <Card className="mb-6 border-cyan-200 bg-cyan-50/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-cyan-900">
-                    <FileText className="w-5 h-5" />
-                    Payment Instructions
-                  </CardTitle>
-                  <CardDescription>Please transfer the total amount to the following bank account</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Bank Name */}
-                  <div className="bg-white rounded-lg p-4 border border-cyan-100">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <Label className="text-xs text-muted-foreground mb-1 block">Bank Name</Label>
-                        <p className="font-bold text-lg text-cyan-900">Bank Syariah Indonesia (BSI)</p>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard("Bank Syariah Indonesia", "bank")}
-                        className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
-                        aria-label="Copy bank name"
-                      >
-                        {copiedField === "bank" ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-cyan-600" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Account Number */}
-                  <div className="bg-white rounded-lg p-4 border border-cyan-100">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <Label className="text-xs text-muted-foreground mb-1 block">Account Number</Label>
-                        <p className="font-bold text-2xl text-cyan-900 tracking-wider">7207681363</p>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard("7207681363", "account")}
-                        className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
-                        aria-label="Copy account number"
-                      >
-                        {copiedField === "account" ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-cyan-600" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Account Name */}
-                  <div className="bg-white rounded-lg p-4 border border-cyan-100">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <Label className="text-xs text-muted-foreground mb-1 block">Account Name</Label>
-                        <p className="font-bold text-lg text-cyan-900">PT Tombo Farma Indonesia</p>
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard("PT Tombo Farma Indonesia", "name")}
-                        className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
-                        aria-label="Copy account name"
-                      >
-                        {copiedField === "name" ? (
-                          <Check className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <Copy className="w-4 h-4 text-cyan-600" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Important Notes */}
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <div className="flex gap-3">
-                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                      <div className="space-y-2 text-sm">
-                        <p className="font-semibold text-amber-900">Important:</p>
-                        <ul className="list-disc list-inside space-y-1 text-amber-800">
-                          <li>Transfer the exact total amount shown above</li>
-                          <li>Save your payment receipt for verification</li>
-                          <li>Upload your payment proof after completing the transfer</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {paymentMethod === "Sponsored" && (
-              <Card className="mb-6 border-green-200 bg-green-50/50">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-green-900">
-                    <FileText className="w-5 h-5" />
-                    Sponsored Registration
-                  </CardTitle>
-                  <CardDescription>Your registration fee is covered by a sponsor/benefactor</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-green-100 border border-green-200 rounded-lg p-4">
-                    <div className="flex gap-3">
-                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                      <div className="space-y-2 text-sm">
-                        <p className="font-semibold text-green-900">Sponsored Payment</p>
-                        <p className="text-green-800">
-                          No payment transfer is required. Please enter your sponsor/benefactor name below and submit.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            <Card>
+            <Card className="mb-6">
               <CardHeader>
-                <CardTitle>
-                  {paymentMethod === "Sponsored"
-                    ? "Sponsor Information"
-                    : isResubmitting
-                      ? "Re-upload Payment Proof"
-                      : "Upload Payment Proof"}
-                </CardTitle>
-                <CardDescription>
-                  {paymentMethod === "Sponsored"
-                    ? "Enter the name of your sponsor or benefactor"
-                    : isResubmitting
-                      ? "Replace your current payment proof with a new one"
-                      : "Upload your payment receipt or transfer confirmation (Max 5MB, .jpg or .png only)"}
-                </CardDescription>
+                <CardTitle>Select Payment Method</CardTitle>
+                <CardDescription>Choose how you want to pay for your order</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {isResubmitting && initialPayment.payment_proof_url && (
-                  <div className="p-4 border rounded-lg bg-gray-50">
-                    <Label className="text-sm font-medium mb-2 block">Current Payment Proof (for reference)</Label>
-                    <div className="border rounded-lg p-3 bg-white">
-                      <img
-                        src={initialPayment.payment_proof_url || "/placeholder.svg"}
-                        alt="Current payment proof"
-                        className="w-full h-auto max-h-48 object-contain rounded"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">This will be replaced with your new upload</p>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="payment-method">Payment Method *</Label>
-                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                    <SelectTrigger id="payment-method">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="Sponsored">Sponsored</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-3">
+                  <Label className="text-base font-medium">Select Payment Method</Label>
+                  <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-muted/50">
+                      <TabsTrigger
+                        value="Bank Transfer"
+                        className="flex items-center gap-2 h-12 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
+                      >
+                        <CreditCard className="w-4 h-4" />
+                        Bank Transfer
+                      </TabsTrigger>
+                      <TabsTrigger
+                        value="Sponsored"
+                        className="flex items-center gap-2 h-12 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
+                      >
+                        <Gift className="w-4 h-4" />
+                        Sponsored
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+                  <p className="text-xs text-muted-foreground">
+                    {paymentMethod === "Bank Transfer"
+                      ? "Pay via bank transfer to our official account"
+                      : "Registration sponsored by a company or individual"}
+                  </p>
                 </div>
 
                 {paymentMethod === "Sponsored" && (

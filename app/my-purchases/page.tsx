@@ -5,7 +5,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle } from "lucide-react"
+import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle, Gift } from "lucide-react"
 import Link from "next/link"
 import { CancelOrderButton } from "@/components/cancel-order-button"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -32,7 +32,9 @@ export default async function MyPurchasesPage() {
         payment_status,
         payment_proof_url,
         rejection_reason,
-        verified_at
+        verified_at,
+        payment_method,
+        sponsor_name
       )
     `)
     .eq("user_id", user.id)
@@ -263,6 +265,14 @@ export default async function MyPurchasesPage() {
                                     })}
                                     . Your registration is now confirmed!
                                   </p>
+                                  {payment.payment_method === "sponsored" && payment.sponsor_name && (
+                                    <div className="mt-2 flex items-center gap-2 text-sm text-green-700">
+                                      <Gift className="w-4 h-4" />
+                                      <span>
+                                        Sponsored by: <strong>{payment.sponsor_name}</strong>
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -298,8 +308,6 @@ export default async function MyPurchasesPage() {
                                 <span className="text-muted-foreground">Phone:</span>
                                 <span className="font-medium">{order.phone}</span>
                               </div>
-                            </div>
-                            <div className="space-y-2 text-sm">
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Items:</span>
                                 <span className="font-medium">
@@ -314,6 +322,24 @@ export default async function MyPurchasesPage() {
                                   {!hasEventItems && hasHotelItems && "Hotel Booking"}
                                 </span>
                               </div>
+                              {payment && (
+                                <div className="flex justify-between items-center">
+                                  <span className="text-muted-foreground">Payment:</span>
+                                  <span className="font-medium">
+                                    {payment.payment_method === "sponsored" ? (
+                                      <Badge
+                                        variant="secondary"
+                                        className="bg-purple-100 text-purple-700 border-purple-200"
+                                      >
+                                        <Gift className="w-3 h-3 mr-1" />
+                                        Sponsored
+                                      </Badge>
+                                    ) : (
+                                      "Bank Transfer"
+                                    )}
+                                  </span>
+                                </div>
+                              )}
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Total:</span>
                                 <span className="font-bold text-primary">
@@ -321,12 +347,7 @@ export default async function MyPurchasesPage() {
                                 </span>
                               </div>
                             </div>
-                          </div>
-
-                          {/* Order items list */}
-                          <div className="border-t pt-4">
-                            <h4 className="font-semibold text-sm mb-3">Order Items:</h4>
-                            <div className="space-y-2">
+                            <div className="space-y-2 text-sm">
                               {order.order_items?.map((item: any) => (
                                 <div
                                   key={item.id}
@@ -366,6 +387,21 @@ export default async function MyPurchasesPage() {
                                               night{item.nights !== 1 ? "s" : ""})
                                             </>
                                           )}
+                                        </p>
+                                      </>
+                                    )}
+                                    {item.item_type === "gift" && (
+                                      <>
+                                        <div
+                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${
+                                            getBadgeColors("gift").solid
+                                          }`}
+                                        >
+                                          {getBadgeColors("gift").label}
+                                        </div>
+                                        <p className="font-medium">{item.gift_label || item.item_name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {item.gift_message || "No message provided"}
                                         </p>
                                       </>
                                     )}

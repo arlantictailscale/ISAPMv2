@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { getBadgeColors, BADGE_COLORS } from "@/lib/badge-colors"
 
-interface OrderPayment {
+interface Payment {
   id: string
   order_id: string
   user_id: string
@@ -42,6 +42,7 @@ interface OrderPayment {
   notes: string | null
   created_at: string
   updated_at: string
+  sponsor_name: string | null
   orders: {
     id: string
     full_name: string
@@ -68,8 +69,8 @@ export default function PaymentValidationPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
-  const [payments, setPayments] = useState<OrderPayment[]>([])
-  const [selectedPayment, setSelectedPayment] = useState<OrderPayment | null>(null)
+  const [payments, setPayments] = useState<Payment[]>([])
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
@@ -177,10 +178,12 @@ export default function PaymentValidationPage() {
         payment_status: "no_proof",
         rejection_reason: null,
         notes: null,
+        sponsor_name: null,
         verified_by: null,
         verified_at: null,
         created_at: order.created_at,
         updated_at: order.updated_at,
+        sponsor_name: null,
         orders: order,
       }))
 
@@ -335,7 +338,7 @@ export default function PaymentValidationPage() {
     }
   }
 
-  const PaymentCard = ({ payment }: { payment: OrderPayment }) => {
+  const PaymentCard = ({ payment }: { payment: Payment }) => {
     const order = payment.orders
     const items = order?.order_items || []
 
@@ -408,17 +411,46 @@ export default function PaymentValidationPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t text-sm">
               <div className="min-w-0">
                 <p className="text-muted-foreground">Payment Method</p>
-                <p className="font-medium truncate">{payment.payment_method || "Bank Transfer"}</p>
+                <p className="font-medium truncate">
+                  {payment.payment_method === "sponsored" ? (
+                    <span className="flex items-center gap-1">
+                      <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200">
+                        Sponsored
+                      </Badge>
+                    </span>
+                  ) : (
+                    payment.payment_method || "Bank Transfer"
+                  )}
+                </p>
               </div>
-              <div className="min-w-0">
-                <p className="text-muted-foreground">Bank</p>
-                <p className="font-medium truncate">{payment.bank_name || "N/A"}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="text-muted-foreground">Account Name</p>
-                <p className="font-medium truncate">{payment.account_name || "N/A"}</p>
-              </div>
+              {payment.payment_method === "sponsored" ? (
+                <div className="min-w-0">
+                  <p className="text-muted-foreground">Sponsor / Benefactor</p>
+                  <p className="font-medium truncate text-purple-700">{payment.sponsor_name || "N/A"}</p>
+                </div>
+              ) : (
+                <div className="min-w-0">
+                  <p className="text-muted-foreground">Bank</p>
+                  <p className="font-medium truncate">{payment.bank_name || "N/A"}</p>
+                </div>
+              )}
+              {payment.payment_method !== "sponsored" && (
+                <div className="min-w-0">
+                  <p className="text-muted-foreground">Account Name</p>
+                  <p className="font-medium truncate">{payment.account_name || "N/A"}</p>
+                </div>
+              )}
             </div>
+
+            {/* Sponsor Name */}
+            {payment.sponsor_name && payment.payment_method !== "sponsored" && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t text-sm">
+                <div className="min-w-0">
+                  <p className="text-muted-foreground">Sponsor Name</p>
+                  <p className="font-medium truncate">{payment.sponsor_name || "N/A"}</p>
+                </div>
+              </div>
+            )}
 
             {/* Total */}
             <div className="pt-4 border-t flex justify-between items-center">

@@ -8,7 +8,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, CheckCircle, Clock, Ticket, Users, Loader2, Info } from "lucide-react"
+import { Calendar, MapPin, CheckCircle, Clock, Ticket, Users, Loader2, Info, Gift } from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { getBadgeColors } from "@/lib/badge-colors"
@@ -28,6 +28,8 @@ interface OrderPayment {
   payment_status: string
   payment_proof_url?: string
   verified_at?: string
+  payment_method?: string
+  sponsor_name?: string
 }
 
 interface Order {
@@ -80,7 +82,9 @@ export default function MyEventsPage() {
           order_payments!inner (
             payment_status,
             payment_proof_url,
-            verified_at
+            verified_at,
+            payment_method,
+            sponsor_name
           )
         `,
         )
@@ -264,10 +268,18 @@ export default function MyEventsPage() {
                                   })}
                             </CardDescription>
                           </div>
-                          <Badge className="bg-green-600 hover:bg-green-700 text-white border-0">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Verified
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            {payment?.payment_method === "sponsored" && (
+                              <Badge className="bg-purple-600 hover:bg-purple-700 text-white border-0">
+                                <Gift className="w-3 h-3 mr-1" />
+                                Sponsored
+                              </Badge>
+                            )}
+                            <Badge className="bg-green-600 hover:bg-green-700 text-white border-0">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Verified
+                            </Badge>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="pt-6">
@@ -365,6 +377,15 @@ export default function MyEventsPage() {
                                 <span className="text-muted-foreground">Institution:</span>
                                 <p className="font-medium">{order.institution || "Not specified"}</p>
                               </div>
+                              {payment?.payment_method === "sponsored" && payment.sponsor_name && (
+                                <div className="sm:col-span-2">
+                                  <span className="text-muted-foreground">Sponsored by:</span>
+                                  <p className="font-medium text-purple-700 flex items-center gap-1">
+                                    <Gift className="w-4 h-4" />
+                                    {payment.sponsor_name}
+                                  </p>
+                                </div>
+                              )}
                             </div>
                           </div>
 

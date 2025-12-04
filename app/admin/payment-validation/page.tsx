@@ -938,10 +938,13 @@ export default function PaymentValidationPage() {
       <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Reject Payment</DialogTitle>
+            <DialogTitle>
+              {selectedPayment?.payment_method?.toLowerCase() === "sponsored" ? "Reject Sponsorship" : "Reject Payment"}
+            </DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting this payment. The user will be notified and can resubmit with
-              corrections.
+              {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                ? "Please provide a reason for rejecting this sponsored registration. The user will be notified and can update their sponsorship details or switch to bank transfer."
+                : "Please provide a reason for rejecting this payment. The user will be notified and can resubmit with corrections."}
             </DialogDescription>
           </DialogHeader>
           {selectedPayment && (
@@ -949,18 +952,62 @@ export default function PaymentValidationPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                 <div className="text-muted-foreground">Order ID:</div>
                 <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
-                <div className="text-muted-foreground">Amount:</div>
-                <div className="font-semibold break-all">
-                  {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
-                </div>
+                {selectedPayment.payment_method?.toLowerCase() === "sponsored" ? (
+                  <>
+                    <div className="text-muted-foreground">Payment Type:</div>
+                    <div className="font-semibold text-purple-600">Sponsored</div>
+                    {selectedPayment.sponsor_name && (
+                      <>
+                        <div className="text-muted-foreground">Sponsor:</div>
+                        <div className="font-semibold">{selectedPayment.sponsor_name}</div>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="text-muted-foreground">Amount:</div>
+                    <div className="font-semibold break-all">
+                      {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
+                    </div>
+                  </>
+                )}
                 <div className="text-muted-foreground">Customer:</div>
                 <div className="truncate">{selectedPayment.orders?.full_name}</div>
               </div>
+
+              {selectedPayment.payment_method?.toLowerCase() === "sponsored" && (
+                <div className="space-y-2">
+                  <Label className="text-muted-foreground text-xs">Common Rejection Reasons:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      "Sponsor not verified",
+                      "Invalid sponsor information",
+                      "Sponsorship not authorized",
+                      "Duplicate registration",
+                    ].map((reason) => (
+                      <Button
+                        key={reason}
+                        variant="outline"
+                        size="sm"
+                        className="text-xs h-7 bg-transparent"
+                        onClick={() => setRejectionReason(reason)}
+                      >
+                        {reason}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-2">
                 <Label htmlFor="rejection-reason">Rejection Reason *</Label>
                 <Textarea
                   id="rejection-reason"
-                  placeholder="E.g., Payment proof is unclear, incorrect amount, etc."
+                  placeholder={
+                    selectedPayment.payment_method?.toLowerCase() === "sponsored"
+                      ? "E.g., Sponsor not verified, sponsorship not authorized, etc."
+                      : "E.g., Payment proof is unclear, incorrect amount, etc."
+                  }
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   rows={4}
@@ -974,7 +1021,11 @@ export default function PaymentValidationPage() {
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleReject} disabled={isProcessing || !rejectionReason.trim()}>
-              {isProcessing ? "Rejecting..." : "Reject Payment"}
+              {isProcessing
+                ? "Rejecting..."
+                : selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                  ? "Reject Sponsorship"
+                  : "Reject Payment"}
             </Button>
           </DialogFooter>
         </DialogContent>

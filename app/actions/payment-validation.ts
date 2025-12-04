@@ -120,6 +120,8 @@ export async function rejectPayment(paymentId: string, rejectionReason: string) 
       return { success: false, error: "Payment not found" }
     }
 
+    const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
+
     const { error } = await supabase
       .from("order_payments")
       .update({
@@ -143,8 +145,10 @@ export async function rejectPayment(paymentId: string, rejectionReason: string) 
         orderId: order.id,
         totalAmount: order.total_amount,
         currency: order.currency,
+        paymentMethod: payment.payment_method,
+        sponsorName: payment.sponsor_name,
       })
-      console.log("[v0] Payment rejection email sent to:", order.email)
+      console.log("[v0] Payment rejection email sent to:", order.email, "isSponsored:", isSponsored)
     } catch (emailError) {
       console.error("[v0] Failed to send payment rejection email:", emailError)
     }

@@ -418,6 +418,8 @@ export async function sendPaymentVerificationEmail({
   orderItems,
   totalAmount,
   currency,
+  paymentMethod,
+  sponsorName,
 }: {
   email: string
   userName: string
@@ -432,9 +434,12 @@ export async function sendPaymentVerificationEmail({
   }>
   totalAmount: number
   currency: string
+  paymentMethod?: string
+  sponsorName?: string
 }) {
   const isVerified = status === "verified"
-  const rejectionComment = rejectionReason // Fix: Declare rejectionComment
+  const rejectionComment = rejectionReason
+  const isSponsored = paymentMethod?.toLowerCase() === "sponsored"
 
   // Format order items summary for verified emails
   let itemsSummary = ""
@@ -453,11 +458,20 @@ export async function sendPaymentVerificationEmail({
       .join("")
   }
 
+  const themeColor = isSponsored ? "#9333ea" : "#00A9E0"
+  const headerGradient = isVerified
+    ? isSponsored
+      ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)"
+      : "linear-gradient(135deg, #00A9E0 0%, #0088B8 100%)"
+    : "linear-gradient(135deg, #EF3340 0%, #d92532 100%)"
+
   try {
     await resend.emails.send({
       from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: email,
-      subject: `Payment ${isVerified ? "Verified" : "Rejected"} - ISAPM 2026`,
+      subject: isSponsored
+        ? `Sponsored Registration ${isVerified ? "Confirmed" : "Rejected"} - ISAPM 2026`
+        : `Payment ${isVerified ? "Verified" : "Rejected"} - ISAPM 2026`,
       html: `
         <!DOCTYPE html>
         <html>
@@ -466,14 +480,14 @@ export async function sendPaymentVerificationEmail({
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: ${isVerified ? "linear-gradient(135deg, #00A9E0 0%, #0088B8 100%)" : "linear-gradient(135deg, #EF3340 0%, #d92532 100%)"}; color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .header { background: ${headerGradient}; color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
               .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
               .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 14px; }
               .content { background: #ffffff; padding: 40px 30px; border: 1px solid #e2e8f0; border-top: none; }
-              .alert { background: ${isVerified ? "#d1fae5" : "#fee2e2"}; border-left: 4px solid ${isVerified ? "#10b981" : "#ef4444"}; padding: 20px; margin: 25px 0; border-radius: 4px; }
+              .alert { background: ${isVerified ? (isSponsored ? "#f3e8ff" : "#d1fae5") : "#fee2e2"}; border-left: 4px solid ${isVerified ? (isSponsored ? "#9333ea" : "#10b981") : "#ef4444"}; padding: 20px; margin: 25px 0; border-radius: 4px; }
               .alert-icon { font-size: 24px; margin-bottom: 10px; }
-              .alert-title { font-weight: 700; color: ${isVerified ? "#065f46" : "#991b1b"}; margin-bottom: 8px; font-size: 16px; }
-              .alert-text { color: ${isVerified ? "#064e3b" : "#7f1d1d"}; font-size: 14px; line-height: 1.6; }
+              .alert-title { font-weight: 700; color: ${isVerified ? (isSponsored ? "#6b21a8" : "#065f46") : "#991b1b"}; margin-bottom: 8px; font-size: 16px; }
+              .alert-text { color: ${isVerified ? (isSponsored ? "#581c87" : "#064e3b") : "#7f1d1d"}; font-size: 14px; line-height: 1.6; }
               .details { background: #f7fafc; padding: 20px; margin: 25px 0; border-radius: 8px; border: 1px solid #e2e8f0; }
               .details-title { font-size: 16px; font-weight: 600; color: #1a202c; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
               .details-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
@@ -491,8 +505,24 @@ export async function sendPaymentVerificationEmail({
           <body>
             <div class="container">
               <div class="header">
-                <h1>${isVerified ? "✓ Payment Verified" : "✗ Payment Rejected"}</h1>
-                <p>${isVerified ? "Your order is now complete" : "Action required on your payment"}</p>
+                <h1>${
+                  isVerified
+                    ? isSponsored
+                      ? "✓ Registration Confirmed"
+                      : "✓ Payment Verified"
+                    : isSponsored
+                      ? "✗ Sponsorship Rejected"
+                      : "✗ Payment Rejected"
+                }</h1>
+                <p>${
+                  isVerified
+                    ? isSponsored
+                      ? "Your sponsored registration is complete"
+                      : "Your order is now complete"
+                    : isSponsored
+                      ? "Action required on your sponsorship"
+                      : "Action required on your payment"
+                }</p>
               </div>
               <div class="content">
                 <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>
@@ -501,10 +531,14 @@ export async function sendPaymentVerificationEmail({
                   isVerified
                     ? `
                   <div class="alert">
-                    <div class="alert-icon">🎉</div>
-                    <div class="alert-title">Payment Successfully Verified!</div>
+                    <div class="alert-icon">${isSponsored ? "🎁" : "🎉"}</div>
+                    <div class="alert-title">${isSponsored ? "Sponsored Registration Confirmed!" : "Payment Successfully Verified!"}</div>
                     <div class="alert-text">
-                      Your payment has been verified by our admin team. Your registration is now complete and confirmed.
+                      ${
+                        isSponsored
+                          ? `Your sponsored registration has been verified. Your sponsor${sponsorName ? ` (${sponsorName})` : ""} has been acknowledged.`
+                          : "Your payment has been verified by our admin team. Your registration is now complete and confirmed."
+                      }
                     </div>
                   </div>
                   
@@ -514,13 +548,24 @@ export async function sendPaymentVerificationEmail({
                       <span class="details-label">Order ID</span>
                       <span class="details-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
                     </div>
+                    ${
+                      isSponsored && sponsorName
+                        ? `
+                    <div class="details-row">
+                      <span class="details-label">Sponsored By</span>
+                      <span class="details-value" style="color: #9333ea;">${sponsorName}</span>
+                    </div>
+                    `
+                        : `
                     <div class="details-row">
                       <span class="details-label">Total Paid</span>
-                      <span class="details-value" style="color: #00A9E0; font-size: 18px;">${currency} ${totalAmount.toLocaleString()}</span>
+                      <span class="details-value" style="color: ${themeColor}; font-size: 18px;">${currency} ${totalAmount.toLocaleString()}</span>
                     </div>
+                    `
+                    }
                     <div class="details-row">
-                      <span class="details-label">Payment Status</span>
-                      <span class="details-value" style="color: #10b981;">✓ Verified</span>
+                      <span class="details-label">${isSponsored ? "Registration Status" : "Payment Status"}</span>
+                      <span class="details-value" style="color: ${isSponsored ? "#9333ea" : "#10b981"};">✓ ${isSponsored ? "Confirmed" : "Verified"}</span>
                     </div>
                   </div>
                   
@@ -537,10 +582,10 @@ export async function sendPaymentVerificationEmail({
                       : ""
                   }
                   
-                  <div style="background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #00A9E0;">
-                    <h3 style="font-size: 16px; color: #0369a1; margin-top: 0;">What's Next?</h3>
-                    <ul style="margin: 10px 0; padding-left: 20px; color: #0c4a6e;">
-                      <li style="margin: 8px 0;">Access your verified bookings in your dashboard</li>
+                  <div style="background: ${isSponsored ? "#faf5ff" : "#f0f9ff"}; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid ${themeColor};">
+                    <h3 style="font-size: 16px; color: ${isSponsored ? "#7e22ce" : "#0369a1"}; margin-top: 0;">What's Next?</h3>
+                    <ul style="margin: 10px 0; padding-left: 20px; color: ${isSponsored ? "#581c87" : "#0c4a6e"};">
+                      <li style="margin: 8px 0;">Access your ${isSponsored ? "confirmed registration" : "verified bookings"} in your dashboard</li>
                       <li style="margin: 8px 0;">Download your conference materials and badges</li>
                       <li style="margin: 8px 0;">Check your email for additional event information</li>
                       <li style="margin: 8px 0;">Join us on April 16-18, 2026!</li>
@@ -548,7 +593,7 @@ export async function sendPaymentVerificationEmail({
                   </div>
 
                   <div style="text-align: center;">
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button">Go to Dashboard</a>
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="background: ${isSponsored ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "linear-gradient(135deg, #00A9E0 0%, #0088B8 100%)"};">Go to Dashboard</a>
                   </div>
 
                   <p style="font-size: 15px; color: #475569; margin-top: 25px;">
@@ -558,24 +603,35 @@ export async function sendPaymentVerificationEmail({
                     : `
                   <div class="alert">
                     <div class="alert-icon">⚠️</div>
-                    <div class="alert-title">Payment Could Not Be Verified</div>
+                    <div class="alert-title">${isSponsored ? "Sponsorship Could Not Be Verified" : "Payment Could Not Be Verified"}</div>
                     <div class="alert-text">
-                      Unfortunately, we were unable to verify your payment at this time.
+                      Unfortunately, we were unable to verify your ${isSponsored ? "sponsored registration" : "payment"} at this time.
                     </div>
                   </div>
                   
                   <div class="details">
-                    <div class="details-title">Order Information</div>
+                    <div class="details-title">${isSponsored ? "Sponsorship Information" : "Order Information"}</div>
                     <div class="details-row">
                       <span class="details-label">Order ID</span>
                       <span class="details-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
                     </div>
+                    ${
+                      isSponsored && sponsorName
+                        ? `
+                    <div class="details-row">
+                      <span class="details-label">Sponsor Name</span>
+                      <span class="details-value">${sponsorName}</span>
+                    </div>
+                    `
+                        : `
                     <div class="details-row">
                       <span class="details-label">Expected Amount</span>
                       <span class="details-value">${currency} ${totalAmount.toLocaleString()}</span>
                     </div>
+                    `
+                    }
                     <div class="details-row">
-                      <span class="details-label">Payment Status</span>
+                      <span class="details-label">${isSponsored ? "Sponsorship Status" : "Payment Status"}</span>
                       <span class="details-value" style="color: #ef4444;">✗ Rejected</span>
                     </div>
                   </div>
@@ -594,15 +650,26 @@ export async function sendPaymentVerificationEmail({
                   <div style="background: #fffbeb; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #f59e0b;">
                     <h3 style="font-size: 16px; color: #92400e; margin-top: 0;">Next Steps:</h3>
                     <ol style="margin: 10px 0; padding-left: 20px; color: #78350f;">
+                      ${
+                        isSponsored
+                          ? `
+                      <li style="margin: 8px 0;">Verify your sponsor/benefactor information is correct</li>
+                      <li style="margin: 8px 0;">Confirm that your sponsor has authorized this registration</li>
+                      <li style="margin: 8px 0;">Contact your sponsor to resolve any issues</li>
+                      <li style="margin: 8px 0;">Resubmit your sponsorship details or switch to bank transfer</li>
+                      `
+                          : `
                       <li style="margin: 8px 0;">Verify your payment details and amount</li>
                       <li style="margin: 8px 0;">Upload a clear, readable photo of your payment receipt</li>
                       <li style="margin: 8px 0;">Ensure the payment matches the order amount</li>
                       <li style="margin: 8px 0;">Contact us if you need assistance</li>
+                      `
+                      }
                     </ol>
                   </div>
 
                   <div style="text-align: center;">
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-purchases" class="button">Resubmit Payment Proof</a>
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-purchases" class="button">${isSponsored ? "Update Sponsorship Details" : "Resubmit Payment Proof"}</a>
                   </div>
 
                   <p style="font-size: 14px; color: #64748b; margin-top: 25px;">
@@ -612,8 +679,8 @@ export async function sendPaymentVerificationEmail({
                 }
                 
                 <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none;">admin@isapm2026.org</a> 
-                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none;">+6289602626709</a>
+                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: ${themeColor}; text-decoration: none;">admin@isapm2026.org</a> 
+                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: ${themeColor}; text-decoration: none;">+6289602626709</a>
                 </p>
                 
                 <p style="font-size: 15px; color: #1a202c; margin-top: 25px;">
@@ -625,9 +692,9 @@ export async function sendPaymentVerificationEmail({
                 <div class="footer-brand">ISAPM 2026 National Meeting</div>
                 <div>The Indonesian Society of Anesthesiology for Pain Management</div>
                 <div style="margin-top: 12px;">
-                  <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Email</a> •
-                  <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Website</a>
+                  <a href="mailto:admin@isapm2026.org" style="color: ${themeColor}; text-decoration: none; margin: 0 10px;">Email</a> •
+                  <a href="https://wa.me/6289602626709" style="color: ${themeColor}; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: ${themeColor}; text-decoration: none; margin: 0 10px;">Website</a>
                 </div>
               </div>
             </div>
@@ -817,7 +884,7 @@ export async function sendPaymentConfirmationWithInvoice({
           <body>
             <div class="container">
               <div class="header">
-                <h1>${isSponsored ? "🎁 Registration Confirmed!" : "✓ Payment Confirmed!"}</h1>
+                <h1>${isSponsored ? "✓ Registration Confirmed!" : "✓ Payment Confirmed!"}</h1>
                 <p>${isSponsored ? "Your sponsored registration is complete" : "Thank you for your payment"}</p>
               </div>
               <div class="content">
@@ -831,7 +898,7 @@ export async function sendPaymentConfirmationWithInvoice({
                   <div class="alert-text">
                     ${
                       isSponsored
-                        ? "Your sponsored registration has been verified and approved by our admin team. Your registration is now complete and confirmed. Please find your official registration certificate attached to this email."
+                        ? "Your sponsored registration has been verified and approved by our admin team. Your registration is now complete and confirmed."
                         : "Your payment has been verified by our admin team. Your registration is now complete and confirmed. Please find your official invoice/receipt attached to this email."
                     }
                   </div>
@@ -921,7 +988,7 @@ export async function sendPaymentConfirmationWithInvoice({
                 <p style="font-size: 15px; color: #475569; margin-top: 25px;">
                   We look forward to seeing you at ISAPM 2026! If you have any questions, feel free to reach out.
                 </p>
-
+                
                 <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                   Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: ${primaryColor}; text-decoration: none;">admin@isapm2026.org</a> 
                   or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: ${primaryColor}; text-decoration: none;">+6289602626709</a>

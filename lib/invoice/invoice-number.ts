@@ -2,11 +2,15 @@ import { createClient } from "@supabase/supabase-js"
 
 // Create a Supabase client for server-side operations
 function getSupabaseAdmin() {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!supabaseUrl || !supabaseServiceKey) {
-    throw new Error("Missing Supabase environment variables")
+    console.error("[v0] Missing Supabase environment variables:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey,
+    })
+    return null
   }
 
   return createClient(supabaseUrl, supabaseServiceKey, {
@@ -43,6 +47,12 @@ export async function generateSequentialInvoiceNumber(date: Date = new Date()): 
   const day = date.getDate().toString().padStart(2, "0")
   const dateStr = `${year}${month}${day}`
 
+  // If Supabase is not available, use fallback immediately
+  if (!supabase) {
+    console.error("[v0] Supabase not available, using fallback invoice number")
+    return generateFallbackInvoiceNumber(date)
+  }
+
   // Format date for database (YYYY-MM-DD)
   const dbDate = `${date.getFullYear()}-${month}-${day}`
 
@@ -53,7 +63,7 @@ export async function generateSequentialInvoiceNumber(date: Date = new Date()): 
     })
 
     if (error) {
-      console.error("Error getting next invoice sequence:", error)
+      console.error("[v0] Error getting next invoice sequence:", error)
       // Fallback to UUID-based if database call fails
       return generateFallbackInvoiceNumber(date)
     }
@@ -63,7 +73,7 @@ export async function generateSequentialInvoiceNumber(date: Date = new Date()): 
 
     return `Natmet-${dateStr}-${sequence}`
   } catch (error) {
-    console.error("Error generating sequential invoice number:", error)
+    console.error("[v0] Error generating sequential invoice number:", error)
     // Fallback to UUID-based if anything fails
     return generateFallbackInvoiceNumber(date)
   }
@@ -92,7 +102,7 @@ export function generateFallbackInvoiceNumber(date: Date = new Date(), orderId?:
  * Validate invoice number format
  * Accepts both formats:
  * - Sequential: Natmet-YYMMDD-XXXX (e.g., Natmet-251203-0001)
- * - Legacy: Natmet-YYMMDDSUFX (e.g., Natmet-25120316A0)
+ * - Legacy: Natmet-YYMMDDSUFX (4 alphanumeric chars)
  */
 export function validateInvoiceNumber(invoiceNumber: string): boolean {
   // Sequential format: Natmet-YYMMDD-XXXX
@@ -147,6 +157,11 @@ export function parseInvoiceNumber(invoiceNumber: string): {
  */
 export async function getTodayInvoiceCount(): Promise<number> {
   const supabase = getSupabaseAdmin()
+
+  if (!supabase) {
+    return 0
+  }
+
   const today = new Date()
   const month = (today.getMonth() + 1).toString().padStart(2, "0")
   const day = today.getDate().toString().padStart(2, "0")

@@ -226,7 +226,10 @@ export default function PaymentValidationPage() {
     console.log("[v0] Difference:", Math.abs(calculatedTotal - submittedAmount))
 
     // Check if there's a significant discrepancy (more than 1 IDR due to rounding)
-    if (Math.abs(calculatedTotal - submittedAmount) > 1 && selectedPayment.payment_method !== "sponsored") {
+    if (
+      Math.abs(calculatedTotal - submittedAmount) > 1 &&
+      selectedPayment.payment_method?.toLowerCase() !== "sponsored"
+    ) {
       toast({
         title: "Amount Mismatch Detected",
         description: `Submitted amount (${formatCurrency(submittedAmount, selectedPayment.currency)}) does not match calculated order total (${formatCurrency(calculatedTotal, selectedPayment.currency)}). Please verify before approving.`,
@@ -303,12 +306,14 @@ export default function PaymentValidationPage() {
   const pendingPayments = payments.filter((p) => p.payment_status === "pending" && p.payment_proof_url)
   const approvedPayments = payments.filter((p) => p.payment_status === "verified")
   const rejectedPayments = payments.filter((p) => p.payment_status === "rejected")
-  const sponsoredPayments = payments.filter((p) => p.payment_method === "sponsored" && p.payment_status === "pending")
+  const sponsoredPayments = payments.filter(
+    (p) => p.payment_method?.toLowerCase() === "sponsored" && p.payment_status === "pending",
+  )
   const noProofPayments = payments.filter(
     (p) =>
       (p.payment_status === "no_proof" ||
         (!p.payment_proof_url && p.payment_status !== "verified" && p.payment_status !== "rejected")) &&
-      p.payment_method !== "sponsored",
+      p.payment_method?.toLowerCase() !== "sponsored",
   )
 
   console.log("[v0] Filtered payments:", {
@@ -351,7 +356,7 @@ export default function PaymentValidationPage() {
 
     const calculatedTotal = calculateOrderTotal(items)
 
-    const isSponsored = payment.payment_method === "sponsored"
+    const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
 
     return (
       <Card className="hover:shadow-lg transition-shadow">
@@ -779,10 +784,12 @@ export default function PaymentValidationPage() {
         <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {selectedPayment?.payment_method === "sponsored" ? "Verify Sponsored Registration" : "Approve Payment"}
+              {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                ? "Verify Sponsored Registration"
+                : "Approve Payment"}
             </DialogTitle>
             <DialogDescription>
-              {selectedPayment?.payment_method === "sponsored"
+              {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
                 ? "Please confirm you have verified this sponsorship with the sponsor before approving."
                 : "Are you sure you want to approve this payment? This action will mark the order as paid and allow the user to access their event registrations."}
             </DialogDescription>
@@ -794,7 +801,7 @@ export default function PaymentValidationPage() {
               const calculatedTotal = calculateOrderTotal(items)
               const submittedAmount = selectedPayment.amount
               const hasMismatch = Math.abs(calculatedTotal - submittedAmount) > 1
-              const isSponsored = selectedPayment.payment_method === "sponsored"
+              const isSponsored = selectedPayment.payment_method?.toLowerCase() === "sponsored"
 
               return (
                 <div className="space-y-4 py-4">
@@ -912,11 +919,15 @@ export default function PaymentValidationPage() {
             <Button
               onClick={handleApprove}
               disabled={isProcessing}
-              className={selectedPayment?.payment_method === "sponsored" ? "bg-purple-600 hover:bg-purple-700" : ""}
+              className={
+                selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                  ? "bg-purple-600 hover:bg-purple-700"
+                  : ""
+              }
             >
               {isProcessing
                 ? "Processing..."
-                : selectedPayment?.payment_method === "sponsored"
+                : selectedPayment?.payment_method?.toLowerCase() === "sponsored"
                   ? "Confirm Sponsorship"
                   : "Approve Payment"}
             </Button>

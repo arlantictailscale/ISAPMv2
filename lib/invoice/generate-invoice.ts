@@ -15,7 +15,7 @@ const IMAGE_DIMENSIONS: Record<string, { width: number; height: number }> = {
   logoKemenkes: { width: 16, height: 16 }, // Kemenkes emblem with text - much wider aspect ratio
   logoIsapmOrg: { width: 30, height: 14 }, // Circular gear logo - perfect square
   lunasStamp: { width: 31, height: 28 }, // Wide stamp with LUNAS text
-  signature: { width: 50, height: 22 }, // Wide signature
+  signature: { width: 19, height: 22 }, // Wide signature
 }
 
 function getImageDimensions(key: string): { width: number; height: number } {

@@ -343,16 +343,18 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   )}
 
                   {/* Payment Proof */}
-                  <div>
-                    <Label className="text-muted-foreground mb-2 block">Payment Proof</Label>
-                    <div className="border rounded-lg p-4">
-                      <img
-                        src={initialPayment.payment_proof_url || "/placeholder.svg"}
-                        alt="Payment proof"
-                        className="w-full h-auto max-h-96 object-contain rounded"
-                      />
+                  {initialPayment.payment_method !== "Sponsored" && (
+                    <div>
+                      <Label className="text-muted-foreground mb-2 block">Payment Proof</Label>
+                      <div className="border rounded-lg p-4">
+                        <img
+                          src={initialPayment.payment_proof_url || "/placeholder.svg"}
+                          alt="Payment proof"
+                          className="w-full h-auto max-h-96 object-contain rounded"
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Submission Date */}
                   <div>
@@ -361,27 +363,30 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2">
-                    {initialPayment.payment_status === "rejected" && (
-                      <Button
-                        onClick={() => setShowResubmitForm(true)}
-                        className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Resubmit Payment Proof
-                      </Button>
-                    )}
-                    {(initialPayment.payment_status === "pending" || initialPayment.payment_status === "verified") && (
-                      <Button
-                        onClick={() => setShowResubmitForm(true)}
-                        variant="outline"
-                        className="flex-1 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Re-upload Payment Proof
-                      </Button>
-                    )}
-                  </div>
+                  {initialPayment.payment_method !== "Sponsored" && (
+                    <div className="flex gap-2">
+                      {initialPayment.payment_status === "rejected" && (
+                        <Button
+                          onClick={() => setShowResubmitForm(true)}
+                          className="flex-1 bg-cyan-600 hover:bg-cyan-700 text-white"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Resubmit Payment Proof
+                        </Button>
+                      )}
+                      {(initialPayment.payment_status === "pending" ||
+                        initialPayment.payment_status === "verified") && (
+                        <Button
+                          onClick={() => setShowResubmitForm(true)}
+                          variant="outline"
+                          className="flex-1 border-cyan-600 text-cyan-600 hover:bg-cyan-50"
+                        >
+                          <Upload className="w-4 h-4 mr-2" />
+                          Re-upload Payment Proof
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>

@@ -692,7 +692,7 @@ export async function sendPaymentConfirmationWithInvoice({
 
     const invoiceNumber = providedInvoiceNumber || (await generateInvoiceNumber(orderId, paymentVerifiedAt))
 
-    const paymentType = paymentMethod === "sponsored" ? "sponsored" : "regular"
+    const paymentType = paymentMethod?.toLowerCase() === "sponsored" ? "sponsored" : "regular"
 
     const invoiceData: InvoiceData = {
       orderId,

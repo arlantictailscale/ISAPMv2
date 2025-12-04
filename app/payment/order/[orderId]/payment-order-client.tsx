@@ -35,6 +35,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const [accountName, setAccountName] = useState("")
   const [transactionRef, setTransactionRef] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
+  const [sponsorName, setSponsorName] = useState("")
 
   const calculateTotal = () => {
     if (!initialOrder?.order_items) return 0
@@ -87,12 +88,21 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   }
 
   const handleSubmit = async () => {
-    if (!paymentMethod || !bankName || !accountName || !transactionRef) {
-      toast.error("Please fill in all required fields")
-      return
+    if (paymentMethod === "Sponsored") {
+      // For sponsored payments, only sponsor name is required
+      if (!sponsorName.trim()) {
+        toast.error("Please enter the sponsor/benefactor name")
+        return
+      }
+    } else {
+      // For bank transfer and other methods, require bank details
+      if (!paymentMethod || !bankName || !accountName || !transactionRef) {
+        toast.error("Please fill in all required fields")
+        return
+      }
     }
 
-    if (!selectedFile) {
+    if (paymentMethod !== "Sponsored" && !selectedFile) {
       toast.error("Please upload a payment proof file")
       return
     }
@@ -107,7 +117,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
     try {
       const formData = new FormData()
-      formData.append("file", selectedFile)
+      if (selectedFile) {
+        formData.append("file", selectedFile)
+      }
       formData.append("orderId", initialOrder.id)
       formData.append("paymentMethod", paymentMethod)
       formData.append("bankName", bankName)
@@ -115,12 +127,15 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
       formData.append("transactionRef", transactionRef)
       formData.append("additionalNotes", additionalNotes)
       formData.append("userId", initialOrder.user_id)
+      formData.append("sponsorName", sponsorName)
 
       console.log("[v0] Submitting payment proof:", {
         orderId: initialOrder.id,
         userId: initialOrder.user_id,
-        fileSize: selectedFile.size,
-        fileType: selectedFile.type,
+        fileSize: selectedFile ? selectedFile.size : "N/A",
+        fileType: selectedFile ? selectedFile.type : "N/A",
+        paymentMethod,
+        sponsorName,
       })
 
       const response = await fetch("/api/upload-payment-proof", {
@@ -469,102 +484,137 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
               </CardContent>
             </Card>
 
-            <Card className="mb-6 border-cyan-200 bg-cyan-50/50">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-cyan-900">
-                  <FileText className="w-5 h-5" />
-                  Payment Instructions
-                </CardTitle>
-                <CardDescription>Please transfer the total amount to the following bank account</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Bank Name */}
-                <div className="bg-white rounded-lg p-4 border border-cyan-100">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground mb-1 block">Bank Name</Label>
-                      <p className="font-bold text-lg text-cyan-900">Bank Syariah Indonesia (BSI)</p>
+            {paymentMethod !== "Sponsored" && (
+              <Card className="mb-6 border-cyan-200 bg-cyan-50/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-cyan-900">
+                    <FileText className="w-5 h-5" />
+                    Payment Instructions
+                  </CardTitle>
+                  <CardDescription>Please transfer the total amount to the following bank account</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Bank Name */}
+                  <div className="bg-white rounded-lg p-4 border border-cyan-100">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <Label className="text-xs text-muted-foreground mb-1 block">Bank Name</Label>
+                        <p className="font-bold text-lg text-cyan-900">Bank Syariah Indonesia (BSI)</p>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard("Bank Syariah Indonesia", "bank")}
+                        className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
+                        aria-label="Copy bank name"
+                      >
+                        {copiedField === "bank" ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-cyan-600" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => copyToClipboard("Bank Syariah Indonesia", "bank")}
-                      className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
-                      aria-label="Copy bank name"
-                    >
-                      {copiedField === "bank" ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-cyan-600" />
-                      )}
-                    </button>
                   </div>
-                </div>
 
-                {/* Account Number */}
-                <div className="bg-white rounded-lg p-4 border border-cyan-100">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground mb-1 block">Account Number</Label>
-                      <p className="font-bold text-2xl text-cyan-900 tracking-wider">7207681363</p>
+                  {/* Account Number */}
+                  <div className="bg-white rounded-lg p-4 border border-cyan-100">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <Label className="text-xs text-muted-foreground mb-1 block">Account Number</Label>
+                        <p className="font-bold text-2xl text-cyan-900 tracking-wider">7207681363</p>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard("7207681363", "account")}
+                        className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
+                        aria-label="Copy account number"
+                      >
+                        {copiedField === "account" ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-cyan-600" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => copyToClipboard("7207681363", "account")}
-                      className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
-                      aria-label="Copy account number"
-                    >
-                      {copiedField === "account" ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-cyan-600" />
-                      )}
-                    </button>
                   </div>
-                </div>
 
-                {/* Account Name */}
-                <div className="bg-white rounded-lg p-4 border border-cyan-100">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <Label className="text-xs text-muted-foreground mb-1 block">Account Name</Label>
-                      <p className="font-bold text-lg text-cyan-900">PT Tombo Farma Indonesia</p>
+                  {/* Account Name */}
+                  <div className="bg-white rounded-lg p-4 border border-cyan-100">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <Label className="text-xs text-muted-foreground mb-1 block">Account Name</Label>
+                        <p className="font-bold text-lg text-cyan-900">PT Tombo Farma Indonesia</p>
+                      </div>
+                      <button
+                        onClick={() => copyToClipboard("PT Tombo Farma Indonesia", "name")}
+                        className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
+                        aria-label="Copy account name"
+                      >
+                        {copiedField === "name" ? (
+                          <Check className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-cyan-600" />
+                        )}
+                      </button>
                     </div>
-                    <button
-                      onClick={() => copyToClipboard("PT Tombo Farma Indonesia", "name")}
-                      className="p-2 hover:bg-cyan-100 rounded-md transition-colors"
-                      aria-label="Copy account name"
-                    >
-                      {copiedField === "name" ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-cyan-600" />
-                      )}
-                    </button>
                   </div>
-                </div>
 
-                {/* Important Notes */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                  <div className="flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                    <div className="space-y-2 text-sm">
-                      <p className="font-semibold text-amber-900">Important:</p>
-                      <ul className="list-disc list-inside space-y-1 text-amber-800">
-                        <li>Transfer the exact total amount shown above</li>
-                        <li>Save your payment receipt for verification</li>
-                        <li>Upload your payment proof after completing the transfer</li>
-                      </ul>
+                  {/* Important Notes */}
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-2 text-sm">
+                        <p className="font-semibold text-amber-900">Important:</p>
+                        <ul className="list-disc list-inside space-y-1 text-amber-800">
+                          <li>Transfer the exact total amount shown above</li>
+                          <li>Save your payment receipt for verification</li>
+                          <li>Upload your payment proof after completing the transfer</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
+
+            {paymentMethod === "Sponsored" && (
+              <Card className="mb-6 border-green-200 bg-green-50/50">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-900">
+                    <FileText className="w-5 h-5" />
+                    Sponsored Registration
+                  </CardTitle>
+                  <CardDescription>Your registration fee is covered by a sponsor/benefactor</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-green-100 border border-green-200 rounded-lg p-4">
+                    <div className="flex gap-3">
+                      <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-2 text-sm">
+                        <p className="font-semibold text-green-900">Sponsored Payment</p>
+                        <p className="text-green-800">
+                          No payment transfer is required. Please enter your sponsor/benefactor name below and submit.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
-                <CardTitle>{isResubmitting ? "Re-upload Payment Proof" : "Upload Payment Proof"}</CardTitle>
+                <CardTitle>
+                  {paymentMethod === "Sponsored"
+                    ? "Sponsor Information"
+                    : isResubmitting
+                      ? "Re-upload Payment Proof"
+                      : "Upload Payment Proof"}
+                </CardTitle>
                 <CardDescription>
-                  {isResubmitting
-                    ? "Replace your current payment proof with a new one"
-                    : "Upload your payment receipt or transfer confirmation (Max 5MB, .jpg or .png only)"}
+                  {paymentMethod === "Sponsored"
+                    ? "Enter the name of your sponsor or benefactor"
+                    : isResubmitting
+                      ? "Replace your current payment proof with a new one"
+                      : "Upload your payment receipt or transfer confirmation (Max 5MB, .jpg or .png only)"}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -592,131 +642,170 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                       <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
                       <SelectItem value="Virtual Account">Virtual Account</SelectItem>
                       <SelectItem value="E-Wallet">E-Wallet</SelectItem>
+                      <SelectItem value="Sponsored">Sponsored</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="bank-name">Bank Name *</Label>
-                  <Input
-                    id="bank-name"
-                    placeholder="e.g., Bank Syariah Indonesia"
-                    value={bankName}
-                    onChange={(e) => setBankName(e.target.value)}
-                    required
-                  />
-                </div>
+                {paymentMethod === "Sponsored" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="sponsor-name">Sponsor / Benefactor Name *</Label>
+                    <Input
+                      id="sponsor-name"
+                      placeholder="e.g., PT ABC Company, Dr. John Doe, Hospital Name"
+                      value={sponsorName}
+                      onChange={(e) => setSponsorName(e.target.value)}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Enter the name of the company, organization, or individual sponsoring your registration
+                    </p>
+                  </div>
+                )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="account-name">Account Name *</Label>
-                  <Input
-                    id="account-name"
-                    placeholder="Name on the account"
-                    value={accountName}
-                    onChange={(e) => setAccountName(e.target.value)}
-                    required
-                  />
-                </div>
+                {paymentMethod !== "Sponsored" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="bank-name">Bank Name *</Label>
+                      <Input
+                        id="bank-name"
+                        placeholder="e.g., Bank Syariah Indonesia"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        required
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="transaction-ref">Transaction Reference / ID *</Label>
-                  <Input
-                    id="transaction-ref"
-                    placeholder="e.g., TRX123456789"
-                    value={transactionRef}
-                    onChange={(e) => setTransactionRef(e.target.value)}
-                    required
-                  />
-                </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="account-name">Account Name *</Label>
+                      <Input
+                        id="account-name"
+                        placeholder="Name on the account"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="transaction-ref">Transaction Reference / ID *</Label>
+                      <Input
+                        id="transaction-ref"
+                        placeholder="e.g., TRX123456789"
+                        value={transactionRef}
+                        onChange={(e) => setTransactionRef(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="additional-notes">Additional Notes (Optional)</Label>
                   <Textarea
                     id="additional-notes"
-                    placeholder="Any additional information about your payment"
+                    placeholder={
+                      paymentMethod === "Sponsored"
+                        ? "Any additional information about the sponsorship"
+                        : "Any additional information about your payment"
+                    }
                     value={additionalNotes}
                     onChange={(e) => setAdditionalNotes(e.target.value)}
                     rows={3}
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="payment-proof">Payment Proof File *</Label>
-                  <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
-                    {!selectedFile ? (
-                      <div className="text-center">
-                        <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Upload payment receipt or transfer confirmation
-                        </p>
-                        <p className="text-xs text-muted-foreground mb-4">Supported formats: JPG, PNG only (Max 5MB)</p>
-                        <Input
-                          id="payment-proof"
-                          type="file"
-                          accept="image/jpeg,image/jpg,image/png"
-                          onChange={handleFileChange}
-                          className="hidden"
-                        />
-                        <Label
-                          htmlFor="payment-proof"
-                          className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
-                        >
-                          Choose File
-                        </Label>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-muted rounded-md">
-                          <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <FileText className="w-5 h-5 text-primary flex-shrink-0" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleRemoveFile}
-                            className="flex-shrink-0"
+                {paymentMethod !== "Sponsored" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="payment-proof">Payment Proof File *</Label>
+                    <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
+                      {!selectedFile ? (
+                        <div className="text-center">
+                          <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Upload payment receipt or transfer confirmation
+                          </p>
+                          <p className="text-xs text-muted-foreground mb-4">
+                            Supported formats: JPG, PNG only (Max 5MB)
+                          </p>
+                          <Input
+                            id="payment-proof"
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png"
+                            onChange={handleFileChange}
+                            className="hidden"
+                          />
+                          <Label
+                            htmlFor="payment-proof"
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
                           >
-                            <X className="w-4 h-4" />
-                          </Button>
+                            Choose File
+                          </Label>
                         </div>
-                        {previewUrl && (
-                          <div className="border rounded-lg p-4">
-                            <img
-                              src={previewUrl || "/placeholder.svg"}
-                              alt="Payment proof preview"
-                              className="w-full h-auto max-h-64 object-contain rounded"
-                            />
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FileText className="w-5 h-5 text-primary flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleRemoveFile}
+                              className="flex-shrink-0"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
                           </div>
-                        )}
-                      </div>
-                    )}
+                          {previewUrl && (
+                            <div className="border rounded-lg p-4">
+                              <img
+                                src={previewUrl || "/placeholder.svg"}
+                                alt="Payment proof preview"
+                                className="w-full h-auto max-h-64 object-contain rounded"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <Button onClick={handleSubmit} disabled={isUploading} className="w-full" size="lg">
                   {isUploading ? (
                     <>
                       <Upload className="w-4 h-4 mr-2 animate-pulse" />
-                      {isResubmitting ? "Re-uploading..." : "Uploading..."}
+                      {paymentMethod === "Sponsored"
+                        ? "Submitting..."
+                        : isResubmitting
+                          ? "Re-uploading..."
+                          : "Uploading..."}
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4 mr-2" />
-                      {isResubmitting ? "Submit New Payment Proof" : "Submit Payment Proof"}
+                      {paymentMethod === "Sponsored"
+                        ? "Submit Sponsored Registration"
+                        : isResubmitting
+                          ? "Submit New Payment Proof"
+                          : "Submit Payment Proof"}
                     </>
                   )}
                 </Button>
 
                 <p className="text-xs text-center text-muted-foreground">
-                  Your payment will be verified within 1-2 business days
+                  {paymentMethod === "Sponsored"
+                    ? "Your sponsored registration will be verified within 1-2 business days"
+                    : "Your payment will be verified within 1-2 business days"}
                 </p>
               </CardContent>
             </Card>

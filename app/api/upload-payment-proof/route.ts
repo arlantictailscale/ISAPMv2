@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     console.log("[v0] Payment proof upload request received")
 
     const formData = await request.formData()
-    const file = formData.get("file") as File
+    const file = formData.get("file") as File | null
     const orderId = formData.get("orderId") as string
     const paymentMethod = formData.get("paymentMethod") as string
     const bankName = formData.get("bankName") as string
@@ -16,18 +16,23 @@ export async function POST(request: NextRequest) {
     const transactionRef = formData.get("transactionRef") as string
     const additionalNotes = formData.get("additionalNotes") as string
     const userId = formData.get("userId") as string
+    const sponsorName = formData.get("sponsorName") as string
+
+    const isSponsored = paymentMethod === "Sponsored"
 
     console.log("[v0] Form data extracted:", {
       hasFile: !!file,
       orderId,
       userId,
       paymentMethod,
+      isSponsored,
+      sponsorName: isSponsored ? sponsorName : undefined,
       fileType: file?.type,
       fileSize: file?.size,
     })
 
-    if (!file) {
-      console.error("[v0] No file provided")
+    if (!isSponsored && !file) {
+      console.error("[v0] No file provided for non-sponsored payment")
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
@@ -36,33 +41,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required information" }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
-    if (!allowedTypes.includes(file.type)) {
-      console.error("[v0] Invalid file type:", file.type)
-      return NextResponse.json({ error: "Only .jpg and .png files are allowed" }, { status: 400 })
+    if (isSponsored && !sponsorName?.trim()) {
+      console.error("[v0] Missing sponsor name for sponsored payment")
+      return NextResponse.json({ error: "Sponsor name is required for sponsored payments" }, { status: 400 })
     }
 
-    // Validate file size (5MB)
-    const maxSize = 5 * 1024 * 1024 // 5MB
-    if (file.size > maxSize) {
-      console.error("[v0] File too large:", file.size)
-      return NextResponse.json({ error: "File size must not exceed 5MB" }, { status: 400 })
-    }
+    let blobUrl: string | null = null
 
-    console.log("[v0] Uploading to Vercel Blob...")
+    if (file && !isSponsored) {
+      const allowedTypes = ["image/jpeg", "image/jpg", "image/png"]
+      if (!allowedTypes.includes(file.type)) {
+        console.error("[v0] Invalid file type:", file.type)
+        return NextResponse.json({ error: "Only .jpg and .png files are allowed" }, { status: 400 })
+      }
 
-    let blob
-    try {
-      const extension = file.name.split(".").pop() || "jpg"
-      blob = await put(`payment-proofs/${orderId}-${Date.now()}.${extension}`, file, {
-        access: "public",
-        token: process.env.BLOB_READ_WRITE_TOKEN,
-      })
-      console.log("[v0] File uploaded to blob:", blob.url)
-    } catch (blobError) {
-      console.error("[v0] Blob upload error:", blobError)
-      return NextResponse.json({ error: "Failed to upload file to storage" }, { status: 500 })
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (file.size > maxSize) {
+        console.error("[v0] File too large:", file.size)
+        return NextResponse.json({ error: "File size must not exceed 5MB" }, { status: 400 })
+      }
+
+      console.log("[v0] Uploading to Vercel Blob...")
+
+      try {
+        const extension = file.name.split(".").pop() || "jpg"
+        const blob = await put(`payment-proofs/${orderId}-${Date.now()}.${extension}`, file, {
+          access: "public",
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        })
+        blobUrl = blob.url
+        console.log("[v0] File uploaded to blob:", blob.url)
+      } catch (blobError) {
+        console.error("[v0] Blob upload error:", blobError)
+        return NextResponse.json({ error: "Failed to upload file to storage" }, { status: 500 })
+      }
     }
 
     const supabase = await createClient()
@@ -79,6 +91,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 })
     }
 
+    const paymentData = {
+      payment_proof_url: blobUrl,
+      payment_status: "pending",
+      payment_method: paymentMethod,
+      bank_name: isSponsored ? null : bankName,
+      account_name: isSponsored ? null : accountName,
+      transaction_reference: isSponsored ? null : transactionRef,
+      notes: additionalNotes,
+      sponsor_name: isSponsored ? sponsorName : null,
+      updated_at: new Date().toISOString(),
+    }
+
     console.log("[v0] Checking for existing payment...")
     const { data: existingPayment } = await supabase
       .from("order_payments")
@@ -88,19 +112,7 @@ export async function POST(request: NextRequest) {
 
     if (existingPayment) {
       console.log("[v0] Updating existing payment record...")
-      const { error: updateError } = await supabase
-        .from("order_payments")
-        .update({
-          payment_proof_url: blob.url,
-          payment_status: "pending",
-          payment_method: paymentMethod,
-          bank_name: bankName,
-          account_name: accountName,
-          transaction_reference: transactionRef,
-          notes: additionalNotes,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("order_id", orderId)
+      const { error: updateError } = await supabase.from("order_payments").update(paymentData).eq("order_id", orderId)
 
       if (updateError) {
         console.error("[v0] Error updating payment proof:", updateError)
@@ -115,13 +127,7 @@ export async function POST(request: NextRequest) {
         user_id: userId,
         amount: order.total_amount,
         currency: order.currency,
-        payment_proof_url: blob.url,
-        payment_status: "pending",
-        payment_method: paymentMethod,
-        bank_name: bankName,
-        account_name: accountName,
-        transaction_reference: transactionRef,
-        notes: additionalNotes,
+        ...paymentData,
       })
 
       if (insertError) {
@@ -136,7 +142,7 @@ export async function POST(request: NextRequest) {
     revalidatePath(`/payment/order/${orderId}`)
 
     console.log("[v0] Payment proof upload completed successfully")
-    return NextResponse.json({ url: blob.url, success: true })
+    return NextResponse.json({ url: blobUrl, success: true })
   } catch (error) {
     console.error("[v0] Upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })

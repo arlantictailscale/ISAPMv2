@@ -87,7 +87,8 @@ export async function GET(request: Request) {
       )
     }
 
-    const paymentType = payment.payment_method === "sponsored" ? "sponsored" : "regular"
+    const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
+    const paymentType = isSponsored ? "sponsored" : "regular"
 
     const invoiceData: InvoiceData = {
       orderId: order.id,
@@ -108,12 +109,14 @@ export async function GET(request: Request) {
     const doc = await generateInvoicePDF(invoiceData)
     const pdfBuffer = Buffer.from(doc.output("arraybuffer"))
 
+    const filePrefix = isSponsored ? "Bukti-Registrasi" : "Kwitansi"
+
     // Return PDF as download
     return new NextResponse(pdfBuffer, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="Kwitansi-ISAPM-2026-${invoiceData.invoiceNumber}.pdf"`,
+        "Content-Disposition": `attachment; filename="${filePrefix}-ISAPM-2026-${invoiceData.invoiceNumber}.pdf"`,
         "Cache-Control": "no-cache",
       },
     })

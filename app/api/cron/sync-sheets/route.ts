@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
           order_items (*)
         )
       `)
-      .not("payment_proof_url", "is", null)
+      .or("payment_proof_url.not.is.null,payment_method.ilike.sponsored") // Include sponsored payments
       .order("created_at", { ascending: false })
 
     if (allPaymentsError) {
@@ -292,6 +292,8 @@ export async function GET(request: NextRequest) {
       "Validated Event Purchased",
       "Participant Type",
       "Verified Date",
+      "Payment Type", // New column for Bank Transfer vs Sponsored
+      "Sponsor Name", // New column for sponsor name
       "Payment Proof Submitted",
       "Payment Proof URL",
       "Payment Amount",
@@ -302,15 +304,19 @@ export async function GET(request: NextRequest) {
 
     const paymentProofMap = new Map()
     allPaymentsData?.forEach((payment) => {
-      if (payment.payment_proof_url && payment.user_id) {
-        // Store the most recent payment proof for each user
+      if (payment.user_id) {
+        // Store the most recent payment for each user (including sponsored)
         if (!paymentProofMap.has(payment.user_id)) {
+          const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
           paymentProofMap.set(payment.user_id, {
             payment_proof_url: payment.payment_proof_url,
             amount: payment.amount,
             created_at: payment.created_at,
             transaction_reference: payment.transaction_reference,
-            file_type: payment.payment_proof_url?.split(".").pop()?.toUpperCase() || "Unknown",
+            file_type: payment.payment_proof_url?.split(".").pop()?.toUpperCase() || "N/A",
+            payment_method: payment.payment_method,
+            sponsor_name: payment.sponsor_name,
+            is_sponsored: isSponsored,
           })
         }
       }
@@ -318,6 +324,7 @@ export async function GET(request: NextRequest) {
 
     const comprehensiveRows = comprehensiveAttendees.map((attendee) => {
       const paymentProof = paymentProofMap.get(attendee.user_id)
+      const isSponsored = paymentProof?.is_sponsored
 
       return [
         attendee.title_degree
@@ -331,7 +338,9 @@ export async function GET(request: NextRequest) {
         attendee.event_label || "",
         attendee.participant_type_label || "",
         attendee.verified_at ? new Date(attendee.verified_at).toLocaleDateString() : "",
-        paymentProof ? "Yes" : "No",
+        isSponsored ? "Sponsored" : "Bank Transfer", // Payment type column
+        paymentProof?.sponsor_name || "", // Sponsor name column
+        isSponsored ? "N/A" : paymentProof ? "Yes" : "No",
         paymentProof?.payment_proof_url || "",
         paymentProof ? `Rp ${paymentProof.amount?.toLocaleString("id-ID")}` : "",
         paymentProof?.created_at ? new Date(paymentProof.created_at).toLocaleDateString() : "",
@@ -422,7 +431,8 @@ export async function GET(request: NextRequest) {
       "Order ID",
       "Amount Paid",
       "Currency",
-      "Payment Method",
+      "Payment Type", // Renamed from Payment Method for clarity
+      "Sponsor Name", // New column
       "Bank Name",
       "Account Name",
       "Payment Status",
@@ -437,8 +447,10 @@ export async function GET(request: NextRequest) {
     const paymentProofRows = (allPaymentsData || []).map((payment) => {
       const profile = paymentProfilesMap.get(payment.user_id) || {}
       const order = payment.orders
+      const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
 
-      let fileType = "Unknown"
+      // Determine file type from URL
+      let fileType = isSponsored ? "N/A" : "Unknown"
       if (payment.payment_proof_url) {
         if (payment.payment_proof_url.toLowerCase().includes(".pdf")) {
           fileType = "PDF"
@@ -450,7 +462,7 @@ export async function GET(request: NextRequest) {
       }
 
       return [
-        payment.transaction_reference || payment.id,
+        payment.transaction_reference || payment.id, // Unique identifier
         profile.full_name || order?.full_name || "",
         profile.email || order?.email || "",
         profile.phone || order?.phone || "",
@@ -458,11 +470,12 @@ export async function GET(request: NextRequest) {
         payment.order_id || "",
         payment.amount || 0,
         payment.currency || "IDR",
-        payment.payment_method || "",
-        payment.bank_name || "",
-        payment.account_name || "",
+        isSponsored ? "Sponsored" : payment.payment_method || "Bank Transfer", // Payment type
+        payment.sponsor_name || "", // Sponsor name
+        isSponsored ? "N/A" : payment.bank_name || "",
+        isSponsored ? "N/A" : payment.account_name || "",
         payment.payment_status || "pending",
-        payment.payment_proof_url || "",
+        payment.payment_proof_url || (isSponsored ? "N/A - Sponsored" : ""),
         fileType,
         payment.created_at ? new Date(payment.created_at).toLocaleString() : "",
         payment.verified_at ? new Date(payment.verified_at).toLocaleString() : "",

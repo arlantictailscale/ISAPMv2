@@ -184,6 +184,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const hasSubmittedPayment = initialPayment && !showResubmitForm
   const isResubmitting = showResubmitForm && initialPayment
   const canDownloadInvoice = initialPayment?.payment_status === "verified"
+  const isSponsored = initialPayment?.payment_method?.toLowerCase() === "sponsored"
 
   if (hasSubmittedPayment) {
     return (
@@ -203,7 +204,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
               <div
                 className={`mb-6 p-4 rounded-lg ${
                   initialPayment.payment_status === "verified"
-                    ? "bg-green-50 border border-green-200"
+                    ? isSponsored
+                      ? "bg-purple-50 border border-purple-200"
+                      : "bg-green-50 border border-green-200"
                     : initialPayment.payment_status === "rejected"
                       ? "bg-red-50 border border-red-200"
                       : "bg-amber-50 border border-amber-200"
@@ -213,7 +216,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   <div
                     className={`w-3 h-3 rounded-full ${
                       initialPayment.payment_status === "verified"
-                        ? "bg-green-500"
+                        ? isSponsored
+                          ? "bg-purple-500"
+                          : "bg-green-500"
                         : initialPayment.payment_status === "rejected"
                           ? "bg-red-500"
                           : "bg-amber-500"
@@ -222,21 +227,34 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   <div className="flex-1">
                     <p className="font-semibold">
                       {initialPayment.payment_status === "verified"
-                        ? "Payment Approved"
+                        ? isSponsored
+                          ? "Registration Confirmed"
+                          : "Payment Approved"
                         : initialPayment.payment_status === "rejected"
                           ? "Payment Rejected"
-                          : "Waiting Verification Payment"}
+                          : isSponsored
+                            ? "Waiting for Verification"
+                            : "Waiting Verification Payment"}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {initialPayment.payment_status === "verified"
-                        ? "Your payment has been verified and approved."
+                        ? isSponsored
+                          ? "Your sponsored registration has been verified and confirmed."
+                          : "Your payment has been verified and approved."
                         : initialPayment.payment_status === "rejected"
                           ? `Your payment was rejected. Reason: ${initialPayment.rejection_reason || "No reason provided"}`
-                          : "Your payment proof has been submitted and is awaiting admin verification."}
+                          : isSponsored
+                            ? "Your sponsored registration is awaiting admin verification."
+                            : "Your payment proof has been submitted and is awaiting admin verification."}
                     </p>
                   </div>
                   {canDownloadInvoice && (
-                    <DownloadInvoiceButton orderId={initialOrder.id} variant="default" size="sm" />
+                    <DownloadInvoiceButton
+                      orderId={initialOrder.id}
+                      variant="default"
+                      size="sm"
+                      isSponsored={isSponsored}
+                    />
                   )}
                 </div>
               </div>
@@ -524,7 +542,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
                 {/* Bank Transfer Instructions */}
                 {paymentMethod === "Bank Transfer" && (
-                  <div className="space-y-4">
+                  <>
                     <div className="p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200">
                       <div className="flex items-start gap-3 mb-4">
                         <div className="p-2 bg-cyan-100 rounded-lg">
@@ -674,12 +692,12 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {/* Sponsored Payment Instructions */}
                 {paymentMethod === "Sponsored" && (
-                  <div className="space-y-4">
+                  <>
                     <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
                       <div className="flex items-start gap-3 mb-4">
                         <div className="p-2 bg-purple-100 rounded-lg">
@@ -728,7 +746,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                         Enter the name of the company, organization, or individual sponsoring your registration
                       </p>
                     </div>
-                  </div>
+                  </>
                 )}
 
                 {/* Additional Notes - Shown for both payment types */}

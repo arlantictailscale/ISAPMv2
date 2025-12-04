@@ -652,7 +652,8 @@ export async function sendPaymentConfirmationWithInvoice({
   customerInstitution,
   customerPhone,
   paymentVerifiedAt,
-  invoiceNumber: providedInvoiceNumber, // Accept optional pre-generated invoice number
+  invoiceNumber: providedInvoiceNumber,
+  paymentMethod, // Add paymentMethod parameter
 }: {
   email: string
   userName: string
@@ -673,6 +674,7 @@ export async function sendPaymentConfirmationWithInvoice({
   customerPhone?: string
   paymentVerifiedAt: Date
   invoiceNumber?: string // Optional invoice number parameter
+  paymentMethod?: string // Add paymentMethod type
 }) {
   try {
     // Prepare invoice items
@@ -690,6 +692,8 @@ export async function sendPaymentConfirmationWithInvoice({
 
     const invoiceNumber = providedInvoiceNumber || (await generateInvoiceNumber(orderId, paymentVerifiedAt))
 
+    const paymentType = paymentMethod === "sponsored" ? "sponsored" : "regular"
+
     const invoiceData: InvoiceData = {
       orderId,
       invoiceNumber,
@@ -702,6 +706,7 @@ export async function sendPaymentConfirmationWithInvoice({
       totalAmount,
       currency,
       paymentDate: paymentVerifiedAt,
+      paymentType, // Pass payment type to invoice generator
     }
 
     // Generate PDF invoice
@@ -835,6 +840,10 @@ export async function sendPaymentConfirmationWithInvoice({
                   <div class="invoice-row">
                     <span class="invoice-label">Payment Status</span>
                     <span class="invoice-value" style="color: #10b981;">✓ Verified</span>
+                  </div>
+                  <div class="invoice-row">
+                    <span class="invoice-label">Payment Method</span>
+                    <span class="invoice-value">${paymentMethod ? paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1) : "N/A"}</span>
                   </div>
                 </div>
 

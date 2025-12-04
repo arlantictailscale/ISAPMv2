@@ -79,6 +79,7 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
         customerPhone: order.phone,
         paymentVerifiedAt: verifiedAt,
         invoiceNumber,
+        paymentMethod: payment.payment_method, // Add payment method
       })
       console.log("[v0] Payment confirmation with invoice email sent to:", order.email)
     } catch (emailError) {

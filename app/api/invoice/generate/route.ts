@@ -87,6 +87,8 @@ export async function GET(request: Request) {
       )
     }
 
+    const paymentType = payment.payment_method === "sponsored" ? "sponsored" : "regular"
+
     const invoiceData: InvoiceData = {
       orderId: order.id,
       invoiceNumber,
@@ -99,6 +101,7 @@ export async function GET(request: Request) {
       totalAmount,
       currency: order.currency || "IDR",
       paymentDate: payment.verified_at ? new Date(payment.verified_at) : undefined,
+      paymentType, // Pass payment type to invoice generator
     }
 
     // Generate PDF

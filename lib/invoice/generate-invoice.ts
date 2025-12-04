@@ -193,6 +193,7 @@ export interface InvoiceData {
   currency: string
   paymentDate?: Date
   paymentMethod?: string
+  paymentType?: "regular" | "sponsored"
 }
 
 export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
@@ -216,6 +217,8 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const darkText: [number, number, number] = [33, 37, 41]
   const grayText: [number, number, number] = [108, 117, 125]
   const greenStamp: [number, number, number] = [40, 167, 69] // For LUNAS stamp
+
+  const isSponsored = data.paymentType === "sponsored"
 
   let yPos = margin
 
@@ -272,7 +275,8 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   doc.setFontSize(16)
   doc.setFont("helvetica", "bold")
   doc.setTextColor(...primaryBlue)
-  doc.text("TANDA TERIMA PEMBAYARAN", pageWidth / 2, yPos, { align: "center" })
+  const invoiceTitle = isSponsored ? "TANDA BUKTI REGISTRASI" : "TANDA TERIMA PEMBAYARAN"
+  doc.text(invoiceTitle, pageWidth / 2, yPos, { align: "center" })
   yPos += 3
 
   // Divider line
@@ -469,47 +473,51 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   // ============================================
   // PAYMENT INFO BOX & LUNAS STAMP
   // ============================================
-  doc.setFillColor(240, 248, 255) // Light blue background
-  doc.setDrawColor(...primaryBlue)
-  doc.setLineWidth(0.3)
-  doc.roundedRect(margin, yPos, contentWidth / 2 - 5, 28, 2, 2, "FD")
+  if (!isSponsored) {
+    doc.setFillColor(240, 248, 255) // Light blue background
+    doc.setDrawColor(...primaryBlue)
+    doc.setLineWidth(0.3)
+    doc.roundedRect(margin, yPos, contentWidth / 2 - 5, 28, 2, 2, "FD")
 
-  doc.setTextColor(...darkText)
-  doc.setFont("helvetica", "bold")
-  doc.setFontSize(9)
-  doc.text("Telah dibayarkan pada:", margin + 5, yPos + 7)
+    doc.setTextColor(...darkText)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(9)
+    doc.text("Telah dibayarkan pada:", margin + 5, yPos + 7)
 
-  doc.setFont("helvetica", "normal")
-  doc.setFontSize(8)
-  doc.text("No. Rek. 7207681363 (BSI)", margin + 5, yPos + 14)
-  doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(8)
+    doc.text("No. Rek. 7207681363 (BSI)", margin + 5, yPos + 14)
+    doc.text("a.n PT. Tombo Farma Indonesia", margin + 5, yPos + 20)
 
-  const stampX = margin + contentWidth / 2 + 10
-  const stampY = yPos
-  const stampDims = getImageDimensions("lunasStamp")
+    const stampX = margin + contentWidth / 2 + 10
+    const stampY = yPos
+    const stampDims = getImageDimensions("lunasStamp")
 
-  if (images.lunasStamp) {
-    try {
-      doc.addImage(images.lunasStamp, "PNG", stampX, stampY, stampDims.width, stampDims.height)
-    } catch (e) {
-      console.error("Failed to add LUNAS stamp:", e)
-      // Fallback to drawn stamp
+    if (images.lunasStamp) {
+      try {
+        doc.addImage(images.lunasStamp, "PNG", stampX, stampY, stampDims.width, stampDims.height)
+      } catch (e) {
+        console.error("Failed to add LUNAS stamp:", e)
+        // Fallback to drawn stamp
+        drawFallbackLunasStamp(doc, stampX, stampY, greenStamp)
+      }
+    } else {
       drawFallbackLunasStamp(doc, stampX, stampY, greenStamp)
     }
+
+    // Date under stamp
+    doc.setFontSize(7)
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(...grayText)
+    const paymentDateStr = data.paymentDate
+      ? formatDateIndonesian(data.paymentDate)
+      : formatDateIndonesian(data.invoiceDate)
+    doc.text(paymentDateStr, stampX + stampDims.width / 2, stampY + stampDims.height + 3, { align: "center" })
+
+    yPos += 38
   } else {
-    drawFallbackLunasStamp(doc, stampX, stampY, greenStamp)
+    yPos += 10
   }
-
-  // Date under stamp
-  doc.setFontSize(7)
-  doc.setFont("helvetica", "normal")
-  doc.setTextColor(...grayText)
-  const paymentDateStr = data.paymentDate
-    ? formatDateIndonesian(data.paymentDate)
-    : formatDateIndonesian(data.invoiceDate)
-  doc.text(paymentDateStr, stampX + stampDims.width / 2, stampY + stampDims.height + 3, { align: "center" })
-
-  yPos += 38
 
   // ============================================
   // SIGNATURE SECTION

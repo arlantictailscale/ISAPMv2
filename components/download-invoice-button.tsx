@@ -24,11 +24,13 @@ export function DownloadInvoiceButton({
 }: DownloadInvoiceButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false)
 
-  const buttonLabel = isSponsored ? "Unduh Bukti Registrasi" : "Unduh Kwitansi"
-  const downloadingLabel = "Mengunduh..."
-  const filePrefix = isSponsored ? "Bukti-Registrasi" : "Kwitansi"
-  const successMessage = isSponsored ? "Bukti registrasi berhasil diunduh" : "Kwitansi berhasil diunduh"
-  const errorMessage = isSponsored ? "Gagal mengunduh bukti registrasi" : "Gagal mengunduh kwitansi"
+  const buttonLabel = isSponsored ? "Download Certificate" : "Download Invoice"
+  const downloadingLabel = "Downloading..."
+  const filePrefix = isSponsored ? "Registration-Certificate" : "Invoice"
+  const successMessage = isSponsored
+    ? "Registration certificate downloaded successfully"
+    : "Invoice downloaded successfully"
+  const errorMessage = isSponsored ? "Failed to download registration certificate" : "Failed to download invoice"
 
   const handleDownload = async () => {
     setIsDownloading(true)
@@ -55,12 +57,12 @@ export function DownloadInvoiceButton({
       window.URL.revokeObjectURL(url)
 
       toast.success(successMessage, {
-        description: "File PDF telah disimpan ke perangkat Anda.",
+        description: "The PDF file has been saved to your device.",
       })
     } catch (error) {
       console.error("[v0] Error downloading invoice:", error)
       toast.error(errorMessage, {
-        description: error instanceof Error ? error.message : "Silakan coba lagi nanti.",
+        description: error instanceof Error ? error.message : "Please try again later.",
       })
     } finally {
       setIsDownloading(false)

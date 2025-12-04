@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
 import { generateInvoicePDF, type InvoiceData, type InvoiceItem } from "@/lib/invoice/generate-invoice"
-import { generateSequentialInvoiceNumber } from "@/lib/invoice/invoice-number"
 
 export async function GET(request: Request) {
   try {
@@ -75,7 +74,18 @@ export async function GET(request: Request) {
     // Prepare invoice data
     const invoiceDate = payment.verified_at ? new Date(payment.verified_at) : new Date()
 
-    const invoiceNumber = await generateSequentialInvoiceNumber(invoiceDate)
+    // This ensures consistency between emailed invoice and downloaded invoice
+    const invoiceNumber = payment.invoice_number
+
+    if (!invoiceNumber) {
+      console.error("[v0] No invoice number found for payment:", payment.id)
+      return NextResponse.json(
+        {
+          error: "Invoice number not found. Please contact support.",
+        },
+        { status: 400 },
+      )
+    }
 
     const invoiceData: InvoiceData = {
       orderId: order.id,

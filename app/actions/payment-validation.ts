@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendPaymentVerificationEmail, sendPaymentConfirmationWithInvoice } from "@/lib/email"
+import { generateSequentialInvoiceNumber } from "@/lib/invoice/invoice-number"
 
 export async function approvePayment(paymentId: string, orderId: string, calculatedTotal?: number) {
   try {
@@ -29,16 +30,19 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
       return { success: false, error: "Payment not found" }
     }
 
-    const verifiedAt = new Date().toISOString()
+    const verifiedAt = new Date()
+
+    const invoiceNumber = await generateSequentialInvoiceNumber(verifiedAt)
+    console.log("[v0] Generated invoice number:", invoiceNumber)
 
     const { error: paymentError } = await supabase
       .from("order_payments")
       .update({
         payment_status: "verified",
-        verified_at: verifiedAt,
+        verified_at: verifiedAt.toISOString(),
         verified_by: user.id,
         rejection_reason: null,
-        // Update amount to calculated total if provided (fixes incorrect amounts)
+        invoice_number: invoiceNumber,
         ...(calculatedTotal !== undefined && { amount: calculatedTotal }),
       })
       .eq("id", paymentId)
@@ -73,7 +77,8 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
         currency: order.currency,
         customerInstitution: order.institution,
         customerPhone: order.phone,
-        paymentVerifiedAt: new Date(verifiedAt),
+        paymentVerifiedAt: verifiedAt,
+        invoiceNumber,
       })
       console.log("[v0] Payment confirmation with invoice email sent to:", order.email)
     } catch (emailError) {
@@ -114,7 +119,6 @@ export async function rejectPayment(paymentId: string, rejectionReason: string) 
       return { success: false, error: "Payment not found" }
     }
 
-    // Update payment status to rejected
     const { error } = await supabase
       .from("order_payments")
       .update({

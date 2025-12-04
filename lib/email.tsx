@@ -652,6 +652,7 @@ export async function sendPaymentConfirmationWithInvoice({
   customerInstitution,
   customerPhone,
   paymentVerifiedAt,
+  invoiceNumber: providedInvoiceNumber, // Accept optional pre-generated invoice number
 }: {
   email: string
   userName: string
@@ -671,6 +672,7 @@ export async function sendPaymentConfirmationWithInvoice({
   customerInstitution?: string
   customerPhone?: string
   paymentVerifiedAt: Date
+  invoiceNumber?: string // Optional invoice number parameter
 }) {
   try {
     // Prepare invoice items
@@ -686,8 +688,8 @@ export async function sendPaymentConfirmationWithInvoice({
       checkOutDate: item.check_out_date,
     }))
 
-    // Generate invoice number and data
-    const invoiceNumber = await generateInvoiceNumber(orderId, paymentVerifiedAt)
+    const invoiceNumber = providedInvoiceNumber || (await generateInvoiceNumber(orderId, paymentVerifiedAt))
+
     const invoiceData: InvoiceData = {
       orderId,
       invoiceNumber,

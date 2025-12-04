@@ -2,16 +2,16 @@ import { createClient } from "@supabase/supabase-js"
 
 // Create a Supabase client for server-side operations
 function getSupabaseAdmin() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "https://wilienulethgfxdiqghw.supabase.co"
   const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error("[v0] Missing Supabase environment variables:", {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseServiceKey,
-    })
+  if (!supabaseServiceKey) {
+    console.error("[v0] Missing SUPABASE_SERVICE_ROLE_KEY environment variable")
     return null
   }
+
+  console.log("[v0] Creating Supabase admin client for invoice number generation")
 
   return createClient(supabaseUrl, supabaseServiceKey, {
     auth: {

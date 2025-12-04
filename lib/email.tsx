@@ -693,20 +693,21 @@ export async function sendPaymentConfirmationWithInvoice({
     const invoiceNumber = providedInvoiceNumber || (await generateInvoiceNumber(orderId, paymentVerifiedAt))
 
     const paymentType = paymentMethod?.toLowerCase() === "sponsored" ? "sponsored" : "regular"
+    const isSponsored = paymentType === "sponsored"
 
     const invoiceData: InvoiceData = {
       orderId,
       invoiceNumber,
       invoiceDate: paymentVerifiedAt,
       customerName: userName,
-      customerEmail: email,
+      customerEmail: email, // Added customerEmail
       customerPhone,
       customerInstitution,
       items,
       totalAmount,
       currency,
       paymentDate: paymentVerifiedAt,
-      paymentType, // Pass payment type to invoice generator
+      paymentType,
     }
 
     // Generate PDF invoice
@@ -761,10 +762,17 @@ export async function sendPaymentConfirmationWithInvoice({
       })
       .join("")
 
+    const emailSubject = isSponsored
+      ? `Registration Confirmed - ISAPM 2026 (${invoiceNumber})`
+      : `Payment Confirmed & Invoice - ISAPM 2026 (${invoiceNumber})`
+
+    const primaryColor = isSponsored ? "#8B5CF6" : "#00A9E0"
+    const primaryColorDark = isSponsored ? "#7C3AED" : "#0088B8"
+
     const emailConfig: any = {
       from: "ISAPM 2026 <noreply@isapm2026.org>",
       to: email,
-      subject: `Payment Confirmed & Invoice - ISAPM 2026 (${invoiceNumber})`,
+      subject: emailSubject,
       html: `
         <!DOCTYPE html>
         <html>
@@ -773,15 +781,15 @@ export async function sendPaymentConfirmationWithInvoice({
             <style>
               body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
               .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #00A9E0 0%, #0088B8 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .header { background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColorDark} 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
               .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
               .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 14px; }
               .content { background: #ffffff; padding: 40px 30px; border: 1px solid #e2e8f0; border-top: none; }
-              .success-badge { display: inline-block; background: #d1fae5; color: #065f46; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-bottom: 20px; }
-              .alert { background: #d1fae5; border-left: 4px solid #10b981; padding: 20px; margin: 25px 0; border-radius: 4px; }
+              .sponsor-badge { display: inline-flex; align-items: center; gap: 8px; background: #f3e8ff; color: #7c3aed; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-bottom: 20px; border: 2px solid #c4b5fd; }
+              .alert { background: ${isSponsored ? "#f3e8ff" : "#d1fae5"}; border-left: 4px solid ${isSponsored ? "#8b5cf6" : "#10b981"}; padding: 20px; margin: 25px 0; border-radius: 4px; }
               .alert-icon { font-size: 24px; margin-bottom: 10px; }
-              .alert-title { font-weight: 700; color: #065f46; margin-bottom: 8px; font-size: 16px; }
-              .alert-text { color: #064e3b; font-size: 14px; line-height: 1.6; }
+              .alert-title { font-weight: 700; color: ${isSponsored ? "#6d28d9" : "#065f46"}; margin-bottom: 8px; font-size: 16px; }
+              .alert-text { color: ${isSponsored ? "#5b21b6" : "#064e3b"}; font-size: 14px; line-height: 1.6; }
               .invoice-info { background: #f7fafc; padding: 20px; margin: 20px 0; border-radius: 8px; border: 1px solid #e2e8f0; }
               .invoice-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
               .invoice-row:last-child { border-bottom: none; }
@@ -789,17 +797,17 @@ export async function sendPaymentConfirmationWithInvoice({
               .invoice-value { font-weight: 600; color: #1e293b; }
               .section-title { font-size: 18px; font-weight: 600; color: #1a202c; margin: 30px 0 15px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; }
               .items-table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 20px 0; }
-              .items-table th { padding: 12px; text-align: left; border-bottom: 2px solid #00A9E0; background: #f8f9fa; }
+              .items-table th { padding: 12px; text-align: left; border-bottom: 2px solid ${primaryColor}; background: #f8f9fa; }
               .items-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-              .total-box { background: linear-gradient(135deg, #00A9E0 0%, #0088B8 100%); color: white; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; }
+              .total-box { background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColorDark} 100%); color: white; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; }
               .total-amount { font-size: 28px; font-weight: 700; margin: 10px 0; }
               .terbilang { font-style: italic; font-size: 12px; opacity: 0.9; }
-              .info-box { background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #00A9E0; }
-              .info-box h3 { font-size: 14px; color: #0369a1; margin-top: 0; }
-              .info-box ul { margin: 10px 0; padding-left: 20px; color: #0c4a6e; }
+              .info-box { background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid ${primaryColor}; }
+              .info-box h3 { font-size: 14px; color: ${isSponsored ? "#6d28d9" : "#0369a1"}; margin-top: 0; }
+              .info-box ul { margin: 10px 0; padding-left: 20px; color: ${isSponsored ? "#5b21b6" : "#0c4a6e"}; }
               .info-box li { margin: 8px 0; }
-              .button { display: inline-block; background: linear-gradient(135deg, #EF3340 0%, #d92532 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(239, 51, 64, 0.2); }
-              .button:hover { box-shadow: 0 6px 8px rgba(239, 51, 64, 0.3); }
+              .button { display: inline-block; background: linear-gradient(135deg, ${isSponsored ? "#8B5CF6 0%, #7C3AED" : "#EF3340 0%, #d92532"} 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(${isSponsored ? "139, 92, 246" : "239, 51, 64"}, 0.2); }
+              .button:hover { box-shadow: 0 6px 8px rgba(${isSponsored ? "139, 92, 246" : "239, 51, 64"}, 0.3); }
               .attachment-notice { background: #fef3c7; padding: 15px 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #f59e0b; }
               .attachment-notice p { margin: 0; font-size: 14px; color: #92400e; }
               .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
@@ -809,24 +817,29 @@ export async function sendPaymentConfirmationWithInvoice({
           <body>
             <div class="container">
               <div class="header">
-                <h1>✓ Order Confirmed!</h1>
-                <p>Thank you for your order</p>
+                <h1>${isSponsored ? "🎁 Registration Confirmed!" : "✓ Payment Confirmed!"}</h1>
+                <p>${isSponsored ? "Your sponsored registration is complete" : "Thank you for your payment"}</p>
               </div>
               <div class="content">
                 <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>
                 
+                ${isSponsored ? `<div class="sponsor-badge"><span>🎁</span><span>Sponsored Registration</span></div>` : ""}
+                
                 <div class="alert">
                   <div class="alert-icon">🎉</div>
-                  <div class="alert-title">Payment Successfully Verified!</div>
+                  <div class="alert-title">${isSponsored ? "Sponsored Registration Verified!" : "Payment Successfully Verified!"}</div>
                   <div class="alert-text">
-                    Your payment has been verified by our admin team. Your registration is now complete and confirmed. 
-                    Please find your official invoice/receipt attached to this email.
+                    ${
+                      isSponsored
+                        ? "Your sponsored registration has been verified and approved by our admin team. Your registration is now complete and confirmed. Please find your official registration certificate attached to this email."
+                        : "Your payment has been verified by our admin team. Your registration is now complete and confirmed. Please find your official invoice/receipt attached to this email."
+                    }
                   </div>
                 </div>
 
                 <div class="invoice-info">
                   <div class="invoice-row">
-                    <span class="invoice-label">Invoice Number</span>
+                    <span class="invoice-label">${isSponsored ? "Certificate Number" : "Invoice Number"}</span>
                     <span class="invoice-value" style="font-family: monospace;">${invoiceNumber}</span>
                   </div>
                   <div class="invoice-row">
@@ -834,16 +847,16 @@ export async function sendPaymentConfirmationWithInvoice({
                     <span class="invoice-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
                   </div>
                   <div class="invoice-row">
-                    <span class="invoice-label">Payment Date</span>
+                    <span class="invoice-label">${isSponsored ? "Approval Date" : "Payment Date"}</span>
                     <span class="invoice-value">${formatDateIndonesian(paymentVerifiedAt)}</span>
                   </div>
                   <div class="invoice-row">
-                    <span class="invoice-label">Payment Status</span>
-                    <span class="invoice-value" style="color: #10b981;">✓ Verified</span>
+                    <span class="invoice-label">Status</span>
+                    <span class="invoice-value" style="color: #10b981;">✓ ${isSponsored ? "Approved" : "Verified"}</span>
                   </div>
                   <div class="invoice-row">
-                    <span class="invoice-label">Payment Method</span>
-                    <span class="invoice-value">${paymentMethod ? paymentMethod.charAt(0).toUpperCase() + paymentMethod.slice(1) : "N/A"}</span>
+                    <span class="invoice-label">Registration Type</span>
+                    <span class="invoice-value" style="color: ${isSponsored ? "#7c3aed" : "#1e293b"};">${isSponsored ? "Sponsored" : "Regular"}</span>
                   </div>
                 </div>
 
@@ -860,7 +873,7 @@ export async function sendPaymentConfirmationWithInvoice({
                     : ""
                 }
 
-                <div class="section-title">Invoice Details</div>
+                <div class="section-title">${isSponsored ? "Registration Details" : "Invoice Details"}</div>
                 <table class="items-table">
                   <thead>
                     <tr>
@@ -876,7 +889,7 @@ export async function sendPaymentConfirmationWithInvoice({
                 </table>
 
                 <div class="total-box">
-                  <div style="font-size: 14px; opacity: 0.9;">Total Amount Paid</div>
+                  <div style="font-size: 14px; opacity: 0.9;">${isSponsored ? "Total Registration Value" : "Total Amount Paid"}</div>
                   <div class="total-amount">${formatRupiah(totalAmount)}</div>
                   <div class="terbilang">${formatTerbilang(totalAmount)}</div>
                 </div>
@@ -885,7 +898,7 @@ export async function sendPaymentConfirmationWithInvoice({
                   pdfBase64
                     ? `
                 <div class="attachment-notice">
-                  <p>📎 <strong>Attachment:</strong> Your official invoice (PDF) is attached to this email. You can also download it from your dashboard.</p>
+                  <p>📎 <strong>Attachment:</strong> Your official ${isSponsored ? "registration certificate" : "invoice"} (PDF) is attached to this email.</p>
                 </div>
                 `
                     : ""
@@ -910,8 +923,8 @@ export async function sendPaymentConfirmationWithInvoice({
                 </p>
 
                 <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
-                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none;">admin@isapm2026.org</a> 
-                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none;">+6289602626709</a>
+                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: ${primaryColor}; text-decoration: none;">admin@isapm2026.org</a> 
+                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: ${primaryColor}; text-decoration: none;">+6289602626709</a>
                 </p>
                 
                 <p style="font-size: 15px; color: #1a202c; margin-top: 25px;">
@@ -923,9 +936,9 @@ export async function sendPaymentConfirmationWithInvoice({
                 <div class="footer-brand">ISAPM 2026 National Meeting</div>
                 <div>The Indonesian Society of Anesthesiology for Pain Management</div>
                 <div style="margin-top: 12px;">
-                  <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Email</a> •
-                  <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Website</a>
+                  <a href="mailto:admin@isapm2026.org" style="color: ${primaryColor}; text-decoration: none; margin: 0 10px;">Email</a> •
+                  <a href="https://wa.me/6289602626709" style="color: ${primaryColor}; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: ${primaryColor}; text-decoration: none; margin: 0 10px;">Website</a>
                 </div>
               </div>
             </div>
@@ -938,7 +951,9 @@ export async function sendPaymentConfirmationWithInvoice({
     if (pdfBase64) {
       emailConfig.attachments = [
         {
-          filename: `Kwitansi-ISAPM-2026-${invoiceNumber}.pdf`,
+          filename: isSponsored
+            ? `Sertifikat-Registrasi-ISAPM-2026-${invoiceNumber}.pdf`
+            : `Kwitansi-ISAPM-2026-${invoiceNumber}.pdf`,
           content: pdfBase64,
         },
       ]
@@ -1221,6 +1236,194 @@ export async function sendPosterReviewNotification({
     return { success: true }
   } catch (error) {
     console.error("Error sending poster review notification:", error)
+    return { success: false, error }
+  }
+}
+
+export async function sendSponsoredPaymentSubmittedEmail({
+  email,
+  userName,
+  orderId,
+  sponsorName,
+  orderItems,
+  totalAmount,
+  currency,
+}: {
+  email: string
+  userName: string
+  orderId: string
+  sponsorName: string
+  orderItems: Array<{
+    item_type: string
+    event_label?: string
+    participant_type_label?: string
+    hotel_room_type?: string
+    unit_price: number
+    nights?: number
+  }>
+  totalAmount: number
+  currency: string
+}) {
+  try {
+    const itemsSummary = orderItems
+      .map((item) => {
+        if (item.item_type === "workshop" || item.item_type === "symposium") {
+          return `<li style="margin: 8px 0; color: #475569;">${item.event_label} - ${item.participant_type_label}</li>`
+        } else if (item.item_type === "hotel") {
+          return `<li style="margin: 8px 0; color: #475569;">Hotel: ${item.hotel_room_type}${item.nights ? ` (${item.nights} night${item.nights > 1 ? "s" : ""})` : ""}</li>`
+        } else if (item.item_type === "cpd_course") {
+          return `<li style="margin: 8px 0; color: #475569;">CPD Course: ${item.event_label}</li>`
+        }
+        return ""
+      })
+      .join("")
+
+    await resend.emails.send({
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
+      to: email,
+      subject: "Sponsored Registration Submitted - ISAPM 2026",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%); color: white; padding: 40px 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+              .header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 14px; }
+              .content { background: #ffffff; padding: 40px 30px; border: 1px solid #e2e8f0; border-top: none; }
+              .sponsor-badge { display: inline-flex; align-items: center; gap: 8px; background: #f3e8ff; color: #7c3aed; padding: 12px 20px; border-radius: 24px; font-weight: 600; font-size: 14px; margin-bottom: 20px; border: 2px solid #c4b5fd; }
+              .order-info { background: #f7fafc; padding: 20px; margin: 25px 0; border-radius: 8px; border: 1px solid #e2e8f0; }
+              .order-info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+              .order-info-row:last-child { border-bottom: none; }
+              .order-info-label { color: #64748b; font-size: 14px; }
+              .order-info-value { font-weight: 600; color: #1e293b; }
+              .sponsor-box { background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); padding: 20px; margin: 25px 0; border-radius: 8px; border: 2px solid #c4b5fd; }
+              .sponsor-label { font-size: 12px; color: #7c3aed; text-transform: uppercase; font-weight: 600; margin-bottom: 8px; }
+              .sponsor-name { font-size: 20px; font-weight: 700; color: #5b21b6; }
+              .waiting-box { background: #fefce8; border: 2px solid #fbbf24; border-radius: 8px; padding: 25px; margin: 25px 0; text-align: center; }
+              .waiting-icon { font-size: 48px; margin-bottom: 15px; }
+              .waiting-title { font-size: 18px; font-weight: 700; color: #92400e; margin-bottom: 10px; }
+              .waiting-text { font-size: 14px; color: #a16207; line-height: 1.6; }
+              .total-section { margin: 25px 0; padding: 20px; background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%); border-radius: 8px; border: 2px solid #8b5cf6; }
+              .total-row { display: flex; justify-content: space-between; align-items: center; }
+              .total-label { font-size: 18px; font-weight: 600; color: #1a202c; }
+              .total-amount { font-size: 24px; font-weight: 700; color: #7c3aed; }
+              .info-box { background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #00A9E0; }
+              .info-box h3 { font-size: 14px; color: #0369a1; margin-top: 0; }
+              .info-box ul { margin: 10px 0; padding-left: 20px; color: #0c4a6e; }
+              .info-box li { margin: 8px 0; }
+              .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
+              .footer-brand { font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎁 Sponsored Registration</h1>
+                <p>Your registration has been submitted</p>
+              </div>
+              <div class="content">
+                <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>
+                
+                <div class="sponsor-badge">
+                  <span>🎁</span>
+                  <span>Sponsored Registration</span>
+                </div>
+
+                <p style="font-size: 15px; color: #475569; line-height: 1.7;">
+                  Thank you for submitting your sponsored registration. Your registration details have been received and are now pending verification by our admin team.
+                </p>
+
+                <div class="sponsor-box">
+                  <div class="sponsor-label">Sponsored By</div>
+                  <div class="sponsor-name">${sponsorName}</div>
+                </div>
+
+                <div class="order-info">
+                  <div class="order-info-row">
+                    <span class="order-info-label">Order ID</span>
+                    <span class="order-info-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
+                  </div>
+                  <div class="order-info-row">
+                    <span class="order-info-label">Submission Date</span>
+                    <span class="order-info-value">${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
+                  </div>
+                  <div class="order-info-row">
+                    <span class="order-info-label">Payment Type</span>
+                    <span class="order-info-value" style="color: #7c3aed;">Sponsored</span>
+                  </div>
+                </div>
+
+                ${
+                  itemsSummary
+                    ? `
+                <div style="margin: 25px 0;">
+                  <h3 style="font-size: 16px; color: #1a202c; margin-bottom: 10px;">Registration Items:</h3>
+                  <ul style="margin: 0; padding-left: 20px;">
+                    ${itemsSummary}
+                  </ul>
+                </div>
+                `
+                    : ""
+                }
+
+                <div class="total-section">
+                  <div class="total-row">
+                    <span class="total-label">Registration Value</span>
+                    <span class="total-amount">${currency} ${totalAmount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div class="waiting-box">
+                  <div class="waiting-icon">⏳</div>
+                  <div class="waiting-title">Please Wait for Verification</div>
+                  <div class="waiting-text">
+                    Our admin team will verify your sponsored registration with your sponsor/benefactor. 
+                    You will receive a confirmation email once your registration is approved.
+                    This typically takes 1-2 business days.
+                  </div>
+                </div>
+
+                <div class="info-box">
+                  <h3>What Happens Next?</h3>
+                  <ul>
+                    <li>Our team will verify the sponsorship details</li>
+                    <li>You will receive a confirmation email once approved</li>
+                    <li>Your official registration certificate will be sent upon approval</li>
+                    <li>No payment action is required from you</li>
+                  </ul>
+                </div>
+
+                <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: #8b5cf6; text-decoration: none;">admin@isapm2026.org</a> 
+                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: #8b5cf6; text-decoration: none;">+6289602626709</a>
+                </p>
+                
+                <p style="font-size: 15px; color: #1a202c; margin-top: 25px;">
+                  Best regards,<br>
+                  <strong>ISAPM 2026 Team</strong>
+                </p>
+              </div>
+              <div class="footer">
+                <div class="footer-brand">ISAPM 2026 National Meeting</div>
+                <div>The Indonesian Society of Anesthesiology for Pain Management</div>
+                <div style="margin-top: 12px;">
+                  <a href="mailto:admin@isapm2026.org" style="color: #8b5cf6; text-decoration: none; margin: 0 10px;">Email</a> •
+                  <a href="https://wa.me/6289602626709" style="color: #8b5cf6; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #8b5cf6; text-decoration: none; margin: 0 10px;">Website</a>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    })
+    return { success: true }
+  } catch (error) {
+    console.error("Error sending sponsored payment submitted email:", error)
     return { success: false, error }
   }
 }

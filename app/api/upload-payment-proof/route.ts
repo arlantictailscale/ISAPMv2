@@ -2,6 +2,7 @@ import { put } from "@vercel/blob"
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { sendSponsoredPaymentSubmittedEmail } from "@/lib/email"
 
 export async function POST(request: NextRequest) {
   try {
@@ -136,6 +137,36 @@ export async function POST(request: NextRequest) {
       }
 
       console.log("[v0] Payment record created successfully")
+    }
+
+    if (isSponsored) {
+      try {
+        // Fetch order details with items for the email
+        const { data: orderWithItems } = await supabase
+          .from("orders")
+          .select(`
+            *,
+            order_items (*)
+          `)
+          .eq("id", orderId)
+          .single()
+
+        if (orderWithItems) {
+          await sendSponsoredPaymentSubmittedEmail({
+            email: orderWithItems.email,
+            userName: orderWithItems.full_name,
+            orderId: orderId,
+            sponsorName: sponsorName,
+            orderItems: orderWithItems.order_items || [],
+            totalAmount: orderWithItems.total_amount,
+            currency: orderWithItems.currency,
+          })
+          console.log("[v0] Sponsored payment submitted email sent to:", orderWithItems.email)
+        }
+      } catch (emailError) {
+        console.error("[v0] Failed to send sponsored payment submitted email:", emailError)
+        // Don't fail the request if email fails
+      }
     }
 
     revalidatePath("/my-purchases")

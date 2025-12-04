@@ -687,7 +687,7 @@ export async function sendPaymentConfirmationWithInvoice({
     }))
 
     // Generate invoice number and data
-    const invoiceNumber = generateInvoiceNumber(orderId, paymentVerifiedAt)
+    const invoiceNumber = await generateInvoiceNumber(orderId, paymentVerifiedAt)
     const invoiceData: InvoiceData = {
       orderId,
       invoiceNumber,

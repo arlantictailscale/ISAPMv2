@@ -59,10 +59,12 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
       checkOutDate: item.check_out_date,
     }))
 
+    const invoiceNumber = await generateInvoiceNumber(orderId, paymentVerifiedAt)
+
     // Prepare invoice data
     const invoiceData: InvoiceData = {
       orderId,
-      invoiceNumber: generateInvoiceNumber(orderId, paymentVerifiedAt),
+      invoiceNumber,
       invoiceDate: paymentVerifiedAt,
       customerName: userName,
       customerEmail: email,

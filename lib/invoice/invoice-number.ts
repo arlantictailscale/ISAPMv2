@@ -22,30 +22,22 @@ function getSupabaseAdmin() {
 }
 
 /**
- * Generate a sequential invoice number for a given date
- * Format: Natmet-YYMMDD-XXXX
+ * Generate a sequential invoice number
+ * Format: XXXX-ISAPM (e.g., 0001-ISAPM, 0002-ISAPM)
  *
- * @param date - The invoice date (defaults to current date)
+ * The sequence is global and continues incrementing with each new transaction.
+ * It does NOT reset daily - it's a continuous sequence.
+ *
+ * @param date - The invoice date (used for database record, not in the format)
  * @returns Promise<string> - The generated invoice number
  *
  * @example
- * // First invoice on Dec 3, 2025
- * generateSequentialInvoiceNumber(new Date('2025-12-03')) // "Natmet-251203-0001"
- *
- * // Second invoice on same day
- * generateSequentialInvoiceNumber(new Date('2025-12-03')) // "Natmet-251203-0002"
- *
- * // First invoice on Dec 4, 2025 (counter resets)
- * generateSequentialInvoiceNumber(new Date('2025-12-04')) // "Natmet-251204-0001"
+ * generateSequentialInvoiceNumber() // "0001-ISAPM"
+ * generateSequentialInvoiceNumber() // "0002-ISAPM"
+ * generateSequentialInvoiceNumber() // "0003-ISAPM"
  */
 export async function generateSequentialInvoiceNumber(date: Date = new Date()): Promise<string> {
   const supabase = getSupabaseAdmin()
-
-  // Format date components
-  const year = date.getFullYear().toString().slice(-2)
-  const month = (date.getMonth() + 1).toString().padStart(2, "0")
-  const day = date.getDate().toString().padStart(2, "0")
-  const dateStr = `${year}${month}${day}`
 
   // If Supabase is not available, use fallback immediately
   if (!supabase) {
@@ -53,77 +45,81 @@ export async function generateSequentialInvoiceNumber(date: Date = new Date()): 
     return generateFallbackInvoiceNumber(date)
   }
 
-  // Format date for database (YYYY-MM-DD)
-  const dbDate = `${date.getFullYear()}-${month}-${day}`
-
   try {
-    // Call the database function to get next sequence (atomic operation)
     const { data, error } = await supabase.rpc("get_next_invoice_sequence", {
-      p_date: dbDate,
+      p_date: "2025-01-01", // Fixed date to maintain global sequence
     })
 
     if (error) {
       console.error("[v0] Error getting next invoice sequence:", error)
-      // Fallback to UUID-based if database call fails
       return generateFallbackInvoiceNumber(date)
     }
 
-    // Format sequence as 4-digit number with leading zeros
     const sequence = (data as number).toString().padStart(4, "0")
-
-    return `Natmet-${dateStr}-${sequence}`
+    return `${sequence}-ISAPM`
   } catch (error) {
     console.error("[v0] Error generating sequential invoice number:", error)
-    // Fallback to UUID-based if anything fails
     return generateFallbackInvoiceNumber(date)
   }
 }
 
 /**
- * Fallback invoice number generation using order ID (for backward compatibility)
- * Format: Natmet-YYMMDDSUFX
+ * Fallback invoice number generation using random suffix
+ * Format: XXXX-ISAPM (random 4-digit number)
  */
 export function generateFallbackInvoiceNumber(date: Date = new Date(), orderId?: string): string {
-  const year = date.getFullYear().toString().slice(-2)
-  const month = (date.getMonth() + 1).toString().padStart(2, "0")
-  const day = date.getDate().toString().padStart(2, "0")
-
   if (orderId) {
-    const orderSuffix = orderId.slice(0, 4).toUpperCase()
-    return `Natmet-${year}${month}${day}${orderSuffix}`
+    // Use first 4 chars of order ID as a pseudo-sequence
+    const numericSuffix = orderId.replace(/\D/g, "").slice(0, 4).padStart(4, "0")
+    return `${numericSuffix}-ISAPM`
   }
 
-  // Generate random suffix if no order ID
-  const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase()
-  return `Natmet-${year}${month}${day}${randomSuffix}`
+  // Generate random 4-digit number
+  const randomNum = Math.floor(Math.random() * 10000)
+    .toString()
+    .padStart(4, "0")
+  return `${randomNum}-ISAPM`
 }
 
 /**
  * Validate invoice number format
  * Accepts both formats:
- * - Sequential: Natmet-YYMMDD-XXXX (e.g., Natmet-251203-0001)
- * - Legacy: Natmet-YYMMDDSUFX (4 alphanumeric chars)
+ * - New: XXXX-ISAPM (e.g., 0001-ISAPM)
+ * - Legacy: Natmet-YYMMDD-XXXX or Natmet-YYMMDDSUFX
  */
 export function validateInvoiceNumber(invoiceNumber: string): boolean {
-  // Sequential format: Natmet-YYMMDD-XXXX
+  const newPattern = /^\d{4}-ISAPM$/
+
+  // Legacy sequential format: Natmet-YYMMDD-XXXX
   const sequentialPattern = /^Natmet-\d{6}-\d{4}$/
 
   // Legacy format: Natmet-YYMMDDSUFX (4 alphanumeric chars)
   const legacyPattern = /^Natmet-\d{6}[A-Z0-9]{4}$/
 
-  return sequentialPattern.test(invoiceNumber) || legacyPattern.test(invoiceNumber)
+  return newPattern.test(invoiceNumber) || sequentialPattern.test(invoiceNumber) || legacyPattern.test(invoiceNumber)
 }
 
 /**
- * Parse invoice number to extract date and sequence
+ * Parse invoice number to extract sequence
  */
 export function parseInvoiceNumber(invoiceNumber: string): {
   prefix: string
-  date: Date
+  date: Date | null
   sequence: string
   isSequential: boolean
 } | null {
-  // Sequential format: Natmet-YYMMDD-XXXX
+  const newMatch = invoiceNumber.match(/^(\d{4})-ISAPM$/)
+  if (newMatch) {
+    const [, sequence] = newMatch
+    return {
+      prefix: "ISAPM",
+      date: null, // No date in new format
+      sequence,
+      isSequential: true,
+    }
+  }
+
+  // Legacy sequential format: Natmet-YYMMDD-XXXX
   const sequentialMatch = invoiceNumber.match(/^(Natmet)-(\d{2})(\d{2})(\d{2})-(\d{4})$/)
   if (sequentialMatch) {
     const [, prefix, year, month, day, sequence] = sequentialMatch
@@ -153,7 +149,7 @@ export function parseInvoiceNumber(invoiceNumber: string): {
 }
 
 /**
- * Get current day's invoice count (for admin dashboard)
+ * Get current total invoice count (for admin dashboard)
  */
 export async function getTodayInvoiceCount(): Promise<number> {
   const supabase = getSupabaseAdmin()
@@ -162,16 +158,11 @@ export async function getTodayInvoiceCount(): Promise<number> {
     return 0
   }
 
-  const today = new Date()
-  const month = (today.getMonth() + 1).toString().padStart(2, "0")
-  const day = today.getDate().toString().padStart(2, "0")
-  const dbDate = `${today.getFullYear()}-${month}-${day}`
-
   try {
     const { data, error } = await supabase
       .from("invoice_counters")
       .select("last_sequence")
-      .eq("counter_date", dbDate)
+      .eq("counter_date", "2025-01-01")
       .single()
 
     if (error || !data) {

@@ -289,7 +289,7 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   // Left column - Invoice details
   doc.setFont("helvetica", "bold")
-  doc.text("No. Kwitansi", margin, yPos)
+  doc.text("Nomor", margin, yPos)
   doc.setFont("helvetica", "normal")
   doc.text(`: ${data.invoiceNumber}`, margin + 28, yPos)
 

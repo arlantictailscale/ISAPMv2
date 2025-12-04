@@ -11,6 +11,7 @@ interface DownloadInvoiceButtonProps {
   variant?: "default" | "outline" | "secondary" | "ghost"
   size?: "default" | "sm" | "lg" | "icon"
   className?: string
+  isSponsored?: boolean
 }
 
 export function DownloadInvoiceButton({
@@ -19,8 +20,15 @@ export function DownloadInvoiceButton({
   variant = "outline",
   size = "default",
   className,
+  isSponsored = false,
 }: DownloadInvoiceButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false)
+
+  const buttonLabel = isSponsored ? "Unduh Bukti Registrasi" : "Unduh Kwitansi"
+  const downloadingLabel = "Mengunduh..."
+  const filePrefix = isSponsored ? "Bukti-Registrasi" : "Kwitansi"
+  const successMessage = isSponsored ? "Bukti registrasi berhasil diunduh" : "Kwitansi berhasil diunduh"
+  const errorMessage = isSponsored ? "Gagal mengunduh bukti registrasi" : "Gagal mengunduh kwitansi"
 
   const handleDownload = async () => {
     setIsDownloading(true)
@@ -40,18 +48,18 @@ export function DownloadInvoiceButton({
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement("a")
       link.href = url
-      link.download = `Kwitansi-ISAPM-2026-${invoiceNumber || orderId.slice(0, 8)}.pdf`
+      link.download = `${filePrefix}-ISAPM-2026-${invoiceNumber || orderId.slice(0, 8)}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
 
-      toast.success("Kwitansi berhasil diunduh", {
+      toast.success(successMessage, {
         description: "File PDF telah disimpan ke perangkat Anda.",
       })
     } catch (error) {
       console.error("[v0] Error downloading invoice:", error)
-      toast.error("Gagal mengunduh kwitansi", {
+      toast.error(errorMessage, {
         description: error instanceof Error ? error.message : "Silakan coba lagi nanti.",
       })
     } finally {
@@ -64,12 +72,12 @@ export function DownloadInvoiceButton({
       {isDownloading ? (
         <>
           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Mengunduh...
+          {downloadingLabel}
         </>
       ) : (
         <>
           <FileText className="w-4 h-4 mr-2" />
-          Unduh Kwitansi
+          {buttonLabel}
         </>
       )}
     </Button>

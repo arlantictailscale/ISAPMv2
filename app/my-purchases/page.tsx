@@ -87,10 +87,24 @@ export default async function MyPurchasesPage() {
       )
     }
 
+    const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
+
     const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
-      pending: { label: "Waiting Verification Payment", variant: "default", icon: Clock },
-      verified: { label: "Payment Approved", variant: "default", icon: CheckCircle },
-      rejected: { label: "Payment Rejected", variant: "destructive", icon: XCircle },
+      pending: {
+        label: isSponsored ? "Waiting Verification" : "Waiting Verification Payment",
+        variant: "default",
+        icon: Clock,
+      },
+      verified: {
+        label: isSponsored ? "Registration Confirmed" : "Payment Approved",
+        variant: "default",
+        icon: CheckCircle,
+      },
+      rejected: {
+        label: isSponsored ? "Registration Rejected" : "Payment Rejected",
+        variant: "destructive",
+        icon: XCircle,
+      },
     }
 
     const config = statusConfig[payment.payment_status] || statusConfig.pending
@@ -100,7 +114,11 @@ export default async function MyPurchasesPage() {
       <Badge
         variant={config.variant}
         className={`flex items-center gap-1 w-fit max-w-full whitespace-nowrap shrink-0 ${
-          payment.payment_status === "verified" ? "bg-green-500 hover:bg-green-600" : ""
+          payment.payment_status === "verified"
+            ? isSponsored
+              ? "bg-purple-500 hover:bg-purple-600"
+              : "bg-green-500 hover:bg-green-600"
+            : ""
         } ${payment.payment_status === "pending" ? "bg-amber-500 hover:bg-amber-600" : ""}`}
       >
         <Icon className="w-3 h-3 shrink-0" />
@@ -251,22 +269,58 @@ export default async function MyPurchasesPage() {
                           )}
 
                           {payment?.payment_status === "verified" && (
-                            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div
+                              className={`${
+                                payment.payment_method?.toLowerCase() === "sponsored"
+                                  ? "bg-purple-50 border-purple-200"
+                                  : "bg-green-50 border-green-200"
+                              } border rounded-lg p-4`}
+                            >
                               <div className="flex gap-2">
-                                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                <CheckCircle
+                                  className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                                    payment.payment_method?.toLowerCase() === "sponsored"
+                                      ? "text-purple-600"
+                                      : "text-green-600"
+                                  }`}
+                                />
                                 <div>
-                                  <h4 className="font-semibold text-green-900 text-sm mb-1">Payment Approved</h4>
-                                  <p className="text-sm text-green-700">
-                                    Your payment has been verified and approved on{" "}
-                                    {new Date(payment.verified_at).toLocaleDateString("en-US", {
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                    })}
-                                    . Your registration is now confirmed!
+                                  <h4
+                                    className={`font-semibold text-sm mb-1 ${
+                                      payment.payment_method?.toLowerCase() === "sponsored"
+                                        ? "text-purple-900"
+                                        : "text-green-900"
+                                    }`}
+                                  >
+                                    {payment.payment_method?.toLowerCase() === "sponsored"
+                                      ? "Registration Confirmed"
+                                      : "Payment Approved"}
+                                  </h4>
+                                  <p
+                                    className={`text-sm ${
+                                      payment.payment_method?.toLowerCase() === "sponsored"
+                                        ? "text-purple-700"
+                                        : "text-green-700"
+                                    }`}
+                                  >
+                                    {payment.payment_method?.toLowerCase() === "sponsored"
+                                      ? `Your sponsored registration has been verified and confirmed on ${new Date(
+                                          payment.verified_at,
+                                        ).toLocaleDateString("en-US", {
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                        })}. Your registration is now complete!`
+                                      : `Your payment has been verified and approved on ${new Date(
+                                          payment.verified_at,
+                                        ).toLocaleDateString("en-US", {
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                        })}. Your registration is now confirmed!`}
                                   </p>
-                                  {payment.payment_method === "sponsored" && payment.sponsor_name && (
-                                    <div className="mt-2 flex items-center gap-2 text-sm text-green-700">
+                                  {payment.payment_method?.toLowerCase() === "sponsored" && payment.sponsor_name && (
+                                    <div className="mt-2 flex items-center gap-2 text-sm text-purple-700">
                                       <Gift className="w-4 h-4" />
                                       <span>
                                         Sponsored by: <strong>{payment.sponsor_name}</strong>
@@ -433,7 +487,12 @@ export default async function MyPurchasesPage() {
                               </Button>
                             </Link>
                             {canDownloadInvoice && (
-                              <DownloadInvoiceButton orderId={order.id} variant="outline" className="shrink-0" />
+                              <DownloadInvoiceButton
+                                orderId={order.id}
+                                variant="outline"
+                                className="shrink-0"
+                                isSponsored={payment?.payment_method?.toLowerCase() === "sponsored"}
+                              />
                             )}
                             {canCancel && (
                               <div className="shrink-0">

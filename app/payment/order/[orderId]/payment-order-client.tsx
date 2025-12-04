@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileText, Upload, X, AlertCircle, CreditCard, Gift } from "lucide-react"
+import { FileText, Upload, X, AlertCircle, CreditCard, Gift, Copy, CheckCircle } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -36,6 +36,13 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const [transactionRef, setTransactionRef] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
   const [sponsorName, setSponsorName] = useState("")
+
+  const bankAccount = {
+    bank: "Bank Syariah Indonesia (BSI)",
+    accountNumber: "7207681363",
+    accountName: "PT. Tombo Farma Indonesia",
+    branch: "KCP MALANG SAWOJAJAR",
+  }
 
   const calculateTotal = () => {
     if (!initialOrder?.order_items) return 0
@@ -489,87 +496,237 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                 <CardTitle>Select Payment Method</CardTitle>
                 <CardDescription>Choose how you want to pay for your order</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <Label className="text-base font-medium">Select Payment Method</Label>
-                  <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 h-14 p-1 bg-muted/50">
-                      <TabsTrigger
-                        value="Bank Transfer"
-                        className="flex items-center gap-2 h-12 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
-                      >
-                        <CreditCard className="w-4 h-4" />
-                        Bank Transfer
-                      </TabsTrigger>
-                      <TabsTrigger
-                        value="Sponsored"
-                        className="flex items-center gap-2 h-12 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all"
-                      >
-                        <Gift className="w-4 h-4" />
-                        Sponsored
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                  <p className="text-xs text-muted-foreground">
-                    {paymentMethod === "Bank Transfer"
-                      ? "Pay via bank transfer to our official account"
-                      : "Registration sponsored by a company or individual"}
-                  </p>
-                </div>
+              <CardContent className="space-y-6">
+                {/* Payment Method Tabs */}
+                <Tabs value={paymentMethod} onValueChange={setPaymentMethod} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 h-16 p-1.5 bg-muted/50 rounded-xl">
+                    <TabsTrigger
+                      value="Bank Transfer"
+                      className="flex flex-col items-center justify-center gap-1 h-full text-sm font-medium rounded-lg data-[state=active]:bg-white data-[state=active]:text-cyan-700 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-cyan-200 transition-all"
+                    >
+                      <CreditCard className="w-5 h-5" />
+                      <span>Bank Transfer</span>
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="Sponsored"
+                      className="flex flex-col items-center justify-center gap-1 h-full text-sm font-medium rounded-lg data-[state=active]:bg-white data-[state=active]:text-purple-700 data-[state=active]:shadow-md data-[state=active]:border data-[state=active]:border-purple-200 transition-all"
+                    >
+                      <Gift className="w-5 h-5" />
+                      <span>Sponsored</span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
 
-                {paymentMethod === "Sponsored" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="sponsor-name">Sponsor / Benefactor Name *</Label>
-                    <Input
-                      id="sponsor-name"
-                      placeholder="e.g., PT ABC Company, Dr. John Doe, Hospital Name"
-                      value={sponsorName}
-                      onChange={(e) => setSponsorName(e.target.value)}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Enter the name of the company, organization, or individual sponsoring your registration
-                    </p>
+                {/* Bank Transfer Instructions */}
+                {paymentMethod === "Bank Transfer" && (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-blue-50 border border-cyan-200">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="p-2 bg-cyan-100 rounded-lg">
+                          <CreditCard className="w-5 h-5 text-cyan-700" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-cyan-900">Transfer to Our Bank Account</h4>
+                          <p className="text-sm text-cyan-700">Please transfer the exact amount shown above</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-4 space-y-3 border border-cyan-100">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Bank</span>
+                          <span className="font-semibold text-cyan-900">{bankAccount.bank}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Account Number</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-bold text-lg text-cyan-900">
+                              {bankAccount.accountNumber}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 px-2 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
+                              onClick={() => {
+                                navigator.clipboard.writeText(bankAccount.accountNumber)
+                                toast.success("Account number copied!")
+                              }}
+                            >
+                              <Copy className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Account Name</span>
+                          <span className="font-semibold text-cyan-900">{bankAccount.accountName}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Branch</span>
+                          <span className="text-sm text-cyan-800">{bankAccount.branch}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex items-start gap-2 text-sm text-cyan-700">
+                        <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <p>After transferring, please fill in the form below and upload your payment proof.</p>
+                      </div>
+                    </div>
+
+                    {/* Bank Transfer Form Fields */}
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bank-name">Your Bank Name *</Label>
+                        <Input
+                          id="bank-name"
+                          placeholder="e.g., BCA, Mandiri, BNI"
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="account-name">Your Account Name *</Label>
+                        <Input
+                          id="account-name"
+                          placeholder="Name on your bank account"
+                          value={accountName}
+                          onChange={(e) => setAccountName(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="transaction-ref">Transaction Reference / ID *</Label>
+                        <Input
+                          id="transaction-ref"
+                          placeholder="e.g., TRX123456789"
+                          value={transactionRef}
+                          onChange={(e) => setTransactionRef(e.target.value)}
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="payment-proof">Payment Proof *</Label>
+                        <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-cyan-400 transition-colors">
+                          {!selectedFile ? (
+                            <div className="text-center">
+                              <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                              <p className="text-sm text-muted-foreground mb-2">
+                                Upload payment receipt or transfer confirmation
+                              </p>
+                              <p className="text-xs text-muted-foreground mb-4">
+                                Supported formats: JPG, PNG only (Max 5MB)
+                              </p>
+                              <Input
+                                id="payment-proof"
+                                type="file"
+                                accept="image/jpeg,image/jpg,image/png"
+                                onChange={handleFileChange}
+                                className="hidden"
+                              />
+                              <Label
+                                htmlFor="payment-proof"
+                                className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-cyan-600 text-white hover:bg-cyan-700 h-10 px-4 py-2 cursor-pointer"
+                              >
+                                Choose File
+                              </Label>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <FileText className="w-5 h-5 text-cyan-600 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium truncate">{selectedFile.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                                    </p>
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleRemoveFile}
+                                  className="flex-shrink-0"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              {previewUrl && (
+                                <div className="border rounded-lg p-4">
+                                  <img
+                                    src={previewUrl || "/placeholder.svg"}
+                                    alt="Payment proof preview"
+                                    className="w-full h-auto max-h-64 object-contain rounded"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                {paymentMethod !== "Sponsored" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label htmlFor="bank-name">Bank Name *</Label>
-                      <Input
-                        id="bank-name"
-                        placeholder="e.g., Bank Syariah Indonesia"
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        required
-                      />
+                {/* Sponsored Payment Instructions */}
+                {paymentMethod === "Sponsored" && (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200">
+                      <div className="flex items-start gap-3 mb-4">
+                        <div className="p-2 bg-purple-100 rounded-lg">
+                          <Gift className="w-5 h-5 text-purple-700" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-purple-900">Sponsored Registration</h4>
+                          <p className="text-sm text-purple-700">
+                            Your registration is covered by a sponsor or benefactor
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-4 border border-purple-100">
+                        <ul className="space-y-2 text-sm text-purple-800">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                            <span>No payment proof required</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                            <span>Just enter your sponsor's name below</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-purple-600 flex-shrink-0 mt-0.5" />
+                            <span>Your registration will be verified within 1-2 business days</span>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
 
+                    {/* Sponsor Name Input */}
                     <div className="space-y-2">
-                      <Label htmlFor="account-name">Account Name *</Label>
+                      <Label htmlFor="sponsor-name" className="text-base font-medium">
+                        Sponsor / Benefactor Name *
+                      </Label>
                       <Input
-                        id="account-name"
-                        placeholder="Name on the account"
-                        value={accountName}
-                        onChange={(e) => setAccountName(e.target.value)}
+                        id="sponsor-name"
+                        placeholder="e.g., PT ABC Company, Dr. John Doe, Hospital Name"
+                        value={sponsorName}
+                        onChange={(e) => setSponsorName(e.target.value)}
+                        className="h-12 text-base border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Enter the name of the company, organization, or individual sponsoring your registration
+                      </p>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="transaction-ref">Transaction Reference / ID *</Label>
-                      <Input
-                        id="transaction-ref"
-                        placeholder="e.g., TRX123456789"
-                        value={transactionRef}
-                        onChange={(e) => setTransactionRef(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </>
+                  </div>
                 )}
 
+                {/* Additional Notes - Shown for both payment types */}
                 <div className="space-y-2">
                   <Label htmlFor="additional-notes">Additional Notes (Optional)</Label>
                   <Textarea
@@ -585,71 +742,17 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   />
                 </div>
 
-                {paymentMethod !== "Sponsored" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="payment-proof">Payment Proof File *</Label>
-                    <div className="border-2 border-dashed border-border rounded-lg p-6 hover:border-primary/50 transition-colors">
-                      {!selectedFile ? (
-                        <div className="text-center">
-                          <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-                          <p className="text-sm text-muted-foreground mb-2">
-                            Upload payment receipt or transfer confirmation
-                          </p>
-                          <p className="text-xs text-muted-foreground mb-4">
-                            Supported formats: JPG, PNG only (Max 5MB)
-                          </p>
-                          <Input
-                            id="payment-proof"
-                            type="file"
-                            accept="image/jpeg,image/jpg,image/png"
-                            onChange={handleFileChange}
-                            className="hidden"
-                          />
-                          <Label
-                            htmlFor="payment-proof"
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
-                          >
-                            Choose File
-                          </Label>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between p-3 bg-muted rounded-md">
-                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                              <FileText className="w-5 h-5 text-primary flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium truncate">{selectedFile.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={handleRemoveFile}
-                              className="flex-shrink-0"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                          {previewUrl && (
-                            <div className="border rounded-lg p-4">
-                              <img
-                                src={previewUrl || "/placeholder.svg"}
-                                alt="Payment proof preview"
-                                className="w-full h-auto max-h-64 object-contain rounded"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <Button onClick={handleSubmit} disabled={isUploading} className="w-full" size="lg">
+                {/* Submit Button */}
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isUploading}
+                  className={`w-full h-12 text-base ${
+                    paymentMethod === "Sponsored"
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "bg-cyan-600 hover:bg-cyan-700"
+                  }`}
+                  size="lg"
+                >
                   {isUploading ? (
                     <>
                       <Upload className="w-4 h-4 mr-2 animate-pulse" />
@@ -661,7 +764,11 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                     </>
                   ) : (
                     <>
-                      <Upload className="w-4 h-4 mr-2" />
+                      {paymentMethod === "Sponsored" ? (
+                        <Gift className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
                       {paymentMethod === "Sponsored"
                         ? "Submit Sponsored Registration"
                         : isResubmitting

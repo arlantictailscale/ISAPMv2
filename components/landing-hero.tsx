@@ -11,24 +11,24 @@ const carouselImages = [
     alt: "Doctor performing fluoroscopy-guided pain intervention procedure",
   },
   {
-    src: "/images/0ebee122-eefd-434e-b4c1-95495c511e6d.jpg",
-    alt: "Medical professional in lead vest preparing for interventional procedure",
+    src: "/images/8bf2d59c-4dcf-416b-87bc-8f7db7292309.jpg",
+    alt: "Medical staff in protective vests performing fluoroscopy-guided procedure",
   },
   {
     src: "/images/1f37ffa6-b328-43d2-8d17-bc0ccb42dba2.jpg",
     alt: "Medical team performing fluoroscopy-guided intervention together",
   },
   {
-    src: "/images/dsc07220.jpg",
-    alt: "Ultrasound-guided training session with Mindray equipment",
+    src: "/images/dsc07187.jpg",
+    alt: "Healthcare professional operating ultrasound machine during training workshop",
+  },
+  {
+    src: "/images/dsc07185.jpg",
+    alt: "Medical workshop participants practicing with catheter equipment",
   },
   {
     src: "/images/dsc07258.jpg",
-    alt: "Hands-on ultrasound training with healthcare professionals",
-  },
-  {
-    src: "/images/dsc07195.jpg",
-    alt: "Medical conference networking and group discussion",
+    alt: "Hands-on ultrasound training session with healthcare professionals",
   },
 ]
 

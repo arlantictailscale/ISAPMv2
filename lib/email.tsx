@@ -5,8 +5,6 @@ import {
   type InvoiceData,
   type InvoiceItem,
   formatRupiah,
-  formatDateIndonesian,
-  formatTerbilang,
 } from "@/lib/invoice/generate-invoice"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -14,34 +12,45 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export async function sendWelcomeEmail(toEmail: string, userName?: string) {
   try {
     const displayName = userName || toEmail.split("@")[0] || "User"
+    const logoUrl = "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/1.png"
 
     await resend.emails.send({
       from: "ISAPM 2026 <noreply@isapm2026.org>",
+      subject: "Welcome to ISAPM 8th National Meeting 2026!",
       to: toEmail,
-      subject: "Welcome to ISAPM 2026!",
       html: `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: #00A9E0; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 0; }
+              .header { background: linear-gradient(135deg, #00A9E0 0%, #0088B8 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .logo-container { margin-bottom: 20px; }
+              .logo { max-width: 280px; height: auto; }
               .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-              .button { display: inline-block; background: #EF3340; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-              .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+              .button { display: inline-block; background: #EF3340; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+              .footer { text-align: center; padding: 25px 20px; color: #666; font-size: 12px; border-top: 1px solid #e2e8f0; }
+              .footer-brand { font-weight: 600; color: #1e293b; margin-bottom: 8px; }
               ul { padding-left: 20px; }
-              li { margin: 8px 0; }
+              li { margin: 10px 0; }
+              .highlight { color: #00A9E0; font-weight: 600; }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <h1 style="margin: 0; font-size: 28px;">Welcome to ISAPM 2026!</h1>
+                <!-- Added logo in header -->
+                <div class="logo-container">
+                  <img src="${logoUrl}" alt="ISAPM 2026" class="logo" style="max-width: 280px; height: auto;" />
+                </div>
+                <!-- Updated greeting text -->
+                <h1 style="margin: 0; font-size: 24px; font-weight: 700;">Welcome to ISAPM 8th National Meeting 2026!</h1>
               </div>
               <div class="content">
-                <p style="font-size: 16px;">Dear ${displayName},</p>
+                <p style="font-size: 16px;">Dear <span class="highlight">${displayName}</span>,</p>
                 <p style="font-size: 16px;">Thank you for registering with ISAPM 2026. Your account has been successfully created!</p>
                 <p style="font-size: 16px; font-weight: bold;">You can now:</p>
                 <ul style="font-size: 15px;">
@@ -51,15 +60,18 @@ export async function sendWelcomeEmail(toEmail: string, userName?: string) {
                   <li>Manage your profile</li>
                 </ul>
                 <p style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/dashboard" class="button">Go to Dashboard</a>
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://isapm2026.org"}/dashboard" class="button" style="color: white;">Go to Dashboard</a>
                 </p>
                 <p style="font-size: 16px;">If you have any questions, feel free to contact us.</p>
                 <p style="font-size: 16px;">Best regards,<br><strong>ISAPM 2026 Team</strong></p>
               </div>
               <div class="footer">
+                <div class="footer-brand">ISAPM 8th National Meeting 2026</div>
                 <p><strong>The Indonesian Society of Anesthesiology for Pain Management</strong></p>
-                <p>8th National Meeting - ISAPM 2026</p>
-                <p>Email: admin@isapm2026.org | Phone: +6289602626709 (WhatsApp)</p>
+                <p style="margin-top: 12px;">
+                  Email: <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none;">admin@isapm2026.org</a> | 
+                  Phone: <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none;">+6289602626709</a> (WhatsApp)
+                </p>
               </div>
             </div>
           </body>
@@ -767,7 +779,7 @@ export async function sendPaymentConfirmationWithInvoice({
       invoiceNumber,
       invoiceDate: paymentVerifiedAt,
       customerName: userName,
-      customerEmail: email, // Added customerEmail
+      customerEmail: email,
       customerPhone,
       customerInstitution,
       items,
@@ -868,7 +880,6 @@ export async function sendPaymentConfirmationWithInvoice({
               .items-table td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
               .total-box { background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColorDark} 100%); color: white; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; }
               .total-amount { font-size: 28px; font-weight: 700; margin: 10px 0; }
-              .terbilang { font-style: italic; font-size: 12px; opacity: 0.9; }
               .info-box { background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid ${primaryColor}; }
               .info-box h3 { font-size: 14px; color: ${isSponsored ? "#6d28d9" : "#0369a1"}; margin-top: 0; }
               .info-box ul { margin: 10px 0; padding-left: 20px; color: ${isSponsored ? "#5b21b6" : "#0c4a6e"}; }
@@ -884,8 +895,8 @@ export async function sendPaymentConfirmationWithInvoice({
           <body>
             <div class="container">
               <div class="header">
-                <h1>${isSponsored ? "✓ Registration Confirmed!" : "✓ Payment Confirmed!"}</h1>
-                <p>${isSponsored ? "Your sponsored registration is complete" : "Thank you for your payment"}</p>
+                <h1>${isSponsored ? "✓ Registration Confirmed" : "✓ Payment Confirmed"}</h1>
+                <p>${isSponsored ? "Your sponsored registration is complete" : "Your payment has been verified"}</p>
               </div>
               <div class="content">
                 <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>
@@ -893,20 +904,20 @@ export async function sendPaymentConfirmationWithInvoice({
                 ${isSponsored ? `<div class="sponsor-badge"><span>🎁</span><span>Sponsored Registration</span></div>` : ""}
                 
                 <div class="alert">
-                  <div class="alert-icon">🎉</div>
-                  <div class="alert-title">${isSponsored ? "Sponsored Registration Verified!" : "Payment Successfully Verified!"}</div>
+                  <div class="alert-icon">${isSponsored ? "🎁" : "🎉"}</div>
+                  <div class="alert-title">${isSponsored ? "Registration Confirmed!" : "Payment Successfully Verified!"}</div>
                   <div class="alert-text">
                     ${
                       isSponsored
-                        ? "Your sponsored registration has been verified and approved by our admin team. Your registration is now complete and confirmed."
-                        : "Your payment has been verified by our admin team. Your registration is now complete and confirmed. Please find your official invoice/receipt attached to this email."
+                        ? "Your sponsored registration has been verified and confirmed."
+                        : "Your payment has been verified by our admin team. Your registration is now complete."
                     }
                   </div>
                 </div>
 
                 <div class="invoice-info">
                   <div class="invoice-row">
-                    <span class="invoice-label">${isSponsored ? "Certificate Number" : "Invoice Number"}</span>
+                    <span class="invoice-label">Invoice Number</span>
                     <span class="invoice-value" style="font-family: monospace;">${invoiceNumber}</span>
                   </div>
                   <div class="invoice-row">
@@ -914,16 +925,12 @@ export async function sendPaymentConfirmationWithInvoice({
                     <span class="invoice-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
                   </div>
                   <div class="invoice-row">
-                    <span class="invoice-label">${isSponsored ? "Approval Date" : "Payment Date"}</span>
-                    <span class="invoice-value">${formatDateIndonesian(paymentVerifiedAt)}</span>
+                    <span class="invoice-label">Date</span>
+                    <span class="invoice-value">${paymentVerifiedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
                   </div>
                   <div class="invoice-row">
                     <span class="invoice-label">Status</span>
-                    <span class="invoice-value" style="color: #10b981;">✓ ${isSponsored ? "Approved" : "Verified"}</span>
-                  </div>
-                  <div class="invoice-row">
-                    <span class="invoice-label">Registration Type</span>
-                    <span class="invoice-value" style="color: ${isSponsored ? "#7c3aed" : "#1e293b"};">${isSponsored ? "Sponsored" : "Regular"}</span>
+                    <span class="invoice-value" style="color: ${isSponsored ? "#8b5cf6" : "#10b981"};">✓ ${isSponsored ? "Confirmed" : "Verified"}</span>
                   </div>
                 </div>
 
@@ -931,7 +938,7 @@ export async function sendPaymentConfirmationWithInvoice({
                   itemsSummary
                     ? `
                 <div style="margin: 25px 0;">
-                  <h3 style="font-size: 16px; color: #1a202c; margin-bottom: 10px;">Your Registered Items:</h3>
+                  <h3 style="font-size: 16px; color: #1a202c; margin-bottom: 10px;">Your Items:</h3>
                   <ul style="margin: 0; padding-left: 20px;">
                     ${itemsSummary}
                   </ul>
@@ -940,32 +947,16 @@ export async function sendPaymentConfirmationWithInvoice({
                     : ""
                 }
 
-                <div class="section-title">${isSponsored ? "Registration Details" : "Invoice Details"}</div>
-                <table class="items-table">
-                  <thead>
-                    <tr>
-                      <th style="text-align: center; width: 40px;">No</th>
-                      <th>Description</th>
-                      <th style="text-align: right;">Unit Price</th>
-                      <th style="text-align: right;">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${itemsHtml}
-                  </tbody>
-                </table>
-
                 <div class="total-box">
-                  <div style="font-size: 14px; opacity: 0.9;">${isSponsored ? "Total Registration Value" : "Total Amount Paid"}</div>
-                  <div class="total-amount">${formatRupiah(totalAmount)}</div>
-                  <div class="terbilang">${formatTerbilang(totalAmount)}</div>
+                  <div style="font-size: 14px; opacity: 0.9;">Total Amount</div>
+                  <div class="total-amount">${currency} ${totalAmount.toLocaleString()}</div>
                 </div>
 
                 ${
                   pdfBase64
                     ? `
                 <div class="attachment-notice">
-                  <p>📎 <strong>Attachment:</strong> Your official ${isSponsored ? "registration certificate" : "invoice"} (PDF) is attached to this email.</p>
+                  <p>📎 Your official ${isSponsored ? "registration certificate" : "invoice/receipt"} is attached to this email as a PDF.</p>
                 </div>
                 `
                     : ""
@@ -974,21 +965,17 @@ export async function sendPaymentConfirmationWithInvoice({
                 <div class="info-box">
                   <h3>What's Next?</h3>
                   <ul>
-                    <li>Access your verified bookings in your dashboard</li>
+                    <li>Access your confirmed registration in your dashboard</li>
                     <li>Download your conference materials and badges</li>
                     <li>Check your email for additional event information</li>
-                    <li>Join us on April 16-18, 2026 at Harris Hotel Malang!</li>
+                    <li>Join us on April 16-18, 2026 at The Singhasari Resort!</li>
                   </ul>
                 </div>
 
                 <div style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-events" class="button">View My Events</a>
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: white;">Go to Dashboard</a>
                 </div>
 
-                <p style="font-size: 15px; color: #475569; margin-top: 25px;">
-                  We look forward to seeing you at ISAPM 2026! If you have any questions, feel free to reach out.
-                </p>
-                
                 <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
                   Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: ${primaryColor}; text-decoration: none;">admin@isapm2026.org</a> 
                   or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: ${primaryColor}; text-decoration: none;">+6289602626709</a>
@@ -1000,7 +987,7 @@ export async function sendPaymentConfirmationWithInvoice({
                 </p>
               </div>
               <div class="footer">
-                <div class="footer-brand">ISAPM 2026 National Meeting</div>
+                <div class="footer-brand">ISAPM 8th National Meeting 2026</div>
                 <div>The Indonesian Society of Anesthesiology for Pain Management</div>
                 <div style="margin-top: 12px;">
                   <a href="mailto:admin@isapm2026.org" style="color: ${primaryColor}; text-decoration: none; margin: 0 10px;">Email</a> •

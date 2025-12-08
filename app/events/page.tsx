@@ -11,8 +11,51 @@ import Link from "next/link"
 import { getPricingByEventId, getWorkshopPricing, formatPrice, EARLY_BIRD_DEADLINE } from "@/lib/data/event-pricing"
 import { EventPricingCard, PricingBadge } from "@/components/event-pricing-card"
 import { isBefore, parseISO } from "date-fns"
-import Image from "next/image" // Import Image component
-import { MapPin } from "lucide-react" // Added MapPin icon for City Tour tab
+import Image from "next/image"
+import { MapPin } from "lucide-react"
+
+const tabHeroImages = {
+  program: {
+    src: "/images/dsc07187.jpg",
+    alt: "CPD Courses - Ultrasound guided training session",
+    title: "CPD Courses",
+    subtitle: "Comprehensive Pain Management Education",
+    description: "Enhance your clinical expertise through evidence-based continuing professional development",
+    color: "purple",
+  },
+  workshop: {
+    src: "/images/8bf2d59c-4dcf-416b-87bc-8f7db7292309.jpg",
+    alt: "Workshops - Hands-on fluoroscopy guided procedure",
+    title: "Hands-on Workshops",
+    subtitle: "Practical Skills Development",
+    description: "Master interventional pain techniques with expert-guided hands-on training",
+    color: "orange",
+  },
+  symposium: {
+    src: "/images/dsc07258.jpg",
+    alt: "Symposium - Interactive ultrasound demonstration",
+    title: "Scientific Symposium",
+    subtitle: "Cutting-edge Research & Knowledge Exchange",
+    description: "Engage with leading experts and discover the latest advances in pain management",
+    color: "cyan",
+  },
+  congress: {
+    src: "/images/dsc07185.jpg",
+    alt: "ISAPM Congress - Professional medical discussion",
+    title: "ISAPM Congress",
+    subtitle: "National Meeting & Professional Assembly",
+    description: "Join fellow professionals in shaping the future of pain management in Indonesia",
+    color: "emerald",
+  },
+  "city-tour": {
+    src: "/images/ef470f04-429e-4b61-82b3-35d27ae9d9a6.jpg",
+    alt: "City Tour - Professional networking",
+    title: "City Tour",
+    subtitle: "Explore Beautiful Malang",
+    description: "Experience the charm and culture of Malang with fellow conference attendees",
+    color: "rose",
+  },
+}
 
 export default function EventsPage() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
@@ -429,111 +472,111 @@ export default function EventsPage() {
     date: "Friday, April 17, 2026",
     agenda: [
       { time: "07.30 – 08.00", activity: "Re-Registration + Onsite Registration", speaker: "Committee" },
-      { time: "08.00 – 08.05", activity: "Opening Ceremony", speaker: "Committee" },
-      { time: "08.05 – 08.25", activity: "Ethics and Patient Safety in Pain Management", speaker: "TBD" },
+      { time: "08.00 – 08:05", activity: "Opening Ceremony", speaker: "Committee" },
+      { time: "08:05 – 08:25", activity: "Ethics and Patient Safety in Pain Management", speaker: "TBD" },
       {
-        time: "08.25 – 08.45",
+        time: "08:25 – 08:45",
         activity: "Realizing Integrated Pain Services: Regulatory Challenges and Implementation in Health Facilities",
         speaker: "TBD",
       },
       {
-        time: "08.45 – 09.05",
+        time: "08:45 – 09:05",
         activity:
           "The Role of BPJS Kesehatan in Ensuring Access, Quality, and Efficiency of Pain Services in Indonesia",
         speaker: "TBD",
       },
       {
-        time: "09.05– 09.25",
+        time: "09:05– 09:25",
         activity:
           "Bridging Policy and Practice: Synergy of the Anesthesia Profession with the Ministry of Health and BPJS in Recognition of Pain Services",
         speaker: "TBD",
       },
-      { time: "09.25– 09.55", activity: "DISCUSSION", speaker: "-" },
-      { time: "09.55– 10.15", activity: "Industrial Symposium", speaker: "TBD" },
+      { time: "09:25– 09:55", activity: "DISCUSSION", speaker: "-" },
+      { time: "09:55– 10:15", activity: "Industrial Symposium", speaker: "TBD" },
       {
-        time: "10.15 – 10.35",
+        time: "10:15 – 10:35",
         activity: "Multimodal Analgesia for Acute Postoperative Pain: Current Evidence and Future Directions",
         speaker: "TBD",
       },
       {
-        time: "10.35 - 10.55",
+        time: "10:35 - 10:55",
         activity: "Preventing Transition from Acute to Chronic Post-Surgical Pain: Early Recognition and Intervention",
         speaker: "TBD",
       },
       {
-        time: "10.55 – 11.15",
+        time: "10:55 – 11:15",
         activity: "Integration of Acute Pain Service (APS) in Perioperative Care in Hospitals",
         speaker: "TBD",
       },
-      { time: "11.15 – 11.25", activity: "DISCUSSION", speaker: "-" },
+      { time: "11:15 – 11:25", activity: "DISCUSSION", speaker: "-" },
       {
-        time: "11.25 -11.45",
+        time: "11:25 -11:45",
         activity:
           "Ultrasound-Guided Pain Interventions: Evidence-Based Updates, Clinical Pearls, and Future Directions",
         speaker: "TBD",
       },
       {
-        time: "11.45-12.05",
+        time: "11:45-12:05",
         activity: "Steroid Injections in Pain Medicine: Still Relevant or Outdated?",
         speaker: "TBD",
       },
       {
-        time: "12.05-12.25",
+        time: "12:05-12:25",
         activity: "Sugar Heals: Understanding the Science Behind Dextrose Prolotherapy in Chronic Pain Management",
         speaker: "TBD",
       },
-      { time: "12.25-12.35", activity: "DISCUSSION", speaker: "-" },
-      { time: "12.35 – 13.15", activity: "Break and Lunch Symposium", speaker: "TBD" },
+      { time: "12:25-12:35", activity: "DISCUSSION", speaker: "-" },
+      { time: "12:35 – 13:15", activity: "Break and Lunch Symposium", speaker: "TBD" },
       {
-        time: "13.15-13.35",
+        time: "13:15-13:35",
         activity: "Regenerative Pain Medicine: From Biologic Science to Ultrasound-Guided Clinical Application",
         speaker: "TBD",
       },
       {
-        time: "13.35– 13.55",
+        time: "13:35– 13:55",
         activity:
           "Secretome and Exosome-Based Therapy: Evidence, Mechanism, and Clinical Potential in Pain and Tissue Repair",
         speaker: "TBD",
       },
       {
-        time: "13.55– 14.15",
+        time: "13:55– 14:15",
         activity:
           "Comparative Effectiveness of Regenerative Pain Interventions: PRP, Stem Cell, and Biologic Derivatives in Chronic Pain Management",
         speaker: "TBD",
       },
-      { time: "14.15 – 14.25", activity: "DISCUSSION", speaker: "-" },
-      { time: "14.25– 14.45", activity: "Industrial Symposium 2", speaker: "TBD" },
+      { time: "14:15 – 14:25", activity: "DISCUSSION", speaker: "-" },
+      { time: "14:25– 14:45", activity: "Industrial Symposium 2", speaker: "TBD" },
       {
-        time: "14.45 – 15.05",
+        time: "14:45 – 15:05",
         activity:
           "Radiofrequency Interventions for Chronic Pain: Current Evidence, Expanding Indications, and Long-Term Outcomes",
         speaker: "TBD",
       },
       {
-        time: "15.05 – 15.25",
+        time: "15:05 – 15:25",
         activity: "From Needles to Neuromodulation: Advances in Minimally Invasive Pain Procedures",
         speaker: "TBD",
       },
       {
-        time: "15.25-15.45",
+        time: "15:25-15:45",
         activity:
           "Hybrid Regenerative-Radiofrequency Techniques: Combining Biologic and Thermal Modulation for Enhanced Pain Relief",
         speaker: "TBD",
       },
-      { time: "15.45-15.55", activity: "DISCUSSION", speaker: "-" },
+      { time: "15:45-15:55", activity: "DISCUSSION", speaker: "-" },
       {
-        time: "15.55-16.15",
+        time: "15:55-16:15",
         activity: "Interventional Pain Procedures in Palliative Care: Balancing Efficacy, Safety, and Quality of Life",
         speaker: "TBD",
       },
       {
-        time: "16.15-16.35",
+        time: "16:15-16:35",
         activity:
           "Integrated Palliative Pain Management: Bridging Pharmacologic, Interventional, and Psychosocial Strategies",
         speaker: "TBD",
       },
-      { time: "16.35-16.45", activity: "DISCUSSION", speaker: "-" },
-      { time: "16.45-17.00", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
+      { time: "16:35-16:45", activity: "DISCUSSION", speaker: "-" },
+      { time: "16:45-17:00", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
     ],
   }
 
@@ -580,23 +623,96 @@ export default function EventsPage() {
     return "bg-card border-border hover:border-primary/50"
   }
 
+  const [activeTab, setActiveTab] = useState<keyof typeof tabHeroImages>("program")
+  const currentHero = tabHeroImages[activeTab]
+
+  const getGradientColors = (color: string) => {
+    const colors: Record<string, { from: string; to: string; overlay: string }> = {
+      purple: { from: "from-purple-900/90", to: "to-purple-600/70", overlay: "bg-purple-500/20" },
+      orange: { from: "from-orange-900/90", to: "to-orange-600/70", overlay: "bg-orange-500/20" },
+      cyan: { from: "from-cyan-900/90", to: "to-cyan-600/70", overlay: "bg-cyan-500/20" },
+      emerald: { from: "from-emerald-900/90", to: "to-emerald-600/70", overlay: "bg-emerald-500/20" },
+      rose: { from: "from-rose-900/90", to: "to-rose-600/70", overlay: "bg-rose-500/20" },
+    }
+    return colors[color] || colors.purple
+  }
+
+  const gradientColors = getGradientColors(currentHero.color)
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background to-muted/20">
       <Navigation />
 
-      <main className="flex-1 pt-24">
-        <div className="container mx-auto px-4 py-12">
-          <div className="text-center mb-12 space-y-4">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground font-display">
-              Events & Programs
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              Explore our comprehensive program of CPD courses, hands-on workshops, and symposium sessions
-            </p>
+      <main className="flex-1 pt-20">
+        <section className="relative h-[50vh] min-h-[400px] max-h-[500px] overflow-hidden">
+          {/* Background Image with transition */}
+          <div className="absolute inset-0 transition-opacity duration-700">
+            <Image
+              src={currentHero.src || "/placeholder.svg"}
+              alt={currentHero.alt}
+              fill
+              className="object-cover object-center"
+              priority
+              sizes="100vw"
+            />
           </div>
 
+          {/* Gradient Overlay */}
+          <div
+            className={`absolute inset-0 bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} transition-colors duration-700`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+
+          {/* Decorative Elements */}
+          <div
+            className={`absolute top-20 right-10 w-64 h-64 ${gradientColors.overlay} rounded-full blur-3xl opacity-60 transition-colors duration-700`}
+          />
+          <div
+            className={`absolute bottom-10 left-10 w-48 h-48 ${gradientColors.overlay} rounded-full blur-3xl opacity-40 transition-colors duration-700`}
+          />
+
+          {/* Hero Content */}
+          <div className="relative z-10 container mx-auto px-4 h-full flex flex-col justify-center">
+            <div className="max-w-3xl space-y-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium">
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                April 16-19, 2026 • Malang, Indonesia
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white font-display leading-tight">
+                {currentHero.title}
+              </h1>
+              <p className="text-xl md:text-2xl text-white/90 font-medium">{currentHero.subtitle}</p>
+              <p className="text-base md:text-lg text-white/80 max-w-2xl leading-relaxed">{currentHero.description}</p>
+              <div className="flex flex-wrap gap-4 pt-4">
+                <Button asChild size="lg" className="bg-white text-foreground hover:bg-white/90 shadow-lg">
+                  <Link href="/register">
+                    <Ticket className="mr-2 h-5 w-5" />
+                    Register Now
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  size="lg"
+                  className="border-white/30 text-white hover:bg-white/10 backdrop-blur-sm bg-transparent"
+                >
+                  <Link href="#schedule">
+                    View Schedule
+                    <ChevronRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div id="schedule" className="container mx-auto px-4 py-12">
           <div className="max-w-7xl mx-auto">
-            <Tabs defaultValue="program" className="w-full">
+            <Tabs
+              defaultValue="program"
+              className="w-full"
+              onValueChange={(value) => setActiveTab(value as keyof typeof tabHeroImages)}
+            >
               <div className="flex justify-center mb-12">
                 <TabsList className="grid grid-cols-2 md:grid-cols-5 h-auto md:h-14 bg-card border border-border shadow-sm p-1 rounded-xl">
                   <TabsTrigger

@@ -1,14 +1,32 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/cart/utils"
-import { formatDistanceToNow } from "date-fns"
-import { CheckCircle, XCircle, Eye, Clock, RefreshCw, FileX, AlertCircle, CheckCircle2, Gift } from "lucide-react"
+import { formatDistanceToNow, format } from "date-fns"
+import {
+  CheckCircle,
+  XCircle,
+  Eye,
+  Clock,
+  RefreshCw,
+  FileX,
+  AlertCircle,
+  CheckCircle2,
+  Gift,
+  Search,
+  Filter,
+  Calendar,
+  DollarSign,
+  FileText,
+  Copy,
+  Building,
+  Hash,
+} from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import Navigation from "@/components/navigation"
@@ -24,6 +42,8 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getBadgeColors, BADGE_COLORS } from "@/lib/badge-colors"
 
 interface Payment {
@@ -43,6 +63,9 @@ interface Payment {
   created_at: string
   updated_at: string
   sponsor_name: string | null
+  invoice_number: string | null
+  verified_at: string | null
+  verified_by: string | null
   orders: {
     id: string
     full_name: string
@@ -52,6 +75,8 @@ interface Payment {
     currency: string
     status: string
     created_at: string
+    institution: string | null
+    position: string | null
     order_items: Array<{
       id: string
       event_label: string
@@ -79,22 +104,22 @@ export default function PaymentValidationPage() {
   const [error, setError] = useState<string | null>(null)
   const { toast } = useToast()
 
+  const [searchQuery, setSearchQuery] = useState("")
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all")
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<"all" | "bank_transfer" | "sponsored">("all")
+
   useEffect(() => {
     checkAuth()
   }, [])
 
   const checkAuth = async () => {
     const supabase = createClient()
-    console.log("[v0] Checking authentication for payment validation page")
 
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    console.log("[v0] User:", user ? `${user.email} (${user.id})` : "Not logged in")
-
     if (!user) {
-      console.log("[v0] No user found, redirecting to login")
       router.push("/auth/login")
       return
     }
@@ -105,16 +130,11 @@ export default function PaymentValidationPage() {
       .eq("id", user.id)
       .single()
 
-    console.log("[v0] Profile:", profile)
-    console.log("[v0] Profile error:", profileError)
-
     if (profile?.role !== "admin") {
-      console.log("[v0] User is not admin, redirecting to dashboard")
       router.push("/dashboard")
       return
     }
 
-    console.log("[v0] User is admin, fetching payments")
     setIsAdmin(true)
     await fetchPayments()
   }
@@ -124,8 +144,6 @@ export default function PaymentValidationPage() {
     setError(null)
 
     try {
-      console.log("[v0] Starting to fetch payments...")
-
       // Fetch existing payment records
       const { data: paymentsData, error: paymentsError } = await createClient()
         .from("order_payments")
@@ -139,7 +157,6 @@ export default function PaymentValidationPage() {
         .order("created_at", { ascending: false })
 
       if (paymentsError) {
-        console.error("[v0] Error fetching payments:", paymentsError)
         setError(paymentsError.message)
         return
       }
@@ -154,7 +171,6 @@ export default function PaymentValidationPage() {
         .order("created_at", { ascending: false })
 
       if (ordersError) {
-        console.error("[v0] Error fetching orders:", ordersError)
         setError(ordersError.message)
         return
       }
@@ -179,32 +195,106 @@ export default function PaymentValidationPage() {
         rejection_reason: null,
         notes: null,
         sponsor_name: null,
+        invoice_number: null,
         verified_by: null,
         verified_at: null,
         created_at: order.created_at,
         updated_at: order.updated_at,
-        sponsor_name: null,
         orders: order,
       }))
 
       // Combine both lists
       const allPayments = [...(paymentsData || []), ...noProofPayments]
-
-      console.log("[v0] Fetched payments count:", paymentsData?.length || 0)
-      console.log("[v0] Orders without payments count:", noProofPayments.length)
-      console.log("[v0] Fetch error:", paymentsError || ordersError)
-      console.log("[v0] Payments data:", paymentsData)
-
-      console.log("[v0] Setting payments state with", allPayments.length, "items")
       setPayments(allPayments)
-      console.log("[v0] Finished fetching payments")
     } catch (err) {
-      console.error("[v0] Unexpected error:", err)
       setError("Failed to fetch payments")
     } finally {
       setLoading(false)
     }
   }
+
+  const filteredPayments = useMemo(() => {
+    let result = payments
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter((p) => {
+        const order = p.orders
+        return (
+          order?.full_name?.toLowerCase().includes(query) ||
+          order?.email?.toLowerCase().includes(query) ||
+          order?.phone?.toLowerCase().includes(query) ||
+          order?.institution?.toLowerCase().includes(query) ||
+          p.order_id?.toLowerCase().includes(query) ||
+          p.transaction_reference?.toLowerCase().includes(query) ||
+          p.invoice_number?.toLowerCase().includes(query) ||
+          p.sponsor_name?.toLowerCase().includes(query)
+        )
+      })
+    }
+
+    // Date filter
+    if (dateFilter !== "all") {
+      const now = new Date()
+      const startDate = new Date()
+
+      if (dateFilter === "today") {
+        startDate.setHours(0, 0, 0, 0)
+      } else if (dateFilter === "week") {
+        startDate.setDate(now.getDate() - 7)
+      } else if (dateFilter === "month") {
+        startDate.setMonth(now.getMonth() - 1)
+      }
+
+      result = result.filter((p) => new Date(p.created_at) >= startDate)
+    }
+
+    // Payment method filter
+    if (paymentMethodFilter !== "all") {
+      if (paymentMethodFilter === "sponsored") {
+        result = result.filter((p) => p.payment_method?.toLowerCase() === "sponsored")
+      } else {
+        result = result.filter((p) => p.payment_method?.toLowerCase() !== "sponsored")
+      }
+    }
+
+    return result
+  }, [payments, searchQuery, dateFilter, paymentMethodFilter])
+
+  const stats = useMemo(() => {
+    const pendingCount = filteredPayments.filter((p) => p.payment_status === "pending" && p.payment_proof_url).length
+    const sponsoredPendingCount = filteredPayments.filter(
+      (p) => p.payment_method?.toLowerCase() === "sponsored" && p.payment_status === "pending",
+    ).length
+    const approvedCount = filteredPayments.filter((p) => p.payment_status === "verified").length
+    const rejectedCount = filteredPayments.filter((p) => p.payment_status === "rejected").length
+    const noProofCount = filteredPayments.filter(
+      (p) =>
+        (p.payment_status === "no_proof" ||
+          (!p.payment_proof_url && p.payment_status !== "verified" && p.payment_status !== "rejected")) &&
+        p.payment_method?.toLowerCase() !== "sponsored",
+    ).length
+
+    const totalPendingAmount = filteredPayments
+      .filter((p) => p.payment_status === "pending")
+      .reduce((sum, p) => sum + (p.amount || 0), 0)
+
+    const totalApprovedAmount = filteredPayments
+      .filter((p) => p.payment_status === "verified")
+      .reduce((sum, p) => sum + (p.amount || 0), 0)
+
+    return {
+      pendingCount,
+      sponsoredPendingCount,
+      approvedCount,
+      rejectedCount,
+      noProofCount,
+      totalPendingAmount,
+      totalApprovedAmount,
+      totalNeedingAction: pendingCount + sponsoredPendingCount,
+    }
+  }, [filteredPayments])
 
   const calculateOrderTotal = (items: any[]) => {
     return items.reduce((sum, item) => {
@@ -221,10 +311,6 @@ export default function PaymentValidationPage() {
     const calculatedTotal = calculateOrderTotal(items)
     const submittedAmount = selectedPayment.amount
 
-    console.log("[v0] Calculated total:", calculatedTotal)
-    console.log("[v0] Submitted amount:", submittedAmount)
-    console.log("[v0] Difference:", Math.abs(calculatedTotal - submittedAmount))
-
     // Check if there's a significant discrepancy (more than 1 IDR due to rounding)
     if (
       Math.abs(calculatedTotal - submittedAmount) > 1 &&
@@ -240,8 +326,6 @@ export default function PaymentValidationPage() {
     }
 
     setIsProcessing(true)
-
-    console.log("[v0] Approving payment:", selectedPayment.id)
 
     const result = await approvePayment(selectedPayment.id, selectedPayment.order_id, calculatedTotal)
 
@@ -277,7 +361,6 @@ export default function PaymentValidationPage() {
     }
 
     setIsProcessing(true)
-    console.log("[v0] Rejecting payment:", selectedPayment.id)
 
     const result = await rejectPayment(selectedPayment.id, rejectionReason)
 
@@ -303,27 +386,19 @@ export default function PaymentValidationPage() {
     await fetchPayments()
   }
 
-  const pendingPayments = payments.filter((p) => p.payment_status === "pending" && p.payment_proof_url)
-  const approvedPayments = payments.filter((p) => p.payment_status === "verified")
-  const rejectedPayments = payments.filter((p) => p.payment_status === "rejected")
-  const sponsoredPayments = payments.filter(
+  // Use filtered payments for tab counts
+  const pendingPayments = filteredPayments.filter((p) => p.payment_status === "pending" && p.payment_proof_url)
+  const approvedPayments = filteredPayments.filter((p) => p.payment_status === "verified")
+  const rejectedPayments = filteredPayments.filter((p) => p.payment_status === "rejected")
+  const sponsoredPayments = filteredPayments.filter(
     (p) => p.payment_method?.toLowerCase() === "sponsored" && p.payment_status === "pending",
   )
-  const noProofPayments = payments.filter(
+  const noProofPayments = filteredPayments.filter(
     (p) =>
       (p.payment_status === "no_proof" ||
         (!p.payment_proof_url && p.payment_status !== "verified" && p.payment_status !== "rejected")) &&
       p.payment_method?.toLowerCase() !== "sponsored",
   )
-
-  console.log("[v0] Filtered payments:", {
-    total: payments.length,
-    pending: pendingPayments.length,
-    approved: approvedPayments.length,
-    rejected: rejectedPayments.length,
-    sponsored: sponsoredPayments.length,
-    noProof: noProofPayments.length,
-  })
 
   const getEventTypeBadge = (label: string) => {
     const colors = getBadgeColors("event", label)
@@ -350,6 +425,14 @@ export default function PaymentValidationPage() {
     }
   }
 
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text)
+    toast({
+      title: "Copied",
+      description: `${label} copied to clipboard`,
+    })
+  }
+
   const PaymentCard = ({ payment }: { payment: Payment }) => {
     const order = payment.orders
     const items = order?.order_items || []
@@ -362,12 +445,17 @@ export default function PaymentValidationPage() {
       <Card className="hover:shadow-lg transition-shadow">
         <CardContent className="p-6">
           <div className="space-y-4">
-            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg truncate">{order?.full_name}</h3>
                 <p className="text-sm text-muted-foreground truncate">{order?.email}</p>
                 {order?.phone && <p className="text-sm text-muted-foreground break-all">{order.phone}</p>}
+                {order?.institution && (
+                  <div className="flex items-center gap-1 mt-1">
+                    <Building className="w-3 h-3 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground truncate">{order.institution}</p>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                 {isSponsored && (
@@ -391,6 +479,38 @@ export default function PaymentValidationPage() {
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(payment.created_at), { addSuffix: true })}
                 </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 text-xs bg-muted/50 rounded-lg p-3">
+              <div className="flex items-center gap-1">
+                <Hash className="w-3 h-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Order:</span>
+                <button
+                  onClick={() => copyToClipboard(payment.order_id, "Order ID")}
+                  className="font-mono hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  {payment.order_id.slice(0, 8)}...
+                  <Copy className="w-3 h-3" />
+                </button>
+              </div>
+              {payment.invoice_number && (
+                <div className="flex items-center gap-1">
+                  <FileText className="w-3 h-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Invoice:</span>
+                  <span className="font-mono">{payment.invoice_number}</span>
+                </div>
+              )}
+              {payment.transaction_reference && (
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Ref:</span>
+                  <span className="font-mono">{payment.transaction_reference}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-muted-foreground" />
+                <span className="text-muted-foreground">Created:</span>
+                <span>{format(new Date(payment.created_at), "dd MMM yyyy HH:mm")}</span>
               </div>
             </div>
 
@@ -461,6 +581,17 @@ export default function PaymentValidationPage() {
                 </>
               )}
             </div>
+
+            {payment.payment_status === "verified" && payment.verified_at && (
+              <div className="pt-2 border-t">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex items-center gap-2 text-sm text-green-700">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>Verified on {format(new Date(payment.verified_at), "dd MMM yyyy 'at' HH:mm")}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {isSponsored && payment.payment_status === "pending" && (
               <div className="pt-2 border-t">
@@ -551,7 +682,8 @@ export default function PaymentValidationPage() {
               </div>
             )}
 
-            {payment.payment_status === "pending" && isSponsored && (
+            {/* Actions for sponsored payments */}
+            {isSponsored && payment.payment_status === "pending" && (
               <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
                 <Button
                   className="flex-1 bg-purple-600 hover:bg-purple-700"
@@ -584,471 +716,511 @@ export default function PaymentValidationPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted/30 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading payments...</p>
-        </div>
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 animate-spin" />
+            <span>Loading...</span>
+          </div>
+        </main>
+        <Footer />
       </div>
     )
   }
 
   if (!isAdmin) {
-    return null
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center">
+          <p>Access denied. Admin privileges required.</p>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col">
       <Navigation />
-      <main className="pt-24 lg:pt-20 pb-20">
-        <div className="bg-muted/30 overflow-x-hidden">
-          <div className="container mx-auto p-4 sm:p-6 max-w-full">
-            <div className="mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Payment Validation</h1>
-              <p className="text-sm sm:text-base text-muted-foreground">Review and approve submitted payment proofs</p>
+      <main className="flex-1 container mx-auto py-8 px-4">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold">Payment Validation</h1>
+              <p className="text-muted-foreground">Review and approve submitted payment proofs</p>
             </div>
+            <Button onClick={fetchPayments} variant="outline" size="sm">
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
 
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="text-center space-y-4">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                  <p className="text-muted-foreground">Loading payments...</p>
-                </div>
-              </div>
-            ) : payments.length === 0 ? (
-              <Card className="p-12">
-                <div className="text-center space-y-4">
-                  <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                    <CheckCircle className="w-8 h-8 text-muted-foreground" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Card className="bg-amber-50 border-amber-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-100 rounded-lg">
+                    <Clock className="w-5 h-5 text-amber-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">No Payments Yet</h3>
-                    <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                      There are currently no payment submissions in the system. Payments will appear here once users
-                      submit their payment proofs for orders.
-                    </p>
-                  </div>
-                  <div className="pt-4">
-                    <Button variant="outline" onClick={fetchPayments}>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Refresh
-                    </Button>
+                    <p className="text-2xl font-bold text-amber-700">{stats.totalNeedingAction}</p>
+                    <p className="text-sm text-amber-600">Needs Review</p>
                   </div>
                 </div>
-              </Card>
-            ) : (
-              // Existing tabs content
-              <div className="space-y-6">
-                <Tabs defaultValue="pending" className="w-full">
-                  <TabsList className="sticky top-16 z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 grid w-full grid-cols-3 sm:grid-cols-5 mb-6">
-                    <TabsTrigger value="pending" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">Pending</span>
-                      <span className="sm:hidden">Pend.</span>
-                      {pendingPayments.length > 0 && (
-                        <span className="ml-1 px-1.5 py-0.5 text-xs bg-yellow-500 text-white rounded-full">
-                          {pendingPayments.length}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="sponsored" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <Gift className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">Sponsored</span>
-                      <span className="sm:hidden">Spon.</span>
-                      {sponsoredPayments.length > 0 && (
-                        <span className="ml-1 px-1.5 py-0.5 text-xs bg-purple-500 text-white rounded-full">
-                          {sponsoredPayments.length}
-                        </span>
-                      )}
-                    </TabsTrigger>
-                    <TabsTrigger value="approved" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">Approved ({approvedPayments.length})</span>
-                      <span className="sm:hidden">App. ({approvedPayments.length})</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="rejected" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">Rejected ({rejectedPayments.length})</span>
-                      <span className="sm:hidden">Rej. ({rejectedPayments.length})</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="no-proof" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
-                      <FileX className="w-3 h-3 sm:w-4 sm:h-4" />
-                      <span className="hidden sm:inline">No Proof ({noProofPayments.length})</span>
-                      <span className="sm:hidden">None ({noProofPayments.length})</span>
-                    </TabsTrigger>
-                  </TabsList>
+              </CardContent>
+            </Card>
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <CheckCircle2 className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-green-700">{stats.approvedCount}</p>
+                    <p className="text-sm text-green-600">Approved</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-purple-50 border-purple-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-100 rounded-lg">
+                    <Gift className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-purple-700">{stats.sponsoredPendingCount}</p>
+                    <p className="text-sm text-purple-600">Sponsored Pending</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <DollarSign className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-lg font-bold text-blue-700">
+                      {formatCurrency(stats.totalApprovedAmount, "IDR")}
+                    </p>
+                    <p className="text-sm text-blue-600">Total Approved</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-                  <TabsContent value="pending" className="space-y-4 mt-6">
-                    {pendingPayments.length === 0 ? (
-                      <Card className="p-8">
-                        <div className="text-center space-y-2">
-                          <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="font-semibold">No Pending Payments</h3>
-                          <p className="text-sm text-muted-foreground">
-                            All submitted payments have been reviewed. Check back later for new submissions.
-                          </p>
-                        </div>
-                      </Card>
-                    ) : (
-                      pendingPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
-                    )}
-                  </TabsContent>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search by name, email, order ID, invoice, institution..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Select value={dateFilter} onValueChange={(v: any) => setDateFilter(v)}>
+                    <SelectTrigger className="w-[140px]">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Date" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Time</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="week">Last 7 Days</SelectItem>
+                      <SelectItem value="month">Last 30 Days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={paymentMethodFilter} onValueChange={(v: any) => setPaymentMethodFilter(v)}>
+                    <SelectTrigger className="w-[160px]">
+                      <Filter className="w-4 h-4 mr-2" />
+                      <SelectValue placeholder="Payment Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Methods</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="sponsored">Sponsored</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {(searchQuery || dateFilter !== "all" || paymentMethodFilter !== "all") && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>
+                    Showing {filteredPayments.length} of {payments.length} payments
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setDateFilter("all")
+                      setPaymentMethodFilter("all")
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                  <TabsContent value="sponsored" className="space-y-4 mt-6">
-                    {sponsoredPayments.length === 0 ? (
-                      <Card className="p-8">
-                        <div className="text-center space-y-2">
-                          <Gift className="w-12 h-12 text-purple-300 mx-auto mb-4" />
-                          <h3 className="font-semibold">No Pending Sponsored Registrations</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Sponsored registrations awaiting verification will appear here.
-                          </p>
-                        </div>
-                      </Card>
-                    ) : (
-                      <>
-                        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-start gap-3">
-                            <Gift className="w-5 h-5 text-purple-600 mt-0.5" />
-                            <div>
-                              <p className="font-medium text-purple-900">Sponsored Payment Validation</p>
-                              <p className="text-sm text-purple-700 mt-1">
-                                These registrations are marked as sponsored. Please verify with each sponsor before
-                                approving. No payment proof is required for sponsored registrations.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        {sponsoredPayments.map((payment) => (
-                          <PaymentCard key={payment.id} payment={payment} />
-                        ))}
-                      </>
-                    )}
-                  </TabsContent>
+          {error && (
+            <div className="bg-destructive/10 text-destructive p-4 rounded-lg flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              <p>{error}</p>
+            </div>
+          )}
 
-                  <TabsContent value="approved" className="space-y-4 mt-6">
-                    {approvedPayments.length === 0 ? (
-                      <Card className="p-8">
-                        <div className="text-center space-y-2">
-                          <CheckCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="font-semibold">No Approved Payments</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Approved payments will appear here once you verify and approve payment submissions.
-                          </p>
-                        </div>
-                      </Card>
-                    ) : (
-                      approvedPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
-                    )}
-                  </TabsContent>
+          <Tabs defaultValue="pending" className="w-full">
+            <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1">
+              <TabsTrigger value="pending" className="flex-1 min-w-[100px] data-[state=active]:bg-amber-100">
+                <Clock className="w-4 h-4 mr-2 hidden sm:inline" />
+                Pending
+                {pendingPayments.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 bg-amber-200 text-amber-800">
+                    {pendingPayments.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="sponsored" className="flex-1 min-w-[100px] data-[state=active]:bg-purple-100">
+                <Gift className="w-4 h-4 mr-2 hidden sm:inline" />
+                Sponsored
+                {sponsoredPayments.length > 0 && (
+                  <Badge variant="secondary" className="ml-2 bg-purple-200 text-purple-800">
+                    {sponsoredPayments.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="flex-1 min-w-[100px] data-[state=active]:bg-green-100">
+                <CheckCircle2 className="w-4 h-4 mr-2 hidden sm:inline" />
+                Approved ({approvedPayments.length})
+              </TabsTrigger>
+              <TabsTrigger value="rejected" className="flex-1 min-w-[100px] data-[state=active]:bg-red-100">
+                <XCircle className="w-4 h-4 mr-2 hidden sm:inline" />
+                Rejected ({rejectedPayments.length})
+              </TabsTrigger>
+              <TabsTrigger value="no_proof" className="flex-1 min-w-[100px] data-[state=active]:bg-gray-100">
+                <FileX className="w-4 h-4 mr-2 hidden sm:inline" />
+                No Proof ({noProofPayments.length})
+              </TabsTrigger>
+            </TabsList>
 
-                  <TabsContent value="rejected" className="space-y-4 mt-6">
-                    {rejectedPayments.length === 0 ? (
-                      <Card className="p-8">
-                        <div className="text-center space-y-2">
-                          <XCircle className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="font-semibold">No Rejected Payments</h3>
-                          <p className="text-sm text-muted-foreground">
-                            Rejected payments will appear here when you decline payment submissions.
-                          </p>
-                        </div>
-                      </Card>
-                    ) : (
-                      rejectedPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
-                    )}
-                  </TabsContent>
+            <TabsContent value="pending" className="mt-6">
+              {pendingPayments.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-muted-foreground">
+                    <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No pending payments to review</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {pendingPayments.map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
 
-                  <TabsContent value="no-proof" className="space-y-4 mt-6">
-                    {noProofPayments.length === 0 ? (
-                      <Card className="p-8">
-                        <div className="text-center space-y-2">
-                          <FileX className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                          <h3 className="font-semibold">No Unpaid Orders</h3>
-                          <p className="text-sm text-muted-foreground">
-                            All orders have payment proofs submitted or are being processed.
-                          </p>
-                        </div>
-                      </Card>
-                    ) : (
-                      noProofPayments.map((payment) => <PaymentCard key={payment.id} payment={payment} />)
-                    )}
-                  </TabsContent>
-                </Tabs>
+            <TabsContent value="sponsored" className="mt-6">
+              {sponsoredPayments.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-muted-foreground">
+                    <Gift className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No sponsored payments pending verification</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {sponsoredPayments.map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="approved" className="mt-6">
+              {approvedPayments.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-muted-foreground">
+                    <CheckCircle2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No approved payments yet</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {approvedPayments.map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="rejected" className="mt-6">
+              {rejectedPayments.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-muted-foreground">
+                    <XCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No rejected payments</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {rejectedPayments.map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="no_proof" className="mt-6">
+              {noProofPayments.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-muted-foreground">
+                    <FileX className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>All orders have payment proofs submitted</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {noProofPayments.map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Image Preview Dialog */}
+        <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Payment Proof</DialogTitle>
+              <DialogDescription>Review the submitted payment proof</DialogDescription>
+            </DialogHeader>
+            {selectedPayment?.payment_proof_url && (
+              <div className="relative w-full">
+                <img
+                  src={selectedPayment.payment_proof_url || "/placeholder.svg"}
+                  alt="Payment proof"
+                  className="w-full h-auto object-contain rounded-lg"
+                />
               </div>
             )}
-          </div>
-        </div>
-      </main>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setIsImageDialogOpen(false)}>
+                Close
+              </Button>
+              {selectedPayment?.payment_status === "pending" && (
+                <>
+                  <Button
+                    variant="default"
+                    onClick={() => {
+                      setIsImageDialogOpen(false)
+                      setIsApproveDialogOpen(true)
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      setIsImageDialogOpen(false)
+                      setIsRejectDialogOpen(true)
+                    }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject
+                  </Button>
+                </>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
-                ? "Verify Sponsored Registration"
-                : "Approve Payment"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
-                ? "Please confirm you have verified this sponsorship with the sponsor before approving."
-                : "Are you sure you want to approve this payment? This action will mark the order as paid and allow the user to access their event registrations."}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedPayment &&
-            (() => {
-              const order = selectedPayment.orders
-              const items = order?.order_items || []
-              const calculatedTotal = calculateOrderTotal(items)
-              const submittedAmount = selectedPayment.amount
-              const hasMismatch = Math.abs(calculatedTotal - submittedAmount) > 1
-              const isSponsored = selectedPayment.payment_method?.toLowerCase() === "sponsored"
-
-              return (
-                <div className="space-y-4 py-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                    <div className="text-muted-foreground">Order ID:</div>
-                    <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
-                    <div className="text-muted-foreground">Customer:</div>
-                    <div className="truncate">{order?.full_name}</div>
-                    {isSponsored && (
-                      <>
-                        <div className="text-muted-foreground">Sponsor:</div>
-                        <div className="font-semibold text-purple-700">{selectedPayment.sponsor_name}</div>
-                      </>
-                    )}
-                  </div>
-
-                  {isSponsored && (
-                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                      <p className="font-medium text-purple-900 mb-2">Verification Checklist:</p>
-                      <ul className="text-sm text-purple-700 space-y-2">
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 mt-0.5 text-purple-500" />
-                          <span>
-                            Confirmed sponsorship with <strong>{selectedPayment.sponsor_name}</strong>
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 mt-0.5 text-purple-500" />
-                          <span>
-                            Verified participant: <strong>{order?.full_name}</strong>
-                          </span>
-                        </li>
-                        <li className="flex items-start gap-2">
-                          <CheckCircle2 className="w-4 h-4 mt-0.5 text-purple-500" />
-                          <span>
-                            Sponsorship covers:{" "}
-                            <strong>{formatCurrency(calculatedTotal, selectedPayment.currency)}</strong>
-                          </span>
-                        </li>
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="border-t pt-4 space-y-3">
-                    <div className="text-sm font-medium">Payment Details:</div>
-
-                    {/* Order Items */}
-                    <div className="space-y-2">
-                      {items.map((item: any, idx: number) => (
-                        <div key={idx} className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            {item.item_type === "event"
-                              ? item.event_label
-                              : `${item.hotel_room_type} (${item.nights} nights)`}
-                          </span>
-                          <span className="font-medium">
-                            {formatCurrency(
-                              item.item_type === "hotel" && item.nights
-                                ? item.unit_price * item.nights
-                                : item.unit_price,
-                              selectedPayment.currency,
-                            )}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Calculated vs Submitted comparison - only for non-sponsored */}
-                    <div className="border-t pt-3 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {isSponsored ? "Total Amount:" : "Calculated Total:"}
-                        </span>
-                        <span className="font-semibold">
-                          {formatCurrency(calculatedTotal, selectedPayment.currency)}
-                        </span>
-                      </div>
-                      {!isSponsored && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Submitted Amount:</span>
-                          <span className={`font-semibold ${hasMismatch ? "text-destructive" : "text-green-600"}`}>
-                            {formatCurrency(submittedAmount, selectedPayment.currency)}
-                          </span>
-                        </div>
-                      )}
-
-                      {!isSponsored && hasMismatch && (
-                        <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md flex items-start gap-2">
-                          <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-                          <div>
-                            <div className="font-semibold">Amount Mismatch!</div>
-                            <div className="text-xs mt-1">
-                              The submitted payment amount does not match the calculated order total. Difference:{" "}
-                              {formatCurrency(Math.abs(calculatedTotal - submittedAmount), selectedPayment.currency)}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {!isSponsored && !hasMismatch && (
-                        <div className="bg-green-50 text-green-700 text-sm p-3 rounded-md flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 shrink-0" />
-                          <span>Amount verified - matches order total</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })()}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsApproveDialogOpen(false)} disabled={isProcessing}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleApprove}
-              disabled={isProcessing}
-              className={
-                selectedPayment?.payment_method?.toLowerCase() === "sponsored"
-                  ? "bg-purple-600 hover:bg-purple-700"
-                  : ""
-              }
-            >
-              {isProcessing
-                ? "Processing..."
-                : selectedPayment?.payment_method?.toLowerCase() === "sponsored"
-                  ? "Confirm Sponsorship"
+        {/* Approve Dialog */}
+        <Dialog open={isApproveDialogOpen} onOpenChange={setIsApproveDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                  ? "Verify Sponsored Registration"
                   : "Approve Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedPayment?.payment_method?.toLowerCase() === "sponsored" ? "Reject Sponsorship" : "Reject Payment"}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
-                ? "Please provide a reason for rejecting this sponsored registration. The user will be notified and can update their sponsorship details or switch to bank transfer."
-                : "Please provide a reason for rejecting this payment. The user will be notified and can resubmit with corrections."}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedPayment && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                <div className="text-muted-foreground">Order ID:</div>
-                <div className="font-mono text-xs break-all">{selectedPayment.order_id}</div>
-                {selectedPayment.payment_method?.toLowerCase() === "sponsored" ? (
+              </DialogTitle>
+              <DialogDescription>
+                {selectedPayment?.payment_method?.toLowerCase() === "sponsored" ? (
                   <>
-                    <div className="text-muted-foreground">Payment Type:</div>
-                    <div className="font-semibold text-purple-600">Sponsored</div>
-                    {selectedPayment.sponsor_name && (
-                      <>
-                        <div className="text-muted-foreground">Sponsor:</div>
-                        <div className="font-semibold">{selectedPayment.sponsor_name}</div>
-                      </>
-                    )}
+                    <span className="font-medium text-purple-700">Sponsor: {selectedPayment?.sponsor_name}</span>
+                    <br />
+                    Please confirm you have verified this sponsorship before approving.
                   </>
                 ) : (
                   <>
-                    <div className="text-muted-foreground">Amount:</div>
-                    <div className="font-semibold break-all">
-                      {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
-                    </div>
+                    Are you sure you want to approve this payment for{" "}
+                    <strong>{selectedPayment?.orders?.full_name}</strong>?
                   </>
                 )}
-                <div className="text-muted-foreground">Customer:</div>
-                <div className="truncate">{selectedPayment.orders?.full_name}</div>
+              </DialogDescription>
+            </DialogHeader>
+            {selectedPayment?.payment_method?.toLowerCase() === "sponsored" && (
+              <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 my-4">
+                <p className="text-sm font-medium text-purple-900 mb-2">Verification Checklist:</p>
+                <ul className="text-sm text-purple-700 list-disc list-inside space-y-1">
+                  <li>Sponsor has confirmed the registration</li>
+                  <li>Participant details match sponsor's request</li>
+                  <li>Sponsorship covers the total amount</li>
+                </ul>
               </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsApproveDialogOpen(false)} disabled={isProcessing}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleApprove}
+                disabled={isProcessing}
+                className={
+                  selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                    ? "bg-purple-600 hover:bg-purple-700"
+                    : ""
+                }
+              >
+                {isProcessing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                      ? "Verify & Approve"
+                      : "Approve Payment"}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-              {selectedPayment.payment_method?.toLowerCase() === "sponsored" && (
-                <div className="space-y-2">
-                  <Label className="text-muted-foreground text-xs">Common Rejection Reasons:</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[
-                      "Sponsor not verified",
-                      "Invalid sponsor information",
-                      "Sponsorship not authorized",
-                      "Duplicate registration",
-                    ].map((reason) => (
-                      <Button
-                        key={reason}
-                        variant="outline"
-                        size="sm"
-                        className="text-xs h-7 bg-transparent"
-                        onClick={() => setRejectionReason(reason)}
-                      >
-                        {reason}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+        {/* Reject Dialog */}
+        <Dialog open={isRejectDialogOpen} onOpenChange={setIsRejectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                  ? "Reject Sponsored Registration"
+                  : "Reject Payment"}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedPayment?.payment_method?.toLowerCase() === "sponsored" ? (
+                  <>
+                    <span className="font-medium text-purple-700">Sponsor: {selectedPayment?.sponsor_name}</span>
+                    <br />
+                    Please provide a reason for rejecting this sponsored registration.
+                  </>
+                ) : (
+                  <>Please provide a reason for rejecting this payment.</>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="rejection-reason">Rejection Reason *</Label>
+                <Label htmlFor="rejection-reason">Rejection Reason</Label>
                 <Textarea
                   id="rejection-reason"
                   placeholder={
-                    selectedPayment.payment_method?.toLowerCase() === "sponsored"
-                      ? "E.g., Sponsor not verified, sponsorship not authorized, etc."
-                      : "E.g., Payment proof is unclear, incorrect amount, etc."
+                    selectedPayment?.payment_method?.toLowerCase() === "sponsored"
+                      ? "e.g., Unable to verify sponsorship, sponsor not confirmed, etc."
+                      : "e.g., Payment amount mismatch, unclear payment proof, etc."
                   }
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
-                  rows={4}
-                  disabled={isProcessing}
+                  rows={3}
                 />
               </div>
+              {selectedPayment?.payment_method?.toLowerCase() === "sponsored" ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRejectionReason("Sponsorship not confirmed by sponsor")}
+                  >
+                    Sponsor not confirmed
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setRejectionReason("Invalid sponsor information")}>
+                    Invalid sponsor info
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRejectionReason("Sponsorship expired or cancelled")}
+                  >
+                    Sponsorship cancelled
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRejectionReason("Payment amount does not match")}
+                  >
+                    Amount mismatch
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setRejectionReason("Payment proof is unclear")}>
+                    Unclear proof
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setRejectionReason("Payment not found in bank statement")}
+                  >
+                    Not found
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsRejectDialogOpen(false)} disabled={isProcessing}>
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleReject} disabled={isProcessing || !rejectionReason.trim()}>
-              {isProcessing
-                ? "Rejecting..."
-                : selectedPayment?.payment_method?.toLowerCase() === "sponsored"
-                  ? "Reject Sponsorship"
-                  : "Reject Payment"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader>
-            <DialogTitle>Payment Proof</DialogTitle>
-          </DialogHeader>
-          {selectedPayment?.payment_proof_url && (
-            <div className="w-full">
-              <img
-                src={selectedPayment.payment_proof_url || "/placeholder.svg"}
-                alt="Payment proof"
-                className="w-full h-auto max-h-[70vh] object-contain rounded-lg"
-              />
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsRejectDialogOpen(false)
+                  setRejectionReason("")
+                }}
+                disabled={isProcessing}
+              >
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={handleReject} disabled={isProcessing || !rejectionReason.trim()}>
+                {isProcessing ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Reject
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </main>
       <Footer />
-    </>
+    </div>
   )
 }

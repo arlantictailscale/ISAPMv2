@@ -97,43 +97,44 @@ export default function LandingHero() {
 
       {/* Main content */}
       <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-28 md:pt-36 pb-20 min-h-screen">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[calc(100vh-12rem)]">
-          {/* Left Column - Content */}
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-8 items-center min-h-[calc(100vh-12rem)]">
+          {/* Title Section - First on mobile, stays in left column on desktop */}
           <div className="flex flex-col justify-center order-1 lg:order-1">
             {/* Main Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-8">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-0 lg:mb-8">
               <span className="bg-gradient-to-r from-slate-800 via-purple-700 to-blue-600 bg-clip-text text-transparent">
                 The Biggest Pain Management & Intervention Event in Indonesia
               </span>
             </h1>
 
-            {/* Conference description */}
-            <p className="text-slate-500 text-base max-w-md mb-8">
-              The{" "}
-              <span className="inline-flex items-baseline gap-0.5">
-                <span className="text-lg font-bold text-orange-600">8</span>
-                <span className="text-xs font-semibold text-orange-500 uppercase">th</span>
-              </span>{" "}
-              National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
-              healthcare professionals to advance patient care through knowledge sharing and collaboration.
-            </p>
+            {/* Description and CTA - Hidden on mobile, shown on desktop */}
+            <div className="hidden lg:block">
+              <p className="text-slate-500 text-base max-w-md mb-8">
+                The{" "}
+                <span className="inline-flex items-baseline gap-0.5">
+                  <span className="text-lg font-bold text-orange-600">8</span>
+                  <span className="text-xs font-semibold text-orange-500 uppercase">th</span>
+                </span>{" "}
+                National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
+                healthcare professionals to advance patient care through knowledge sharing and collaboration.
+              </p>
 
-            {/* CTA Button */}
-            <div>
-              <Link
-                href="/events"
-                className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
-              >
-                Register Now
-                <span className="flex items-center justify-center w-10 h-10 bg-purple-600 rounded-full group-hover:bg-purple-500 transition-colors">
-                  <ArrowRight className="w-5 h-5" />
-                </span>
-              </Link>
+              <div>
+                <Link
+                  href="/events"
+                  className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
+                >
+                  Register Now
+                  <span className="flex items-center justify-center w-10 h-10 bg-purple-600 rounded-full group-hover:bg-purple-500 transition-colors">
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* Right Column - Carousel */}
-          <div className="flex items-center justify-center order-2 lg:order-2 relative">
+          {/* Carousel - Second on mobile, right column on desktop */}
+          <div className="flex items-center justify-center order-2 lg:order-2 relative w-full">
             {/* Floating image container */}
             <div className="relative w-full max-w-lg lg:max-w-xl">
               {/* Glow effect behind image */}
@@ -200,6 +201,30 @@ export default function LandingHero() {
               {/* Floating accent elements */}
               <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl opacity-80 blur-sm" />
               <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-xl opacity-70 blur-sm" />
+            </div>
+          </div>
+
+          <div className="flex flex-col order-3 lg:hidden">
+            <p className="text-slate-500 text-base max-w-md mb-8">
+              The{" "}
+              <span className="inline-flex items-baseline gap-0.5">
+                <span className="text-lg font-bold text-orange-600">8</span>
+                <span className="text-xs font-semibold text-orange-500 uppercase">th</span>
+              </span>{" "}
+              National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
+              healthcare professionals to advance patient care through knowledge sharing and collaboration.
+            </p>
+
+            <div>
+              <Link
+                href="/events"
+                className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
+              >
+                Register Now
+                <span className="flex items-center justify-center w-10 h-10 bg-purple-600 rounded-full group-hover:bg-purple-500 transition-colors">
+                  <ArrowRight className="w-5 h-5" />
+                </span>
+              </Link>
             </div>
           </div>
         </div>

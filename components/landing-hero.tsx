@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, Calendar, MapPin, Building2 } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 
 export default function LandingHero() {
   return (
@@ -47,15 +47,6 @@ export default function LandingHero() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[calc(100vh-12rem)]">
           {/* Left Column - Content */}
           <div className="flex flex-col justify-center order-2 lg:order-1">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 border border-orange-200/50 rounded-full w-fit mb-6">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-bold text-orange-600">8</span>
-                <span className="text-xs font-semibold text-orange-500 uppercase">TH</span>
-              </div>
-              <span className="text-sm font-medium text-slate-700">National Meeting</span>
-            </div>
-
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-8">
               <span className="bg-gradient-to-r from-slate-800 via-purple-700 to-blue-600 bg-clip-text text-transparent">
@@ -63,26 +54,15 @@ export default function LandingHero() {
               </span>
             </h1>
 
-            {/* Sub-headlines as stacked list */}
-            <div className="space-y-3 mb-8">
-              <div className="flex items-center gap-3 text-slate-600">
-                <Calendar className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                <span className="text-lg md:text-xl font-medium">April 16-18, 2026</span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-600">
-                <Building2 className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                <span className="text-lg md:text-xl font-medium">The Singhasari Resort</span>
-              </div>
-              <div className="flex items-center gap-3 text-slate-600">
-                <MapPin className="w-5 h-5 text-purple-500 flex-shrink-0" />
-                <span className="text-lg md:text-xl font-medium">Batu, Malang, Indonesia</span>
-              </div>
-            </div>
-
             {/* Conference description */}
             <p className="text-slate-500 text-base max-w-md mb-8">
-              The 8th National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings
-              together healthcare professionals to advance patient care through knowledge sharing and collaboration.
+              The{" "}
+              <span className="inline-flex items-baseline gap-0.5">
+                <span className="text-lg font-bold text-orange-600">8</span>
+                <span className="text-xs font-semibold text-orange-500 uppercase">th</span>
+              </span>{" "}
+              National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
+              healthcare professionals to advance patient care through knowledge sharing and collaboration.
             </p>
 
             {/* CTA Button */}

@@ -2,9 +2,62 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight } from "lucide-react"
+import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+
+const carouselImages = [
+  {
+    src: "/images/ef470f04-429e-4b61-82b3-35d27ae9d9a6.jpg",
+    alt: "Doctor performing fluoroscopy-guided pain intervention procedure",
+  },
+  {
+    src: "/images/0ebee122-eefd-434e-b4c1-95495c511e6d.jpg",
+    alt: "Medical professional in lead vest preparing for interventional procedure",
+  },
+  {
+    src: "/images/1f37ffa6-b328-43d2-8d17-bc0ccb42dba2.jpg",
+    alt: "Medical team performing fluoroscopy-guided intervention together",
+  },
+  {
+    src: "/images/dsc07220.jpg",
+    alt: "Ultrasound-guided training session with Mindray equipment",
+  },
+  {
+    src: "/images/dsc07258.jpg",
+    alt: "Hands-on ultrasound training with healthcare professionals",
+  },
+  {
+    src: "/images/dsc07195.jpg",
+    alt: "Medical conference networking and group discussion",
+  },
+]
 
 export default function LandingHero() {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % carouselImages.length)
+  }, [])
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length)
+  }, [])
+
+  const goToSlide = useCallback((index: number) => {
+    setCurrentIndex(index)
+    setIsAutoPlaying(false)
+    // Resume auto-play after 5 seconds of inactivity
+    setTimeout(() => setIsAutoPlaying(true), 5000)
+  }, [])
+
+  // Auto-play effect
+  useEffect(() => {
+    if (!isAutoPlaying) return
+    const interval = setInterval(nextSlide, 4000)
+    return () => clearInterval(interval)
+  }, [isAutoPlaying, nextSlide])
+
   return (
     <section className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-purple-50/30">
       {/* Background decorative curves */}
@@ -79,23 +132,69 @@ export default function LandingHero() {
             </div>
           </div>
 
-          {/* Right Column - Visual */}
+          {/* Right Column - Carousel */}
           <div className="flex items-center justify-center order-1 lg:order-2 relative">
             {/* Floating image container */}
             <div className="relative w-full max-w-lg lg:max-w-xl">
               {/* Glow effect behind image */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-cyan-400/20 rounded-3xl blur-3xl scale-110" />
 
-              {/* Main image */}
-              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500">
-                <Image
-                  src="/hero-pain-intervention.jpg"
-                  alt="Medical professionals performing interventional pain management procedure with fluoroscopy guidance"
-                  fill
-                  className="object-cover"
-                  priority
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
+              <div
+                className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
+                onMouseEnter={() => setIsAutoPlaying(false)}
+                onMouseLeave={() => setIsAutoPlaying(true)}
+              >
+                {/* Images */}
+                {carouselImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                      index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+                    }`}
+                  >
+                    <Image
+                      src={image.src || "/placeholder.svg"}
+                      alt={image.alt}
+                      fill
+                      className="object-cover"
+                      priority={index === 0}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  </div>
+                ))}
+
+                {/* Navigation arrows */}
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110 backdrop-blur-sm"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-5 h-5 text-slate-700" />
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110 backdrop-blur-sm"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5 text-slate-700" />
+                </button>
+
+                {/* Gradient overlay at bottom for dots visibility */}
+                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent z-10 pointer-events-none" />
+
+                {/* Dots navigation */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                  {carouselImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      className={`transition-all duration-300 rounded-full ${
+                        index === currentIndex ? "w-8 h-2.5 bg-white" : "w-2.5 h-2.5 bg-white/50 hover:bg-white/80"
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
 
               {/* Floating accent elements */}

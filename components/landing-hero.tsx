@@ -47,15 +47,24 @@ export default function LandingHero() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[calc(100vh-12rem)]">
           {/* Left Column - Content */}
           <div className="flex flex-col justify-center order-2 lg:order-1">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 border border-orange-200/50 rounded-full w-fit mb-6">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xl font-bold text-orange-600">8</span>
+                <span className="text-xs font-semibold text-orange-500 uppercase">TH</span>
+              </div>
+              <span className="text-sm font-medium text-slate-700">National Meeting</span>
+            </div>
+
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-8">
               <span className="bg-gradient-to-r from-slate-800 via-purple-700 to-blue-600 bg-clip-text text-transparent">
-                The Biggest Pain Management & Intervention Event in Indonesia.
+                The Biggest Pain Management & Intervention Event in Indonesia
               </span>
             </h1>
 
             {/* Sub-headlines as stacked list */}
-            <div className="space-y-3 mb-10">
+            <div className="space-y-3 mb-8">
               <div className="flex items-center gap-3 text-slate-600">
                 <Calendar className="w-5 h-5 text-purple-500 flex-shrink-0" />
                 <span className="text-lg md:text-xl font-medium">April 16-18, 2026</span>
@@ -70,8 +79,14 @@ export default function LandingHero() {
               </div>
             </div>
 
+            {/* Conference description */}
+            <p className="text-slate-500 text-base max-w-md mb-8">
+              Join Indonesia's premier pain management conference bringing together healthcare professionals to advance
+              patient care
+            </p>
+
             {/* CTA Button */}
-            <div className="mb-8">
+            <div>
               <Link
                 href="/events"
                 className="inline-flex items-center gap-3 px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
@@ -82,21 +97,6 @@ export default function LandingHero() {
                 </span>
               </Link>
             </div>
-
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-100 to-amber-100 border border-orange-200/50 rounded-full w-fit">
-              <div className="flex items-center gap-1.5">
-                <span className="text-xl font-bold text-orange-600">8</span>
-                <span className="text-xs font-semibold text-orange-500 uppercase">TH</span>
-              </div>
-              <span className="text-sm font-medium text-slate-700">National Meeting</span>
-            </div>
-
-            {/* Conference description */}
-            <p className="mt-6 text-slate-500 text-base max-w-md">
-              Join Indonesia's premier pain management conference bringing together healthcare professionals to advance
-              patient care.
-            </p>
           </div>
 
           {/* Right Column - Visual */}
@@ -121,19 +121,6 @@ export default function LandingHero() {
               {/* Floating accent elements */}
               <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl opacity-80 blur-sm" />
               <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-xl opacity-70 blur-sm" />
-
-              {/* Stats card floating */}
-              <div className="absolute -bottom-4 -right-4 md:bottom-8 md:-right-8 bg-white rounded-2xl shadow-xl p-4 border border-slate-100">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
-                    <span className="text-white text-lg font-bold">+</span>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-slate-800">500+</div>
-                    <div className="text-sm text-slate-500">Expected Attendees</div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>

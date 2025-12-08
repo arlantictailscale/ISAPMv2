@@ -1,13 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { ShoppingCart, Loader2 } from "lucide-react"
+import { ShoppingCart, Loader2, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { addToCart } from "@/app/actions/cart"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useCart } from "@/lib/cart/cart-context"
 import type { CartItem } from "@/lib/cart/types"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface AddToCartButtonProps {
   item: Omit<CartItem, "id" | "cart_id" | "created_at">
@@ -18,22 +26,23 @@ interface AddToCartButtonProps {
 
 export function AddToCartButton({ item, variant = "outline", size = "default", className }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false)
+  const [showLoginDialog, setShowLoginDialog] = useState(false)
   const router = useRouter()
-  const { refreshCart } = useCart()
+  const { refreshCart, user, isLoading } = useCart()
 
   const handleAddToCart = async () => {
+    if (!user) {
+      setShowLoginDialog(true)
+      return
+    }
+
     setIsAdding(true)
 
     const result = await addToCart(item)
 
     if (result.error) {
       if (result.error.includes("Not authenticated")) {
-        toast.error("Please login to add items to cart", {
-          action: {
-            label: "Login",
-            onClick: () => router.push("/auth/login?redirect=/cart"),
-          },
-        })
+        setShowLoginDialog(true)
       } else {
         toast.error("Failed to add to cart", {
           description: result.error,
@@ -54,19 +63,69 @@ export function AddToCartButton({ item, variant = "outline", size = "default", c
     }
   }
 
+  const handleLogin = () => {
+    const currentPath = window.location.pathname
+    router.push(`/auth/login?redirect=${encodeURIComponent(currentPath)}`)
+  }
+
+  const handleSignUp = () => {
+    const currentPath = window.location.pathname
+    router.push(`/auth/sign-up?redirect=${encodeURIComponent(currentPath)}`)
+  }
+
   return (
-    <Button variant={variant} size={size} onClick={handleAddToCart} disabled={isAdding} className={className}>
-      {isAdding ? (
-        <>
-          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          Adding...
-        </>
-      ) : (
-        <>
-          <ShoppingCart className="w-4 h-4 mr-2" />
-          Add to Cart
-        </>
-      )}
-    </Button>
+    <>
+      <Button
+        variant={variant}
+        size={size}
+        onClick={handleAddToCart}
+        disabled={isAdding || isLoading}
+        className={className}
+      >
+        {isAdding ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Adding...
+          </>
+        ) : (
+          <>
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Add to Cart
+          </>
+        )}
+      </Button>
+
+      <Dialog open={showLoginDialog} onOpenChange={setShowLoginDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LogIn className="w-5 h-5 text-primary" />
+              Login Required
+            </DialogTitle>
+            <DialogDescription>
+              Please login or create an account to add items to your cart and complete your registration.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground">By creating an account, you&apos;ll be able to:</p>
+            <ul className="mt-2 text-sm text-muted-foreground list-disc list-inside space-y-1">
+              <li>Save items to your cart</li>
+              <li>View profession-specific pricing</li>
+              <li>Track your registrations</li>
+              <li>Access your purchase history</li>
+            </ul>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={handleSignUp} className="w-full sm:w-auto bg-transparent">
+              Create Account
+            </Button>
+            <Button onClick={handleLogin} className="w-full sm:w-auto">
+              <LogIn className="w-4 h-4 mr-2" />
+              Login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

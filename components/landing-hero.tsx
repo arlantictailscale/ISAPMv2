@@ -99,7 +99,7 @@ export default function LandingHero() {
       <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-28 md:pt-36 pb-20 min-h-screen">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-8 items-center min-h-[calc(100vh-12rem)]">
           {/* Left Column - Content */}
-          <div className="flex flex-col justify-center order-2 lg:order-1">
+          <div className="flex flex-col justify-center order-1 lg:order-1">
             {/* Main Headline */}
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-8">
               <span className="bg-gradient-to-r from-slate-800 via-purple-700 to-blue-600 bg-clip-text text-transparent">
@@ -133,7 +133,7 @@ export default function LandingHero() {
           </div>
 
           {/* Right Column - Carousel */}
-          <div className="flex items-center justify-center order-1 lg:order-2 relative">
+          <div className="flex items-center justify-center order-2 lg:order-2 relative">
             {/* Floating image container */}
             <div className="relative w-full max-w-lg lg:max-w-xl">
               {/* Glow effect behind image */}

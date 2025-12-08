@@ -744,7 +744,7 @@ export default function PaymentValidationPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
-      <main className="flex-1 container mx-auto py-8 px-4">
+      <main className="flex-1 container mx-auto pt-24 pb-20 px-4">
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

@@ -18,6 +18,7 @@ import {
   Calendar,
   CheckCircle,
   Settings,
+  Receipt,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -229,6 +230,12 @@ export default function Navigation() {
                             Cart Management (Admin)
                           </DropdownMenuItem>
                         </Link>
+                        <Link href="/admin/invoices">
+                          <DropdownMenuItem className="text-primary">
+                            <Receipt className="w-4 h-4 mr-2" />
+                            Invoice Management (Admin)
+                          </DropdownMenuItem>
+                        </Link>
                       </>
                     )}
                     <DropdownMenuSeparator />
@@ -368,6 +375,13 @@ export default function Navigation() {
                         onClick={() => setIsOpen(false)}
                       >
                         Cart Management (Admin)
+                      </Link>
+                      <Link
+                        href="/admin/invoices"
+                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
+                        onClick={() => setIsOpen(false)}
+                      >
+                        Invoice Management (Admin)
                       </Link>
                     </>
                   )}

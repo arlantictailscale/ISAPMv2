@@ -9,14 +9,17 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { ArrowLeft } from "lucide-react"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ArrowLeft, UserPlus, Mail, ArrowRight } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
+
+type ErrorType = "user_not_found" | "invalid_credentials" | "general" | null
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [errorType, setErrorType] = useState<ErrorType>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const router = useRouter()
@@ -26,6 +29,7 @@ export default function LoginPage() {
     const urlError = searchParams.get("error")
     if (urlError) {
       setError(decodeURIComponent(urlError))
+      setErrorType("general")
     }
   }, [searchParams])
 
@@ -33,40 +37,56 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     setError(null)
-
-    console.log("[v0] Starting email login for:", email)
+    setErrorType(null)
 
     try {
       const supabase = createClient()
-
-      console.log("[v0] Supabase client created, attempting sign in...")
 
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log("[v0] Sign in response:", {
-        hasData: !!data,
-        hasUser: !!data?.user,
-        hasSession: !!data?.session,
-        error: signInError,
-      })
-
       if (signInError) {
-        console.error("[v0] Sign in error:", signInError)
-        throw signInError
+        const errorMessage = signInError.message.toLowerCase()
+
+        // Check if user doesn't exist (Supabase returns "Invalid login credentials" for both cases)
+        // We need to check if email exists in the system
+        if (errorMessage.includes("invalid login credentials")) {
+          // Check if the email exists by attempting to get user by email
+          const { data: existingUser } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("email", email.toLowerCase())
+            .maybeSingle()
+
+          if (!existingUser) {
+            // User doesn't exist - show account creation prompt
+            setErrorType("user_not_found")
+            setError("No account found with this email address")
+          } else {
+            // User exists but password is wrong
+            setErrorType("invalid_credentials")
+            setError("Incorrect password. Please try again or reset your password.")
+          }
+        } else {
+          setErrorType("general")
+          setError(signInError.message)
+        }
+        return
       }
 
       if (!data.session) {
-        throw new Error("No session created. Please check your credentials.")
+        setErrorType("general")
+        setError("No session created. Please check your credentials.")
+        return
       }
 
-      console.log("[v0] Login successful, redirecting to dashboard")
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      console.error("[v0] Login error:", error)
+      console.error("Login error:", error)
+      setErrorType("general")
       if (error instanceof Error) {
         setError(error.message)
       } else {
@@ -77,19 +97,20 @@ export default function LoginPage() {
     }
   }
 
+  const handleCreateAccount = () => {
+    router.push(`/auth/sign-up?email=${encodeURIComponent(email)}`)
+  }
+
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true)
     setError(null)
-
-    console.log("[v0] Starting Google OAuth login")
+    setErrorType(null)
 
     try {
       const supabase = createClient()
 
       const redirectUrl =
         process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/api/auth/callback`
-
-      console.log("[v0] OAuth redirect URL:", redirectUrl)
 
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -102,16 +123,12 @@ export default function LoginPage() {
         },
       })
 
-      console.log("[v0] OAuth response:", { hasData: !!data, error: oauthError })
-
       if (oauthError) {
-        console.error("[v0] OAuth error:", oauthError)
         throw oauthError
       }
-
-      // OAuth redirect will happen automatically
     } catch (error: unknown) {
-      console.error("[v0] Google login error:", error)
+      console.error("Google login error:", error)
+      setErrorType("general")
       if (error instanceof Error) {
         setError(error.message)
       } else {
@@ -123,7 +140,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm px-4 sm:px-0">
         <div className="mb-4">
           <Link href="/">
             <Button variant="ghost" className="gap-2">
@@ -168,7 +185,43 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {error && (
+              {error && errorType === "user_not_found" && (
+                <div className="rounded-lg border-2 border-primary/20 bg-primary/5 p-4 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="rounded-full bg-primary/10 p-2 shrink-0">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="space-y-1">
+                      <p className="font-medium text-foreground">No account found</p>
+                      <p className="text-sm text-muted-foreground">
+                        We couldn&apos;t find an account with{" "}
+                        <span className="font-medium text-foreground">{email}</span>. Would you like to create one?
+                      </p>
+                    </div>
+                  </div>
+                  <Button type="button" className="w-full gap-2" onClick={handleCreateAccount}>
+                    <UserPlus className="h-4 w-4" />
+                    Create Account
+                    <ArrowRight className="h-4 w-4 ml-auto" />
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">Registration is quick and free</p>
+                </div>
+              )}
+
+              {error && errorType === "invalid_credentials" && (
+                <Alert variant="destructive" className="border-amber-200 bg-amber-50 text-amber-900">
+                  <AlertCircle className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-900">Incorrect password</AlertTitle>
+                  <AlertDescription className="text-amber-800">
+                    The password you entered is incorrect.{" "}
+                    <Link href="/auth/forgot-password" className="font-medium underline hover:text-amber-900">
+                      Reset your password
+                    </Link>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {error && errorType === "general" && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{error}</AlertDescription>

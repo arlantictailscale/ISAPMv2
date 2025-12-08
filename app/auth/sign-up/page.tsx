@@ -7,9 +7,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { useRouter } from 'next/navigation'
-import { useState } from "react"
-import { ArrowLeft } from 'lucide-react'
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { ArrowLeft, CheckCircle2 } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -18,7 +19,17 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
+  const [fromLogin, setFromLogin] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const emailParam = searchParams.get("email")
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam))
+      setFromLogin(true)
+    }
+  }, [searchParams])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,7 +53,7 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
-      
+
       if (data?.user?.identities?.length === 0) {
         setError("This email is already registered. Please sign in instead.")
       } else if (data?.user && !data?.session) {
@@ -66,7 +77,7 @@ export default function SignUpPage() {
 
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
         },
@@ -80,7 +91,7 @@ export default function SignUpPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm px-4 sm:px-0">
         <div className="mb-4">
           <Link href="/">
             <Button variant="ghost" className="gap-2">
@@ -95,6 +106,14 @@ export default function SignUpPage() {
             <CardDescription className="text-center">Register for ISAPM 2026 Conference</CardDescription>
           </CardHeader>
           <CardContent>
+            {fromLogin && (
+              <Alert className="mb-4 border-primary/20 bg-primary/5">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  Great! Let&apos;s create your account. We&apos;ve pre-filled your email address.
+                </AlertDescription>
+              </Alert>
+            )}
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -137,16 +156,14 @@ export default function SignUpPage() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
                 </div>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full bg-transparent"
                 onClick={handleGoogleSignUp}
                 disabled={isLoading || isGoogleLoading}
               >

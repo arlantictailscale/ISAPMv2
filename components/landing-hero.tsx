@@ -7,12 +7,12 @@ import { useState, useEffect, useCallback } from "react"
 
 const carouselImages = [
   {
-    src: "/images/ef470f04-429e-4b61-82b3-35d27ae9d9a6.jpg",
-    alt: "Doctor performing fluoroscopy-guided pain intervention procedure",
-  },
-  {
     src: "/images/8bf2d59c-4dcf-416b-87bc-8f7db7292309.jpg",
     alt: "Medical staff in protective vests performing fluoroscopy-guided procedure",
+  },
+  {
+    src: "/images/ef470f04-429e-4b61-82b3-35d27ae9d9a6.jpg",
+    alt: "Doctor performing fluoroscopy-guided pain intervention procedure",
   },
   {
     src: "/images/1f37ffa6-b328-43d2-8d17-bc0ccb42dba2.jpg",

@@ -88,13 +88,11 @@ export default function LandingHero() {
 
               {/* Main image */}
               <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500">
-                {/* Background fill for transparent PNG areas */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white via-slate-50 to-purple-50" />
                 <Image
-                  src="/hero-pain-intervention-procedure.png"
-                  alt="Medical professional performing interventional pain management procedure with fluoroscopy guidance"
+                  src="/hero-pain-intervention.jpg"
+                  alt="Medical professionals performing interventional pain management procedure with fluoroscopy guidance"
                   fill
-                  className="object-cover object-left relative z-10"
+                  className="object-cover"
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />

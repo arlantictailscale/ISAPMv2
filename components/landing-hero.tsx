@@ -87,12 +87,12 @@ export default function LandingHero() {
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-cyan-400/20 rounded-3xl blur-3xl scale-110" />
 
               {/* Main image */}
-              <div className="relative aspect-square rounded-3xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500">
+              <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl transform hover:scale-[1.02] transition-transform duration-500 bg-gradient-to-br from-slate-100 to-purple-50">
                 <Image
-                  src="/modern-3d-medical-doctor-with-tablet-holographic-i.jpg"
-                  alt="Modern healthcare professional with advanced medical technology"
+                  src="/hero-pain-intervention-procedure.png"
+                  alt="Medical professional performing interventional pain management procedure with fluoroscopy guidance"
                   fill
-                  className="object-cover"
+                  className="object-cover object-left"
                   priority
                   sizes="(max-width: 768px) 100vw, 50vw"
                 />

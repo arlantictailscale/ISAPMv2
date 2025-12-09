@@ -6,7 +6,7 @@ import type { CartItem, CartSummary } from "./types"
 export function calculateCartTotal(items: CartItem[]): CartSummary {
   const subtotal = items.reduce((sum, item) => {
     // For hotel bookings, multiply unit price by number of nights
-    // For event registrations, use unit price as-is
+    // For event registrations and webinars, use unit price as-is
     const itemTotal =
       item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
 
@@ -49,6 +49,10 @@ export function validateCartItem(item: Partial<CartItem>): boolean {
     return !!(item.hotel_room_type && item.check_in_date && item.check_out_date)
   }
 
+  if (item.item_type === "webinar") {
+    return !!(item.event_id && item.event_label)
+  }
+
   return false
 }
 
@@ -70,6 +74,10 @@ export function isDuplicateCartItem(item1: Partial<CartItem>, item2: Partial<Car
       item1.check_in_date === item2.check_in_date &&
       item1.check_out_date === item2.check_out_date
     )
+  }
+
+  if (item1.item_type === "webinar") {
+    return item1.event_id === item2.event_id
   }
 
   return false

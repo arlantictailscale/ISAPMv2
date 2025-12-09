@@ -595,7 +595,7 @@ export async function sendPaymentVerificationEmail({
                   }
                   
                   <div style="background: ${isSponsored ? "#faf5ff" : "#f0f9ff"}; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid ${themeColor};">
-                    <h3 style="font-size: 16px; color: ${isSponsored ? "#7e22ce" : "#0369a1"}; margin-top: 0;">What's Next?</h3>
+                    <h3 style="font-size: 16px; color: ${isSponsored ? "#7e22ce" : "#0c4a6e"}; margin-top: 0;">What's Next?</h3>
                     <ul style="margin: 10px 0; padding-left: 20px; color: ${isSponsored ? "#581c87" : "#0c4a6e"};">
                       <li style="margin: 8px 0;">Access your ${isSponsored ? "confirmed registration" : "verified bookings"} in your dashboard</li>
                       <li style="margin: 8px 0;">Download your conference materials and badges</li>
@@ -836,6 +836,8 @@ export async function sendPaymentConfirmationWithInvoice({
           return `<li style="margin: 8px 0; color: #475569;">Hotel: ${item.hotel_room_type}${item.nights ? ` (${item.nights} night${item.nights > 1 ? "s" : ""})` : ""}</li>`
         } else if (item.item_type === "cpd_course") {
           return `<li style="margin: 8px 0; color: #475569;">CPD Course: ${item.event_label}</li>`
+        } else if (item.item_type === "webinar") {
+          return `<li style="margin: 8px 0; color: #475569;">Webinar: ${item.event_label}</li>`
         }
         return ""
       })
@@ -885,7 +887,6 @@ export async function sendPaymentConfirmationWithInvoice({
               .info-box ul { margin: 10px 0; padding-left: 20px; color: ${isSponsored ? "#5b21b6" : "#0c4a6e"}; }
               .info-box li { margin: 8px 0; }
               .button { display: inline-block; background: linear-gradient(135deg, ${isSponsored ? "#8B5CF6 0%, #7C3AED" : "#EF3340 0%, #d92532"} 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(${isSponsored ? "139, 92, 246" : "239, 51, 64"}, 0.2); }
-              .button:hover { box-shadow: 0 6px 8px rgba(${isSponsored ? "139, 92, 246" : "239, 51, 64"}, 0.3); }
               .attachment-notice { background: #fef3c7; padding: 15px 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #f59e0b; }
               .attachment-notice p { margin: 0; font-size: 14px; color: #92400e; }
               .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; margin-top: 20px; }
@@ -896,67 +897,65 @@ export async function sendPaymentConfirmationWithInvoice({
             <div class="container">
               <div class="header">
                 <h1>${isSponsored ? "✓ Registration Confirmed" : "✓ Payment Confirmed"}</h1>
-                <p>${isSponsored ? "Your sponsored registration is complete" : "Your payment has been verified"}</p>
+                <p>${isSponsored ? "Your sponsored registration is complete" : "Your invoice is attached"}</p>
               </div>
               <div class="content">
                 <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>
                 
-                ${isSponsored ? `<div class="sponsor-badge"><span>🎁</span><span>Sponsored Registration</span></div>` : ""}
+                ${isSponsored ? '<div class="sponsor-badge"><span>🎁</span><span>Sponsored Registration</span></div>' : ""}
                 
                 <div class="alert">
                   <div class="alert-icon">${isSponsored ? "🎁" : "🎉"}</div>
-                  <div class="alert-title">${isSponsored ? "Registration Confirmed!" : "Payment Successfully Verified!"}</div>
+                  <div class="alert-title">${isSponsored ? "Sponsored Registration Confirmed!" : "Payment Successfully Verified!"}</div>
                   <div class="alert-text">
-                    ${
-                      isSponsored
-                        ? "Your sponsored registration has been verified and confirmed."
-                        : "Your payment has been verified by our admin team. Your registration is now complete."
-                    }
+                    ${isSponsored ? "Your sponsored registration has been verified and confirmed." : "Your payment has been verified by our admin team. Your registration is now complete and confirmed."}
                   </div>
                 </div>
 
                 <div class="invoice-info">
                   <div class="invoice-row">
                     <span class="invoice-label">Invoice Number</span>
-                    <span class="invoice-value" style="font-family: monospace;">${invoiceNumber}</span>
+                    <span class="invoice-value" style="font-family: monospace; color: ${primaryColor};">${invoiceNumber}</span>
                   </div>
                   <div class="invoice-row">
                     <span class="invoice-label">Order ID</span>
                     <span class="invoice-value" style="font-family: monospace;">#${orderId.substring(0, 8)}</span>
                   </div>
                   <div class="invoice-row">
-                    <span class="invoice-label">Date</span>
+                    <span class="invoice-label">Payment Date</span>
                     <span class="invoice-value">${paymentVerifiedAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
                   </div>
                   <div class="invoice-row">
-                    <span class="invoice-label">Status</span>
+                    <span class="invoice-label">Payment Status</span>
                     <span class="invoice-value" style="color: ${isSponsored ? "#8b5cf6" : "#10b981"};">✓ ${isSponsored ? "Confirmed" : "Verified"}</span>
                   </div>
                 </div>
 
-                ${
-                  itemsSummary
-                    ? `
-                <div style="margin: 25px 0;">
-                  <h3 style="font-size: 16px; color: #1a202c; margin-bottom: 10px;">Your Items:</h3>
-                  <ul style="margin: 0; padding-left: 20px;">
-                    ${itemsSummary}
-                  </ul>
-                </div>
-                `
-                    : ""
-                }
+                <div class="section-title">Order Details</div>
+                <table class="items-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 40px;">#</th>
+                      <th>Item</th>
+                      <th style="text-align: right;">Unit Price</th>
+                      <th style="text-align: right;">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${itemsHtml}
+                  </tbody>
+                </table>
 
                 <div class="total-box">
-                  <div style="font-size: 14px; opacity: 0.9;">Total Amount</div>
-                  <div class="total-amount">${currency} ${totalAmount.toLocaleString()}</div>
+                  <div style="font-size: 14px; opacity: 0.9;">${isSponsored ? "Registration Value" : "Total Paid"}</div>
+                  <div class="total-amount">${formatRupiah(totalAmount)}</div>
                 </div>
 
                 ${
                   pdfBase64
                     ? `
                 <div class="attachment-notice">
-                  <p>📎 Your official ${isSponsored ? "registration certificate" : "invoice/receipt"} is attached to this email as a PDF.</p>
+                  <p><strong>📎 Invoice Attached:</strong> Your official ${isSponsored ? "registration certificate" : "invoice/receipt"} is attached to this email as a PDF file.</p>
                 </div>
                 `
                     : ""
@@ -965,10 +964,10 @@ export async function sendPaymentConfirmationWithInvoice({
                 <div class="info-box">
                   <h3>What's Next?</h3>
                   <ul>
-                    <li>Access your confirmed registration in your dashboard</li>
-                    <li>Download your conference materials and badges</li>
-                    <li>Check your email for additional event information</li>
-                    <li>Join us on April 16-18, 2026 at The Singhasari Resort!</li>
+                    <li>Your registration is confirmed for ISAPM 2026</li>
+                    <li>Access your bookings anytime from your dashboard</li>
+                    <li>You will receive event updates and reminders</li>
+                    <li>Join us on April 16-18, 2026 at The Singhasari Hotel, Batu, Malang!</li>
                   </ul>
                 </div>
 
@@ -987,7 +986,7 @@ export async function sendPaymentConfirmationWithInvoice({
                 </p>
               </div>
               <div class="footer">
-                <div class="footer-brand">ISAPM 8th National Meeting 2026</div>
+                <div class="footer-brand">ISAPM 2026 National Meeting</div>
                 <div>The Indonesian Society of Anesthesiology for Pain Management</div>
                 <div style="margin-top: 12px;">
                   <a href="mailto:admin@isapm2026.org" style="color: ${primaryColor}; text-decoration: none; margin: 0 10px;">Email</a> •
@@ -1478,6 +1477,162 @@ export async function sendSponsoredPaymentSubmittedEmail({
     return { success: true }
   } catch (error) {
     console.error("Error sending sponsored payment submitted email:", error)
+    return { success: false, error }
+  }
+}
+
+export async function sendWebinarConfirmationEmail({
+  email,
+  userName,
+  orderId,
+  webinarTitle,
+  webinarDate,
+  amount,
+  currency,
+}: {
+  email: string
+  userName: string
+  orderId: string
+  webinarTitle: string
+  webinarDate: string
+  amount: number
+  currency: string
+}) {
+  try {
+    const logoUrl = "https://vbq2yu19cpakkhri.public.blob.vercel-storage.com/Invoice%20Logo/1.png"
+
+    await resend.emails.send({
+      from: "ISAPM 2026 <noreply@isapm2026.org>",
+      to: email,
+      subject: "Webinar Registration Confirmed - ISAPM 2026",
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+              .container { max-width: 600px; margin: 0 auto; padding: 0; }
+              .header { background: linear-gradient(135deg, #00A9E0 0%, #0088B8 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+              .logo { max-width: 280px; height: auto; margin-bottom: 20px; }
+              .content { background: #ffffff; padding: 40px 30px; border: 1px solid #e2e8f0; border-top: none; }
+              .webinar-card { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px solid #00A9E0; border-radius: 12px; padding: 24px; margin: 24px 0; }
+              .webinar-title { font-size: 18px; font-weight: 700; color: #1a202c; margin-bottom: 16px; line-height: 1.4; }
+              .webinar-detail { display: flex; align-items: center; margin: 8px 0; color: #475569; font-size: 14px; }
+              .detail-icon { width: 20px; height: 20px; margin-right: 10px; color: #00A9E0; }
+              .speakers-section { background: #f8fafc; border-radius: 8px; padding: 20px; margin: 24px 0; }
+              .speakers-title { font-size: 16px; font-weight: 600; color: #1a202c; margin-bottom: 12px; }
+              .speaker-item { padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+              .speaker-item:last-child { border-bottom: none; }
+              .speaker-org { font-size: 12px; color: #00A9E0; font-weight: 600; text-transform: uppercase; }
+              .speaker-name { font-size: 14px; color: #1a202c; margin-top: 4px; }
+              .alert { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px 20px; margin: 24px 0; border-radius: 4px; }
+              .alert-title { font-weight: 600; color: #1e40af; margin-bottom: 8px; }
+              .alert-text { color: #1e40af; font-size: 14px; }
+              .button { display: inline-block; background: linear-gradient(135deg, #EF3340 0%, #d92532 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; }
+              .footer { text-align: center; padding: 30px 20px; color: #64748b; font-size: 13px; border-top: 1px solid #e2e8f0; background: #f8fafc; border-radius: 0 0 8px 8px; }
+              .footer-brand { font-weight: 600; color: #1e293b; margin-bottom: 8px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <img src="${logoUrl}" alt="ISAPM 2026" class="logo" />
+                <h1 style="margin: 0; font-size: 24px;">Webinar Registration Confirmed!</h1>
+              </div>
+              <div class="content">
+                <p style="font-size: 16px; color: #1a202c;">Dear ${userName},</p>
+                <p style="font-size: 15px; color: #475569;">
+                  Thank you for registering for our upcoming webinar. Your payment has been verified and your registration is now confirmed.
+                </p>
+
+                <div class="webinar-card">
+                  <div class="webinar-title">${webinarTitle}</div>
+                  <div class="webinar-detail">
+                    <span class="detail-icon">📅</span>
+                    <span>${webinarDate}</span>
+                  </div>
+                  <div class="webinar-detail">
+                    <span class="detail-icon">💳</span>
+                    <span>Order ID: #${orderId.substring(0, 8)}</span>
+                  </div>
+                  <div class="webinar-detail">
+                    <span class="detail-icon">✅</span>
+                    <span>Amount Paid: ${currency} ${amount.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div class="speakers-section">
+                  <div class="speakers-title">Featured Speakers:</div>
+                  <div class="speaker-item">
+                    <div class="speaker-org">Ministry of Health</div>
+                    <div class="speaker-name">Prof. dr. Dante Saksono Harbuwono, Sp.PD, KEMD, Ph.D</div>
+                  </div>
+                  <div class="speaker-item">
+                    <div class="speaker-org">ISAPM</div>
+                    <div class="speaker-name">Dr. dr. A. Muh. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)</div>
+                  </div>
+                  <div class="speaker-item">
+                    <div class="speaker-org">PP Perdatin</div>
+                    <div class="speaker-name">Irjen. Pol. Dr. dr. Asep Hendradiana, Sp.An-TI, Subsp.TI(K), M.Kes.</div>
+                  </div>
+                  <div class="speaker-item">
+                    <div class="speaker-org">BPJS Kesehatan</div>
+                    <div class="speaker-name">Prof. dr. Ali Ghufron Mukti, M.Sc., Ph.D., AAK</div>
+                  </div>
+                </div>
+
+                <div class="alert">
+                  <div class="alert-title">Next Steps</div>
+                  <div class="alert-text">
+                    The webinar link will be sent to this email address 1 day before the event. Please make sure to check your inbox and spam folder.
+                  </div>
+                </div>
+
+                <p style="font-size: 15px; color: #475569; margin-top: 24px;">
+                  <strong>What you'll receive:</strong>
+                </p>
+                <ul style="color: #475569; font-size: 14px; padding-left: 20px;">
+                  <li>Access to live webinar session</li>
+                  <li>Q&A session with expert speakers</li>
+                  <li>Digital certificate of attendance</li>
+                  <li>Recording access for 7 days</li>
+                  <li>Presentation materials (PDF)</li>
+                </ul>
+
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-purchases" class="button" style="color: white;">View My Purchases</a>
+                </div>
+
+                <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                  Need assistance? Contact us at <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none;">admin@isapm2026.org</a> 
+                  or via WhatsApp at <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none;">+6289602626709</a>
+                </p>
+                
+                <p style="font-size: 15px; color: #1a202c; margin-top: 25px;">
+                  Best regards,<br>
+                  <strong>ISAPM 2026 Team</strong>
+                </p>
+              </div>
+              <div class="footer">
+                <div class="footer-brand">ISAPM 2026 National Meeting</div>
+                <div>The Indonesian Society of Anesthesiology for Pain Management</div>
+                <div style="margin-top: 12px;">
+                  <a href="mailto:admin@isapm2026.org" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Email</a> •
+                  <a href="https://wa.me/6289602626709" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">WhatsApp</a> •
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}" style="color: #00A9E0; text-decoration: none; margin: 0 10px;">Website</a>
+                </div>
+              </div>
+            </div>
+          </body>
+        </html>
+      `,
+    })
+    console.log(`[v0] Webinar confirmation email sent to ${email}`)
+    return { success: true }
+  } catch (error) {
+    console.error("Error sending webinar confirmation email:", error)
     return { success: false, error }
   }
 }

@@ -1,4 +1,4 @@
-export type CartItemType = "event" | "hotel"
+export type CartItemType = "event" | "hotel" | "webinar"
 
 export interface CartItem {
   id: string

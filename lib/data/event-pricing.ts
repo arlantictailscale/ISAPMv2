@@ -20,6 +20,22 @@ export interface EventPricing {
 
 export const eventPricingData: EventPricing[] = [
   {
+    id: "webinar_equity_pain",
+    label: "Webinar: Achieving Equity in Pain Management Services in Indonesia",
+    shortLabel: "Webinar Equity Pain Management",
+    date: "Friday, January 30, 2026, 13:00 WIB",
+    participantTypes: [
+      {
+        id: "general",
+        label: "General Participant",
+        earlyBirdPrice: 100000,
+        normalPrice: 100000,
+        onSitePrice: 100000,
+        currency: "IDR",
+      },
+    ],
+  },
+  {
     id: "cpd",
     label: "CPD (Continuing Professional Development) Courses (2 days)",
     shortLabel: "CPD Courses",
@@ -273,3 +289,8 @@ export function getMinimumPrice(
 
 // Early bird deadline
 export const EARLY_BIRD_DEADLINE = "2027-01-20T23:59:59"
+
+// Helper function to get webinar pricing
+export function getWebinarPricing(): EventPricing | undefined {
+  return eventPricingData.find((event) => event.id === "webinar_equity_pain")
+}

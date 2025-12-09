@@ -108,6 +108,7 @@ export default function Navigation() {
   const navItems = [
     { label: "Home", href: "/" },
     { label: "Events", href: "/events" },
+    { label: "Webinar", href: "/webinar" },
     { label: "e-Poster", href: "/call-for-papers" },
     { label: "Venue", href: "/venue" },
   ]

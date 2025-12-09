@@ -29,18 +29,33 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
   }, [isAdded])
 
   const handleRegister = async () => {
+    console.log("[v0] Register button clicked for webinar:", webinar.id)
     setIsLoading(true)
 
     try {
       const supabase = createBrowserClient()
+      console.log("[v0] Getting user from Supabase")
       const {
         data: { user },
       } = await supabase.auth.getUser()
 
+      console.log("[v0] User:", user ? user.id : "Not logged in")
+
       if (!user) {
+        console.log("[v0] Redirecting to login")
         router.push(`/auth/login?redirect=/webinar/${webinar.slug}`)
         return
       }
+
+      console.log("[v0] Adding to cart with data:", {
+        item_type: "webinar",
+        event_id: webinar.id,
+        event_label: webinar.title,
+        participant_type: "general",
+        unit_price: webinar.price,
+        currency: webinar.currency || "IDR",
+        quantity: 1,
+      })
 
       const result = await addToCart({
         item_type: "webinar",
@@ -52,18 +67,22 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
         quantity: 1,
       })
 
+      console.log("[v0] Add to cart result:", result)
+
       if (result.data) {
+        console.log("[v0] Successfully added to cart")
         setIsAdded(true)
         toast.success("Added to Cart", {
           description: `${webinar.shortTitle} has been added to your cart.`,
         })
       } else {
+        console.log("[v0] Failed to add to cart:", result.error)
         toast.error("Error", {
           description: result.error || "Failed to add to cart",
         })
       }
     } catch (error) {
-      console.error("Registration error:", error)
+      console.error("[v0] Registration error:", error)
       toast.error("Error", {
         description: "Something went wrong. Please try again.",
       })

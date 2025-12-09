@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, Calendar, HotelIcon, Users, Video } from "lucide-react"
+import { Trash2, Calendar, HotelIcon, Users, Video, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/cart/utils"
@@ -9,6 +9,7 @@ import { removeFromCart } from "@/app/actions/cart"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { useCart } from "@/lib/cart/cart-context"
 
 interface CartItemCardProps {
   item: CartItem
@@ -17,6 +18,7 @@ interface CartItemCardProps {
 export function CartItemCard({ item }: CartItemCardProps) {
   const [isRemoving, setIsRemoving] = useState(false)
   const router = useRouter()
+  const { refreshCart } = useCart()
 
   const itemTotal =
     item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
@@ -32,6 +34,7 @@ export function CartItemCard({ item }: CartItemCardProps) {
       setIsRemoving(false)
     } else {
       toast.success("Item removed from cart")
+      await refreshCart()
       router.refresh()
     }
   }
@@ -65,13 +68,11 @@ export function CartItemCard({ item }: CartItemCardProps) {
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
-            {/* Item Type Icon and Title */}
             <div className="flex items-center gap-2">
               {getItemIcon()}
               <h3 className="font-semibold">{getItemTitle()}</h3>
             </div>
 
-            {/* Event Details */}
             {item.item_type === "event" && (
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>
@@ -90,7 +91,6 @@ export function CartItemCard({ item }: CartItemCardProps) {
               </div>
             )}
 
-            {/* Hotel Details */}
             {item.item_type === "hotel" && (
               <div className="text-sm text-muted-foreground space-y-1">
                 <div className="flex items-center gap-2">
@@ -111,19 +111,17 @@ export function CartItemCard({ item }: CartItemCardProps) {
               </div>
             )}
 
-            {/* Price */}
             <p className="text-lg font-bold text-primary">{formatCurrency(itemTotal, item.currency)}</p>
           </div>
 
-          {/* Remove Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={handleRemove}
             disabled={isRemoving}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
           >
-            <Trash2 className="h-4 w-4" />
+            {isRemoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
             <span className="sr-only">Remove item</span>
           </Button>
         </div>

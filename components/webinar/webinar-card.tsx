@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,16 +12,19 @@ import { formatPrice } from "@/lib/data/event-pricing"
 import { addToCart } from "@/app/actions/cart"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
+import { useCart } from "@/lib/cart/cart-context"
 
 interface WebinarCardProps {
   webinar: Webinar
   index: number
+  onViewDetails?: () => void
 }
 
-export function WebinarCard({ webinar, index }: WebinarCardProps) {
+export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isAdding, setIsAdding] = useState(false)
+  const { refreshCart } = useCart()
 
   const isActive = webinar.status === "active"
   const isComingSoon = webinar.status === "coming_soon"
@@ -52,9 +54,9 @@ export function WebinarCard({ webinar, index }: WebinarCardProps) {
       const cartItem = {
         item_type: "webinar" as const,
         event_id: webinar.id,
-        event_name: webinar.title,
-        participant_type_id: "webinar_participant",
-        participant_type_label: "Webinar Participant",
+        event_label: webinar.title,
+        participant_type_id: "general",
+        participant_type_label: "General Admission",
         unit_price: pricing.price,
         currency: "IDR",
       }
@@ -64,10 +66,10 @@ export function WebinarCard({ webinar, index }: WebinarCardProps) {
       if (result.error) {
         toast.error(result.error)
       } else if (result.data) {
+        await refreshCart()
         toast.success("Added to cart!", {
           description: webinar.shortTitle || webinar.title,
         })
-        router.refresh()
       }
     } catch (error) {
       toast.error("Failed to add to cart")
@@ -197,12 +199,10 @@ export function WebinarCard({ webinar, index }: WebinarCardProps) {
                   {isAdding ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShoppingCart className="w-4 h-4" />}
                   <span className="ml-1 hidden sm:inline">Add to Cart</span>
                 </Button>
-                <Link href={`/webinar/${webinar.slug}`}>
-                  <Button size="sm" className="group/btn">
-                    View Details
-                    <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
-                  </Button>
-                </Link>
+                <Button size="sm" className="group/btn" onClick={onViewDetails}>
+                  View Details
+                  <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
+                </Button>
               </div>
             </>
           ) : (

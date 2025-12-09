@@ -1,29 +1,49 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, ArrowRight, Sparkles } from "lucide-react"
-import { WEBINARS } from "@/lib/data/webinars"
+import { Video, ArrowRight, Sparkles, ArrowLeft } from "lucide-react"
+import { WEBINARS, type Webinar } from "@/lib/data/webinars"
 import { WebinarCard } from "@/components/webinar/webinar-card"
-
-export const metadata: Metadata = {
-  title: "Webinars | ISAPM 2026",
-  description:
-    "Explore our series of webinars on pain management, healthcare policy, and clinical practices. Register for upcoming sessions.",
-  openGraph: {
-    title: "ISAPM 2026 Webinar Series",
-    description:
-      "Join leading experts in healthcare policy, pain management, and health financing through our webinar series.",
-  },
-}
+import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
+import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
+import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration"
 
 export default function WebinarsPage() {
+  const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null)
+
   const activeWebinars = WEBINARS.filter((w) => w.status === "active")
   const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
 
+  if (selectedWebinar) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navigation />
+        <main className="pt-16">
+          {/* Back Button */}
+          <div className="container mx-auto px-4 py-4">
+            <Button variant="ghost" onClick={() => setSelectedWebinar(null)} className="group hover:bg-primary/10">
+              <ArrowLeft className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
+              Back to Webinars
+            </Button>
+          </div>
+
+          {/* Webinar Detail Content */}
+          <WebinarDetailHero webinar={selectedWebinar} />
+          <WebinarDetailSpeakers webinar={selectedWebinar} />
+          <WebinarDetailRegistration webinar={selectedWebinar} />
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
+  // Default list view
   return (
     <div className="min-h-screen bg-background">
       <Navigation />
@@ -92,10 +112,15 @@ export default function WebinarsPage() {
               </div>
             </div>
 
-            {/* Grid - Use new WebinarCard component */}
+            {/* Grid - Use new WebinarCard component with onViewDetails callback */}
             <div className="grid md:grid-cols-2 gap-6">
               {WEBINARS.map((webinar, index) => (
-                <WebinarCard key={webinar.id} webinar={webinar} index={index} />
+                <WebinarCard
+                  key={webinar.id}
+                  webinar={webinar}
+                  index={index}
+                  onViewDetails={webinar.status === "active" ? () => setSelectedWebinar(webinar) : undefined}
+                />
               ))}
             </div>
           </div>

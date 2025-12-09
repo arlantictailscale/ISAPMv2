@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,7 +18,7 @@ interface WebinarDetailRegistrationProps {
 
 export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistrationProps) {
   const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const [isAdded, setIsAdded] = useState(false)
 
   useEffect(() => {
@@ -28,47 +28,72 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
     }
   }, [isAdded])
 
-  const handleRegister = async () => {
-    setIsLoading(true)
+  async function handleRegister() {
+    console.log("[v0] handleRegister called")
 
     try {
       const supabase = createBrowserClient()
+      console.log("[v0] Getting user")
+
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser()
 
+      if (authError) {
+        console.log("[v0] Auth error:", authError)
+        return
+      }
+
+      console.log("[v0] User:", user?.id || "Not logged in")
+
       if (!user) {
+        console.log("[v0] Redirecting to login")
         router.push(`/auth/login?redirect=/webinar/${webinar.slug}`)
         return
       }
 
-      const result = await addToCart({
-        item_type: "webinar",
+      console.log("[v0] Adding to cart...")
+
+      const cartItem = {
+        item_type: "webinar" as const,
         event_id: webinar.id,
         event_label: webinar.title,
-        participant_type: "general",
-        price: webinar.price,
-        quantity: 1,
-      })
+        participant_type_id: "general",
+        participant_type_label: "General Admission",
+        unit_price: webinar.price,
+        currency: webinar.currency || "IDR",
+      }
 
-      if (result.success) {
+      console.log("[v0] Cart item:", cartItem)
+
+      const result = await addToCart(cartItem)
+
+      console.log("[v0] Result:", result)
+
+      if (result.data) {
         setIsAdded(true)
         toast.success("Added to Cart", {
           description: `${webinar.shortTitle} has been added to your cart.`,
         })
-      } else {
+      } else if (result.error) {
         toast.error("Error", {
-          description: result.error || "Failed to add to cart",
+          description: result.error,
         })
       }
     } catch (error) {
-      console.error("Registration error:", error)
+      console.error("[v0] Error:", error)
       toast.error("Error", {
         description: "Something went wrong. Please try again.",
       })
-    } finally {
-      setIsLoading(false)
     }
+  }
+
+  function onButtonClick() {
+    console.log("[v0] Button onClick fired")
+    startTransition(() => {
+      handleRegister()
+    })
   }
 
   const goToCart = () => {
@@ -97,7 +122,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
             <CardContent className="p-6">
               {/* What's Included */}
               <div className="mb-6">
-                <h4 className="font-semibold mb-3">What's Included:</h4>
+                <h4 className="font-semibold mb-3">{"What's Included:"}</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="flex items-center gap-2 text-sm">
                     <Video className="w-4 h-4 text-primary" />
@@ -130,8 +155,8 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
                     Added! View Cart
                   </Button>
                 ) : (
-                  <Button onClick={handleRegister} disabled={isLoading} className="flex-1" size="lg">
-                    {isLoading ? (
+                  <Button type="button" onClick={onButtonClick} disabled={isPending} className="flex-1" size="lg">
+                    {isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Adding...
@@ -139,7 +164,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
                     ) : (
                       <>
                         <ShoppingCart className="w-4 h-4 mr-2" />
-                        Register Now
+                        Add to Cart
                       </>
                     )}
                   </Button>

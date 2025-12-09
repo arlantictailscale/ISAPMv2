@@ -237,3 +237,12 @@ export function formatWebinarTime(time: string, timezone: string): string {
   if (!time) return "TBD"
   return `${time} ${timezone}`
 }
+
+export function getWebinarPricing(id: string): { price: number; currency: string } | null {
+  const webinar = getWebinarById(id)
+  if (!webinar || webinar.status !== "active") return null
+  return {
+    price: webinar.price,
+    currency: webinar.currency,
+  }
+}

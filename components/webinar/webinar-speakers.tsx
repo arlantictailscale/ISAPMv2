@@ -1,5 +1,4 @@
-import { Building2, GraduationCap } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Building2, GraduationCap, Sparkles } from "lucide-react"
 import Image from "next/image"
 
 const speakers = [
@@ -40,73 +39,117 @@ const speakers = [
 
 export function WebinarSpeakers() {
   return (
-    <section className="py-16 md:py-24 bg-muted/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="py-20 md:py-28 bg-gradient-to-b from-background via-muted/30 to-background relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 right-10 w-96 h-96 bg-secondary/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         {/* Section Header */}
-        <div className="text-center mb-12">
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-foreground mb-4">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="w-4 h-4" />
+            Expert Panel
+          </div>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-foreground mb-4">
             Session Topics & Speakers
           </h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
             Learn from leading experts in healthcare policy, pain management, and health financing
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2">
-          {speakers.map((speaker) => (
-            <Card key={speaker.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
-              <CardContent className="p-0">
-                <div className="flex flex-col sm:flex-row">
-                  {/* Speaker Image Container */}
-                  <div className="relative w-full sm:w-40 h-48 sm:h-auto shrink-0 overflow-hidden">
-                    {/* Gradient Overlay */}
-                    <div
-                      className={`absolute inset-0 z-10 opacity-20 ${
-                        speaker.color === "primary"
-                          ? "bg-gradient-to-br from-primary/40 to-transparent"
-                          : "bg-gradient-to-br from-secondary/40 to-transparent"
-                      }`}
-                    />
-                    {/* Speaker Photo */}
+        {/* Speakers Grid */}
+        <div className="grid gap-8 lg:gap-10 md:grid-cols-2">
+          {speakers.map((speaker, index) => (
+            <div
+              key={speaker.id}
+              className="group relative bg-background rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden border border-border/50"
+            >
+              {/* Accent line at top */}
+              <div
+                className={`absolute top-0 left-0 right-0 h-1 ${
+                  speaker.color === "primary"
+                    ? "bg-gradient-to-r from-primary via-primary/80 to-primary/40"
+                    : "bg-gradient-to-r from-secondary via-secondary/80 to-secondary/40"
+                }`}
+              />
+
+              <div className="flex flex-col sm:flex-row">
+                {/* Speaker Image Container - Enhanced */}
+                <div className="relative w-full sm:w-52 h-64 sm:h-72 shrink-0">
+                  {/* Decorative frame */}
+                  <div
+                    className={`absolute inset-2 sm:inset-3 rounded-xl overflow-hidden ${
+                      speaker.color === "primary"
+                        ? "ring-2 ring-primary/20 ring-offset-2 ring-offset-background"
+                        : "ring-2 ring-secondary/20 ring-offset-2 ring-offset-background"
+                    }`}
+                  >
+                    {/* Main Image */}
                     <Image
                       src={speaker.image || "/placeholder.svg"}
                       alt={speaker.name}
                       fill
-                      className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 640px) 100vw, 160px"
+                      className="object-cover object-top group-hover:scale-110 transition-transform duration-700 ease-out"
+                      sizes="(max-width: 640px) 100vw, 208px"
                     />
-                    {/* Bottom Gradient for text readability on mobile */}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent sm:hidden" />
+
+                    {/* Gradient Overlay for depth */}
+                    <div
+                      className={`absolute inset-0 opacity-0 group-hover:opacity-30 transition-opacity duration-500 ${
+                        speaker.color === "primary"
+                          ? "bg-gradient-to-t from-primary/60 via-transparent to-transparent"
+                          : "bg-gradient-to-t from-secondary/60 via-transparent to-transparent"
+                      }`}
+                    />
                   </div>
 
-                  {/* Speaker Info */}
-                  <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between">
-                    {/* Organization Badge */}
-                    <div>
-                      <div
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-3 ${
-                          speaker.color === "primary" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                        }`}
-                      >
-                        <Building2 className="w-3.5 h-3.5" />
-                        {speaker.organization}
-                      </div>
+                  {/* Decorative corner accent */}
+                  <div
+                    className={`absolute bottom-0 right-0 w-16 h-16 ${
+                      speaker.color === "primary" ? "bg-primary/10" : "bg-secondary/10"
+                    } rounded-tl-3xl hidden sm:block`}
+                  />
+                </div>
 
-                      {/* Speaker Name */}
-                      <h3 className="font-semibold text-foreground text-base md:text-lg mb-3 leading-tight">
-                        {speaker.name}
-                      </h3>
-                    </div>
+                {/* Speaker Info */}
+                <div className="flex-1 p-6 sm:p-7 flex flex-col">
+                  {/* Organization Badge */}
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold mb-4 w-fit ${
+                      speaker.color === "primary"
+                        ? "bg-gradient-to-r from-primary/15 to-primary/5 text-primary border border-primary/20"
+                        : "bg-gradient-to-r from-secondary/15 to-secondary/5 text-secondary border border-secondary/20"
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5" />
+                    {speaker.organization}
+                  </div>
 
-                    {/* Topic */}
-                    <div className="flex gap-3 mt-auto">
-                      <GraduationCap className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                      <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">"{speaker.topic}"</p>
-                    </div>
+                  {/* Speaker Name */}
+                  <h3 className="font-bold text-foreground text-lg md:text-xl mb-4 leading-snug group-hover:text-primary transition-colors duration-300">
+                    {speaker.name}
+                  </h3>
+
+                  {/* Topic with enhanced styling */}
+                  <div
+                    className={`flex gap-3 mt-auto p-4 rounded-xl ${
+                      speaker.color === "primary" ? "bg-primary/5" : "bg-secondary/5"
+                    }`}
+                  >
+                    <GraduationCap
+                      className={`w-5 h-5 shrink-0 mt-0.5 ${
+                        speaker.color === "primary" ? "text-primary" : "text-secondary"
+                      }`}
+                    />
+                    <p className="text-muted-foreground text-sm leading-relaxed">"{speaker.topic}"</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       </div>

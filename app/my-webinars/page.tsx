@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Video, Calendar, Clock, CheckCircle, ExternalLink, Users, FileText, Play } from "lucide-react"
 import Link from "next/link"
+import { getWebinarById, formatWebinarDate } from "@/lib/data/webinars"
 
 interface WebinarOrder {
   id: string
@@ -76,43 +77,6 @@ export default async function MyWebinarsPage() {
       return payment?.payment_status === "verified"
     }) || []
 
-  // Webinar details (static for now - can be moved to database later)
-  const webinarDetails = {
-    title: "Achieving Equity in Pain Management Services in Indonesia",
-    subtitle: "Synergy between Anesthesiologists, Government Regulations, and BPJS Health Financing Schemes",
-    date: "Friday, January 30, 2026",
-    time: "13:00 WIB - End",
-    speakers: [
-      {
-        name: "Prof. dr. Dante Saksono Harbuwono, Sp.PD, KEMD, Ph.D",
-        organization: "Ministry of Health (Kemenkes)",
-        topic:
-          "National Policy Direction for Equity in Pain Management: Integration into the Cancer, Heart, Stroke, and Uro-Nephrology (KJSU) Priority Programs",
-      },
-      {
-        name: "Dr. dr. A. Muh. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
-        organization: "ISAPM",
-        topic: "Mapping the National Pain Management Workforce: Distribution, Competencies, and Challenges",
-      },
-      {
-        name: "Irjen. Pol. Dr. dr. Asep Hendradiana, Sp.An-TI, Subsp.TI(K), M.Kes.",
-        organization: "PP Perdatin",
-        topic: "National Clinical Practice Guidelines (PNPK) for Pain: Standardization for Quality and Equity",
-      },
-      {
-        name: "Prof. dr. Ali Ghufron Mukti, M.Sc., Ph.D., AAK",
-        organization: "BPJS Kesehatan",
-        topic: "Equitable and Clinical Need-Based Financing for Pain Services: Strategies to Support Equal Access",
-      },
-    ],
-    benefits: [
-      "Live webinar access with Q&A session",
-      "Certificate of participation (SKP)",
-      "Recording access for 30 days",
-      "Presentation materials (PDF)",
-    ],
-  }
-
   return (
     <>
       <Navigation />
@@ -163,6 +127,29 @@ export default async function MyWebinarsPage() {
                   const webinarItem = order.order_items.find((item) => item.item_type === "webinar")
                   const payment = order.order_payments?.[0]
 
+                  const webinarData = webinarItem ? getWebinarById(webinarItem.event_id) : null
+
+                  // Fallback for webinars not in config (legacy support)
+                  const webinarDetails = webinarData
+                    ? {
+                        title: webinarData.shortTitle,
+                        subtitle: webinarData.title,
+                        date: formatWebinarDate(webinarData.date),
+                        time: `${webinarData.time} ${webinarData.timezone}`,
+                        speakers: webinarData.speakers,
+                        benefits: webinarData.benefits.map((b) => b.description),
+                        slug: webinarData.slug,
+                      }
+                    : {
+                        title: webinarItem?.event_label || "Webinar",
+                        subtitle: "",
+                        date: "TBD",
+                        time: "TBD",
+                        speakers: [],
+                        benefits: [],
+                        slug: "",
+                      }
+
                   return (
                     <Card key={order.id} className="overflow-hidden border-indigo-200 shadow-lg">
                       {/* Webinar Header */}
@@ -174,7 +161,11 @@ export default async function MyWebinarsPage() {
                               Access Confirmed
                             </Badge>
                             <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">{webinarDetails.title}</h2>
-                            <p className="text-indigo-100 text-sm sm:text-base">{webinarDetails.subtitle}</p>
+                            {webinarDetails.subtitle && (
+                              <p className="text-indigo-100 text-sm sm:text-base line-clamp-2">
+                                {webinarDetails.subtitle}
+                              </p>
+                            )}
                           </div>
                           <div className="shrink-0">
                             <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
@@ -243,42 +234,46 @@ export default async function MyWebinarsPage() {
                         </div>
 
                         {/* Speakers */}
-                        <div className="mb-8">
-                          <h3 className="font-semibold mb-4 flex items-center gap-2">
-                            <Users className="w-5 h-5 text-indigo-600" />
-                            Session Speakers
-                          </h3>
-                          <div className="grid gap-3 sm:grid-cols-2">
-                            {webinarDetails.speakers.map((speaker, index) => (
-                              <div
-                                key={index}
-                                className="p-4 border rounded-xl bg-card hover:shadow-md transition-shadow"
-                              >
-                                <Badge variant="secondary" className="mb-2 text-xs">
-                                  {speaker.organization}
-                                </Badge>
-                                <p className="font-semibold text-sm mb-1">{speaker.name}</p>
-                                <p className="text-xs text-muted-foreground line-clamp-2">{speaker.topic}</p>
-                              </div>
-                            ))}
+                        {webinarDetails.speakers.length > 0 && (
+                          <div className="mb-8">
+                            <h3 className="font-semibold mb-4 flex items-center gap-2">
+                              <Users className="w-5 h-5 text-indigo-600" />
+                              Session Speakers
+                            </h3>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              {webinarDetails.speakers.map((speaker, index) => (
+                                <div
+                                  key={index}
+                                  className="p-4 border rounded-xl bg-card hover:shadow-md transition-shadow"
+                                >
+                                  <Badge variant="secondary" className="mb-2 text-xs">
+                                    {speaker.organization}
+                                  </Badge>
+                                  <p className="font-semibold text-sm mb-1">{speaker.name}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-2">{speaker.topic}</p>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* What You'll Get */}
-                        <div className="mb-6">
-                          <h3 className="font-semibold mb-4 flex items-center gap-2">
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                            What You&apos;ll Receive
-                          </h3>
-                          <div className="grid gap-2 sm:grid-cols-2">
-                            {webinarDetails.benefits.map((benefit, index) => (
-                              <div key={index} className="flex items-center gap-2 text-sm">
-                                <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                                <span>{benefit}</span>
-                              </div>
-                            ))}
+                        {webinarDetails.benefits.length > 0 && (
+                          <div className="mb-6">
+                            <h3 className="font-semibold mb-4 flex items-center gap-2">
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              What You&apos;ll Receive
+                            </h3>
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              {webinarDetails.benefits.map((benefit, index) => (
+                                <div key={index} className="flex items-center gap-2 text-sm">
+                                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                                  <span>{benefit}</span>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Order Info */}
                         <div className="border-t pt-4 mt-6">

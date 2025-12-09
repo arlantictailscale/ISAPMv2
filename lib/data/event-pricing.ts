@@ -36,6 +36,27 @@ export const eventPricingData: EventPricing[] = [
     ],
   },
   {
+    id: "webinar_2",
+    label: "Webinar 2 - Coming Soon",
+    shortLabel: "Webinar 2",
+    date: "TBD",
+    participantTypes: [],
+  },
+  {
+    id: "webinar_3",
+    label: "Webinar 3 - Coming Soon",
+    shortLabel: "Webinar 3",
+    date: "TBD",
+    participantTypes: [],
+  },
+  {
+    id: "webinar_4",
+    label: "Webinar 4 - Coming Soon",
+    shortLabel: "Webinar 4",
+    date: "TBD",
+    participantTypes: [],
+  },
+  {
     id: "cpd",
     label: "CPD (Continuing Professional Development) Courses (2 days)",
     shortLabel: "CPD Courses",
@@ -293,4 +314,20 @@ export const EARLY_BIRD_DEADLINE = "2027-01-20T23:59:59"
 // Helper function to get webinar pricing
 export function getWebinarPricing(): EventPricing | undefined {
   return eventPricingData.find((event) => event.id === "webinar_equity_pain")
+}
+
+// Helper function to get webinar pricing by ID
+export function getWebinarPricingById(webinarId: string): EventPricing | undefined {
+  return eventPricingData.find((event) => event.id === webinarId)
+}
+
+// Helper function to get all webinar pricing entries
+export function getAllWebinarPricing(): EventPricing[] {
+  return eventPricingData.filter((event) => event.id.startsWith("webinar"))
+}
+
+// Helper function to check if a webinar is purchasable
+export function isWebinarPurchasable(webinarId: string): boolean {
+  const pricing = getWebinarPricingById(webinarId)
+  return pricing !== undefined && pricing.participantTypes.length > 0
 }

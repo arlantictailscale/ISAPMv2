@@ -441,45 +441,6 @@ export default async function MyHotelsPage() {
                 })}
               </div>
             )}
-
-            {/* Hotel Contact */}
-            <Card className="mt-8 border-amber-200">
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
-                  <Phone className="w-5 h-5 text-amber-600" />
-                  Hotel Contact Information
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                      <Building2 className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Hotel</p>
-                      <p className="font-medium">The Singhasari Resort</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Phone</p>
-                      <p className="font-medium">+62 341 595 888</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                      <Mail className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <p className="font-medium">reservation@singhasari.com</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </section>
       </main>

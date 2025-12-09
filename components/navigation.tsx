@@ -173,28 +173,28 @@ export default function Navigation() {
                         My Profile
                       </DropdownMenuItem>
                     </Link>
-                    <Link href="/my-events">
-                      <DropdownMenuItem>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        My Events
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-posters">
-                      <DropdownMenuItem>
-                        <FileText className="w-4 h-4 mr-2" />
-                        My E-Posters
-                      </DropdownMenuItem>
-                    </Link>
                     <Link href="/my-purchases">
                       <DropdownMenuItem>
                         <ShoppingBag className="w-4 h-4 mr-2" />
                         My Purchases
                       </DropdownMenuItem>
                     </Link>
+                    <Link href="/my-events">
+                      <DropdownMenuItem>
+                        <Calendar className="w-4 h-4 mr-2" />
+                        My Events
+                      </DropdownMenuItem>
+                    </Link>
                     <Link href="/my-webinars">
                       <DropdownMenuItem>
                         <Video className="w-4 h-4 mr-2" />
                         My Webinars
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-posters">
+                      <DropdownMenuItem>
+                        <FileText className="w-4 h-4 mr-2" />
+                        My E-Posters
                       </DropdownMenuItem>
                     </Link>
                     <Link href="/my-hotels">
@@ -316,22 +316,6 @@ export default function Navigation() {
                   My Profile
                 </Link>
                 <Link
-                  href="/my-events"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Calendar className="w-4 h-4" />
-                  My Events
-                </Link>
-                <Link
-                  href="/my-posters"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <FileText className="w-4 h-4" />
-                  My E-Posters
-                </Link>
-                <Link
                   href="/my-purchases"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
                   onClick={() => setIsOpen(false)}
@@ -340,12 +324,28 @@ export default function Navigation() {
                   My Purchases
                 </Link>
                 <Link
+                  href="/my-events"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Calendar className="w-4 h-4" />
+                  My Events
+                </Link>
+                <Link
                   href="/my-webinars"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <Video className="w-4 h-4" />
                   My Webinars
+                </Link>
+                <Link
+                  href="/my-posters"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <FileText className="w-4 h-4" />
+                  My E-Posters
                 </Link>
                 <Link
                   href="/my-hotels"

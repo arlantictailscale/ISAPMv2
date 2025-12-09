@@ -47,11 +47,12 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
         event_id: webinar.id,
         event_label: webinar.title,
         participant_type: "general",
-        price: webinar.price,
+        unit_price: webinar.price,
+        currency: webinar.currency || "IDR",
         quantity: 1,
       })
 
-      if (result.success) {
+      if (result.data) {
         setIsAdded(true)
         toast.success("Added to Cart", {
           description: `${webinar.shortTitle} has been added to your cart.`,

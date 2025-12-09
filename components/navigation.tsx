@@ -19,6 +19,8 @@ import {
   CheckCircle,
   Settings,
   Receipt,
+  Video,
+  Building2,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -58,7 +60,6 @@ export default function Navigation() {
 
             if (error) {
               console.error("[v0] Error fetching user role:", error.message)
-              // Default to 'user' role if database fails
               setUserRole("user")
             } else if (profile?.role) {
               setUserRole(profile.role)
@@ -67,7 +68,6 @@ export default function Navigation() {
             }
           } catch (profileError) {
             console.error("[v0] Failed to fetch profile, using default role:", profileError)
-            // Gracefully fallback to 'user' role if Supabase is down
             setUserRole("user")
           }
         }
@@ -131,7 +131,6 @@ export default function Navigation() {
               priority
             />
           </Link>
-          {/* </CHANGE> */}
 
           <div className="hidden md:flex flex-grow justify-end items-center gap-8">
             {navItems.map((item) => (
@@ -190,6 +189,18 @@ export default function Navigation() {
                       <DropdownMenuItem>
                         <ShoppingBag className="w-4 h-4 mr-2" />
                         My Purchases
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-webinars">
+                      <DropdownMenuItem>
+                        <Video className="w-4 h-4 mr-2" />
+                        My Webinars
+                      </DropdownMenuItem>
+                    </Link>
+                    <Link href="/my-hotels">
+                      <DropdownMenuItem>
+                        <Building2 className="w-4 h-4 mr-2" />
+                        My Hotels
                       </DropdownMenuItem>
                     </Link>
                     {userRole === "admin" && (
@@ -274,138 +285,158 @@ export default function Navigation() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                className="block px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
                 onClick={() => setIsOpen(false)}
               >
                 {item.label}
               </Link>
             ))}
-
-            <Link href="/pricing" className="block mx-2" onClick={() => setIsOpen(false)}>
-              <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
+            <Link href="/pricing" onClick={() => setIsOpen(false)}>
+              <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
                 Register Now
               </Button>
             </Link>
 
-            <div className="border-t border-border pt-4 space-y-2">
-              {!isLoading && user ? (
-                <>
-                  <Link
-                    href="/cart"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    <ShoppingCart className="w-4 h-4 inline mr-2" />
-                    My Cart
-                  </Link>
-                  <Link
-                    href="/dashboard"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/profile"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Profile
-                  </Link>
-                  <Link
-                    href="/my-events"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Events
-                  </Link>
-                  <Link
-                    href="/my-posters"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My E-Posters
-                  </Link>
-                  <Link
-                    href="/my-purchases"
-                    className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    My Purchases
-                  </Link>
-                  {userRole === "admin" && (
-                    <>
-                      <Link
-                        href="/admin/users"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        User Management (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/payment-validation"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Payment Validation (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/posters"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        E-Poster Submissions (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/confirmed-attendees"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Confirmed Attendees (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/room-availability"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Room Availability (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/carts"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Cart Management (Admin)
-                      </Link>
-                      <Link
-                        href="/admin/invoices"
-                        className="block px-4 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg text-center"
-                        onClick={() => setIsOpen(false)}
-                      >
-                        Invoice Management (Admin)
-                      </Link>
-                    </>
-                  )}
-                  <button
-                    onClick={() => {
-                      handleLogout()
-                      setIsOpen(false)
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors text-center"
-                  >
-                    Sign Out
-                  </button>
-                </>
-              ) : (
+            {!isLoading && user ? (
+              <div className="border-t pt-4 mt-4 space-y-1">
                 <Link
-                  href="/auth/login"
-                  className="block px-4 py-2 text-sm font-medium hover:bg-muted rounded-lg text-center"
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
-                  Login
+                  <LayoutDashboard className="w-4 h-4" />
+                  Dashboard
                 </Link>
-              )}
-            </div>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <User className="w-4 h-4" />
+                  My Profile
+                </Link>
+                <Link
+                  href="/my-events"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Calendar className="w-4 h-4" />
+                  My Events
+                </Link>
+                <Link
+                  href="/my-posters"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <FileText className="w-4 h-4" />
+                  My E-Posters
+                </Link>
+                <Link
+                  href="/my-purchases"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <ShoppingBag className="w-4 h-4" />
+                  My Purchases
+                </Link>
+                <Link
+                  href="/my-webinars"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Video className="w-4 h-4" />
+                  My Webinars
+                </Link>
+                <Link
+                  href="/my-hotels"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Building2 className="w-4 h-4" />
+                  My Hotels
+                </Link>
+
+                {userRole === "admin" && (
+                  <>
+                    <div className="border-t my-2" />
+                    <Link
+                      href="/admin/users"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Users className="w-4 h-4" />
+                      User Management (Admin)
+                    </Link>
+                    <Link
+                      href="/admin/payment-validation"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Payment Validation (Admin)
+                    </Link>
+                    <Link
+                      href="/admin/posters"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Presentation className="w-4 h-4" />
+                      E-Poster Submissions (Admin)
+                    </Link>
+                    <Link
+                      href="/admin/confirmed-attendees"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Users className="w-4 h-4" />
+                      Confirmed Attendees (Admin)
+                    </Link>
+                    <Link
+                      href="/admin/room-availability"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Settings className="w-4 h-4" />
+                      Room Availability (Admin)
+                    </Link>
+                    <Link
+                      href="/admin/carts"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Cart Management (Admin)
+                    </Link>
+                    <Link
+                      href="/admin/invoices"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Receipt className="w-4 h-4" />
+                      Invoice Management (Admin)
+                    </Link>
+                  </>
+                )}
+
+                <div className="border-t my-2" />
+                <button
+                  onClick={() => {
+                    handleLogout()
+                    setIsOpen(false)
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-muted rounded-lg transition-colors w-full text-left"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" size="sm" className="w-full mt-2 bg-transparent">
+                  Login
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </div>

@@ -4,11 +4,10 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { CheckCircle, ShoppingCart, Loader2, AlertCircle, LogIn } from "lucide-react"
+import { CheckCircle, ShoppingCart, Loader2, AlertCircle } from "lucide-react"
 import { addToCart } from "@/app/actions/cart"
 import { createClient } from "@/lib/supabase/client"
 import { formatPrice } from "@/lib/data/event-pricing"
-import Link from "next/link"
 
 const webinarDetails = {
   id: "webinar_equity_pain",
@@ -29,20 +28,8 @@ export function WebinarRegistration() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const router = useRouter()
   const supabase = createClient()
-
-  // Check authentication status
-  useState(() => {
-    const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setIsAuthenticated(!!user)
-    }
-    checkAuth()
-  })
 
   const handleAddToCart = async () => {
     setIsLoading(true)
@@ -136,13 +123,6 @@ export function WebinarRegistration() {
                       <CheckCircle className="w-5 h-5" />
                       <span className="font-medium">Added to cart! Redirecting...</span>
                     </div>
-                  ) : isAuthenticated === false ? (
-                    <Link href={`/auth/login?redirect=/webinar`}>
-                      <Button size="lg" className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground">
-                        <LogIn className="w-5 h-5 mr-2" />
-                        Login to Register
-                      </Button>
-                    </Link>
                   ) : (
                     <Button
                       size="lg"
@@ -153,12 +133,12 @@ export function WebinarRegistration() {
                       {isLoading ? (
                         <>
                           <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                          Adding to Cart...
+                          Processing...
                         </>
                       ) : (
                         <>
                           <ShoppingCart className="w-5 h-5 mr-2" />
-                          Add to Cart
+                          Register Now
                         </>
                       )}
                     </Button>

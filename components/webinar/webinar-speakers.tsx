@@ -1,5 +1,6 @@
 import { Building2, GraduationCap } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import Image from "next/image"
 
 const speakers = [
   {
@@ -9,6 +10,7 @@ const speakers = [
     topic:
       "National Policy Direction for Equity in Pain Management: Integration into the Cancer, Heart, Stroke, and Uro-Nephrology (KJSU) Priority Programs",
     color: "primary",
+    image: "/images/speakers/dr-dante.jpg",
   },
   {
     id: 2,
@@ -16,6 +18,7 @@ const speakers = [
     organization: "ISAPM",
     topic: "Mapping the National Pain Management Workforce: Distribution, Competencies, and Challenges",
     color: "secondary",
+    image: "/images/speakers/dr-muh-takdir.jpeg",
   },
   {
     id: 3,
@@ -23,6 +26,7 @@ const speakers = [
     organization: "PP Perdatin",
     topic: "National Clinical Practice Guidelines (PNPK) for Pain: Standardization for Quality and Equity",
     color: "primary",
+    image: "/images/speakers/dr-asep.png",
   },
   {
     id: 4,
@@ -30,6 +34,7 @@ const speakers = [
     organization: "BPJS Kesehatan",
     topic: "Equitable and Clinical Need-Based Financing for Pain Services: Strategies to Support Equal Access",
     color: "secondary",
+    image: "/images/speakers/prof-ali-ghufron.jpg",
   },
 ]
 
@@ -47,34 +52,58 @@ export function WebinarSpeakers() {
           </p>
         </div>
 
-        {/* Speakers Grid */}
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2">
           {speakers.map((speaker) => (
-            <Card
-              key={speaker.id}
-              className="overflow-hidden border-l-4 hover:shadow-lg transition-shadow"
-              style={{
-                borderLeftColor: speaker.color === "primary" ? "hsl(var(--primary))" : "hsl(var(--secondary))",
-              }}
-            >
-              <CardContent className="p-6">
-                {/* Organization Badge */}
-                <div
-                  className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium mb-4 ${
-                    speaker.color === "primary" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
-                  }`}
-                >
-                  <Building2 className="w-3 h-3" />
-                  {speaker.organization}
-                </div>
+            <Card key={speaker.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
+              <CardContent className="p-0">
+                <div className="flex flex-col sm:flex-row">
+                  {/* Speaker Image Container */}
+                  <div className="relative w-full sm:w-40 h-48 sm:h-auto shrink-0 overflow-hidden">
+                    {/* Gradient Overlay */}
+                    <div
+                      className={`absolute inset-0 z-10 opacity-20 ${
+                        speaker.color === "primary"
+                          ? "bg-gradient-to-br from-primary/40 to-transparent"
+                          : "bg-gradient-to-br from-secondary/40 to-transparent"
+                      }`}
+                    />
+                    {/* Speaker Photo */}
+                    <Image
+                      src={speaker.image || "/placeholder.svg"}
+                      alt={speaker.name}
+                      fill
+                      className="object-cover object-top group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 640px) 100vw, 160px"
+                    />
+                    {/* Bottom Gradient for text readability on mobile */}
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/50 to-transparent sm:hidden" />
+                  </div>
 
-                {/* Speaker Name */}
-                <h3 className="font-semibold text-foreground text-lg mb-3 leading-tight">{speaker.name}</h3>
+                  {/* Speaker Info */}
+                  <div className="flex-1 p-5 sm:p-6 flex flex-col justify-between">
+                    {/* Organization Badge */}
+                    <div>
+                      <div
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-3 ${
+                          speaker.color === "primary" ? "bg-primary/10 text-primary" : "bg-secondary/10 text-secondary"
+                        }`}
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        {speaker.organization}
+                      </div>
 
-                {/* Topic */}
-                <div className="flex gap-3">
-                  <GraduationCap className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
-                  <p className="text-muted-foreground text-sm leading-relaxed">"{speaker.topic}"</p>
+                      {/* Speaker Name */}
+                      <h3 className="font-semibold text-foreground text-base md:text-lg mb-3 leading-tight">
+                        {speaker.name}
+                      </h3>
+                    </div>
+
+                    {/* Topic */}
+                    <div className="flex gap-3 mt-auto">
+                      <GraduationCap className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                      <p className="text-muted-foreground text-sm leading-relaxed line-clamp-3">"{speaker.topic}"</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

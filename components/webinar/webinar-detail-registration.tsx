@@ -45,27 +45,16 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
   }, [buttonState])
 
   async function handleRegister() {
-    console.log("[v0] handleRegister called")
     setButtonState("loading")
 
     try {
       const supabase = createBrowserClient()
-
       const {
         data: { user },
-        error: authError,
       } = await supabase.auth.getUser()
 
-      console.log("[v0] Auth check - user:", user, "error:", authError)
-
-      if (authError) {
-        console.log("[v0] Auth error:", authError)
-        setButtonState("idle")
-        return
-      }
-
+      // AuthSessionMissingError is expected for non-logged-in users
       if (!user) {
-        console.log("[v0] No user found, showing login prompt")
         setButtonState("idle")
         setShowLoginPrompt(true)
         return
@@ -96,7 +85,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
         })
       }
     } catch (error) {
-      console.error("[v0] Error:", error)
+      console.error("Error adding to cart:", error)
       setButtonState("idle")
       toast.error("Error", {
         description: "Something went wrong. Please try again.",
@@ -237,6 +226,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
         </div>
       </div>
 
+      {/* Login Prompt Dialog */}
       <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -253,7 +243,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
               className="w-full"
               onClick={() => {
                 setShowLoginPrompt(false)
-                router.push(`/auth/login?redirect=/webinar/${webinar.slug}`)
+                router.push(`/auth/login?redirect=/webinar`)
               }}
             >
               <LogIn className="w-4 h-4 mr-2" />
@@ -264,7 +254,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
               className="w-full bg-transparent"
               onClick={() => {
                 setShowLoginPrompt(false)
-                router.push(`/auth/sign-up?redirect=/webinar/${webinar.slug}`)
+                router.push(`/auth/sign-up?redirect=/webinar`)
               }}
             >
               <User className="w-4 h-4 mr-2" />

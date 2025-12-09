@@ -44,20 +44,15 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
   const isSoldOut = webinar.status === "sold_out"
 
   const handleAddToCart = async () => {
-    console.log("[v0] Add to Cart clicked")
     setIsAdding(true)
 
     try {
       const supabase = createBrowserClient()
       const {
         data: { user },
-        error: authError,
       } = await supabase.auth.getUser()
 
-      console.log("[v0] Auth check - user:", user, "error:", authError)
-
       if (!user) {
-        console.log("[v0] No user found, showing login prompt")
         setIsAdding(false)
         setShowLoginPrompt(true)
         return
@@ -91,7 +86,7 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
         })
       }
     } catch (error) {
-      console.error("[v0] Error in handleAddToCart:", error)
+      console.error("Error in handleAddToCart:", error)
       toast.error("Failed to add to cart")
     } finally {
       setIsAdding(false)
@@ -244,6 +239,7 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
         </CardContent>
       </Card>
 
+      {/* Login Prompt Dialog */}
       <Dialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

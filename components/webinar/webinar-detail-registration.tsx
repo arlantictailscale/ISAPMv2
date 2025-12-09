@@ -10,6 +10,7 @@ import { addToCart } from "@/app/actions/cart"
 import { createBrowserClient } from "@/lib/supabase/client"
 import { formatPrice } from "@/lib/data/event-pricing"
 import { toast } from "sonner"
+import { useCart } from "@/lib/cart/cart-context"
 import type { Webinar } from "@/lib/data/webinars"
 
 interface WebinarDetailRegistrationProps {
@@ -20,6 +21,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isAdded, setIsAdded] = useState(false)
+  const { refreshCart } = useCart()
 
   useEffect(() => {
     if (isAdded) {
@@ -73,6 +75,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
 
       if (result.data) {
         setIsAdded(true)
+        await refreshCart()
         toast.success("Added to Cart", {
           description: `${webinar.shortTitle} has been added to your cart.`,
         })
@@ -147,25 +150,34 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
                 </div>
               </div>
 
-              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-3">
                 {isAdded ? (
-                  <Button onClick={goToCart} className="flex-1 bg-green-500 hover:bg-green-600">
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Added! View Cart
+                  <Button
+                    onClick={goToCart}
+                    className="flex-1 bg-green-500 hover:bg-green-600 transform transition-all duration-300 ease-out scale-100 hover:scale-[1.02] active:scale-[0.98]"
+                    size="lg"
+                  >
+                    <CheckCircle2 className="w-5 h-5 mr-2 animate-[bounceIn_0.5s_ease-out]" />
+                    <span className="animate-[fadeIn_0.3s_ease-out]">Added! View Cart</span>
                   </Button>
                 ) : (
-                  <Button type="button" onClick={onButtonClick} disabled={isPending} className="flex-1" size="lg">
+                  <Button
+                    type="button"
+                    onClick={onButtonClick}
+                    disabled={isPending}
+                    className="flex-1 transform transition-all duration-200 ease-out hover:scale-[1.02] active:scale-[0.98] disabled:scale-100 disabled:opacity-70"
+                    size="lg"
+                  >
                     {isPending ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Adding...
-                      </>
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        <span className="animate-pulse">Adding to Cart...</span>
+                      </span>
                     ) : (
-                      <>
-                        <ShoppingCart className="w-4 h-4 mr-2" />
+                      <span className="flex items-center justify-center group">
+                        <ShoppingCart className="w-5 h-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
                         Add to Cart
-                      </>
+                      </span>
                     )}
                   </Button>
                 )}

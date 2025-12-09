@@ -478,6 +478,77 @@
   }
 }
 
+/* Add cart button and icon animations */
+@keyframes cartBounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.2);
+  }
+  50% {
+    transform: scale(0.95);
+  }
+  75% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes badgePop {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes successPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(34, 197, 94, 0);
+  }
+}
+
+.animate-success-pulse {
+  animation: successPulse 1.5s ease-in-out infinite;
+}
+/* End cart animations */
+
 .animate-slide-up {
   animation: slide-up 0.6s ease-out forwards;
 }
@@ -515,7 +586,9 @@
   .animate-slide-up,
   .animate-progress,
   .animate-float-slow,
-  .animate-float-medium {
+  .animate-float-medium,
+  .animate-success-pulse {
+    /* Added .animate-success-pulse here */
     animation: none;
     opacity: 1;
     transform: none;

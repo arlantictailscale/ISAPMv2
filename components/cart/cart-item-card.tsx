@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, Calendar, HotelIcon, Users, Video, Loader2 } from "lucide-react"
+import { Trash2, Calendar, HotelIcon, Users, Video, Loader2, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/cart/utils"
@@ -17,6 +17,7 @@ interface CartItemCardProps {
 
 export function CartItemCard({ item }: CartItemCardProps) {
   const [isRemoving, setIsRemoving] = useState(false)
+  const [isRemoved, setIsRemoved] = useState(false)
   const router = useRouter()
   const { refreshCart } = useCart()
 
@@ -33,9 +34,14 @@ export function CartItemCard({ item }: CartItemCardProps) {
       })
       setIsRemoving(false)
     } else {
+      setIsRemoved(true)
       toast.success("Item removed from cart")
-      await refreshCart()
-      router.refresh()
+
+      // Wait for animation to complete before refreshing
+      setTimeout(async () => {
+        await refreshCart()
+        router.refresh()
+      }, 300)
     }
   }
 
@@ -64,7 +70,11 @@ export function CartItemCard({ item }: CartItemCardProps) {
   }
 
   return (
-    <Card>
+    <Card
+      className={`transition-all duration-300 ease-out ${
+        isRemoved ? "opacity-0 scale-95 -translate-x-4" : "opacity-100 scale-100 translate-x-0"
+      }`}
+    >
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-2">
@@ -118,10 +128,20 @@ export function CartItemCard({ item }: CartItemCardProps) {
             variant="ghost"
             size="icon"
             onClick={handleRemove}
-            disabled={isRemoving}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
+            disabled={isRemoving || isRemoved}
+            className={`relative overflow-hidden transition-all duration-300 ${
+              isRemoved
+                ? "bg-green-100 text-green-600"
+                : "text-destructive hover:text-destructive hover:bg-destructive/10"
+            }`}
           >
-            {isRemoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+            {isRemoved ? (
+              <Check className="h-4 w-4 animate-[bounceIn_0.3s_ease-out]" />
+            ) : isRemoving ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4 transition-transform hover:scale-110" />
+            )}
             <span className="sr-only">Remove item</span>
           </Button>
         </div>

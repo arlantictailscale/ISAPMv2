@@ -5,7 +5,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle, Gift } from "lucide-react"
+import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle, Gift, Video } from "lucide-react"
 import Link from "next/link"
 import { CancelOrderButton } from "@/components/cancel-order-button"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -202,6 +202,7 @@ export default async function MyPurchasesPage() {
                   const totalItems = order.order_items?.length || 0
                   const hasHotelItems = order.order_items?.some((item: any) => item.item_type === "hotel")
                   const hasEventItems = order.order_items?.some((item: any) => item.item_type === "event")
+                  const hasWebinarItems = order.order_items?.some((item: any) => item.item_type === "webinar")
                   const payment = order.order_payments?.[0]
                   const actionButton = getActionButton(order)
                   const ActionIcon = actionButton.icon
@@ -371,9 +372,13 @@ export default async function MyPurchasesPage() {
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Type:</span>
                                 <span className="font-medium">
-                                  {hasEventItems && hasHotelItems && "Event + Hotel"}
-                                  {hasEventItems && !hasHotelItems && "Event Registration"}
-                                  {!hasEventItems && hasHotelItems && "Hotel Booking"}
+                                  {hasWebinarItems && !hasEventItems && !hasHotelItems && "Webinar Registration"}
+                                  {hasEventItems && hasHotelItems && !hasWebinarItems && "Event + Hotel"}
+                                  {hasEventItems && !hasHotelItems && !hasWebinarItems && "Event Registration"}
+                                  {!hasEventItems && hasHotelItems && !hasWebinarItems && "Hotel Booking"}
+                                  {hasWebinarItems && hasEventItems && "Webinar + Event"}
+                                  {hasWebinarItems && hasHotelItems && !hasEventItems && "Webinar + Hotel"}
+                                  {hasWebinarItems && hasEventItems && hasHotelItems && "Webinar + Event + Hotel"}
                                 </span>
                               </div>
                               {payment && (
@@ -441,6 +446,26 @@ export default async function MyPurchasesPage() {
                                               night{item.nights !== 1 ? "s" : ""})
                                             </>
                                           )}
+                                        </p>
+                                      </>
+                                    )}
+                                    {item.item_type === "webinar" && (
+                                      <>
+                                        <div
+                                          className={`text-xs font-semibold mb-0.5 px-2 py-0.5 rounded w-fit ${
+                                            getBadgeColors("webinar").solid
+                                          }`}
+                                        >
+                                          <span className="flex items-center gap-1">
+                                            <Video className="w-3 h-3" />
+                                            {getBadgeColors("webinar").label}
+                                          </span>
+                                        </div>
+                                        <p className="font-medium">
+                                          {item.event_label || item.item_name || "Online Webinar"}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          Friday, January 30, 2026, 13:00 WIB
                                         </p>
                                       </>
                                     )}

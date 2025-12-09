@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, Calendar, HotelIcon, Users } from "lucide-react"
+import { Trash2, Calendar, HotelIcon, Users, Video } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/cart/utils"
@@ -36,6 +36,30 @@ export function CartItemCard({ item }: CartItemCardProps) {
     }
   }
 
+  const getItemIcon = () => {
+    switch (item.item_type) {
+      case "event":
+        return <Users className="h-5 w-5 text-primary" />
+      case "webinar":
+        return <Video className="h-5 w-5 text-purple-600" />
+      case "hotel":
+      default:
+        return <HotelIcon className="h-5 w-5 text-secondary" />
+    }
+  }
+
+  const getItemTitle = () => {
+    switch (item.item_type) {
+      case "event":
+        return item.event_label
+      case "webinar":
+        return item.event_label || "Webinar Registration"
+      case "hotel":
+      default:
+        return `Hotel Room - ${item.hotel_room_type}`
+    }
+  }
+
   return (
     <Card>
       <CardContent className="p-4">
@@ -43,14 +67,8 @@ export function CartItemCard({ item }: CartItemCardProps) {
           <div className="flex-1 space-y-2">
             {/* Item Type Icon and Title */}
             <div className="flex items-center gap-2">
-              {item.item_type === "event" ? (
-                <Users className="h-5 w-5 text-primary" />
-              ) : (
-                <HotelIcon className="h-5 w-5 text-secondary" />
-              )}
-              <h3 className="font-semibold">
-                {item.item_type === "event" ? item.event_label : `Hotel Room - ${item.hotel_room_type}`}
-              </h3>
+              {getItemIcon()}
+              <h3 className="font-semibold">{getItemTitle()}</h3>
             </div>
 
             {/* Event Details */}
@@ -59,6 +77,16 @@ export function CartItemCard({ item }: CartItemCardProps) {
                 <p>
                   Participant Type: <span className="font-medium text-foreground">{item.participant_type_label}</span>
                 </p>
+              </div>
+            )}
+
+            {item.item_type === "webinar" && (
+              <div className="text-sm text-muted-foreground space-y-1">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  <span>Friday, January 30, 2026 at 13:00 WIB</span>
+                </div>
+                <p>Online Event - Live Streaming</p>
               </div>
             )}
 

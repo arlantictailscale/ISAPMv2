@@ -20,7 +20,6 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isAdded, setIsAdded] = useState(false)
-  const [debugMsg, setDebugMsg] = useState("")
 
   useEffect(() => {
     if (isAdded) {
@@ -31,12 +30,10 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
 
   async function handleRegister() {
     console.log("[v0] handleRegister called")
-    setDebugMsg("Button clicked...")
 
     try {
       const supabase = createBrowserClient()
       console.log("[v0] Getting user")
-      setDebugMsg("Getting user...")
 
       const {
         data: { user },
@@ -45,7 +42,6 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
 
       if (authError) {
         console.log("[v0] Auth error:", authError)
-        setDebugMsg("Auth error: " + authError.message)
         return
       }
 
@@ -53,12 +49,11 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
 
       if (!user) {
         console.log("[v0] Redirecting to login")
-        setDebugMsg("Redirecting to login...")
         router.push(`/auth/login?redirect=/webinar/${webinar.slug}`)
         return
       }
 
-      setDebugMsg("Adding to cart...")
+      console.log("[v0] Adding to cart...")
 
       const cartItem = {
         item_type: "webinar" as const,
@@ -75,7 +70,6 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
       const result = await addToCart(cartItem)
 
       console.log("[v0] Result:", result)
-      setDebugMsg("Result: " + JSON.stringify(result))
 
       if (result.data) {
         setIsAdded(true)
@@ -89,7 +83,6 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
       }
     } catch (error) {
       console.error("[v0] Error:", error)
-      setDebugMsg("Error: " + String(error))
       toast.error("Error", {
         description: "Something went wrong. Please try again.",
       })
@@ -111,9 +104,6 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
     <section id="register" className="py-16">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          {/* Debug display - remove after testing */}
-          {debugMsg && <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded text-sm">Debug: {debugMsg}</div>}
-
           <Card className="overflow-hidden border-2 border-primary/20">
             <CardHeader className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
               <div className="flex items-center justify-between">
@@ -174,7 +164,7 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
                     ) : (
                       <>
                         <ShoppingCart className="w-4 h-4 mr-2" />
-                        Register Now
+                        Add to Cart
                       </>
                     )}
                   </Button>

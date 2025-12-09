@@ -525,6 +525,15 @@ export default function PaymentValidationPage() {
                         {getEventTypeBadge(item.event_label)}
                         <span className="break-words">{item.event_label}</span>
                       </>
+                    ) : item.item_type === "webinar" ? (
+                      <>
+                        <Badge
+                          className={`${BADGE_COLORS.WEBINAR.bg} ${BADGE_COLORS.WEBINAR.text} ${BADGE_COLORS.WEBINAR.border}`}
+                        >
+                          {BADGE_COLORS.WEBINAR.label}
+                        </Badge>
+                        <span className="break-words">{item.event_label}</span>
+                      </>
                     ) : (
                       <>
                         <Badge

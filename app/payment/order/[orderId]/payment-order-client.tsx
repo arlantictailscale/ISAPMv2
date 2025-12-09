@@ -102,8 +102,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
         return
       }
     } else {
-      // For bank transfer and other methods, require bank details
-      if (!paymentMethod || !bankName || !accountName || !transactionRef) {
+      if (!paymentMethod || !bankName || !accountName) {
         toast.error("Please fill in all required fields")
         return
       }
@@ -280,6 +279,11 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                           {item.item_type === "event" && (
                             <p className="text-xs text-muted-foreground mt-1">
                               {item.participant_type_label || "General"}
+                            </p>
+                          )}
+                          {item.item_type === "webinar" && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {item.participant_type_label || "Online Webinar"}
                             </p>
                           )}
                           {item.item_type === "hotel" && (
@@ -476,6 +480,11 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                             {item.participant_type_label || "General"}
                           </p>
                         )}
+                        {item.item_type === "webinar" && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {item.participant_type_label || "Online Webinar"}
+                          </p>
+                        )}
                         {item.item_type === "hotel" && (
                           <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
                             <p>{item.hotel_room_type} Room</p>
@@ -620,13 +629,12 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="transaction-ref">Transaction Reference / ID *</Label>
+                        <Label htmlFor="transaction-ref">Transaction Reference / ID</Label>
                         <Input
                           id="transaction-ref"
                           placeholder="e.g., TRX123456789"
                           value={transactionRef}
                           onChange={(e) => setTransactionRef(e.target.value)}
-                          required
                         />
                       </div>
 

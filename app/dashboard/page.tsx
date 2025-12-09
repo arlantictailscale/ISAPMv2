@@ -5,7 +5,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { User, FileText, ShoppingBag, Users, Presentation, Hotel, ShoppingCart, CheckCircle } from "lucide-react"
+import { User, FileText, ShoppingBag, Users, Presentation, Hotel, ShoppingCart, CheckCircle, Video } from "lucide-react"
 import Link from "next/link"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
@@ -37,6 +37,7 @@ export default async function DashboardPage() {
     orderCount: 0,
     pendingPayments: 0,
     activeCart: 0,
+    webinarCount: 0,
   }
 
   if (!isAdmin) {
@@ -62,11 +63,28 @@ export default async function DashboardPage() {
         return !payment || payment.payment_status === "pending"
       }).length || 0
 
+    const { data: webinarOrders } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        order_items!inner(item_type),
+        order_payments(payment_status)
+      `)
+      .eq("user_id", user.id)
+      .eq("order_items.item_type", "webinar")
+
+    const approvedWebinarCount =
+      webinarOrders?.filter((order: any) => {
+        const payment = order.order_payments?.[0]
+        return payment?.payment_status === "verified"
+      }).length || 0
+
     stats = {
       posterCount: postersResult.count || 0,
       orderCount: ordersResult.count || 0,
       pendingPayments: pendingCount,
       activeCart: cartResult?.cart_items?.length || 0,
+      webinarCount: approvedWebinarCount,
     }
   }
 
@@ -105,6 +123,15 @@ export default async function DashboardPage() {
       href: "/profile",
       color: "from-blue-500 to-blue-600",
       stats: null,
+    },
+    {
+      title: "My Webinars",
+      description: "Access your purchased webinars",
+      icon: Video,
+      href: "/my-webinars",
+      color: "from-indigo-500 to-purple-600",
+      stats: stats.webinarCount > 0 ? `${stats.webinarCount} webinar${stats.webinarCount !== 1 ? "s" : ""}` : null,
+      badge: stats.webinarCount > 0 ? { text: "Active", variant: "default" as const } : null,
     },
     {
       title: "My E-Posters",

@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, CheckCircle2, Save } from "lucide-react"
 import { toast } from "sonner"
 
 export default function ProfilePage() {
@@ -23,6 +23,7 @@ export default function ProfilePage() {
   })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
   const [user, setUser] = useState<any>(null)
   const router = useRouter()
   const supabase = createClient()
@@ -69,11 +70,13 @@ export default function ProfilePage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    if (saveSuccess) setSaveSuccess(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSaving(true)
+    setSaveSuccess(false)
 
     try {
       const { error } = await supabase.from("profiles").upsert({
@@ -90,13 +93,21 @@ export default function ProfilePage() {
 
       if (error) {
         console.error("[v0] Error saving profile:", error)
-        toast.error("Failed to save profile: " + error.message)
+        toast.error("Failed to save profile", {
+          description: error.message,
+        })
       } else {
-        toast.success("Profile saved successfully!")
+        setSaveSuccess(true)
+        toast.success("Profile saved successfully!", {
+          description: "Your information has been updated.",
+        })
+        setTimeout(() => setSaveSuccess(false), 3000)
       }
     } catch (err) {
       console.error("[v0] Error in handleSubmit:", err)
-      toast.error("An unexpected error occurred")
+      toast.error("An unexpected error occurred", {
+        description: "Please try again later.",
+      })
     } finally {
       setIsSaving(false)
     }
@@ -268,16 +279,41 @@ export default function ProfilePage() {
                 </select>
               </div>
 
-              <Button type="submit" disabled={isSaving} className="w-full">
-                {isSaving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Profile"
+              <div className="relative">
+                {isSaving && (
+                  <div className="absolute inset-0 bg-background/50 backdrop-blur-[1px] rounded-lg flex items-center justify-center z-10">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span className="text-sm font-medium">Saving your profile...</span>
+                    </div>
+                  </div>
                 )}
-              </Button>
+
+                <Button
+                  type="submit"
+                  disabled={isSaving}
+                  className={`w-full h-12 text-base font-semibold transition-all duration-300 ${
+                    saveSuccess ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                  }`}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : saveSuccess ? (
+                    <>
+                      <CheckCircle2 className="w-5 h-5 mr-2" />
+                      Profile Saved!
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5 mr-2" />
+                      Save Profile
+                    </>
+                  )}
+                </Button>
+              </div>
             </form>
           </div>
         </section>

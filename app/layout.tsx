@@ -155,7 +155,24 @@ export default function RootLayout({
         <CartProvider>{children}</CartProvider>
         <Analytics />
         <SpeedInsights />
-        <Toaster />
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            classNames: {
+              toast: "bg-card border-border shadow-lg",
+              title: "text-foreground font-medium",
+              description: "text-muted-foreground",
+              success:
+                "!bg-emerald-50 !border-emerald-200 !text-emerald-800 dark:!bg-emerald-950 dark:!border-emerald-800 dark:!text-emerald-200",
+              error:
+                "!bg-red-50 !border-red-200 !text-red-800 dark:!bg-red-950 dark:!border-red-800 dark:!text-red-200",
+              info: "!bg-blue-50 !border-blue-200 !text-blue-800 dark:!bg-blue-950 dark:!border-blue-800 dark:!text-blue-200",
+            },
+          }}
+          richColors
+          closeButton
+        />
       </body>
     </html>
   )

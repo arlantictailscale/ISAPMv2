@@ -49,7 +49,7 @@ export default function FlipBookSection({ registeredCount }: FlipBookSectionProp
     return (
       <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
-          <div className="w-full max-w-5xl mx-auto mb-12 h-[451px] bg-gray-100 rounded-lg animate-pulse" />
+          <div className="w-full max-w-5xl mx-auto mb-12 h-[600px] bg-gray-100 rounded-lg animate-pulse" />
         </div>
       </section>
     )
@@ -66,8 +66,8 @@ export default function FlipBookSection({ registeredCount }: FlipBookSectionProp
             allow="clipboard-write"
             scrolling="no"
             className="w-full border border-border rounded-lg shadow-lg"
-            src="https://heyzine.com/flip-book/2ba328d004.html"
-            style={{ height: "471px" }}
+            src="https://heyzine.com/flip-book/1720ce36c8.html"
+            style={{ height: "600px" }}
             title="Conference Flip Book"
           />
         </div>

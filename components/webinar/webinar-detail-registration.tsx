@@ -68,7 +68,6 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
         participant_type_label: "General Admission",
         unit_price: webinar.price,
         currency: webinar.currency || "IDR",
-        quantity: 1,
       }
 
       console.log("[v0] Cart item:", cartItem)

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, Clock, Users, ArrowRight, Bell, CheckCircle2, ShoppingCart, Loader2 } from "lucide-react"
-import { type Webinar, formatWebinarDate, getWebinarPricing } from "@/lib/data/webinars"
+import { type Webinar, formatWebinarDate } from "@/lib/data/webinars"
 import { formatPrice } from "@/lib/data/event-pricing"
 import { addToCart } from "@/app/actions/cart"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -29,47 +29,60 @@ export function WebinarCard({ webinar, index }: WebinarCardProps) {
   const isSoldOut = webinar.status === "sold_out"
 
   const handleAddToCart = async () => {
+    console.log("[v0] WebinarCard handleAddToCart called for:", webinar.id)
     setIsAdding(true)
 
     try {
       const supabase = createBrowserClient()
       const {
         data: { user },
+        error: authError,
       } = await supabase.auth.getUser()
+
+      if (authError) {
+        console.log("[v0] Auth error:", authError)
+        toast.error("Authentication error")
+        setIsAdding(false)
+        return
+      }
 
       if (!user) {
         toast.error("Please sign in to add items to cart")
-        router.push("/login")
+        router.push(`/auth/login?redirect=/webinar`)
+        setIsAdding(false)
         return
       }
 
-      const pricing = getWebinarPricing(webinar.id)
-      if (!pricing) {
-        toast.error("Pricing information not available")
-        return
-      }
+      console.log("[v0] User authenticated:", user.id)
 
       const cartItem = {
         item_type: "webinar" as const,
         event_id: webinar.id,
-        event_name: webinar.title,
-        participant_type_id: "webinar_participant",
-        participant_type_label: "Webinar Participant",
-        unit_price: pricing.price,
-        currency: "IDR",
+        event_label: webinar.title,
+        participant_type_id: "general",
+        participant_type_label: "General Admission",
+        unit_price: webinar.price,
+        currency: webinar.currency || "IDR",
       }
+
+      console.log("[v0] Cart item:", cartItem)
 
       const result = await addToCart(cartItem)
 
-      if (result.error) {
-        toast.error(result.error)
-      } else if (result.data) {
+      console.log("[v0] Result:", result)
+
+      if (result.data) {
         toast.success("Added to cart!", {
           description: webinar.shortTitle || webinar.title,
         })
         router.refresh()
+      } else if (result.error) {
+        toast.error("Error", {
+          description: result.error,
+        })
       }
     } catch (error) {
+      console.error("[v0] Error:", error)
       toast.error("Failed to add to cart")
     } finally {
       setIsAdding(false)

@@ -7,7 +7,7 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, Sparkles, ArrowLeft, Gift } from "lucide-react"
+import { Video, Sparkles, ArrowLeft, Gift, ArrowRight } from "lucide-react"
 import { WEBINARS, type Webinar } from "@/lib/data/webinars"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
@@ -104,9 +104,9 @@ export default function WebinarsPage() {
         </section>
 
         {promotion && (
-          <section className="py-8 bg-background">
+          <section className="py-6 bg-background">
             <div className="container mx-auto px-4">
-              <SymposiumBundleBanner variant="full" showCTA={true} />
+              <SymposiumBundleBanner variant="compact" showCTA={false} />
             </div>
           </section>
         )}
@@ -127,12 +127,10 @@ export default function WebinarsPage() {
               </div>
 
               {promotion && bundleSavings > 0 && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-full">
-                  <Gift className="w-4 h-4 text-emerald-600" />
-                  <span className="text-sm font-medium text-emerald-700">
-                    FREE with Symposium (Save {formatCurrency(bundleSavings)})
-                  </span>
-                </div>
+                <span className="text-sm text-muted-foreground">
+                  <Gift className="w-4 h-4 inline mr-1 text-emerald-500" />
+                  All webinars included with Symposium registration
+                </span>
               )}
             </div>
 
@@ -151,45 +149,31 @@ export default function WebinarsPage() {
           </div>
         </section>
 
-        {/* CTA Section - Updated to highlight bundle deal */}
-        <section className="py-16">
+        <section className="py-12">
           <div className="container mx-auto px-4">
-            <Card className="bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 border-0 text-white overflow-hidden">
-              <CardContent className="p-8 md:p-12 relative">
-                {/* Background Pattern */}
-                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
-
-                <div className="relative z-10 max-w-2xl mx-auto text-center">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full mb-4">
-                    <Gift className="w-4 h-4" />
-                    <span className="text-sm font-medium">Special Bundle Offer</span>
+            <Card className="bg-slate-50 border-slate-200">
+              <CardContent className="p-6 md:p-8">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-full bg-primary/10 shrink-0">
+                      <Gift className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-foreground mb-1">Symposium Bundle</h3>
+                      <p className="text-muted-foreground text-sm max-w-md">
+                        All 4 webinars are included at no additional cost when you register for the Symposium.
+                        {bundleSavings > 0 && (
+                          <span className="text-emerald-600 font-medium"> ({formatCurrency(bundleSavings)} value)</span>
+                        )}
+                      </p>
+                    </div>
                   </div>
-                  <h3 className="text-2xl md:text-3xl font-bold mb-4">Get All 4 Webinars FREE!</h3>
-                  <p className="text-white/90 mb-6">
-                    Purchase any Symposium ticket and receive all webinars at no additional cost.
-                    {bundleSavings > 0 && (
-                      <span className="block mt-2 text-lg font-semibold">
-                        Save {formatCurrency(bundleSavings)} instantly!
-                      </span>
-                    )}
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                    <Link href="/pricing">
-                      <Button size="lg" variant="secondary" className="bg-white text-emerald-600 hover:bg-white/90">
-                        <Gift className="w-4 h-4 mr-2" />
-                        Get the Bundle Deal
-                      </Button>
-                    </Link>
-                    <Link href="/events">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="border-white/30 text-white hover:bg-white/10 bg-transparent"
-                      >
-                        View All Events
-                      </Button>
-                    </Link>
-                  </div>
+                  <Link href="/pricing">
+                    <Button variant="outline" className="shrink-0 bg-transparent">
+                      View Symposium Options
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

@@ -17,14 +17,16 @@ export interface BundlePromotion {
 // Active Promotions Configuration
 export const SYMPOSIUM_BUNDLE_PROMOTION: BundlePromotion = {
   id: "symposium-webinar-bundle-2026",
-  name: "Symposium + 4 Free Webinars",
-  description: "Purchase any Symposium ticket and receive all 4 webinars absolutely FREE!",
+  name: "Symposium Bundle",
+  description: "Symposium registration includes access to all 4 webinars at no additional cost.",
   triggerEventType: "symposium",
   triggerParticipantTypes: ["specialist-doctor", "general-doctor", "resident", "nurse", "student", "other"],
   includedWebinarIds: ["webinar_equity_pain", "webinar_2", "webinar_3", "webinar_4"],
-  discountPercentage: 100, // 100% off = FREE
+  discountPercentage: 100,
   isActive: true,
 }
+
+const WEBINAR_STANDARD_PRICE = 100000 // Rp 100.000 per webinar
 
 // Helper Functions
 export function isPromotionActive(promotion: BundlePromotion): boolean {
@@ -49,8 +51,11 @@ export function getIncludedWebinarsForSymposium(): Webinar[] {
 }
 
 export function calculateBundleSavings(): number {
-  const includedWebinars = getIncludedWebinarsForSymposium()
-  return includedWebinars.reduce((total, webinar) => total + (webinar.price || 0), 0)
+  const promotion = getActiveSymposiumPromotion()
+  if (!promotion) return 0
+
+  // 4 webinars × Rp 100.000 = Rp 400.000
+  return promotion.includedWebinarIds.length * WEBINAR_STANDARD_PRICE
 }
 
 export function isWebinarIncludedInSymposiumBundle(webinarId: string): boolean {

@@ -390,7 +390,7 @@ export default function PricingPage() {
 
             {promotion && (
               <div className="mt-6">
-                <SymposiumBundleBanner variant="full" showCTA={false} />
+                <SymposiumBundleBanner variant="compact" showCTA={false} />
               </div>
             )}
 
@@ -488,9 +488,9 @@ export default function PricingPage() {
                               {colorScheme.categoryLabel}
                             </span>
                             {isSymposium && promotion && (
-                              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
                                 <Gift className="w-3 h-3" />
-                                +4 FREE Webinars
+                                Includes 4 Webinars
                               </span>
                             )}
                           </div>
@@ -513,9 +513,9 @@ export default function PricingPage() {
                             {colorScheme.categoryLabel}
                           </span>
                           {isSymposium && promotion && (
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
                               <Gift className="w-3 h-3" />
-                              +4 FREE Webinars
+                              Includes 4 Webinars
                             </span>
                           )}
                         </div>

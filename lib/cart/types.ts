@@ -5,10 +5,7 @@ export interface CartItem {
   cart_id: string
   item_type: CartItemType
   event_id?: string
-  event_type?: string
   event_label?: string
-  event_name?: string
-  participant_type?: string
   participant_type_id?: string
   participant_type_label?: string
   hotel_room_type?: string
@@ -18,9 +15,6 @@ export interface CartItem {
   unit_price: number
   currency: string
   created_at: string
-  is_bonus_item?: boolean
-  bonus_source?: string
-  original_price?: number
 }
 
 export interface Cart {

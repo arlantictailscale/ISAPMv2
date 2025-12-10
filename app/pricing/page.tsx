@@ -13,14 +13,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ChevronRight, Loader2, AlertCircle, User, Gift } from "lucide-react"
+import { ChevronRight, Loader2, AlertCircle, User } from "lucide-react"
 import { AddToCartButton } from "@/components/add-to-cart-button"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { SymposiumBundleBanner } from "@/components/promotions/symposium-bundle-banner"
-import { getActiveSymposiumPromotion, calculateBundleSavings, formatCurrency } from "@/lib/data/promotions"
 
 export default function PricingPage() {
   const earlyBirdDeadline = parseISO("2027-01-20T23:59:59")
@@ -31,9 +29,6 @@ export default function PricingPage() {
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
   const router = useRouter()
-
-  const promotion = getActiveSymposiumPromotion()
-  const bundleSavings = calculateBundleSavings()
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -388,12 +383,6 @@ export default function PricingPage() {
               </div>
             )}
 
-            {promotion && (
-              <div className="mt-6">
-                <SymposiumBundleBanner variant="compact" showCTA={false} />
-              </div>
-            )}
-
             <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-900">
                 <strong>Important:</strong> On-site registration is available at a higher rate. Register online now to
@@ -472,7 +461,6 @@ export default function PricingPage() {
             <div className="space-y-4">
               {filteredEvents.map((event) => {
                 const colorScheme = getEventColorScheme(event.id)
-                const isSymposium = event.id === "symposium"
 
                 return (
                   <Dialog key={event.id}>
@@ -481,18 +469,12 @@ export default function PricingPage() {
                         className={`w-full bg-gradient-to-br ${colorScheme.bgGradient} border-2 ${colorScheme.borderColor} ${colorScheme.hoverBorder} rounded-xl p-4 transition-all duration-200 text-left flex items-center justify-between group shadow-sm hover:shadow-md`}
                       >
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2 flex-wrap">
+                          <div className="flex items-center gap-2 mb-2">
                             <span
                               className={`text-xs font-semibold px-2 py-1 rounded-full ${colorScheme.badgeBg} ${colorScheme.badgeText}`}
                             >
                               {colorScheme.categoryLabel}
                             </span>
-                            {isSymposium && promotion && (
-                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
-                                <Gift className="w-3 h-3" />
-                                Includes 4 Webinars
-                              </span>
-                            )}
                           </div>
                           <h3 className={`font-display text-lg font-bold ${colorScheme.textColor} mb-1 truncate`}>
                             {event.label}
@@ -506,40 +488,16 @@ export default function PricingPage() {
                     </DialogTrigger>
                     <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto overflow-x-hidden w-[95vw] sm:w-full">
                       <DialogHeader>
-                        <div className="mb-2 flex items-center gap-2 flex-wrap">
+                        <div className="mb-2">
                           <span
                             className={`text-xs font-semibold px-2 py-1 rounded-full ${colorScheme.badgeBg} ${colorScheme.badgeText}`}
                           >
                             {colorScheme.categoryLabel}
                           </span>
-                          {isSymposium && promotion && (
-                            <span className="text-xs font-medium px-2 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
-                              <Gift className="w-3 h-3" />
-                              Includes 4 Webinars
-                            </span>
-                          )}
                         </div>
                         <DialogTitle className="text-xl pr-8 break-words">{event.label}</DialogTitle>
                         <DialogDescription className="break-words">{event.date}</DialogDescription>
                       </DialogHeader>
-
-                      {isSymposium && promotion && bundleSavings > 0 && (
-                        <div className="p-4 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg mb-4">
-                          <div className="flex items-start gap-3">
-                            <div className="flex items-center justify-center w-10 h-10 bg-emerald-100 rounded-full shrink-0">
-                              <Gift className="w-5 h-5 text-emerald-600" />
-                            </div>
-                            <div>
-                              <p className="font-semibold text-emerald-800 mb-1">Special Bundle Deal!</p>
-                              <p className="text-sm text-emerald-700">
-                                Purchase this symposium ticket and receive all 4 webinars FREE - a{" "}
-                                <span className="font-bold">{formatCurrency(bundleSavings)}</span> value!
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
                       <div className="space-y-4 mt-4">
                         {event.participantTypes.map((pt) => {
                           const currentPrice = isEarlyBirdPeriod ? pt.earlyBirdPrice : pt.normalPrice
@@ -575,7 +533,6 @@ export default function PricingPage() {
                                 <AddToCartButton
                                   item={{
                                     item_type: "event",
-                                    event_type: event.id,
                                     event_id: event.id,
                                     event_label: event.label,
                                     participant_type_id: pt.id,
@@ -586,7 +543,6 @@ export default function PricingPage() {
                                   variant="default"
                                   size="default"
                                   className="w-full"
-                                  showBundleMessage={isSymposium && !!promotion}
                                 />
                               </div>
                             </div>

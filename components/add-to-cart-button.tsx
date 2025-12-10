@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ShoppingCart, Loader2, LogIn, Gift } from "lucide-react"
+import { ShoppingCart, Loader2, LogIn } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { addToCart } from "@/app/actions/cart"
 import { useRouter } from "next/navigation"
@@ -22,16 +22,9 @@ interface AddToCartButtonProps {
   variant?: "default" | "outline" | "secondary"
   size?: "default" | "sm" | "lg"
   className?: string
-  showBundleMessage?: boolean
 }
 
-export function AddToCartButton({
-  item,
-  variant = "outline",
-  size = "default",
-  className,
-  showBundleMessage = false,
-}: AddToCartButtonProps) {
+export function AddToCartButton({ item, variant = "outline", size = "default", className }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
   const router = useRouter()
@@ -50,14 +43,6 @@ export function AddToCartButton({
     if (result.error) {
       if (result.error.includes("Not authenticated")) {
         setShowLoginDialog(true)
-      } else if (result.error.toLowerCase().includes("already")) {
-        toast.info("Already in Cart", {
-          description: "This item is already in your cart.",
-          action: {
-            label: "View Cart",
-            onClick: () => router.push("/cart"),
-          },
-        })
       } else {
         toast.error("Failed to add to cart", {
           description: result.error,
@@ -67,24 +52,12 @@ export function AddToCartButton({
     } else {
       await refreshCart()
 
-      if (result.bonusItemsAdded && result.bonusItemsAdded > 0) {
-        toast.success(result.message || "Added to cart with bonus items!", {
-          description: `${result.bonusItemsAdded} FREE webinar${result.bonusItemsAdded > 1 ? "s" : ""} added to your cart!`,
-          icon: <Gift className="w-4 h-4 text-emerald-500" />,
-          action: {
-            label: "View Cart",
-            onClick: () => router.push("/cart"),
-          },
-          duration: 5000,
-        })
-      } else {
-        toast.success("Added to cart!", {
-          action: {
-            label: "View Cart",
-            onClick: () => router.push("/cart"),
-          },
-        })
-      }
+      toast.success("Added to cart!", {
+        action: {
+          label: "View Cart",
+          onClick: () => router.push("/cart"),
+        },
+      })
       setIsAdding(false)
       router.refresh()
     }
@@ -116,17 +89,8 @@ export function AddToCartButton({
           </>
         ) : (
           <>
-            {showBundleMessage ? (
-              <>
-                <Gift className="w-4 h-4 mr-2" />
-                Add to Cart + 4 FREE Webinars
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Add to Cart
-              </>
-            )}
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            Add to Cart
           </>
         )}
       </Button>

@@ -7,23 +7,18 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, Sparkles, ArrowLeft, Gift, ArrowRight } from "lucide-react"
+import { Video, ArrowRight, Sparkles, ArrowLeft } from "lucide-react"
 import { WEBINARS, type Webinar } from "@/lib/data/webinars"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
 import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
 import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration"
-import { SymposiumBundleBanner } from "@/components/promotions/symposium-bundle-banner"
-import { getActiveSymposiumPromotion, calculateBundleSavings, formatCurrency } from "@/lib/data/promotions"
 
 export default function WebinarsPage() {
   const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null)
 
   const activeWebinars = WEBINARS.filter((w) => w.status === "active")
   const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
-
-  const promotion = getActiveSymposiumPromotion()
-  const bundleSavings = calculateBundleSavings()
 
   if (selectedWebinar) {
     return (
@@ -103,35 +98,18 @@ export default function WebinarsPage() {
           </div>
         </section>
 
-        {promotion && (
-          <section className="py-6 bg-background">
-            <div className="container mx-auto px-4">
-              <SymposiumBundleBanner variant="compact" showCTA={false} />
-            </div>
-          </section>
-        )}
-
         {/* Webinars Grid */}
         <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             {/* Section Header */}
-            <div className="flex items-center justify-between gap-3 mb-8 flex-wrap">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
-                  <Video className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold">All Webinars</h2>
-                  <p className="text-sm text-muted-foreground">Browse and register for our webinar series</p>
-                </div>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Video className="w-5 h-5 text-primary" />
               </div>
-
-              {promotion && bundleSavings > 0 && (
-                <span className="text-sm text-muted-foreground">
-                  <Gift className="w-4 h-4 inline mr-1 text-emerald-500" />
-                  All webinars included with Symposium registration
-                </span>
-              )}
+              <div>
+                <h2 className="text-2xl font-bold">All Webinars</h2>
+                <p className="text-sm text-muted-foreground">Browse and register for our webinar series</p>
+              </div>
             </div>
 
             {/* Grid - Use new WebinarCard component with onViewDetails callback */}
@@ -142,38 +120,43 @@ export default function WebinarsPage() {
                   webinar={webinar}
                   index={index}
                   onViewDetails={webinar.status === "active" ? () => setSelectedWebinar(webinar) : undefined}
-                  showBundleBadge={promotion !== null}
                 />
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-12">
+        {/* CTA Section */}
+        <section className="py-16">
           <div className="container mx-auto px-4">
-            <Card className="bg-slate-50 border-slate-200">
-              <CardContent className="p-6 md:p-8">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-full bg-primary/10 shrink-0">
-                      <Gift className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-foreground mb-1">Symposium Bundle</h3>
-                      <p className="text-muted-foreground text-sm max-w-md">
-                        All 4 webinars are included at no additional cost when you register for the Symposium.
-                        {bundleSavings > 0 && (
-                          <span className="text-emerald-600 font-medium"> ({formatCurrency(bundleSavings)} value)</span>
-                        )}
-                      </p>
-                    </div>
+            <Card className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 border-0 text-white overflow-hidden">
+              <CardContent className="p-8 md:p-12 relative">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+
+                <div className="relative z-10 max-w-2xl mx-auto text-center">
+                  <h3 className="text-2xl md:text-3xl font-bold mb-4">Stay Updated on New Webinars</h3>
+                  <p className="text-white/80 mb-6">
+                    Be the first to know when new webinars are announced. Register for the main conference to get
+                    priority access and exclusive discounts on webinar registrations.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link href="/pricing">
+                      <Button size="lg" variant="secondary" className="bg-white text-purple-600 hover:bg-white/90">
+                        Register for Conference
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
+                    <Link href="/events">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="border-white/30 text-white hover:bg-white/10 bg-transparent"
+                      >
+                        View All Events
+                      </Button>
+                    </Link>
                   </div>
-                  <Link href="/pricing">
-                    <Button variant="outline" className="shrink-0 bg-transparent">
-                      View Symposium Options
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>

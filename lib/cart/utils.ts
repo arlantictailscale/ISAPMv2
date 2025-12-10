@@ -37,49 +37,22 @@ export function formatCurrency(amount: number, currency = "IDR"): string {
  * Validate cart item data
  */
 export function validateCartItem(item: Partial<CartItem>): boolean {
-  if (!item.item_type || typeof item.unit_price !== "number") {
-    console.log("[v0] validateCartItem failed: missing item_type or unit_price", {
-      item_type: item.item_type,
-      unit_price: item.unit_price,
-    })
+  if (!item.item_type || !item.unit_price) {
     return false
   }
 
   if (item.item_type === "event") {
-    const valid = !!(item.event_id && item.participant_type_id)
-    if (!valid) {
-      console.log("[v0] validateCartItem failed for event:", {
-        event_id: item.event_id,
-        participant_type_id: item.participant_type_id,
-      })
-    }
-    return valid
+    return !!(item.event_id && item.participant_type_id)
   }
 
   if (item.item_type === "hotel") {
-    const valid = !!(item.hotel_room_type && item.check_in_date && item.check_out_date)
-    if (!valid) {
-      console.log("[v0] validateCartItem failed for hotel:", {
-        hotel_room_type: item.hotel_room_type,
-        check_in_date: item.check_in_date,
-        check_out_date: item.check_out_date,
-      })
-    }
-    return valid
+    return !!(item.hotel_room_type && item.check_in_date && item.check_out_date)
   }
 
   if (item.item_type === "webinar") {
-    const valid = !!(item.event_id && item.event_label)
-    if (!valid) {
-      console.log("[v0] validateCartItem failed for webinar:", {
-        event_id: item.event_id,
-        event_label: item.event_label,
-      })
-    }
-    return valid
+    return !!(item.event_id && item.event_label)
   }
 
-  console.log("[v0] validateCartItem failed: unknown item_type", item.item_type)
   return false
 }
 

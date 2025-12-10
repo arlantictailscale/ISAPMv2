@@ -73,15 +73,20 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
 
       const result = await addToCart(cartItem)
 
+      console.log("[v0] addToCart result:", result)
+
       if (result.data) {
+        console.log("[v0] Item added successfully")
         setButtonState("success")
         await refreshCart()
         toast.success("Added to Cart", {
           description: `${webinar.shortTitle} has been added to your cart.`,
         })
       } else if (result.error) {
+        console.log("[v0] Error from addToCart:", result.error)
         setButtonState("idle")
-        if (result.error === "This item is already in your cart") {
+        if (result.error.toLowerCase().includes("already")) {
+          console.log("[v0] Showing duplicate item toast")
           toast.info("Already in Cart", {
             description: `${webinar.shortTitle || webinar.title} is already in your cart.`,
             icon: <ShoppingBag className="w-4 h-4" />,

@@ -78,8 +78,12 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
 
       const result = await addToCart(cartItem)
 
+      console.log("[v0] addToCart result:", result)
+
       if (result.error) {
-        if (result.error === "This item is already in your cart") {
+        console.log("[v0] Error from addToCart:", result.error)
+        if (result.error.toLowerCase().includes("already")) {
+          console.log("[v0] Showing duplicate item toast")
           toast.info("Already in Cart", {
             description: `${webinar.shortTitle || webinar.title} is already in your cart.`,
             icon: <ShoppingBag className="w-4 h-4" />,
@@ -92,6 +96,7 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           toast.error(result.error)
         }
       } else if (result.data) {
+        console.log("[v0] Item added successfully")
         await refreshCart()
         toast.success("Added to cart!", {
           description: webinar.shortTitle || webinar.title,

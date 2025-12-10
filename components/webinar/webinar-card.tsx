@@ -19,6 +19,7 @@ import {
   User,
   LogIn,
   ShoppingBag,
+  Gift,
 } from "lucide-react"
 import { type Webinar, formatWebinarDate, getWebinarPricing } from "@/lib/data/webinars"
 import { formatPrice } from "@/lib/data/event-pricing"
@@ -31,9 +32,10 @@ interface WebinarCardProps {
   webinar: Webinar
   index: number
   onViewDetails?: () => void
+  showBundleBadge?: boolean
 }
 
-export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps) {
+export function WebinarCard({ webinar, index, onViewDetails, showBundleBadge = false }: WebinarCardProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [isAdding, setIsAdding] = useState(false)
@@ -68,9 +70,11 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
 
       const cartItem = {
         item_type: "webinar" as const,
+        event_type: "webinar",
         event_id: webinar.id,
-        event_label: webinar.title,
-        participant_type_id: "general",
+        event_label: webinar.slug,
+        event_name: webinar.shortTitle || webinar.title,
+        participant_type: "general",
         participant_type_label: "General Admission",
         unit_price: pricing.price,
         currency: "IDR",
@@ -78,12 +82,8 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
 
       const result = await addToCart(cartItem)
 
-      console.log("[v0] addToCart result:", result)
-
       if (result.error) {
-        console.log("[v0] Error from addToCart:", result.error)
         if (result.error.toLowerCase().includes("already")) {
-          console.log("[v0] Showing duplicate item toast")
           toast.info("Already in Cart", {
             description: `${webinar.shortTitle || webinar.title} is already in your cart.`,
             icon: <ShoppingBag className="w-4 h-4" />,
@@ -96,7 +96,6 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           toast.error(result.error)
         }
       } else if (result.data) {
-        console.log("[v0] Item added successfully")
         await refreshCart()
         toast.success("Added to cart!", {
           description: webinar.shortTitle || webinar.title,
@@ -120,7 +119,7 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
         }`}
       >
         {/* Status Badge */}
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex flex-col gap-2 items-end">
           {isActive && (
             <Badge className="bg-green-500 text-white border-0">
               <CheckCircle2 className="w-3 h-3 mr-1" />
@@ -134,6 +133,13 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
             </Badge>
           )}
           {isSoldOut && <Badge variant="destructive">Sold Out</Badge>}
+
+          {showBundleBadge && isActive && (
+            <Badge className="bg-emerald-500 text-white border-0">
+              <Gift className="w-3 h-3 mr-1" />
+              FREE with Symposium
+            </Badge>
+          )}
         </div>
 
         {/* Webinar Number Indicator */}
@@ -221,7 +227,12 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
               <>
                 <div>
                   <p className="text-xs text-muted-foreground">Registration Fee</p>
-                  <p className="text-lg font-bold text-primary">{formatPrice(webinar.price)}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-lg font-bold text-primary">{formatPrice(webinar.price)}</p>
+                    {showBundleBadge && (
+                      <span className="text-xs text-emerald-600 font-medium">or FREE with Symposium</span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <Button

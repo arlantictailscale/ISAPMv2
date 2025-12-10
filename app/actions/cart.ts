@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { CartItem } from "@/lib/cart/types"
 import { isDuplicateCartItem, validateCartItem } from "@/lib/cart/utils"
+import { isEventTypeSymposium, getActiveSymposiumPromotion, getBonusWebinarItems } from "@/lib/data/promotions"
 
 /**
  * Get or create active cart for current user
@@ -102,11 +103,53 @@ export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created
     return { error: error.message }
   }
 
+  let bonusItemsAdded = 0
+  if (isEventTypeSymposium(item.event_type)) {
+    const promotion = getActiveSymposiumPromotion()
+    if (promotion) {
+      const bonusItems = getBonusWebinarItems(item.participant_type)
+
+      for (const bonusItem of bonusItems) {
+        // Check if bonus item is already in cart
+        const bonusAlreadyInCart = existingItems.find(
+          (existing) => existing.event_type === bonusItem.event_type && existing.event_label === bonusItem.event_label,
+        )
+
+        if (!bonusAlreadyInCart) {
+          const { error: bonusError } = await supabase.from("cart_items").insert({
+            cart_id: cart.id,
+            event_type: bonusItem.event_type,
+            event_label: bonusItem.event_label,
+            event_name: bonusItem.event_name,
+            participant_type: bonusItem.participant_type,
+            participant_type_label: bonusItem.participant_type_label,
+            unit_price: bonusItem.unit_price,
+            currency: bonusItem.currency,
+            is_bonus_item: true,
+            bonus_source: bonusItem.bonus_source,
+          })
+
+          if (!bonusError) {
+            bonusItemsAdded++
+          }
+        }
+      }
+    }
+  }
+
   // Update cart timestamp
   await supabase.from("carts").update({ updated_at: new Date().toISOString() }).eq("id", cart.id)
 
   revalidatePath("/cart")
-  return { data }
+
+  return {
+    data,
+    bonusItemsAdded,
+    message:
+      bonusItemsAdded > 0
+        ? `Symposium added with ${bonusItemsAdded} FREE webinar${bonusItemsAdded > 1 ? "s" : ""}!`
+        : undefined,
+  }
 }
 
 /**
@@ -123,10 +166,23 @@ export async function removeFromCart(itemId: string) {
   }
 
   // Verify item belongs to user's cart
-  const { data: item } = await supabase.from("cart_items").select("cart_id, carts(user_id)").eq("id", itemId).single()
+  const { data: item } = await supabase
+    .from("cart_items")
+    .select("cart_id, event_type, carts(user_id)")
+    .eq("id", itemId)
+    .single()
 
   if (!item || item.carts?.user_id !== user.id) {
     return { error: "Item not found or unauthorized" }
+  }
+
+  if (item.event_type === "symposium") {
+    await supabase
+      .from("cart_items")
+      .delete()
+      .eq("cart_id", item.cart_id)
+      .eq("is_bonus_item", true)
+      .eq("bonus_source", "symposium")
   }
 
   const { error } = await supabase.from("cart_items").delete().eq("id", itemId)

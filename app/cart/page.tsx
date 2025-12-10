@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { calculateCartTotal, formatCurrency } from "@/lib/cart/utils"
-import { ShoppingBag, ArrowRight, Lock } from "lucide-react"
+import { ShoppingBag, ArrowRight, Lock, Gift, Sparkles } from "lucide-react"
 import Link from "next/link"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
@@ -36,6 +36,10 @@ export default async function CartPage() {
 
   const items = cart?.cart_items || []
   const cartSummary = calculateCartTotal(items)
+
+  const bonusItems = items.filter((item: any) => item.is_bonus_item === true)
+  const regularItems = items.filter((item: any) => item.is_bonus_item !== true)
+  const totalSavings = bonusItems.reduce((sum: number, item: any) => sum + (item.original_price || 0), 0)
 
   return (
     <>
@@ -77,9 +81,26 @@ export default async function CartPage() {
                   </Link>
                 </div>
 
-                {items.map((item) => (
+                {regularItems.map((item) => (
                   <CartItemCard key={item.id} item={item} />
                 ))}
+
+                {bonusItems.length > 0 && (
+                  <>
+                    <div className="flex items-center gap-3 mt-8 mb-4">
+                      <div className="flex items-center gap-2 text-emerald-600">
+                        <Gift className="w-5 h-5" />
+                        <h3 className="font-semibold">Bonus Items</h3>
+                      </div>
+                      <span className="text-sm text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                        {bonusItems.length} FREE item{bonusItems.length > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    {bonusItems.map((item) => (
+                      <CartItemCard key={item.id} item={item} />
+                    ))}
+                  </>
+                )}
               </div>
 
               {/* Order Summary */}
@@ -109,6 +130,16 @@ export default async function CartPage() {
                         <span className="text-muted-foreground">Items</span>
                         <span className="font-medium">{cartSummary.itemCount}</span>
                       </div>
+
+                      {totalSavings > 0 && (
+                        <div className="flex justify-between text-sm text-emerald-600">
+                          <span className="flex items-center gap-1">
+                            <Sparkles className="w-3 h-3" />
+                            Bundle Savings
+                          </span>
+                          <span className="font-medium">-{formatCurrency(totalSavings, cartSummary.currency)}</span>
+                        </div>
+                      )}
                     </div>
 
                     <Separator />
@@ -117,6 +148,18 @@ export default async function CartPage() {
                       <span>Total</span>
                       <span className="text-primary">{formatCurrency(cartSummary.subtotal, cartSummary.currency)}</span>
                     </div>
+
+                    {totalSavings > 0 && (
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-emerald-700">
+                          <Gift className="w-4 h-4 shrink-0" />
+                          <p className="text-sm font-medium">
+                            You're saving {formatCurrency(totalSavings, cartSummary.currency)} with the Symposium
+                            bundle!
+                          </p>
+                        </div>
+                      </div>
+                    )}
 
                     {profileStatus.isComplete ? (
                       <Link href="/checkout" className="block">

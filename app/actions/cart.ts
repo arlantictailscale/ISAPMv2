@@ -58,33 +58,40 @@ export async function getOrCreateCart() {
  * Add item to cart
  */
 export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created_at">) {
+  console.log("[v0] addToCart called with item:", JSON.stringify(item, null, 2))
+
   const supabase = await createClient()
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
+    console.log("[v0] addToCart: Not authenticated")
     return { error: "Not authenticated" }
   }
 
   // Validate item
   if (!validateCartItem(item)) {
+    console.log("[v0] addToCart: Invalid cart item data")
     return { error: "Invalid cart item data" }
   }
 
   // Get or create cart
   const cartResult = await getOrCreateCart()
   if (cartResult.error) {
+    console.log("[v0] addToCart: Error getting/creating cart:", cartResult.error)
     return { error: cartResult.error }
   }
 
   const cart = cartResult.data!
+  console.log("[v0] addToCart: Got cart with", cart.cart_items?.length || 0, "existing items")
 
   // Check for duplicates
   const existingItems = cart.cart_items || []
   const duplicate = existingItems.find((existingItem) => isDuplicateCartItem(item, existingItem))
 
   if (duplicate) {
+    console.log("[v0] addToCart: Duplicate item found")
     return { error: "This item is already in your cart" }
   }
 
@@ -103,34 +110,51 @@ export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created
     return { error: error.message }
   }
 
+  console.log("[v0] addToCart: Item added successfully:", data?.id)
+
   let bonusItemsAdded = 0
-  if (isEventTypeSymposium(item.event_type)) {
+  const isSymposium = isEventTypeSymposium(item.event_type || "") || item.item_type === "symposium"
+  console.log("[v0] addToCart: isSymposium check:", {
+    event_type: item.event_type,
+    item_type: item.item_type,
+    isSymposium,
+  })
+
+  if (isSymposium) {
     const promotion = getActiveSymposiumPromotion()
+    console.log("[v0] addToCart: Active promotion:", promotion?.id)
+
     if (promotion) {
-      const bonusItems = getBonusWebinarItems(item.participant_type)
+      const bonusItems = getBonusWebinarItems(item.participant_type_id || item.participant_type || "general")
+      console.log("[v0] addToCart: Bonus items to add:", bonusItems.length)
 
       for (const bonusItem of bonusItems) {
         // Check if bonus item is already in cart
         const bonusAlreadyInCart = existingItems.find(
-          (existing) => existing.event_type === bonusItem.event_type && existing.event_label === bonusItem.event_label,
+          (existing) => existing.item_type === "webinar" && existing.event_label === bonusItem.event_label,
         )
 
         if (!bonusAlreadyInCart) {
           const { error: bonusError } = await supabase.from("cart_items").insert({
             cart_id: cart.id,
+            item_type: "webinar",
+            event_id: bonusItem.event_label,
             event_type: bonusItem.event_type,
             event_label: bonusItem.event_label,
-            event_name: bonusItem.event_name,
-            participant_type: bonusItem.participant_type,
+            participant_type_id: bonusItem.participant_type,
             participant_type_label: bonusItem.participant_type_label,
             unit_price: bonusItem.unit_price,
             currency: bonusItem.currency,
             is_bonus_item: true,
             bonus_source: bonusItem.bonus_source,
+            original_price: bonusItem.original_price,
           })
 
           if (!bonusError) {
             bonusItemsAdded++
+            console.log("[v0] addToCart: Added bonus item:", bonusItem.event_label)
+          } else {
+            console.error("[v0] addToCart: Error adding bonus item:", bonusError)
           }
         }
       }
@@ -142,6 +166,7 @@ export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created
 
   revalidatePath("/cart")
 
+  console.log("[v0] addToCart: Complete. Bonus items added:", bonusItemsAdded)
   return {
     data,
     bonusItemsAdded,

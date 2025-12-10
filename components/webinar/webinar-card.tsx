@@ -18,6 +18,7 @@ import {
   Loader2,
   User,
   LogIn,
+  ShoppingBag,
 } from "lucide-react"
 import { type Webinar, formatWebinarDate, getWebinarPricing } from "@/lib/data/webinars"
 import { formatPrice } from "@/lib/data/event-pricing"
@@ -78,7 +79,18 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
       const result = await addToCart(cartItem)
 
       if (result.error) {
-        toast.error(result.error)
+        if (result.error === "This item is already in your cart") {
+          toast.info("Already in Cart", {
+            description: `${webinar.shortTitle || webinar.title} is already in your cart.`,
+            icon: <ShoppingBag className="w-4 h-4" />,
+            action: {
+              label: "View Cart",
+              onClick: () => router.push("/cart"),
+            },
+          })
+        } else {
+          toast.error(result.error)
+        }
       } else if (result.data) {
         await refreshCart()
         toast.success("Added to cart!", {

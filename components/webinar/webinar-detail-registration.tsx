@@ -16,6 +16,7 @@ import {
   MessageCircle,
   User,
   LogIn,
+  ShoppingBag,
 } from "lucide-react"
 import { addToCart } from "@/app/actions/cart"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -80,9 +81,20 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
         })
       } else if (result.error) {
         setButtonState("idle")
-        toast.error("Error", {
-          description: result.error,
-        })
+        if (result.error === "This item is already in your cart") {
+          toast.info("Already in Cart", {
+            description: `${webinar.shortTitle || webinar.title} is already in your cart.`,
+            icon: <ShoppingBag className="w-4 h-4" />,
+            action: {
+              label: "View Cart",
+              onClick: () => router.push("/cart"),
+            },
+          })
+        } else {
+          toast.error("Error", {
+            description: result.error,
+          })
+        }
       }
     } catch (error) {
       console.error("Error adding to cart:", error)

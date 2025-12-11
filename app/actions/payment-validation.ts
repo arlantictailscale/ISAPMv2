@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { sendPaymentVerificationEmail, sendPaymentConfirmationWithInvoice } from "@/lib/email"
 import { generateSequentialInvoiceNumber } from "@/lib/invoice/invoice-number"
+import { grantSymposiumWebinarAccess, orderContainsSymposium } from "@/app/actions/webinar-access"
 
 export async function approvePayment(paymentId: string, orderId: string, calculatedTotal?: number) {
   try {
@@ -64,8 +65,24 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
       console.error("[v0] Error updating order status:", orderError)
     }
 
+    const order = payment.orders as any
     try {
-      const order = payment.orders as any
+      const hasSymposium = await orderContainsSymposium(orderId)
+      if (hasSymposium) {
+        console.log("[v0] Order contains Symposium event, granting bonus webinar access...")
+        const grantResult = await grantSymposiumWebinarAccess(order.user_id, orderId, user.id)
+        if (grantResult.success) {
+          console.log(`[v0] Successfully granted ${grantResult.granted} bonus webinars for Symposium purchase`)
+        } else {
+          console.error("[v0] Failed to grant bonus webinars:", grantResult.error)
+        }
+      }
+    } catch (grantError) {
+      console.error("[v0] Error checking/granting symposium webinar access:", grantError)
+      // Don't fail the payment approval if webinar grant fails
+    }
+
+    try {
       const emailTotalAmount = calculatedTotal !== undefined ? calculatedTotal : order.total_amount
 
       await sendPaymentConfirmationWithInvoice({
@@ -79,7 +96,7 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
         customerPhone: order.phone,
         paymentVerifiedAt: verifiedAt,
         invoiceNumber,
-        paymentMethod: payment.payment_method, // Add payment method
+        paymentMethod: payment.payment_method,
       })
       console.log("[v0] Payment confirmation with invoice email sent to:", order.email)
     } catch (emailError) {
@@ -88,6 +105,7 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
     }
 
     revalidatePath("/admin/payment-validation")
+    revalidatePath("/my-webinars")
     return { success: true }
   } catch (error) {
     console.error("[v0] Approve payment error:", error)

@@ -5,9 +5,10 @@ import Footer from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Video, Calendar, Clock, CheckCircle, ExternalLink, Users, FileText, Play } from "lucide-react"
+import { Video, Calendar, Clock, CheckCircle, ExternalLink, Users, FileText, Play, Gift } from "lucide-react"
 import Link from "next/link"
 import { getWebinarById, formatWebinarDate } from "@/lib/data/webinars"
+import { getUserWebinarAccess, type WebinarGrant } from "@/app/actions/webinar-access"
 
 interface WebinarOrder {
   id: string
@@ -27,6 +28,178 @@ interface WebinarOrder {
     payment_status: string
     verified_at: string
   }[]
+}
+
+function BonusWebinarCard({ grant }: { grant: WebinarGrant }) {
+  const webinarData = getWebinarById(grant.webinar_id)
+
+  const webinarDetails = webinarData
+    ? {
+        title: webinarData.shortTitle,
+        subtitle: webinarData.title,
+        date: formatWebinarDate(webinarData.date),
+        time: `${webinarData.time} ${webinarData.timezone}`,
+        speakers: webinarData.speakers,
+        benefits: webinarData.benefits.map((b) => b.description),
+        slug: webinarData.slug,
+        status: webinarData.status,
+      }
+    : {
+        title: grant.webinar_id.replace(/_/g, " ").replace(/webinar/i, "Webinar"),
+        subtitle: "",
+        date: "Coming Soon",
+        time: "TBD",
+        speakers: [],
+        benefits: [],
+        slug: "",
+        status: "coming_soon" as const,
+      }
+
+  return (
+    <Card className="overflow-hidden border-emerald-200 shadow-lg">
+      {/* Webinar Header with Bonus Badge */}
+      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 text-white">
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div className="flex-1 min-w-0">
+            <Badge className="bg-amber-400/90 text-amber-900 border-amber-500 mb-3">
+              <Gift className="w-3 h-3 mr-1" />
+              Symposium Bonus
+            </Badge>
+            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">{webinarDetails.title}</h2>
+            {webinarDetails.subtitle && (
+              <p className="text-emerald-100 text-sm sm:text-base line-clamp-2">{webinarDetails.subtitle}</p>
+            )}
+          </div>
+          <div className="shrink-0">
+            <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
+              <Video className="w-8 h-8" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <CardContent className="p-6">
+        {/* Date and Time */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl">
+            <Calendar className="w-5 h-5 text-emerald-600" />
+            <div>
+              <p className="text-xs text-muted-foreground">Date</p>
+              <p className="font-semibold text-sm">{webinarDetails.date}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-xl">
+            <Clock className="w-5 h-5 text-emerald-600" />
+            <div>
+              <p className="text-xs text-muted-foreground">Time</p>
+              <p className="font-semibold text-sm">{webinarDetails.time}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-xl">
+            <Gift className="w-5 h-5 text-amber-600" />
+            <div>
+              <p className="text-xs text-muted-foreground">Access Type</p>
+              <p className="font-semibold text-sm text-amber-700">Symposium Bonus</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
+            <CheckCircle className="w-5 h-5 text-green-600" />
+            <div>
+              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="font-semibold text-sm text-green-700">Access Granted</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Access Buttons */}
+        <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-6 mb-8">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Play className="w-5 h-5 text-emerald-600" />
+            Webinar Access
+          </h3>
+          <div className="flex flex-wrap gap-3">
+            {webinarDetails.status === "active" ? (
+              <>
+                <Button className="bg-emerald-600 hover:bg-emerald-700">
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Join Webinar (Coming Soon)
+                </Button>
+                <Button variant="outline" disabled>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Download Materials
+                </Button>
+                <Button variant="outline" disabled>
+                  <Video className="w-4 h-4 mr-2" />
+                  View Recording
+                </Button>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                This webinar is coming soon. Details will be announced.
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-3">
+            You received this webinar as a bonus for your Symposium purchase.
+          </p>
+        </div>
+
+        {/* Speakers */}
+        {webinarDetails.speakers.length > 0 && (
+          <div className="mb-8">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <Users className="w-5 h-5 text-emerald-600" />
+              Session Speakers
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {webinarDetails.speakers.map((speaker, index) => (
+                <div key={index} className="p-4 border rounded-xl bg-card hover:shadow-md transition-shadow">
+                  <Badge variant="secondary" className="mb-2 text-xs">
+                    {speaker.organization}
+                  </Badge>
+                  <p className="font-semibold text-sm mb-1">{speaker.name}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{speaker.topic}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* What You'll Get */}
+        {webinarDetails.benefits.length > 0 && (
+          <div className="mb-6">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              What You&apos;ll Receive
+            </h3>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {webinarDetails.benefits.map((benefit, index) => (
+                <div key={index} className="flex items-center gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grant Info */}
+        <div className="border-t pt-4 mt-6">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <span>Grant Type: {grant.grant_type.replace(/_/g, " ")}</span>
+            <span>
+              Granted:{" "}
+              {new Date(grant.granted_at).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
 export default async function MyWebinarsPage() {
@@ -77,6 +250,16 @@ export default async function MyWebinarsPage() {
       return payment?.payment_status === "verified"
     }) || []
 
+  const { granted: bonusGrants } = await getUserWebinarAccess(user.id)
+
+  // Filter out bonus grants for webinars that were also purchased (to avoid duplicates)
+  const purchasedWebinarIds = new Set(
+    approvedWebinars.flatMap((order: WebinarOrder) => order.order_items.map((item) => item.event_id)),
+  )
+  const uniqueBonusGrants = bonusGrants.filter((grant) => !purchasedWebinarIds.has(grant.webinar_id))
+
+  const hasAnyWebinars = approvedWebinars.length > 0 || uniqueBonusGrants.length > 0
+
   return (
     <>
       <Navigation />
@@ -90,15 +273,32 @@ export default async function MyWebinarsPage() {
               </div>
               <div>
                 <h1 className="font-display text-3xl sm:text-4xl font-bold">My Webinars</h1>
-                <p className="text-indigo-100">Access your purchased webinars</p>
+                <p className="text-indigo-100">Access your purchased and bonus webinars</p>
               </div>
             </div>
+            {hasAnyWebinars && (
+              <div className="flex flex-wrap gap-4 mt-6">
+                {approvedWebinars.length > 0 && (
+                  <div className="bg-white/10 rounded-lg px-4 py-2">
+                    <span className="text-indigo-200 text-sm">Purchased:</span>
+                    <span className="font-bold ml-2">{approvedWebinars.length}</span>
+                  </div>
+                )}
+                {uniqueBonusGrants.length > 0 && (
+                  <div className="bg-amber-400/20 rounded-lg px-4 py-2">
+                    <Gift className="w-4 h-4 inline mr-1" />
+                    <span className="text-amber-200 text-sm">Symposium Bonus:</span>
+                    <span className="font-bold ml-2">{uniqueBonusGrants.length}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </section>
 
         <section className="py-8 px-4">
           <div className="max-w-6xl mx-auto">
-            {approvedWebinars.length === 0 ? (
+            {!hasAnyWebinars ? (
               <Card className="border-dashed">
                 <CardContent className="py-16 text-center">
                   <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-6">
@@ -123,179 +323,207 @@ export default async function MyWebinarsPage() {
               </Card>
             ) : (
               <div className="space-y-6">
-                {approvedWebinars.map((order: WebinarOrder) => {
-                  const webinarItem = order.order_items.find((item) => item.item_type === "webinar")
-                  const payment = order.order_payments?.[0]
+                {uniqueBonusGrants.length > 0 && (
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-amber-500" />
+                      <h2 className="text-lg font-semibold">Symposium Bonus Webinars</h2>
+                      <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+                        {uniqueBonusGrants.length} included
+                      </Badge>
+                    </div>
+                    {uniqueBonusGrants.map((grant) => (
+                      <BonusWebinarCard key={grant.id} grant={grant} />
+                    ))}
+                  </div>
+                )}
 
-                  const webinarData = webinarItem ? getWebinarById(webinarItem.event_id) : null
-
-                  // Fallback for webinars not in config (legacy support)
-                  const webinarDetails = webinarData
-                    ? {
-                        title: webinarData.shortTitle,
-                        subtitle: webinarData.title,
-                        date: formatWebinarDate(webinarData.date),
-                        time: `${webinarData.time} ${webinarData.timezone}`,
-                        speakers: webinarData.speakers,
-                        benefits: webinarData.benefits.map((b) => b.description),
-                        slug: webinarData.slug,
-                      }
-                    : {
-                        title: webinarItem?.event_label || "Webinar",
-                        subtitle: "",
-                        date: "TBD",
-                        time: "TBD",
-                        speakers: [],
-                        benefits: [],
-                        slug: "",
-                      }
-
-                  return (
-                    <Card key={order.id} className="overflow-hidden border-indigo-200 shadow-lg">
-                      {/* Webinar Header */}
-                      <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
-                        <div className="flex items-start justify-between gap-4 flex-wrap">
-                          <div className="flex-1 min-w-0">
-                            <Badge className="bg-white/20 text-white border-white/30 mb-3">
-                              <CheckCircle className="w-3 h-3 mr-1" />
-                              Access Confirmed
-                            </Badge>
-                            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">{webinarDetails.title}</h2>
-                            {webinarDetails.subtitle && (
-                              <p className="text-indigo-100 text-sm sm:text-base line-clamp-2">
-                                {webinarDetails.subtitle}
-                              </p>
-                            )}
-                          </div>
-                          <div className="shrink-0">
-                            <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
-                              <Video className="w-8 h-8" />
-                            </div>
-                          </div>
-                        </div>
+                {/* Show purchased webinars */}
+                {approvedWebinars.length > 0 && (
+                  <div className="space-y-6">
+                    {uniqueBonusGrants.length > 0 && (
+                      <div className="flex items-center gap-2 mt-8">
+                        <Video className="w-5 h-5 text-indigo-500" />
+                        <h2 className="text-lg font-semibold">Purchased Webinars</h2>
                       </div>
+                    )}
+                    {approvedWebinars.map((order: WebinarOrder) => {
+                      const webinarItem = order.order_items.find((item) => item.item_type === "webinar")
+                      const payment = order.order_payments?.[0]
 
-                      <CardContent className="p-6">
-                        {/* Date and Time */}
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl">
-                            <Calendar className="w-5 h-5 text-indigo-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Date</p>
-                              <p className="font-semibold text-sm">{webinarDetails.date}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl">
-                            <Clock className="w-5 h-5 text-indigo-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Time</p>
-                              <p className="font-semibold text-sm">{webinarDetails.time}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Status</p>
-                              <p className="font-semibold text-sm text-green-700">Registered</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-                            <Users className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Speakers</p>
-                              <p className="font-semibold text-sm">{webinarDetails.speakers.length} Experts</p>
-                            </div>
-                          </div>
-                        </div>
+                      const webinarData = webinarItem ? getWebinarById(webinarItem.event_id) : null
 
-                        {/* Access Buttons */}
-                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-8">
-                          <h3 className="font-semibold mb-4 flex items-center gap-2">
-                            <Play className="w-5 h-5 text-indigo-600" />
-                            Webinar Access
-                          </h3>
-                          <div className="flex flex-wrap gap-3">
-                            <Button className="bg-indigo-600 hover:bg-indigo-700">
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              Join Webinar (Coming Soon)
-                            </Button>
-                            <Button variant="outline" disabled>
-                              <FileText className="w-4 h-4 mr-2" />
-                              Download Materials
-                            </Button>
-                            <Button variant="outline" disabled>
-                              <Video className="w-4 h-4 mr-2" />
-                              View Recording
-                            </Button>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-3">
-                            The webinar link will be sent to your email ({order.email}) before the event.
-                          </p>
-                        </div>
+                      // Fallback for webinars not in config (legacy support)
+                      const webinarDetails = webinarData
+                        ? {
+                            title: webinarData.shortTitle,
+                            subtitle: webinarData.title,
+                            date: formatWebinarDate(webinarData.date),
+                            time: `${webinarData.time} ${webinarData.timezone}`,
+                            speakers: webinarData.speakers,
+                            benefits: webinarData.benefits.map((b) => b.description),
+                            slug: webinarData.slug,
+                          }
+                        : {
+                            title: webinarItem?.event_label || "Webinar",
+                            subtitle: "",
+                            date: "TBD",
+                            time: "TBD",
+                            speakers: [],
+                            benefits: [],
+                            slug: "",
+                          }
 
-                        {/* Speakers */}
-                        {webinarDetails.speakers.length > 0 && (
-                          <div className="mb-8">
-                            <h3 className="font-semibold mb-4 flex items-center gap-2">
-                              <Users className="w-5 h-5 text-indigo-600" />
-                              Session Speakers
-                            </h3>
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              {webinarDetails.speakers.map((speaker, index) => (
-                                <div
-                                  key={index}
-                                  className="p-4 border rounded-xl bg-card hover:shadow-md transition-shadow"
-                                >
-                                  <Badge variant="secondary" className="mb-2 text-xs">
-                                    {speaker.organization}
-                                  </Badge>
-                                  <p className="font-semibold text-sm mb-1">{speaker.name}</p>
-                                  <p className="text-xs text-muted-foreground line-clamp-2">{speaker.topic}</p>
+                      return (
+                        <Card key={order.id} className="overflow-hidden border-indigo-200 shadow-lg">
+                          {/* Webinar Header */}
+                          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+                            <div className="flex items-start justify-between gap-4 flex-wrap">
+                              <div className="flex-1 min-w-0">
+                                <Badge className="bg-white/20 text-white border-white/30 mb-3">
+                                  <CheckCircle className="w-3 h-3 mr-1" />
+                                  Access Confirmed
+                                </Badge>
+                                <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">
+                                  {webinarDetails.title}
+                                </h2>
+                                {webinarDetails.subtitle && (
+                                  <p className="text-indigo-100 text-sm sm:text-base line-clamp-2">
+                                    {webinarDetails.subtitle}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="shrink-0">
+                                <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
+                                  <Video className="w-8 h-8" />
                                 </div>
-                              ))}
+                              </div>
                             </div>
                           </div>
-                        )}
 
-                        {/* What You'll Get */}
-                        {webinarDetails.benefits.length > 0 && (
-                          <div className="mb-6">
-                            <h3 className="font-semibold mb-4 flex items-center gap-2">
-                              <CheckCircle className="w-5 h-5 text-green-600" />
-                              What You&apos;ll Receive
-                            </h3>
-                            <div className="grid gap-2 sm:grid-cols-2">
-                              {webinarDetails.benefits.map((benefit, index) => (
-                                <div key={index} className="flex items-center gap-2 text-sm">
-                                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                                  <span>{benefit}</span>
+                          <CardContent className="p-6">
+                            {/* Date and Time */}
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                              <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl">
+                                <Calendar className="w-5 h-5 text-indigo-600" />
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Date</p>
+                                  <p className="font-semibold text-sm">{webinarDetails.date}</p>
                                 </div>
-                              ))}
+                              </div>
+                              <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl">
+                                <Clock className="w-5 h-5 text-indigo-600" />
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Time</p>
+                                  <p className="font-semibold text-sm">{webinarDetails.time}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Status</p>
+                                  <p className="font-semibold text-sm text-green-700">Registered</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
+                                <Users className="w-5 h-5 text-purple-600" />
+                                <div>
+                                  <p className="text-xs text-muted-foreground">Speakers</p>
+                                  <p className="font-semibold text-sm">{webinarDetails.speakers.length} Experts</p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                        )}
 
-                        {/* Order Info */}
-                        <div className="border-t pt-4 mt-6">
-                          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
-                            <span>Order ID: {order.id.slice(0, 8)}</span>
-                            <span>Registered: {order.full_name}</span>
-                            <span>
-                              Approved:{" "}
-                              {payment?.verified_at
-                                ? new Date(payment.verified_at).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })
-                                : "N/A"}
-                            </span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )
-                })}
+                            {/* Access Buttons */}
+                            <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 mb-8">
+                              <h3 className="font-semibold mb-4 flex items-center gap-2">
+                                <Play className="w-5 h-5 text-indigo-600" />
+                                Webinar Access
+                              </h3>
+                              <div className="flex flex-wrap gap-3">
+                                <Button className="bg-indigo-600 hover:bg-indigo-700">
+                                  <ExternalLink className="w-4 h-4 mr-2" />
+                                  Join Webinar (Coming Soon)
+                                </Button>
+                                <Button variant="outline" disabled>
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Download Materials
+                                </Button>
+                                <Button variant="outline" disabled>
+                                  <Video className="w-4 h-4 mr-2" />
+                                  View Recording
+                                </Button>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-3">
+                                The webinar link will be sent to your email ({order.email}) before the event.
+                              </p>
+                            </div>
+
+                            {/* Speakers */}
+                            {webinarDetails.speakers.length > 0 && (
+                              <div className="mb-8">
+                                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                                  <Users className="w-5 h-5 text-indigo-600" />
+                                  Session Speakers
+                                </h3>
+                                <div className="grid gap-3 sm:grid-cols-2">
+                                  {webinarDetails.speakers.map((speaker, index) => (
+                                    <div
+                                      key={index}
+                                      className="p-4 border rounded-xl bg-card hover:shadow-md transition-shadow"
+                                    >
+                                      <Badge variant="secondary" className="mb-2 text-xs">
+                                        {speaker.organization}
+                                      </Badge>
+                                      <p className="font-semibold text-sm mb-1">{speaker.name}</p>
+                                      <p className="text-xs text-muted-foreground line-clamp-2">{speaker.topic}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* What You'll Get */}
+                            {webinarDetails.benefits.length > 0 && (
+                              <div className="mb-6">
+                                <h3 className="font-semibold mb-4 flex items-center gap-2">
+                                  <CheckCircle className="w-5 h-5 text-green-600" />
+                                  What You&apos;ll Receive
+                                </h3>
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                  {webinarDetails.benefits.map((benefit, index) => (
+                                    <div key={index} className="flex items-center gap-2 text-sm">
+                                      <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
+                                      <span>{benefit}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Order Info */}
+                            <div className="border-t pt-4 mt-6">
+                              <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
+                                <span>Order ID: {order.id.slice(0, 8)}</span>
+                                <span>Registered: {order.full_name}</span>
+                                <span>
+                                  Approved:{" "}
+                                  {payment?.verified_at
+                                    ? new Date(payment.verified_at).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                      })
+                                    : "N/A"}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
           </div>

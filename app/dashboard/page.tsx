@@ -109,7 +109,7 @@ export default async function DashboardPage() {
       .from("orders")
       .select(`
         id,
-        order_items!inner(item_type, event_label),
+        order_items(item_type, event_label),
         order_payments(payment_status)
       `)
       .eq("user_id", user.id)
@@ -126,7 +126,7 @@ export default async function DashboardPage() {
       .from("orders")
       .select(`
         id,
-        order_items!inner(hotel_room_type),
+        order_items(hotel_room_type),
         order_payments(payment_status)
       `)
       .eq("user_id", user.id)
@@ -440,6 +440,11 @@ export default async function DashboardPage() {
                       Browse Events
                     </Button>
                   </Link>
+                  <Link href="/webinar">
+                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700">
+                      Browse Webinars
+                    </Button>
+                  </Link>
                   <Link href="/submit-poster">
                     <Button size="lg" variant="outline">
                       Submit Poster
@@ -684,11 +689,17 @@ export default async function DashboardPage() {
                   <CardDescription>Explore more conference resources</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
-                    <Link href="/program">
+                  <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
+                    <Link href="/events">
                       <Button variant="outline" className="w-full justify-start bg-transparent">
-                        <FileText className="w-4 h-4 mr-2" />
-                        Program
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Browse Events
+                      </Button>
+                    </Link>
+                    <Link href="/webinar">
+                      <Button variant="outline" className="w-full justify-start bg-transparent">
+                        <Video className="w-4 h-4 mr-2" />
+                        Webinars
                       </Button>
                     </Link>
                     <Link href="/hotel-booking">

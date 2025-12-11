@@ -16,6 +16,12 @@ export default async function VenuePage() {
     <div className="min-h-screen">
       <Navigation />
       <main className="pt-24 overflow-x-hidden">
+        {roomAvailability.debug && (
+          <div className="bg-yellow-100 border border-yellow-400 p-4 m-4 rounded-lg text-xs overflow-auto max-h-96">
+            <h3 className="font-bold mb-2">Debug Info:</h3>
+            <pre>{JSON.stringify(roomAvailability.debug, null, 2)}</pre>
+          </div>
+        )}
         {/* Hero Section with Stunning Pool Image Backdrop */}
         <section className="relative h-[60vh] min-h-[500px] overflow-hidden">
           <Image

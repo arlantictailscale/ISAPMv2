@@ -15,6 +15,34 @@ export default function CallbackPage() {
       try {
         const supabase = createClient()
 
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const accessToken = hashParams.get("access_token")
+        const refreshToken = hashParams.get("refresh_token")
+        const type = hashParams.get("type")
+
+        console.log("[v0] Hash params:", { hasAccessToken: !!accessToken, type })
+
+        // If we have tokens in the hash, set the session
+        if (accessToken && refreshToken) {
+          console.log("[v0] Setting session from hash tokens")
+          const { data, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+
+          if (setSessionError) {
+            console.error("[v0] Error setting session:", setSessionError)
+            setError(setSessionError.message)
+            setTimeout(() => {
+              router.push("/auth/login?error=" + encodeURIComponent(setSessionError.message))
+            }, 2000)
+            return
+          }
+
+          console.log("[v0] Session set successfully")
+        }
+
+        // Now check for the session
         console.log("[v0] Checking session...")
         const {
           data: { session },
@@ -42,11 +70,25 @@ export default function CallbackPage() {
         const user = session.user
         console.log("[v0] User authenticated:", user.email)
 
-        const { data: existingProfile } = await supabase
+        const { data: existingProfile, error: profileError } = await supabase
           .from("profiles")
-          .select("id, created_at")
+          .select("id, created_at, role")
           .eq("id", user.id)
           .single()
+
+        if (!existingProfile && !profileError) {
+          console.log("[v0] Creating profile for new user")
+          const { error: insertError } = await supabase.from("profiles").insert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            email: user.email,
+            role: "user",
+          })
+
+          if (insertError) {
+            console.error("[v0] Error creating profile:", insertError)
+          }
+        }
 
         const isNewUser =
           !existingProfile || new Date().getTime() - new Date(existingProfile.created_at).getTime() < 60000
@@ -68,8 +110,13 @@ export default function CallbackPage() {
           })
         }
 
-        console.log("[v0] Redirecting to dashboard")
-        router.replace("/dashboard")
+        if (type === "signup") {
+          console.log("[v0] Email confirmed, redirecting to email-confirmed page")
+          router.replace("/auth/email-confirmed")
+        } else {
+          console.log("[v0] Redirecting to dashboard")
+          router.replace("/dashboard")
+        }
       } catch (err) {
         console.error("[v0] Callback error:", err)
         setError("An error occurred during authentication")

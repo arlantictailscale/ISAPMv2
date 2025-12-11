@@ -224,23 +224,23 @@ export default function LandingHero() {
               healthcare professionals to advance patient care through knowledge sharing and collaboration.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col gap-4">
               <Link
                 href="/events"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-slate-900 hover:bg-slate-800 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
+                className="inline-flex items-center justify-center gap-3 px-6 py-4 bg-slate-900 hover:bg-slate-800 text-white rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
               >
-                Register Main Event
-                <span className="flex items-center justify-center w-10 h-10 bg-purple-600 rounded-full group-hover:bg-purple-500 transition-colors">
-                  <ArrowRight className="w-5 h-5" />
+                <span className="text-base font-semibold">Register Main Event</span>
+                <span className="flex items-center justify-center w-9 h-9 bg-purple-600 rounded-full group-hover:bg-purple-500 transition-colors">
+                  <ArrowRight className="w-4 h-4" />
                 </span>
               </Link>
               <Link
                 href="/webinar"
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
+                className="inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-white rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
               >
-                Register Webinar
-                <span className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
-                  <ArrowRight className="w-5 h-5" />
+                <span className="text-base font-semibold">Register Webinar</span>
+                <span className="flex items-center justify-center w-9 h-9 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <ArrowRight className="w-4 h-4" />
                 </span>
               </Link>
             </div>

@@ -1,60 +1,34 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
+"use client"
+
+import { useState, useEffect, useMemo } from "react"
+import { createBrowserClient } from "@supabase/ssr"
 import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Calendar,
   Clock,
   MapPin,
   CheckCircle,
+  Search,
+  GraduationCap,
+  Wrench,
   Users,
   FileText,
+  LinkIcon,
   Video,
-  BookOpen,
-  Download,
   ExternalLink,
-  GraduationCap,
-  Stethoscope,
+  Download,
+  Loader2,
+  Building,
 } from "lucide-react"
-import { getPricingByEventId } from "@/lib/data/event-pricing"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
+import Link from "next/link"
 
-interface EventOrder {
-  id: string
-  user_id: string
-  email: string
-  full_name: string
-  created_at: string
-  order_items: {
-    id: string
-    event_id: string
-    event_label: string
-    item_type: string
-    participant_type_label: string
-  }[]
-  order_payments: {
-    payment_status: string
-    verified_at: string
-  }[]
-}
-
-interface EventResource {
-  id: string
-  event_id: string
-  resource_type: string
-  title: string
-  description: string | null
-  url: string
-  file_type: string | null
-  file_size: number | null
-  is_public: boolean
-}
-
-// Event details with dates, location, etc.
-const eventDetails: Record<
+// Fallback event details (used if database has no data)
+const fallbackEventDetails: Record<
   string,
   {
     title: string
@@ -75,8 +49,7 @@ const eventDetails: Record<
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "cpd",
-    description:
-      "Comprehensive 2-day continuing professional development program covering pain management fundamentals, assessment techniques, and practical skills.",
+    description: "Comprehensive 2-day continuing professional development program.",
   },
   ws1: {
     title: "Workshop 1: Regenerative Pain Therapy",
@@ -86,30 +59,27 @@ const eventDetails: Record<
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Hands-on workshop on regenerative pain therapy including PRP preparation, prolotherapy, and microinvasive techniques.",
+    description: "Hands-on workshop on regenerative pain therapy.",
   },
   ws2: {
-    title: "Workshop 2: Basic Interventional Pain Management (Musculoskeletal)",
+    title: "Workshop 2: Basic Interventional Pain Management",
     shortTitle: "Basic Interventional Pain",
     date: "April 17, 2026",
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Foundational workshop covering ultrasound-guided musculoskeletal procedures for shoulder, low back, and knee pain.",
+    description: "Foundational workshop on musculoskeletal procedures.",
   },
   ws3: {
-    title: "Workshop 3: Pediatric Essential Pain Management (EPM Lite) + TOT",
+    title: "Workshop 3: Pediatric Essential Pain Management",
     shortTitle: "Pediatric Pain Management",
     date: "April 17, 2026",
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Specialized workshop on pediatric pain assessment, regional techniques, and non-pharmacologic management approaches.",
+    description: "Specialized workshop on pediatric pain management.",
   },
   ws4: {
     title: "Workshop 4: Adjunct Therapy for Pain Management",
@@ -119,8 +89,7 @@ const eventDetails: Record<
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Workshop covering complementary pain therapies including massage, TENS, shock wave therapy, SEFT, and mindfulness.",
+    description: "Workshop on complementary pain therapies.",
   },
   ws5: {
     title: "Workshop 5: Developing a Pain Clinic",
@@ -130,8 +99,7 @@ const eventDetails: Record<
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Team-based workshop on establishing and running a multidisciplinary pain clinic including workflow, staffing, and documentation.",
+    description: "Team-based workshop on establishing pain clinics.",
   },
   ws6: {
     title: "Workshop 6: Cancer Pain",
@@ -141,19 +109,17 @@ const eventDetails: Record<
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Comprehensive workshop on cancer pain management including WHO ladder, interventional techniques, and palliative care.",
+    description: "Comprehensive workshop on cancer pain management.",
   },
   ws7: {
-    title: "Workshop 7: Advanced Intervention of Pain Management",
+    title: "Workshop 7: Advanced Intervention",
     shortTitle: "Advanced Intervention",
     date: "April 17, 2026",
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "workshop",
-    description:
-      "Advanced workshop on neuromodulation, intrathecal drug delivery, radiofrequency techniques, and complex case management.",
+    description: "Advanced workshop on neuromodulation and interventional techniques.",
   },
   symposium: {
     title: "ISAPM 8th National Meeting Symposium",
@@ -163,501 +129,496 @@ const eventDetails: Record<
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
     type: "symposium",
-    description:
-      "Scientific symposium featuring keynote speakers, research presentations, and expert panel discussions on the latest in pain management.",
+    description: "Scientific symposium featuring keynote speakers and research presentations.",
   },
 }
 
-function getEventColorScheme(eventType: string) {
-  if (eventType === "cpd") {
-    return {
-      gradient: "from-purple-600 to-violet-600",
-      badge: "bg-purple-100 text-purple-700 border-purple-200",
-      icon: "text-purple-600",
-      bg: "bg-purple-50",
-    }
-  } else if (eventType === "workshop") {
-    return {
-      gradient: "from-orange-500 to-amber-500",
-      badge: "bg-orange-100 text-orange-700 border-orange-200",
-      icon: "text-orange-600",
-      bg: "bg-orange-50",
-    }
-  } else if (eventType === "symposium") {
-    return {
-      gradient: "from-teal-600 to-emerald-600",
-      badge: "bg-teal-100 text-teal-700 border-teal-200",
-      icon: "text-teal-600",
-      bg: "bg-teal-50",
-    }
-  }
-  return {
-    gradient: "from-slate-600 to-slate-700",
-    badge: "bg-slate-100 text-slate-700 border-slate-200",
-    icon: "text-slate-600",
-    bg: "bg-slate-50",
+function getEventIcon(type: string) {
+  switch (type) {
+    case "cpd":
+      return GraduationCap
+    case "workshop":
+      return Wrench
+    case "symposium":
+      return Users
+    default:
+      return Calendar
   }
 }
 
-function getEventIcon(eventType: string) {
-  if (eventType === "cpd") return GraduationCap
-  if (eventType === "workshop") return Stethoscope
-  return Users
+function getEventColorScheme(type: string) {
+  switch (type) {
+    case "cpd":
+      return {
+        gradient: "from-purple-600 to-purple-800",
+        bg: "bg-purple-50",
+        icon: "text-purple-600",
+        badge: "bg-purple-100 text-purple-700",
+      }
+    case "workshop":
+      return {
+        gradient: "from-orange-500 to-orange-700",
+        bg: "bg-orange-50",
+        icon: "text-orange-600",
+        badge: "bg-orange-100 text-orange-700",
+      }
+    case "symposium":
+      return {
+        gradient: "from-teal-600 to-teal-800",
+        bg: "bg-teal-50",
+        icon: "text-teal-600",
+        badge: "bg-teal-100 text-teal-700",
+      }
+    default:
+      return {
+        gradient: "from-slate-600 to-slate-800",
+        bg: "bg-slate-50",
+        icon: "text-slate-600",
+        badge: "bg-slate-100 text-slate-700",
+      }
+  }
 }
 
-function EventCard({
-  order,
-  eventItem,
-  resources,
-}: {
-  order: EventOrder
-  eventItem: EventOrder["order_items"][0]
-  resources: EventResource[]
-}) {
-  const details = eventDetails[eventItem.event_id]
-  const pricing = getPricingByEventId(eventItem.event_id)
-  const payment = order.order_payments?.[0]
-  const colors = getEventColorScheme(details?.type || "workshop")
-  const EventIcon = getEventIcon(details?.type || "workshop")
+function formatEventDate(startDate: string | null, endDate: string | null): string {
+  if (!startDate) return "TBA"
+  const start = new Date(startDate)
+  if (!endDate || startDate === endDate) {
+    return start.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  }
+  const end = new Date(endDate)
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.toLocaleDateString("en-US", { month: "long" })} ${start.getDate()}-${end.getDate()}, ${end.getFullYear()}`
+  }
+  return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+}
 
-  const eventResources = resources.filter((r) => r.event_id === eventItem.event_id)
-  const materials = eventResources.filter((r) => r.resource_type === "document")
-  const links = eventResources.filter((r) => r.resource_type === "link")
-  const videos = eventResources.filter((r) => r.resource_type === "video")
+function formatEventTime(startTime: string | null, endTime: string | null, timezone: string | null): string {
+  if (!startTime) return "TBA"
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":")
+    return `${hours}:${minutes}`
+  }
+  const tz = timezone || "WIB"
+  if (!endTime) return `${formatTime(startTime)} ${tz}`
+  return `${formatTime(startTime)} - ${formatTime(endTime)} ${tz}`
+}
 
-  return (
-    <Card className="overflow-hidden shadow-lg">
-      {/* Event Header */}
-      <div className={`bg-gradient-to-r ${colors.gradient} p-6 text-white`}>
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <Badge className="bg-white/20 text-white border-white/30 mb-3">
-              <CheckCircle className="w-3 h-3 mr-1" />
-              Registered
-            </Badge>
-            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">
-              {details?.shortTitle || eventItem.event_label}
-            </h2>
-            <p className="text-white/90 text-sm sm:text-base line-clamp-2">{details?.title || eventItem.event_label}</p>
-          </div>
-          <div className="shrink-0">
-            <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
-              <EventIcon className="w-8 h-8" />
-            </div>
-          </div>
-        </div>
-      </div>
+interface EventResource {
+  id: string
+  event_id: string
+  resource_type: string
+  title: string
+  description: string | null
+  url: string
+  file_type: string | null
+  file_size: number | null
+  is_public: boolean
+  is_active: boolean
+}
 
-      <CardContent className="p-6">
-        {/* Event Details Grid */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
-            <Calendar className={`w-5 h-5 ${colors.icon}`} />
-            <div>
-              <p className="text-xs text-muted-foreground">Date</p>
-              <p className="font-semibold text-sm">{details?.date || pricing?.date || "TBA"}</p>
-            </div>
-          </div>
-          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
-            <Clock className={`w-5 h-5 ${colors.icon}`} />
-            <div>
-              <p className="text-xs text-muted-foreground">Time</p>
-              <p className="font-semibold text-sm">{details?.time || "TBA"}</p>
-            </div>
-          </div>
-          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
-            <MapPin className={`w-5 h-5 ${colors.icon}`} />
-            <div>
-              <p className="text-xs text-muted-foreground">Location</p>
-              <p className="font-semibold text-sm">{details?.location || "TBA"}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <div>
-              <p className="text-xs text-muted-foreground">Registration</p>
-              <p className="font-semibold text-sm text-green-700">Confirmed</p>
-            </div>
-          </div>
-        </div>
+interface DBEventDetails {
+  id: string
+  slug: string
+  title: string
+  short_title: string
+  event_type: string
+  start_date: string | null
+  end_date: string | null
+  start_time: string | null
+  end_time: string | null
+  timezone: string | null
+  location: string | null
+  venue: string | null
+  description: string | null
+}
 
-        {/* Participant Type */}
-        {eventItem.participant_type_label && (
-          <div className="mb-6 p-4 border rounded-xl bg-card">
-            <p className="text-sm text-muted-foreground mb-1">Registered As</p>
-            <p className="font-semibold">{eventItem.participant_type_label}</p>
-          </div>
-        )}
+export default function MyEventsPage() {
+  const [loading, setLoading] = useState(true)
+  const [orders, setOrders] = useState<any[]>([])
+  const [resources, setResources] = useState<EventResource[]>([])
+  const [dbEvents, setDbEvents] = useState<DBEventDetails[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
 
-        {/* Description */}
-        {details?.description && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-2 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-slate-600" />
-              About This Event
-            </h3>
-            <p className="text-muted-foreground text-sm">{details.description}</p>
-          </div>
-        )}
-
-        {/* Resources Section */}
-        {eventResources.length > 0 && (
-          <div className="space-y-4">
-            {/* Materials */}
-            {materials.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                  Materials & Documents
-                </h3>
-                <div className="grid gap-2">
-                  {materials.map((resource) => (
-                    <a
-                      key={resource.id}
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-sm">{resource.title}</p>
-                          {resource.description && (
-                            <p className="text-xs text-muted-foreground">{resource.description}</p>
-                          )}
-                        </div>
-                      </div>
-                      <Download className="w-4 h-4 text-muted-foreground" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Links */}
-            {links.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <ExternalLink className="w-5 h-5 text-indigo-600" />
-                  Links
-                </h3>
-                <div className="grid gap-2">
-                  {links.map((resource) => (
-                    <a
-                      key={resource.id}
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <ExternalLink className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-sm">{resource.title}</p>
-                          {resource.description && (
-                            <p className="text-xs text-muted-foreground">{resource.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Videos */}
-            {videos.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-3 flex items-center gap-2">
-                  <Video className="w-5 h-5 text-red-600" />
-                  Videos & Recordings
-                </h3>
-                <div className="grid gap-2">
-                  {videos.map((resource) => (
-                    <a
-                      key={resource.id}
-                      href={resource.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Video className="w-4 h-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-sm">{resource.title}</p>
-                          {resource.description && (
-                            <p className="text-xs text-muted-foreground">{resource.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* No Resources Yet */}
-        {eventResources.length === 0 && (
-          <div className="text-center py-6 border-2 border-dashed rounded-lg">
-            <FileText className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-            <p className="text-muted-foreground text-sm">Event materials will be available closer to the event date.</p>
-          </div>
-        )}
-
-        {/* Order Info */}
-        <div className="border-t pt-4 mt-6">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
-            <span>Order ID: {order.id.slice(0, 8)}</span>
-            <span>Registered: {order.full_name}</span>
-            <span>
-              Approved:{" "}
-              {payment?.verified_at
-                ? new Date(payment.verified_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "N/A"}
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
-}
 
-export default async function MyEventsPage() {
-  const supabase = await createClient()
+  useEffect(() => {
+    loadUserEvents()
+  }, [])
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  async function loadUserEvents() {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) {
+        setLoading(false)
+        return
+      }
 
-  if (!user) {
-    redirect("/auth/login")
+      // Load orders with verified payments
+      const { data: ordersData } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          order_items (*),
+          order_payments (*)
+        `)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+
+      // Filter to only verified orders with event items
+      const verifiedOrders = (ordersData || []).filter((order) => {
+        const hasVerifiedPayment = order.order_payments?.some((p: any) => p.payment_status === "verified")
+        const hasEventItems = order.order_items?.some((item: any) =>
+          ["workshop", "cpd", "symposium"].includes(item.item_type),
+        )
+        return hasVerifiedPayment && hasEventItems
+      })
+
+      setOrders(verifiedOrders)
+
+      // Get unique event IDs from orders
+      const eventIds = new Set<string>()
+      verifiedOrders.forEach((order) => {
+        order.order_items?.forEach((item: any) => {
+          if (["workshop", "cpd", "symposium"].includes(item.item_type)) {
+            eventIds.add(item.event_id)
+          }
+        })
+      })
+
+      if (eventIds.size > 0) {
+        const { data: eventsData } = await supabase.from("events").select("*").in("slug", Array.from(eventIds))
+
+        setDbEvents(eventsData || [])
+      }
+
+      // Load resources for these events
+      if (eventIds.size > 0) {
+        const { data: resourcesData } = await supabase
+          .from("event_resources")
+          .select("*")
+          .in("event_id", Array.from(eventIds))
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+
+        setResources(resourcesData || [])
+      }
+    } catch (error) {
+      console.error("Error loading events:", error)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // Fetch event orders (CPD, Workshop, Symposium) with verified payments
-  // Exclude webinars which have their own page
-  const { data: eventOrders } = await supabase
-    .from("orders")
-    .select(
-      `
-      id,
-      user_id,
-      email,
-      full_name,
-      created_at,
-      order_items!inner(id, event_id, event_label, item_type, participant_type_label),
-      order_payments!inner(payment_status, verified_at)
-    `,
+  function getEventDetails(eventId: string) {
+    const dbEvent = dbEvents.find((e) => e.slug === eventId)
+    const fallback = fallbackEventDetails[eventId]
+
+    if (dbEvent) {
+      return {
+        title: dbEvent.title || fallback?.title || eventId,
+        shortTitle: dbEvent.short_title || fallback?.shortTitle || eventId,
+        date: formatEventDate(dbEvent.start_date, dbEvent.end_date),
+        time: formatEventTime(dbEvent.start_time, dbEvent.end_time, dbEvent.timezone),
+        location: dbEvent.location || fallback?.location || "TBA",
+        venue: dbEvent.venue || fallback?.venue || "TBA",
+        type: (dbEvent.event_type || fallback?.type || "workshop") as "cpd" | "workshop" | "symposium",
+        description: dbEvent.description || fallback?.description || "",
+      }
+    }
+
+    return (
+      fallback || {
+        title: eventId,
+        shortTitle: eventId,
+        date: "TBA",
+        time: "TBA",
+        location: "TBA",
+        venue: "TBA",
+        type: "workshop" as const,
+        description: "",
+      }
     )
-    .eq("user_id", user.id)
-    .in("order_items.item_type", ["event", "workshop", "cpd", "symposium"])
-    .eq("order_payments.payment_status", "verified")
-    .order("created_at", { ascending: false })
+  }
 
-  // Fetch event resources for user's registered events
-  const eventIds =
-    eventOrders?.flatMap((order) =>
-      order.order_items
-        .filter((item) => ["event", "workshop", "cpd", "symposium"].includes(item.item_type))
-        .map((item) => item.event_id),
-    ) || []
+  // Extract all event items from orders
+  const allEventItems = useMemo(() => {
+    const items: { order: any; item: any }[] = []
+    orders.forEach((order) => {
+      order.order_items?.forEach((item: any) => {
+        if (["workshop", "cpd", "symposium"].includes(item.item_type)) {
+          items.push({ order, item })
+        }
+      })
+    })
+    return items
+  }, [orders])
 
-  // Get unique UUIDs for events table lookup
-  const { data: eventsData } = await supabase
-    .from("events")
-    .select("id, slug")
-    .in("slug", [...new Set(eventIds)])
+  // Filter by search
+  const filteredItems = useMemo(() => {
+    if (!searchQuery) return allEventItems
+    const query = searchQuery.toLowerCase()
+    return allEventItems.filter(({ item }) => {
+      const details = getEventDetails(item.event_id)
+      return (
+        details.title.toLowerCase().includes(query) ||
+        details.shortTitle.toLowerCase().includes(query) ||
+        item.event_label?.toLowerCase().includes(query)
+      )
+    })
+  }, [allEventItems, searchQuery, dbEvents])
 
-  const eventUuids = eventsData?.map((e) => e.id) || []
+  // Stats - count unique items by type
+  const stats = useMemo(() => {
+    const allItems = orders.flatMap((o) => o.order_items || [])
+    const eventItems = allItems.filter((item: any) => ["workshop", "cpd", "symposium"].includes(item.item_type))
+    return {
+      cpd: eventItems.filter((i: any) => i.item_type === "cpd").length,
+      workshop: eventItems.filter((i: any) => i.item_type === "workshop").length,
+      symposium: eventItems.filter((i: any) => i.item_type === "symposium").length,
+    }
+  }, [orders])
 
-  // Fetch resources for those events
-  const { data: resources } = await supabase
-    .from("event_resources")
-    .select("*")
-    .in("event_id", eventUuids)
-    .eq("is_active", true)
-    .order("sort_order")
-
-  // Map resources back to event slugs
-  const eventIdToSlug = new Map(eventsData?.map((e) => [e.id, e.slug]) || [])
-  const mappedResources =
-    resources?.map((r) => ({
-      ...r,
-      event_id: eventIdToSlug.get(r.event_id) || r.event_id,
-    })) || []
-
-  const approvedEvents = (eventOrders || []) as EventOrder[]
-
-  // Group events by type
-  const cpdEvents = approvedEvents.filter((order) =>
-    order.order_items.some((item) => item.event_id === "cpd" || item.item_type === "cpd"),
-  )
-  const workshopEvents = approvedEvents.filter((order) =>
-    order.order_items.some((item) => item.event_id.startsWith("ws") || item.item_type === "workshop"),
-  )
-  const symposiumEvents = approvedEvents.filter((order) =>
-    order.order_items.some((item) => item.event_id === "symposium" || item.item_type === "symposium"),
-  )
-
-  const totalEvents =
-    cpdEvents.flatMap((o) => o.order_items).length +
-    workshopEvents.flatMap((o) => o.order_items).length +
-    symposiumEvents.flatMap((o) => o.order_items).length
+  if (loading) {
+    return (
+      <>
+        <Navigation />
+        <main className="pt-24 pb-20 min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        </main>
+        <Footer />
+      </>
+    )
+  }
 
   return (
     <>
       <Navigation />
-      <main className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-orange-50/50 to-background">
-        {/* Header Section */}
-        <section className="py-12 px-4 bg-gradient-to-br from-orange-500 via-orange-600 to-amber-600 text-white">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center">
-                <Calendar className="w-6 h-6" />
-              </div>
+      <main className="pt-20 pb-20 min-h-screen">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-700 text-white py-12">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center gap-4 mb-4">
+              <Calendar className="w-10 h-10" />
               <div>
-                <h1 className="font-display text-3xl sm:text-4xl font-bold">My Events</h1>
+                <h1 className="text-3xl font-bold">My Events</h1>
                 <p className="text-orange-100">Access your registered CPD, workshops, and symposium</p>
               </div>
             </div>
-            {totalEvents > 0 && (
-              <div className="flex flex-wrap gap-4 mt-6">
-                {cpdEvents.length > 0 && (
-                  <div className="bg-purple-500/30 rounded-lg px-4 py-2">
-                    <span className="text-purple-100 text-sm">CPD:</span>
-                    <span className="font-bold ml-2">{cpdEvents.flatMap((o) => o.order_items).length}</span>
-                  </div>
-                )}
-                {workshopEvents.length > 0 && (
-                  <div className="bg-orange-400/30 rounded-lg px-4 py-2">
-                    <span className="text-orange-100 text-sm">Workshops:</span>
-                    <span className="font-bold ml-2">{workshopEvents.flatMap((o) => o.order_items).length}</span>
-                  </div>
-                )}
-                {symposiumEvents.length > 0 && (
-                  <div className="bg-teal-500/30 rounded-lg px-4 py-2">
-                    <span className="text-teal-100 text-sm">Symposium:</span>
-                    <span className="font-bold ml-2">{symposiumEvents.flatMap((o) => o.order_items).length}</span>
-                  </div>
-                )}
-              </div>
-            )}
+
+            {/* Stats */}
+            <div className="flex flex-wrap gap-3 mt-6">
+              <Badge className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2">CPD: {stats.cpd}</Badge>
+              <Badge className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2">
+                Workshops: {stats.workshop}
+              </Badge>
+              <Badge className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2">Symposium: {stats.symposium}</Badge>
+            </div>
           </div>
-        </section>
+        </div>
 
-        <section className="py-8 px-4">
-          <div className="max-w-6xl mx-auto">
-            {totalEvents === 0 ? (
-              <Card className="border-dashed">
-                <CardContent className="py-16 text-center">
-                  <div className="w-20 h-20 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-6">
-                    <Calendar className="w-10 h-10 text-orange-600" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-3">No Events Yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    You haven&apos;t registered for any events yet, or your payment is still being processed.
-                  </p>
-                  <div className="flex gap-3 justify-center flex-wrap">
-                    <Link href="/events">
-                      <Button className="bg-orange-600 hover:bg-orange-700">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Browse Events
-                      </Button>
-                    </Link>
-                    <Link href="/my-purchases">
-                      <Button variant="outline">Check Payment Status</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-8">
-                {/* CPD Events */}
-                {cpdEvents.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5 text-purple-600" />
-                      <h2 className="text-lg font-semibold">CPD Courses</h2>
-                      <Badge className="bg-purple-100 text-purple-700 border-purple-200">
-                        {cpdEvents.flatMap((o) => o.order_items.filter((i) => i.event_id === "cpd")).length} registered
-                      </Badge>
-                    </div>
-                    {cpdEvents.map((order) =>
-                      order.order_items
-                        .filter((item) => item.event_id === "cpd" || item.item_type === "cpd")
-                        .map((item) => (
-                          <EventCard
-                            key={`${order.id}-${item.id}`}
-                            order={order}
-                            eventItem={item}
-                            resources={mappedResources}
-                          />
-                        )),
-                    )}
-                  </div>
-                )}
-
-                {/* Workshop Events */}
-                {workshopEvents.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Stethoscope className="w-5 h-5 text-orange-600" />
-                      <h2 className="text-lg font-semibold">Workshops</h2>
-                      <Badge className="bg-orange-100 text-orange-700 border-orange-200">
-                        {workshopEvents.flatMap((o) => o.order_items.filter((i) => i.event_id.startsWith("ws"))).length}{" "}
-                        registered
-                      </Badge>
-                    </div>
-                    {workshopEvents.map((order) =>
-                      order.order_items
-                        .filter((item) => item.event_id.startsWith("ws") || item.item_type === "workshop")
-                        .map((item) => (
-                          <EventCard
-                            key={`${order.id}-${item.id}`}
-                            order={order}
-                            eventItem={item}
-                            resources={mappedResources}
-                          />
-                        )),
-                    )}
-                  </div>
-                )}
-
-                {/* Symposium Events */}
-                {symposiumEvents.length > 0 && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                      <Users className="w-5 h-5 text-teal-600" />
-                      <h2 className="text-lg font-semibold">Symposium</h2>
-                      <Badge className="bg-teal-100 text-teal-700 border-teal-200">
-                        {symposiumEvents.flatMap((o) => o.order_items.filter((i) => i.event_id === "symposium")).length}{" "}
-                        registered
-                      </Badge>
-                    </div>
-                    {symposiumEvents.map((order) =>
-                      order.order_items
-                        .filter((item) => item.event_id === "symposium" || item.item_type === "symposium")
-                        .map((item) => (
-                          <EventCard
-                            key={`${order.id}-${item.id}`}
-                            order={order}
-                            eventItem={item}
-                            resources={mappedResources}
-                          />
-                        )),
-                    )}
-                  </div>
-                )}
+        <div className="container mx-auto px-4 py-8">
+          {allEventItems.length === 0 ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Calendar className="w-16 h-16 mx-auto text-slate-300 mb-4" />
+                <h2 className="text-xl font-semibold text-slate-700 mb-2">No Events Yet</h2>
+                <p className="text-muted-foreground mb-6">You haven&apos;t registered for any events yet.</p>
+                <Button asChild>
+                  <Link href="/events">Browse Events</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Search */}
+              <div className="mb-6">
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search events..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-            )}
-          </div>
-        </section>
+
+              {/* Event Cards */}
+              <div className="space-y-6">
+                {filteredItems.map(({ order, item }, index) => {
+                  const details = getEventDetails(item.event_id)
+                  const colors = getEventColorScheme(details.type)
+                  const EventIcon = getEventIcon(details.type)
+                  const eventResources = resources.filter((r) => r.event_id === item.event_id)
+                  const materials = eventResources.filter((r) => r.resource_type === "document")
+                  const links = eventResources.filter((r) => r.resource_type === "link")
+                  const videos = eventResources.filter((r) => r.resource_type === "video")
+
+                  return (
+                    <Card key={`${order.id}-${item.id}-${index}`} className="overflow-hidden shadow-lg">
+                      {/* Event Header */}
+                      <div className={`bg-gradient-to-r ${colors.gradient} p-6 text-white`}>
+                        <div className="flex items-start justify-between gap-4 flex-wrap">
+                          <div className="flex-1 min-w-0">
+                            <Badge className="bg-white/20 text-white border-white/30 mb-3">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Registered
+                            </Badge>
+                            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">{details.shortTitle}</h2>
+                            <p className="text-white/90 text-sm sm:text-base line-clamp-2">{details.title}</p>
+                          </div>
+                          <div className="shrink-0">
+                            <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
+                              <EventIcon className="w-8 h-8" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <CardContent className="p-6">
+                        {/* Event Details Grid */}
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
+                            <Calendar className={`w-5 h-5 ${colors.icon}`} />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Date</p>
+                              <p className="font-semibold text-sm">{details.date}</p>
+                            </div>
+                          </div>
+                          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
+                            <Clock className={`w-5 h-5 ${colors.icon}`} />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Time</p>
+                              <p className="font-semibold text-sm">{details.time}</p>
+                            </div>
+                          </div>
+                          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
+                            <MapPin className={`w-5 h-5 ${colors.icon}`} />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Location</p>
+                              <p className="font-semibold text-sm">{details.location}</p>
+                            </div>
+                          </div>
+                          <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
+                            <Building className={`w-5 h-5 ${colors.icon}`} />
+                            <div>
+                              <p className="text-xs text-muted-foreground">Venue</p>
+                              <p className="font-semibold text-sm">{details.venue}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        {details.description && (
+                          <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+                            <p className="text-sm text-muted-foreground">{details.description}</p>
+                          </div>
+                        )}
+
+                        {/* Resources */}
+                        {eventResources.length > 0 && (
+                          <div className="space-y-4">
+                            <h3 className="font-semibold text-slate-900">Event Resources</h3>
+
+                            {/* Materials */}
+                            {materials.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <FileText className="w-4 h-4" />
+                                  Materials
+                                </h4>
+                                <div className="space-y-2">
+                                  {materials.map((resource) => (
+                                    <a
+                                      key={resource.id}
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                                    >
+                                      <Download className="w-4 h-4 text-slate-500" />
+                                      <span className="flex-1 text-sm font-medium">{resource.title}</span>
+                                      {resource.file_type && (
+                                        <Badge variant="outline" className="text-xs">
+                                          {resource.file_type.toUpperCase()}
+                                        </Badge>
+                                      )}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Links */}
+                            {links.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <LinkIcon className="w-4 h-4" />
+                                  Links
+                                </h4>
+                                <div className="space-y-2">
+                                  {links.map((resource) => (
+                                    <a
+                                      key={resource.id}
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                                    >
+                                      <ExternalLink className="w-4 h-4 text-slate-500" />
+                                      <span className="flex-1 text-sm font-medium">{resource.title}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Videos */}
+                            {videos.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <Video className="w-4 h-4" />
+                                  Videos
+                                </h4>
+                                <div className="space-y-2">
+                                  {videos.map((resource) => (
+                                    <a
+                                      key={resource.id}
+                                      href={resource.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="flex items-center gap-3 p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+                                    >
+                                      <Video className="w-4 h-4 text-slate-500" />
+                                      <span className="flex-1 text-sm font-medium">{resource.title}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* No Resources Message */}
+                        {eventResources.length === 0 && (
+                          <div className="text-center py-6 text-muted-foreground">
+                            <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p className="text-sm">No resources available yet.</p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </div>
       </main>
       <Footer />
     </>

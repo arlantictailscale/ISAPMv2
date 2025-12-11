@@ -1,42 +1,17 @@
 "use client"
 
-import React from "react"
-import { createClient } from "@/lib/supabase/client"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import type React from "react"
+
+import { useState, useEffect } from "react"
+import { createBrowserClient } from "@supabase/ssr"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import {
-  LinkIcon,
-  FileText,
-  Video,
-  ImageIcon,
-  Plus,
-  Pencil,
-  Trash2,
-  RefreshCw,
-  History,
-  ExternalLink,
-  Loader2,
-  Eye,
-  EyeOff,
-  RotateCcw,
-  Settings,
-  Calendar,
-  GraduationCap,
-  Stethoscope,
-  Users,
-} from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -45,7 +20,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { formatDistanceToNow } from "date-fns"
+import { Switch } from "@/components/ui/switch"
+import {
+  Calendar,
+  MapPin,
+  FileText,
+  LinkIcon,
+  Video,
+  ImageIcon,
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  History,
+  ExternalLink,
+  Download,
+  GraduationCap,
+  Wrench,
+  Users,
+  Save,
+  Building,
+} from "lucide-react"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 
 type ResourceType = "document" | "link" | "video" | "image"
 
@@ -69,37 +66,29 @@ interface EventHistory {
   id: string
   event_id: string
   action: string
-  changes: Record<string, unknown>
+  changes: Record<string, { old: string; new: string }>
+  change_reason: string | null
   changed_by: string
   changed_at: string
-  change_reason: string | null
-  profiles?: { full_name: string }
 }
 
-interface Event {
+interface EventDetails {
   id: string
   slug: string
   title: string
   short_title: string
   event_type: string
-  status: string
+  start_date: string | null
+  end_date: string | null
+  start_time: string | null
+  end_time: string | null
+  timezone: string | null
+  location: string | null
+  venue: string | null
+  description: string | null
 }
 
-const RESOURCE_TYPE_CONFIG: Record<ResourceType, { label: string; description: string }> = {
-  document: { label: "Documents", description: "PDFs, slides, handouts, and other downloadable files" },
-  link: { label: "Links", description: "External URLs, join links, and references" },
-  video: { label: "Videos", description: "Recordings, tutorials, and video content" },
-  image: { label: "Images", description: "Photos, diagrams, and visual materials" },
-}
-
-const RESOURCE_TYPE_ICONS: Record<ResourceType, React.ElementType> = {
-  document: FileText,
-  link: LinkIcon,
-  video: Video,
-  image: ImageIcon,
-}
-
-// Static event list based on event-pricing.ts
+// Static events list for selection
 const STATIC_EVENTS = [
   {
     id: "cpd",
@@ -160,38 +149,100 @@ const STATIC_EVENTS = [
   },
 ]
 
-function getEventIcon(eventType: string) {
-  if (eventType === "cpd") return GraduationCap
-  if (eventType === "workshop") return Stethoscope
-  return Users
+function getEventIcon(type: string) {
+  switch (type) {
+    case "cpd":
+      return GraduationCap
+    case "workshop":
+      return Wrench
+    case "symposium":
+      return Users
+    default:
+      return Calendar
+  }
 }
 
-function getEventColor(eventType: string) {
-  if (eventType === "cpd") return "bg-purple-100 text-purple-700 border-purple-200"
-  if (eventType === "workshop") return "bg-orange-100 text-orange-700 border-orange-200"
-  return "bg-teal-100 text-teal-700 border-teal-200"
+function getEventColor(type: string) {
+  switch (type) {
+    case "cpd":
+      return "bg-purple-100 text-purple-700 border-purple-200"
+    case "workshop":
+      return "bg-orange-100 text-orange-700 border-orange-200"
+    case "symposium":
+      return "bg-teal-100 text-teal-700 border-teal-200"
+    default:
+      return "bg-slate-100 text-slate-700 border-slate-200"
+  }
+}
+
+function getResourceIcon(type: ResourceType) {
+  switch (type) {
+    case "document":
+      return FileText
+    case "link":
+      return LinkIcon
+    case "video":
+      return Video
+    case "image":
+      return ImageIcon
+    default:
+      return FileText
+  }
+}
+
+function formatFileSize(bytes: number | null): string {
+  if (!bytes) return ""
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleString("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
+}
+
+function formatEventDate(startDate: string | null, endDate: string | null): string {
+  if (!startDate) return "TBA"
+  const start = new Date(startDate)
+  if (!endDate || startDate === endDate) {
+    return start.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  }
+  const end = new Date(endDate)
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })}-${end.getDate()}, ${end.getFullYear()}`
+  }
+  return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+}
+
+function formatEventTime(startTime: string | null, endTime: string | null, timezone: string | null): string {
+  if (!startTime) return "TBA"
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(":")
+    const h = Number.parseInt(hours)
+    const ampm = h >= 12 ? "PM" : "AM"
+    const h12 = h % 12 || 12
+    return `${h12}:${minutes} ${ampm}`
+  }
+  const tz = timezone || "WIB"
+  if (!endTime) return `${formatTime(startTime)} ${tz}`
+  return `${formatTime(startTime)} - ${formatTime(endTime)} ${tz}`
 }
 
 export default function EventCMSPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [selectedEvent, setSelectedEvent] = useState<string>("")
-  const [activeTab, setActiveTab] = useState<ResourceType | "history">("document")
+  const [selectedEvent, setSelectedEvent] = useState<string>("cpd")
   const [resources, setResources] = useState<EventResource[]>([])
   const [history, setHistory] = useState<EventHistory[]>([])
-  const [dbEvents, setDbEvents] = useState<Event[]>([])
-
-  // Dialog states
+  const [activeTab, setActiveTab] = useState<ResourceType | "details" | "history">("details")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedResource, setSelectedResource] = useState<EventResource | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
-
-  // Form state
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -202,205 +253,261 @@ export default function EventCMSPage() {
     is_public: false,
   })
 
-  // Check admin access
+  const [eventDetails, setEventDetails] = useState<EventDetails | null>(null)
+  const [detailsForm, setDetailsForm] = useState({
+    start_date: "",
+    end_date: "",
+    start_time: "",
+    end_time: "",
+    timezone: "WIB",
+    location: "",
+    venue: "",
+    description: "",
+  })
+  const [isSavingDetails, setIsSavingDetails] = useState(false)
+
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
+
   useEffect(() => {
-    async function checkAccess() {
-      const supabase = createClient()
+    checkAdminAndLoadData()
+  }, [])
+
+  useEffect(() => {
+    if (isAdmin && selectedEvent) {
+      loadEventData()
+    }
+  }, [selectedEvent, isAdmin])
+
+  async function checkAdminAndLoadData() {
+    try {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-
       if (!user) {
-        router.push("/auth/login")
+        setLoading(false)
         return
       }
 
       const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
 
-      if (profile?.role !== "admin") {
-        router.push("/")
-        return
+      if (profile?.role === "admin") {
+        setIsAdmin(true)
+        await loadEventData()
       }
-
-      setIsAdmin(true)
+    } catch (error) {
+      console.error("Error checking admin status:", error)
+    } finally {
       setLoading(false)
-
-      // Load events from database
-      const { data: events } = await supabase
-        .from("events")
-        .select("id, slug, title, short_title, event_type, status")
-        .eq("is_active", true)
-        .order("event_type")
-        .order("title")
-
-      if (events && events.length > 0) {
-        setDbEvents(events as Event[])
-      }
     }
-
-    checkAccess()
-  }, [router])
-
-  // Load resources when event changes
-  useEffect(() => {
-    if (selectedEvent && isAdmin) {
-      loadResources()
-      loadHistory()
-    }
-  }, [selectedEvent, isAdmin])
-
-  async function loadResources() {
-    setLoading(true)
-    const supabase = createClient()
-
-    // First check if this event exists in the database
-    const { data: eventData } = await supabase.from("events").select("id").eq("slug", selectedEvent).single()
-
-    if (eventData) {
-      const { data, error } = await supabase
-        .from("event_resources")
-        .select("*")
-        .eq("event_id", eventData.id)
-        .order("resource_type")
-        .order("sort_order")
-
-      if (!error && data) {
-        setResources(data as EventResource[])
-      }
-    } else {
-      setResources([])
-    }
-
-    setLoading(false)
   }
 
-  async function loadHistory() {
-    const supabase = createClient()
+  async function loadEventData() {
+    try {
+      const { data: eventData } = await supabase.from("events").select("*").eq("slug", selectedEvent).single()
 
-    // First check if this event exists in the database
-    const { data: eventData } = await supabase.from("events").select("id").eq("slug", selectedEvent).single()
+      if (eventData) {
+        setEventDetails(eventData)
+        setDetailsForm({
+          start_date: eventData.start_date || "",
+          end_date: eventData.end_date || "",
+          start_time: eventData.start_time || "",
+          end_time: eventData.end_time || "",
+          timezone: eventData.timezone || "WIB",
+          location: eventData.location || "",
+          venue: eventData.venue || "",
+          description: eventData.description || "",
+        })
+      } else {
+        // Reset form if no event data exists
+        const staticEvent = STATIC_EVENTS.find((e) => e.slug === selectedEvent)
+        setEventDetails(null)
+        setDetailsForm({
+          start_date: "",
+          end_date: "",
+          start_time: "",
+          end_time: "",
+          timezone: "WIB",
+          location: "",
+          venue: "",
+          description: "",
+        })
+      }
 
-    if (eventData) {
-      const { data, error } = await supabase
+      // Load resources
+      const { data: resourcesData, error: resourcesError } = await supabase
+        .from("event_resources")
+        .select("*")
+        .eq("event_id", selectedEvent)
+        .order("sort_order", { ascending: true })
+
+      if (resourcesError) throw resourcesError
+      setResources(resourcesData || [])
+
+      // Load history
+      const { data: historyData } = await supabase
         .from("event_history")
-        .select(`*, profiles:changed_by(full_name)`)
-        .eq("event_id", eventData.id)
+        .select("*")
+        .eq("event_id", selectedEvent)
         .order("changed_at", { ascending: false })
         .limit(50)
 
-      if (!error && data) {
-        setHistory(data as EventHistory[])
-      }
-    } else {
-      setHistory([])
+      setHistory(historyData || [])
+    } catch (error) {
+      console.error("Error loading event data:", error)
     }
   }
 
-  // Get or create event in database
-  async function getOrCreateEvent(slug: string): Promise<string | null> {
-    const supabase = createClient()
-
-    // Check if event exists
-    const { data: existingEvent } = await supabase.from("events").select("id").eq("slug", slug).single()
-
-    if (existingEvent) {
-      return existingEvent.id
-    }
-
-    // Create event from static data
-    const staticEvent = STATIC_EVENTS.find((e) => e.slug === slug)
-    if (!staticEvent) return null
-
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-    if (!user) return null
-
-    const { data: newEvent, error } = await supabase
-      .from("events")
-      .insert({
-        slug: staticEvent.slug,
-        title: staticEvent.title,
-        short_title: staticEvent.short_title,
-        event_type: staticEvent.event_type,
-        status: "active",
-        is_active: true,
-        created_by: user.id,
-        updated_by: user.id,
-      })
-      .select("id")
-      .single()
-
-    if (error) {
-      console.error("Error creating event:", error)
-      return null
-    }
-
-    return newEvent?.id || null
-  }
-
-  async function handleCreate() {
-    if (!selectedEvent || !formData.title || !formData.url) return
-    setIsProcessing(true)
-
+  async function saveEventDetails() {
+    setIsSavingDetails(true)
     try {
-      const eventId = await getOrCreateEvent(selectedEvent)
-      if (!eventId) {
-        toast({ title: "Error", description: "Failed to get or create event", variant: "destructive" })
-        return
-      }
-
-      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      const staticEvent = STATIC_EVENTS.find((e) => e.slug === selectedEvent)
+      if (!staticEvent) throw new Error("Event not found")
+
+      const eventPayload = {
+        slug: selectedEvent,
+        title: staticEvent.title,
+        short_title: staticEvent.short_title,
+        event_type: staticEvent.event_type,
+        start_date: detailsForm.start_date || null,
+        end_date: detailsForm.end_date || null,
+        start_time: detailsForm.start_time || null,
+        end_time: detailsForm.end_time || null,
+        timezone: detailsForm.timezone || "WIB",
+        location: detailsForm.location || null,
+        venue: detailsForm.venue || null,
+        description: detailsForm.description || null,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      }
+
+      if (eventDetails?.id) {
+        // Update existing event
+        const { error } = await supabase.from("events").update(eventPayload).eq("id", eventDetails.id)
+
+        if (error) throw error
+
+        // Log history
+        await supabase.from("event_history").insert({
+          event_id: eventDetails.id,
+          action: "updated",
+          changes: {
+            details: { old: "previous values", new: "updated values" },
+          },
+          changed_by: user.id,
+        })
+      } else {
+        // Create new event
+        const { data: newEvent, error } = await supabase
+          .from("events")
+          .insert({
+            ...eventPayload,
+            created_by: user.id,
+            is_active: true,
+            status: "active",
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        // Log history
+        if (newEvent) {
+          await supabase.from("event_history").insert({
+            event_id: newEvent.id,
+            action: "created",
+            changes: { details: { old: "", new: "created" } },
+            changed_by: user.id,
+          })
+        }
+      }
+
+      await loadEventData()
+      alert("Event details saved successfully!")
+    } catch (error) {
+      console.error("Error saving event details:", error)
+      alert("Failed to save event details")
+    } finally {
+      setIsSavingDetails(false)
+    }
+  }
+
+  async function handleAddResource() {
+    if (!formData.title || !formData.url) return
+
+    setIsProcessing(true)
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
+
+      // Ensure event exists first
+      let eventId = eventDetails?.id
+      if (!eventId) {
+        const staticEvent = STATIC_EVENTS.find((e) => e.slug === selectedEvent)
+        const { data: newEvent, error: eventError } = await supabase
+          .from("events")
+          .insert({
+            slug: selectedEvent,
+            title: staticEvent?.title || selectedEvent,
+            short_title: staticEvent?.short_title || selectedEvent,
+            event_type: staticEvent?.event_type || "workshop",
+            created_by: user.id,
+            is_active: true,
+            status: "active",
+          })
+          .select()
+          .single()
+
+        if (eventError) throw eventError
+        eventId = newEvent.id
+      }
 
       const { error } = await supabase.from("event_resources").insert({
-        event_id: eventId,
+        event_id: selectedEvent,
         resource_type: activeTab as ResourceType,
         title: formData.title,
         description: formData.description || null,
         url: formData.url,
         file_type: formData.file_type || null,
         file_size: formData.file_size || null,
-        sort_order: formData.sort_order || 0,
+        sort_order: formData.sort_order,
         is_public: formData.is_public,
         is_active: true,
-        created_by: user?.id,
-        updated_by: user?.id,
+        created_by: user.id,
+        updated_by: user.id,
       })
 
       if (error) throw error
 
-      // Log history
-      await supabase.from("event_history").insert({
-        event_id: eventId,
-        action: "resource_created",
-        changes: { resource_title: formData.title, resource_type: activeTab },
-        changed_by: user?.id,
-      })
-
-      toast({ title: "Success", description: "Resource created successfully" })
+      await loadEventData()
       setIsAddDialogOpen(false)
       resetForm()
-      loadResources()
-      loadHistory()
     } catch (error) {
-      toast({ title: "Error", description: "Failed to create resource", variant: "destructive" })
+      console.error("Error adding resource:", error)
+      alert("Failed to add resource")
     } finally {
       setIsProcessing(false)
     }
   }
 
-  async function handleUpdate() {
+  async function handleEditResource() {
     if (!selectedResource || !formData.title || !formData.url) return
-    setIsProcessing(true)
 
+    setIsProcessing(true)
     try {
-      const supabase = createClient()
       const {
         data: { user },
       } = await supabase.auth.getUser()
+      if (!user) throw new Error("Not authenticated")
 
       const { error } = await supabase
         .from("event_resources")
@@ -410,20 +517,21 @@ export default function EventCMSPage() {
           url: formData.url,
           file_type: formData.file_type || null,
           file_size: formData.file_size || null,
-          sort_order: formData.sort_order || 0,
+          sort_order: formData.sort_order,
           is_public: formData.is_public,
-          updated_by: user?.id,
+          updated_by: user.id,
+          updated_at: new Date().toISOString(),
         })
         .eq("id", selectedResource.id)
 
       if (error) throw error
 
-      toast({ title: "Success", description: "Resource updated successfully" })
+      await loadEventData()
       setIsEditDialogOpen(false)
       resetForm()
-      loadResources()
     } catch (error) {
-      toast({ title: "Error", description: "Failed to update resource", variant: "destructive" })
+      console.error("Error updating resource:", error)
+      alert("Failed to update resource")
     } finally {
       setIsProcessing(false)
     }
@@ -431,11 +539,9 @@ export default function EventCMSPage() {
 
   async function handleDelete() {
     if (!selectedResource) return
+
     setIsProcessing(true)
-
     try {
-      const supabase = createClient()
-
       const { error } = await supabase
         .from("event_resources")
         .update({ is_active: false })
@@ -443,31 +549,12 @@ export default function EventCMSPage() {
 
       if (error) throw error
 
-      toast({ title: "Success", description: "Resource deleted successfully" })
+      await loadEventData()
       setIsDeleteDialogOpen(false)
       setSelectedResource(null)
-      loadResources()
     } catch (error) {
-      toast({ title: "Error", description: "Failed to delete resource", variant: "destructive" })
-    } finally {
-      setIsProcessing(false)
-    }
-  }
-
-  async function handleRestore(resource: EventResource) {
-    setIsProcessing(true)
-
-    try {
-      const supabase = createClient()
-
-      const { error } = await supabase.from("event_resources").update({ is_active: true }).eq("id", resource.id)
-
-      if (error) throw error
-
-      toast({ title: "Success", description: "Resource restored successfully" })
-      loadResources()
-    } catch (error) {
-      toast({ title: "Error", description: "Failed to restore resource", variant: "destructive" })
+      console.error("Error deleting resource:", error)
+      alert("Failed to delete resource")
     } finally {
       setIsProcessing(false)
     }
@@ -480,7 +567,7 @@ export default function EventCMSPage() {
       url: "",
       file_type: "",
       file_size: 0,
-      sort_order: 0,
+      sort_order: resources.length,
       is_public: false,
     })
     setSelectedResource(null)
@@ -488,6 +575,7 @@ export default function EventCMSPage() {
 
   function openAddDialog() {
     resetForm()
+    setFormData((prev) => ({ ...prev, sort_order: resources.length }))
     setIsAddDialogOpen(true)
   }
 
@@ -510,12 +598,7 @@ export default function EventCMSPage() {
     setIsDeleteDialogOpen(true)
   }
 
-  const resourcesByType = resources.filter(
-    (r) => r.resource_type === activeTab && (activeTab === "history" || r.is_active || !r.is_active),
-  )
-
   const activeResources = resources.filter((r) => r.resource_type === activeTab && r.is_active)
-  const inactiveResources = resources.filter((r) => r.resource_type === activeTab && !r.is_active)
 
   const selectedEventData = STATIC_EVENTS.find((e) => e.slug === selectedEvent)
   const EventIcon = selectedEventData ? getEventIcon(selectedEventData.event_type) : Calendar
@@ -532,251 +615,397 @@ export default function EventCMSPage() {
     )
   }
 
+  if (!isAdmin) {
+    return (
+      <>
+        <Navigation />
+        <main className="pt-24 pb-20 min-h-screen flex items-center justify-center">
+          <Card className="max-w-md">
+            <CardContent className="pt-6 text-center">
+              <p className="text-muted-foreground">You do not have permission to access this page.</p>
+            </CardContent>
+          </Card>
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
       <Navigation />
-      <main className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-slate-50 to-background">
-        {/* Header */}
-        <section className="py-8 px-4 border-b bg-white">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl font-bold">Event CMS</h1>
-                <p className="text-muted-foreground">Manage event resources and materials</p>
-              </div>
-              <div className="flex items-center gap-3">
+      <main className="pt-24 pb-20 min-h-screen bg-slate-50">
+        <div className="container mx-auto px-4 max-w-6xl">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-2">Event CMS</h1>
+            <p className="text-muted-foreground">Manage event details, resources, and materials</p>
+          </div>
+
+          {/* Event Selector */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <Label className="text-sm font-medium whitespace-nowrap">Select Event:</Label>
                 <Select value={selectedEvent} onValueChange={setSelectedEvent}>
-                  <SelectTrigger className="w-[300px]">
-                    <SelectValue placeholder="Select an event..." />
+                  <SelectTrigger className="w-full sm:w-[400px]">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cpd" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <GraduationCap className="w-4 h-4 text-purple-600" />
-                        <span>CPD Courses</span>
-                      </div>
-                    </SelectItem>
-                    {STATIC_EVENTS.filter((e) => e.event_type === "workshop").map((event) => (
-                      <SelectItem key={event.slug} value={event.slug} className="py-3">
-                        <div className="flex items-center gap-2">
-                          <Stethoscope className="w-4 h-4 text-orange-600" />
-                          <span>{event.short_title}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                    <SelectItem value="symposium" className="py-3">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-teal-600" />
-                        <span>Symposium</span>
-                      </div>
-                    </SelectItem>
+                    {STATIC_EVENTS.map((event) => {
+                      const Icon = getEventIcon(event.event_type)
+                      return (
+                        <SelectItem key={event.slug} value={event.slug}>
+                          <div className="flex items-center gap-2">
+                            <Icon className="w-4 h-4" />
+                            <span>{event.short_title}</span>
+                            <Badge variant="outline" className={`ml-2 text-xs ${getEventColor(event.event_type)}`}>
+                              {event.event_type.toUpperCase()}
+                            </Badge>
+                          </div>
+                        </SelectItem>
+                      )
+                    })}
                   </SelectContent>
                 </Select>
-                {selectedEvent && (
-                  <Button variant="outline" size="icon" onClick={loadResources}>
-                    <RefreshCw className="w-4 h-4" />
-                  </Button>
-                )}
               </div>
-            </div>
-          </div>
-        </section>
+            </CardContent>
+          </Card>
 
-        {selectedEvent ? (
-          <section className="py-8 px-4">
-            <div className="max-w-7xl mx-auto space-y-6">
-              {/* Event Info Card */}
-              {selectedEventData && (
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                          selectedEventData.event_type === "cpd"
-                            ? "bg-purple-100"
-                            : selectedEventData.event_type === "workshop"
-                              ? "bg-orange-100"
-                              : "bg-teal-100"
-                        }`}
-                      >
-                        <EventIcon
-                          className={`w-6 h-6 ${
-                            selectedEventData.event_type === "cpd"
-                              ? "text-purple-600"
-                              : selectedEventData.event_type === "workshop"
-                                ? "text-orange-600"
-                                : "text-teal-600"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Badge className={getEventColor(selectedEventData.event_type)}>
-                          {selectedEventData.event_type.toUpperCase()}
-                        </Badge>
-                        <h2 className="text-xl font-bold mt-2">{selectedEventData.title}</h2>
-                        <p className="text-muted-foreground text-sm mt-1">
-                          Manage resources, materials, and content for this event
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-muted-foreground">Total Resources</p>
-                        <p className="text-2xl font-bold">{resources.filter((r) => r.is_active).length}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+          {/* Selected Event Info */}
+          {selectedEventData && (
+            <Card className="mb-6">
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${getEventColor(selectedEventData.event_type)}`}>
+                    <EventIcon className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{selectedEventData.title}</CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {eventDetails ? (
+                        <>
+                          {formatEventDate(eventDetails.start_date, eventDetails.end_date)} |{" "}
+                          {formatEventTime(eventDetails.start_time, eventDetails.end_time, eventDetails.timezone)} |{" "}
+                          {eventDetails.location || "Location TBA"}
+                        </>
+                      ) : (
+                        "Date, time, and location not set"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          )}
 
-              {/* Content Tabs */}
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="mb-4 flex-wrap h-auto gap-1">
+              <TabsTrigger value="details" className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="document" className="gap-2">
+                <FileText className="w-4 h-4" />
+                Documents
+              </TabsTrigger>
+              <TabsTrigger value="link" className="gap-2">
+                <LinkIcon className="w-4 h-4" />
+                Links
+              </TabsTrigger>
+              <TabsTrigger value="video" className="gap-2">
+                <Video className="w-4 h-4" />
+                Videos
+              </TabsTrigger>
+              <TabsTrigger value="image" className="gap-2">
+                <ImageIcon className="w-4 h-4" />
+                Images
+              </TabsTrigger>
+              <TabsTrigger value="history" className="gap-2">
+                <History className="w-4 h-4" />
+                History
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details">
               <Card>
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ResourceType | "history")}>
-                  <CardHeader className="pb-0">
-                    <TabsList className="grid w-full grid-cols-5">
-                      {(Object.keys(RESOURCE_TYPE_CONFIG) as ResourceType[]).map((type) => {
-                        const Icon = RESOURCE_TYPE_ICONS[type]
-                        const config = RESOURCE_TYPE_CONFIG[type]
-                        return (
-                          <TabsTrigger key={type} value={type} className="gap-2">
-                            <Icon className="w-4 h-4" />
-                            <span className="hidden sm:inline">{config.label}</span>
-                          </TabsTrigger>
-                        )
-                      })}
-                      <TabsTrigger value="history" className="gap-2">
-                        <History className="w-4 h-4" />
-                        <span className="hidden sm:inline">History</span>
-                      </TabsTrigger>
-                    </TabsList>
-                  </CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Event Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Date Fields */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="start_date">Start Date</Label>
+                      <Input
+                        id="start_date"
+                        type="date"
+                        value={detailsForm.start_date}
+                        onChange={(e) => setDetailsForm((prev) => ({ ...prev, start_date: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end_date">End Date</Label>
+                      <Input
+                        id="end_date"
+                        type="date"
+                        value={detailsForm.end_date}
+                        onChange={(e) => setDetailsForm((prev) => ({ ...prev, end_date: e.target.value }))}
+                      />
+                    </div>
+                  </div>
 
-                  <CardContent className="pt-6">
-                    {/* Resource Type Tabs */}
-                    {(Object.keys(RESOURCE_TYPE_CONFIG) as ResourceType[]).map((type) => (
-                      <TabsContent key={type} value={type} className="mt-0">
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <h3 className="font-medium">{RESOURCE_TYPE_CONFIG[type].label}</h3>
-                              <p className="text-sm text-muted-foreground">{RESOURCE_TYPE_CONFIG[type].description}</p>
-                            </div>
-                            <Button onClick={openAddDialog}>
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add {RESOURCE_TYPE_CONFIG[type].label.slice(0, -1)}
-                            </Button>
-                          </div>
+                  {/* Time Fields */}
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <Label htmlFor="start_time">Start Time</Label>
+                      <Input
+                        id="start_time"
+                        type="time"
+                        value={detailsForm.start_time}
+                        onChange={(e) => setDetailsForm((prev) => ({ ...prev, start_time: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="end_time">End Time</Label>
+                      <Input
+                        id="end_time"
+                        type="time"
+                        value={detailsForm.end_time}
+                        onChange={(e) => setDetailsForm((prev) => ({ ...prev, end_time: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="timezone">Timezone</Label>
+                      <Select
+                        value={detailsForm.timezone}
+                        onValueChange={(v) => setDetailsForm((prev) => ({ ...prev, timezone: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="WIB">WIB (UTC+7)</SelectItem>
+                          <SelectItem value="WITA">WITA (UTC+8)</SelectItem>
+                          <SelectItem value="WIT">WIT (UTC+9)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
 
-                          {loading ? (
-                            <div className="flex items-center justify-center py-12">
-                              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-                            </div>
-                          ) : activeResources.length === 0 && inactiveResources.length === 0 ? (
-                            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                              {React.createElement(RESOURCE_TYPE_ICONS[type], {
-                                className: "w-12 h-12 mx-auto mb-4 text-slate-300",
-                              })}
-                              <p className="text-muted-foreground mb-4">
-                                No {RESOURCE_TYPE_CONFIG[type].label.toLowerCase()} added yet
-                              </p>
-                              <Button variant="outline" onClick={openAddDialog}>
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add First {RESOURCE_TYPE_CONFIG[type].label.slice(0, -1)}
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              {activeResources.map((item) => (
-                                <ResourceItem
-                                  key={item.id}
-                                  item={item}
-                                  onEdit={() => openEditDialog(item)}
-                                  onDelete={() => openDeleteDialog(item)}
-                                  onRestore={() => handleRestore(item)}
-                                />
-                              ))}
-                              {inactiveResources.length > 0 && (
-                                <>
-                                  <div className="pt-4 pb-2">
-                                    <p className="text-sm text-muted-foreground">Deleted Resources</p>
-                                  </div>
-                                  {inactiveResources.map((item) => (
-                                    <ResourceItem
-                                      key={item.id}
-                                      item={item}
-                                      onEdit={() => openEditDialog(item)}
-                                      onDelete={() => openDeleteDialog(item)}
-                                      onRestore={() => handleRestore(item)}
-                                    />
-                                  ))}
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </TabsContent>
-                    ))}
+                  {/* Location Fields */}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label htmlFor="location" className="flex items-center gap-2">
+                        <MapPin className="w-4 h-4" />
+                        Location
+                      </Label>
+                      <Input
+                        id="location"
+                        value={detailsForm.location}
+                        onChange={(e) => setDetailsForm((prev) => ({ ...prev, location: e.target.value }))}
+                        placeholder="e.g., Malang, East Java"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="venue" className="flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        Venue
+                      </Label>
+                      <Input
+                        id="venue"
+                        value={detailsForm.venue}
+                        onChange={(e) => setDetailsForm((prev) => ({ ...prev, venue: e.target.value }))}
+                        placeholder="e.g., Hotel Singhasari"
+                      />
+                    </div>
+                  </div>
 
-                    {/* History Tab */}
-                    <TabsContent value="history" className="mt-0">
-                      <div className="space-y-4">
-                        <div>
-                          <h3 className="font-medium">Change History</h3>
-                          <p className="text-sm text-muted-foreground">Track all changes made to event resources</p>
-                        </div>
+                  {/* Description */}
+                  <div>
+                    <Label htmlFor="description">Description</Label>
+                    <Textarea
+                      id="description"
+                      value={detailsForm.description}
+                      onChange={(e) => setDetailsForm((prev) => ({ ...prev, description: e.target.value }))}
+                      placeholder="Event description..."
+                      rows={4}
+                    />
+                  </div>
 
-                        {history.length === 0 ? (
-                          <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                            <History className="w-12 h-12 mx-auto mb-4 text-slate-300" />
-                            <p className="text-muted-foreground">No history yet</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {history.map((entry) => (
-                              <HistoryItem key={entry.id} entry={entry} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </TabsContent>
-                  </CardContent>
-                </Tabs>
-              </Card>
-            </div>
-          </section>
-        ) : (
-          <section className="py-12 px-4">
-            <div className="max-w-7xl mx-auto">
-              <Card className="border-dashed">
-                <CardContent className="py-16 text-center">
-                  <Settings className="w-16 h-16 mx-auto mb-4 text-slate-300" />
-                  <h3 className="text-xl font-semibold mb-2">Select an Event</h3>
-                  <p className="text-muted-foreground">
-                    Choose an event from the dropdown above to manage its resources
-                  </p>
+                  {/* Save Button */}
+                  <div className="flex justify-end pt-4 border-t">
+                    <Button onClick={saveEventDetails} disabled={isSavingDetails}>
+                      {isSavingDetails ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      Save Details
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-            </div>
-          </section>
-        )}
+            </TabsContent>
+
+            {/* Resources Tabs */}
+            {["document", "link", "video", "image"].map((type) => (
+              <TabsContent key={type} value={type}>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      {type === "document" && <FileText className="w-5 h-5" />}
+                      {type === "link" && <LinkIcon className="w-5 h-5" />}
+                      {type === "video" && <Video className="w-5 h-5" />}
+                      {type === "image" && <ImageIcon className="w-5 h-5" />}
+                      {type.charAt(0).toUpperCase() + type.slice(1)}s
+                    </CardTitle>
+                    <Button onClick={openAddDialog} size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {activeResources.length === 0 ? (
+                      <div className="text-center py-12 text-muted-foreground">
+                        <p>No {type}s added yet.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {activeResources.map((resource) => {
+                          const Icon = getResourceIcon(resource.resource_type)
+                          return (
+                            <div
+                              key={resource.id}
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-slate-50"
+                            >
+                              <div className="flex items-center gap-3 min-w-0 flex-1">
+                                <div className="p-2 rounded-lg bg-slate-100">
+                                  <Icon className="w-4 h-4 text-slate-600" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-medium truncate">{resource.title}</p>
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                    {resource.file_type && (
+                                      <Badge variant="outline" className="text-xs">
+                                        {resource.file_type.toUpperCase()}
+                                      </Badge>
+                                    )}
+                                    {resource.file_size && <span>{formatFileSize(resource.file_size)}</span>}
+                                    <Badge variant={resource.is_public ? "default" : "secondary"} className="text-xs">
+                                      {resource.is_public ? "Public" : "Private"}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 ml-4">
+                                <Button variant="ghost" size="icon" asChild>
+                                  <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                    {type === "document" ? (
+                                      <Download className="w-4 h-4" />
+                                    ) : (
+                                      <ExternalLink className="w-4 h-4" />
+                                    )}
+                                  </a>
+                                </Button>
+                                <Button variant="ghost" size="icon" onClick={() => openEditDialog(resource)}>
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => openDeleteDialog(resource)}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            ))}
+
+            {/* History Tab */}
+            <TabsContent value="history">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="w-5 h-5" />
+                    Change History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {history.length === 0 ? (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <p>No history records yet.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {history.map((record) => (
+                        <div key={record.id} className="flex items-start gap-3 p-4 border rounded-lg">
+                          <div className="p-2 rounded-lg bg-slate-100">
+                            <History className="w-4 h-4 text-slate-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Badge
+                                variant={
+                                  record.action === "created"
+                                    ? "default"
+                                    : record.action === "deleted"
+                                      ? "destructive"
+                                      : "secondary"
+                                }
+                              >
+                                {record.action}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">{formatDate(record.changed_at)}</span>
+                            </div>
+                            {record.change_reason && (
+                              <p className="text-sm text-muted-foreground mt-1">{record.change_reason}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
       <Footer />
 
       {/* Add Resource Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Add New {activeTab !== "history" && RESOURCE_TYPE_CONFIG[activeTab as ResourceType]?.label.slice(0, -1)}
+              Add{" "}
+              {activeTab !== "details" && activeTab !== "history"
+                ? activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+                : "Resource"}
             </DialogTitle>
-            <DialogDescription>Add a new resource to this event</DialogDescription>
+            <DialogDescription>Add a new resource to this event.</DialogDescription>
           </DialogHeader>
           <ResourceForm formData={formData} setFormData={setFormData} resourceType={activeTab as ResourceType} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreate} disabled={isProcessing || !formData.title || !formData.url}>
+            <Button onClick={handleAddResource} disabled={isProcessing || !formData.title || !formData.url}>
               {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
-              Create
+              Add
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -784,23 +1013,23 @@ export default function EventCMSPage() {
 
       {/* Edit Resource Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Resource</DialogTitle>
-            <DialogDescription>Update resource details</DialogDescription>
+            <DialogDescription>Update the resource details.</DialogDescription>
           </DialogHeader>
           <ResourceForm
             formData={formData}
             setFormData={setFormData}
-            resourceType={selectedResource?.resource_type as ResourceType}
+            resourceType={selectedResource?.resource_type || "document"}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleUpdate} disabled={isProcessing || !formData.title || !formData.url}>
-              {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Pencil className="w-4 h-4 mr-2" />}
-              Update
+            <Button onClick={handleEditResource} disabled={isProcessing || !formData.title || !formData.url}>
+              {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -920,124 +1149,21 @@ function ResourceForm({
                 file_size: Number.parseFloat(e.target.value) * 1024 * 1024 || 0,
               }))
             }
-            placeholder="Optional"
+            placeholder="0"
           />
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-4 border rounded-lg">
+      <div className="flex items-center justify-between">
         <div>
-          <Label htmlFor="is_public" className="font-medium">
-            Public Access
-          </Label>
-          <p className="text-sm text-muted-foreground">Visible to everyone, not just registered attendees</p>
+          <Label htmlFor="is_public">Public Access</Label>
+          <p className="text-xs text-muted-foreground">Allow anyone to view this resource</p>
         </div>
         <Switch
           id="is_public"
           checked={formData.is_public}
-          onCheckedChange={(v) => setFormData((prev) => ({ ...prev, is_public: v }))}
+          onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, is_public: checked }))}
         />
-      </div>
-    </div>
-  )
-}
-
-// Resource Item Component
-function ResourceItem({
-  item,
-  onEdit,
-  onDelete,
-  onRestore,
-}: {
-  item: EventResource
-  onEdit: () => void
-  onDelete: () => void
-  onRestore: () => void
-}) {
-  const Icon = RESOURCE_TYPE_ICONS[item.resource_type as ResourceType] || FileText
-
-  return (
-    <div
-      className={`flex items-center justify-between p-4 border rounded-lg ${
-        !item.is_active ? "opacity-50 bg-slate-50" : "bg-card hover:shadow-sm"
-      } transition-all`}
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
-          <Icon className="w-5 h-5 text-slate-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="font-medium truncate">{item.title}</p>
-            {item.is_public ? (
-              <Badge variant="outline" className="text-xs gap-1">
-                <Eye className="w-3 h-3" />
-                Public
-              </Badge>
-            ) : (
-              <Badge variant="secondary" className="text-xs gap-1">
-                <EyeOff className="w-3 h-3" />
-                Private
-              </Badge>
-            )}
-            {!item.is_active && (
-              <Badge variant="destructive" className="text-xs">
-                Deleted
-              </Badge>
-            )}
-          </div>
-          {item.description && <p className="text-sm text-muted-foreground truncate">{item.description}</p>}
-          <p className="text-xs text-muted-foreground truncate mt-1">{item.url}</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2 ml-4">
-        <Button variant="ghost" size="icon" asChild>
-          <a href={item.url} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="w-4 h-4" />
-          </a>
-        </Button>
-        {item.is_active ? (
-          <>
-            <Button variant="ghost" size="icon" onClick={onEdit}>
-              <Pencil className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="icon" onClick={onDelete}>
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </>
-        ) : (
-          <Button variant="ghost" size="icon" onClick={onRestore}>
-            <RotateCcw className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// History Item Component
-function HistoryItem({ entry }: { entry: EventHistory }) {
-  const actionColors: Record<string, string> = {
-    resource_created: "bg-green-100 text-green-700",
-    resource_updated: "bg-blue-100 text-blue-700",
-    resource_deleted: "bg-red-100 text-red-700",
-    resource_restored: "bg-amber-100 text-amber-700",
-  }
-
-  return (
-    <div className="flex items-start gap-3 p-4 border rounded-lg bg-card">
-      <Badge className={actionColors[entry.action] || "bg-slate-100 text-slate-700"}>
-        {entry.action.replace(/_/g, " ")}
-      </Badge>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm">
-          {entry.changes?.resource_title && <span className="font-medium">{String(entry.changes.resource_title)}</span>}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {entry.profiles?.full_name || "Unknown"} &bull;{" "}
-          {formatDistanceToNow(new Date(entry.changed_at), { addSuffix: true })}
-        </p>
       </div>
     </div>
   )

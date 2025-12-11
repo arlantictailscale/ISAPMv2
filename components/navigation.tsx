@@ -36,73 +36,22 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
   DropdownMenuLabel,
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { CartIcon } from "@/components/cart/cart-icon"
 
-const adminNavGroups = [
-  {
-    label: "Orders & Payments",
-    items: [
-      {
-        label: "Payment Validation",
-        href: "/admin/payment-validation",
-        icon: CheckCircle,
-        description: "Review and approve payments",
-      },
-      { label: "Cart Management", href: "/admin/carts", icon: ShoppingCart, description: "Monitor shopping carts" },
-      { label: "Invoice Management", href: "/admin/invoices", icon: Receipt, description: "Manage invoices" },
-    ],
-  },
-  {
-    label: "Users & Attendees",
-    items: [
-      { label: "User Management", href: "/admin/users", icon: Users, description: "Manage user accounts" },
-      {
-        label: "Confirmed Attendees",
-        href: "/admin/confirmed-attendees",
-        icon: UserCheck,
-        description: "View confirmed attendees",
-      },
-    ],
-  },
-  {
-    label: "Content Management",
-    items: [
-      { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen, description: "Manage webinar content" },
-      {
-        label: "E-Poster Submissions",
-        href: "/admin/posters",
-        icon: Presentation,
-        description: "Review poster submissions",
-      },
-    ],
-  },
-  {
-    label: "Access & Configuration",
-    items: [
-      {
-        label: "Symposium Webinar Access",
-        href: "/admin/symposium-webinar-access",
-        icon: Gift,
-        description: "Grant webinar access",
-      },
-      {
-        label: "Room Availability",
-        href: "/admin/room-availability",
-        icon: BedDouble,
-        description: "Configure hotel rooms",
-      },
-    ],
-  },
-  {
-    label: "Tools",
-    items: [{ label: "Email Test", href: "/admin/email-test", icon: Mail, description: "Test email sending" }],
-  },
+const adminNavItems = [
+  { label: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
+  { label: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
+  { label: "Invoice Management", href: "/admin/invoices", icon: Receipt },
+  { label: "User Management", href: "/admin/users", icon: Users },
+  { label: "Confirmed Attendees", href: "/admin/confirmed-attendees", icon: UserCheck },
+  { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen },
+  { label: "E-Poster Submissions", href: "/admin/posters", icon: Presentation },
+  { label: "Symposium Webinar Access", href: "/admin/symposium-webinar-access", icon: Gift },
+  { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
+  { label: "Email Test", href: "/admin/email-test", icon: Mail },
 ]
 
 export default function Navigation() {
@@ -232,7 +181,7 @@ export default function Navigation() {
                       {user.email}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-72">
+                  <DropdownMenuContent align="end" className="w-64">
                     <Link href="/dashboard">
                       <DropdownMenuItem>
                         <LayoutDashboard className="w-4 h-4 mr-2" />
@@ -288,30 +237,17 @@ export default function Navigation() {
                           <Shield className="w-3 h-3" />
                           Admin Panel
                         </DropdownMenuLabel>
-
-                        {adminNavGroups.map((group) => (
-                          <DropdownMenuSub key={group.label}>
-                            <DropdownMenuSubTrigger className="text-primary">
-                              <span>{group.label}</span>
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="w-64">
-                              {group.items.map((item) => {
-                                const Icon = item.icon
-                                return (
-                                  <Link key={item.href} href={item.href}>
-                                    <DropdownMenuItem className="flex items-start gap-3 py-2">
-                                      <Icon className="w-4 h-4 mt-0.5 text-primary" />
-                                      <div className="flex flex-col gap-0.5">
-                                        <span className="text-sm font-medium">{item.label}</span>
-                                        <span className="text-xs text-muted-foreground">{item.description}</span>
-                                      </div>
-                                    </DropdownMenuItem>
-                                  </Link>
-                                )
-                              })}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuSub>
-                        ))}
+                        {adminNavItems.map((item) => {
+                          const Icon = item.icon
+                          return (
+                            <Link key={item.href} href={item.href}>
+                              <DropdownMenuItem className="text-primary">
+                                <Icon className="w-4 h-4 mr-2" />
+                                {item.label}
+                              </DropdownMenuItem>
+                            </Link>
+                          )
+                        })}
                       </>
                     )}
 
@@ -373,7 +309,6 @@ export default function Navigation() {
                   Dashboard
                 </Link>
 
-                {/* User menu items */}
                 <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground font-medium">My Account</p>
                 <Link
                   href="/profile"
@@ -440,27 +375,20 @@ export default function Navigation() {
 
                     {adminMenuOpen && (
                       <div className="ml-2 border-l-2 border-primary/20 pl-2 space-y-1">
-                        {adminNavGroups.map((group) => (
-                          <div key={group.label}>
-                            <p className="px-3 pt-3 pb-1 text-xs text-primary/70 font-semibold uppercase tracking-wider">
-                              {group.label}
-                            </p>
-                            {group.items.map((item) => {
-                              const Icon = item.icon
-                              return (
-                                <Link
-                                  key={item.href}
-                                  href={item.href}
-                                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                  onClick={() => setIsOpen(false)}
-                                >
-                                  <Icon className="w-4 h-4" />
-                                  {item.label}
-                                </Link>
-                              )
-                            })}
-                          </div>
-                        ))}
+                        {adminNavItems.map((item) => {
+                          const Icon = item.icon
+                          return (
+                            <Link
+                              key={item.href}
+                              href={item.href}
+                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              onClick={() => setIsOpen(false)}
+                            >
+                              <Icon className="w-4 h-4" />
+                              {item.label}
+                            </Link>
+                          )
+                        })}
                       </div>
                     )}
                   </>

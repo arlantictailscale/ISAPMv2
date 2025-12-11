@@ -22,6 +22,7 @@ import {
   Download,
   Loader2,
   Building,
+  DoorOpen,
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -37,6 +38,7 @@ const fallbackEventDetails: Record<
     time: string
     location: string
     venue: string
+    room: string
     type: "cpd" | "workshop" | "symposium"
     description: string
   }
@@ -48,6 +50,7 @@ const fallbackEventDetails: Record<
     time: "08:00 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "cpd",
     description: "Comprehensive 2-day continuing professional development program.",
   },
@@ -58,6 +61,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Hands-on workshop on regenerative pain therapy.",
   },
@@ -68,6 +72,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Foundational workshop on musculoskeletal procedures.",
   },
@@ -78,6 +83,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Specialized workshop on pediatric pain management.",
   },
@@ -88,6 +94,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Workshop on complementary pain therapies.",
   },
@@ -98,6 +105,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Team-based workshop on establishing pain clinics.",
   },
@@ -108,6 +116,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Comprehensive workshop on cancer pain management.",
   },
@@ -118,6 +127,7 @@ const fallbackEventDetails: Record<
     time: "07:30 - 16:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "workshop",
     description: "Advanced workshop on neuromodulation and interventional techniques.",
   },
@@ -128,6 +138,7 @@ const fallbackEventDetails: Record<
     time: "08:00 - 17:00 WIB",
     location: "Malang, East Java",
     venue: "Hotel Venue (TBA)",
+    room: "",
     type: "symposium",
     description: "Scientific symposium featuring keynote speakers and research presentations.",
   },
@@ -251,6 +262,7 @@ interface DBEventDetails {
   timezone: string | null
   location: string | null
   venue: string | null
+  room: string | null
   description: string | null
 }
 
@@ -358,6 +370,7 @@ export default function MyEventsPage() {
         time: formatEventTime(dbEvent.start_time, dbEvent.end_time, dbEvent.timezone),
         location: dbEvent.location || fallback?.location || "TBA",
         venue: dbEvent.venue || fallback?.venue || "TBA",
+        room: dbEvent.room || "", // Added room field from database
         type: (dbEvent.event_type || fallback?.type || "workshop") as "cpd" | "workshop" | "symposium",
         description: dbEvent.description || fallback?.description || "",
       }
@@ -371,6 +384,7 @@ export default function MyEventsPage() {
         time: "TBA",
         location: "TBA",
         venue: "TBA",
+        room: "", // Added room field fallback
         type: "workshop" as const,
         description: "",
       }
@@ -514,7 +528,7 @@ export default function MyEventsPage() {
 
                       <CardContent className="p-6">
                         {/* Event Details Grid */}
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8">
                           <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
                             <Calendar className={`w-5 h-5 ${colors.icon}`} />
                             <div>
@@ -543,6 +557,15 @@ export default function MyEventsPage() {
                               <p className="font-semibold text-sm">{details.venue}</p>
                             </div>
                           </div>
+                          {details.room && (
+                            <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
+                              <DoorOpen className={`w-5 h-5 ${colors.icon}`} />
+                              <div>
+                                <p className="text-xs text-muted-foreground">Room</p>
+                                <p className="font-semibold text-sm">{details.room}</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {/* Description */}

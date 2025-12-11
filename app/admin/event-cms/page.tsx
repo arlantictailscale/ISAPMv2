@@ -40,6 +40,7 @@ import {
   Users,
   Save,
   Building,
+  DoorOpen,
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -85,6 +86,7 @@ interface EventDetails {
   timezone: string | null
   location: string | null
   venue: string | null
+  room: string | null // Added room field
   description: string | null
 }
 
@@ -253,7 +255,6 @@ export default function EventCMSPage() {
     is_public: false,
   })
 
-  const [eventDetails, setEventDetails] = useState<EventDetails | null>(null)
   const [detailsForm, setDetailsForm] = useState({
     start_date: "",
     end_date: "",
@@ -262,8 +263,11 @@ export default function EventCMSPage() {
     timezone: "WIB",
     location: "",
     venue: "",
+    room: "", // Added room field
     description: "",
   })
+
+  const [eventDetails, setEventDetails] = useState<EventDetails | null>(null)
   const [isSavingDetails, setIsSavingDetails] = useState(false)
 
   const supabase = createBrowserClient(
@@ -318,6 +322,7 @@ export default function EventCMSPage() {
           timezone: eventData.timezone || "WIB",
           location: eventData.location || "",
           venue: eventData.venue || "",
+          room: eventData.room || "", // Load room from database
           description: eventData.description || "",
         })
       } else {
@@ -332,6 +337,7 @@ export default function EventCMSPage() {
           timezone: "WIB",
           location: "",
           venue: "",
+          room: "", // Reset room field
           description: "",
         })
       }
@@ -383,6 +389,7 @@ export default function EventCMSPage() {
         timezone: detailsForm.timezone || "WIB",
         location: detailsForm.location || null,
         venue: detailsForm.venue || null,
+        room: detailsForm.room || null, // Save room to database
         description: detailsForm.description || null,
         updated_by: user.id,
         updated_at: new Date().toISOString(),
@@ -823,6 +830,20 @@ export default function EventCMSPage() {
                         placeholder="e.g., Hotel Singhasari"
                       />
                     </div>
+                  </div>
+
+                  {/* Room Field */}
+                  <div>
+                    <Label htmlFor="room" className="flex items-center gap-2">
+                      <DoorOpen className="w-4 h-4" />
+                      Room
+                    </Label>
+                    <Input
+                      id="room"
+                      value={detailsForm.room}
+                      onChange={(e) => setDetailsForm((prev) => ({ ...prev, room: e.target.value }))}
+                      placeholder="e.g., Ballroom A, Conference Room 1"
+                    />
                   </div>
 
                   {/* Description */}

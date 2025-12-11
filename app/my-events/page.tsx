@@ -133,6 +133,28 @@ const fallbackEventDetails: Record<
   },
 }
 
+function isEventItem(item: any): boolean {
+  const itemType = item.item_type?.toLowerCase()
+  const eventId = item.event_id?.toLowerCase()
+
+  // item_type is 'event' in the database
+  if (itemType === "event") {
+    // Check event_id to confirm it's a CPD/workshop/symposium (not webinar)
+    return eventId && (eventId.startsWith("ws") || eventId === "cpd" || eventId === "symposium")
+  }
+
+  // Also support legacy item_type values
+  return ["workshop", "cpd", "symposium"].includes(itemType)
+}
+
+function getEventTypeFromId(eventId: string): "cpd" | "workshop" | "symposium" {
+  const id = eventId?.toLowerCase()
+  if (id === "cpd") return "cpd"
+  if (id === "symposium") return "symposium"
+  if (id?.startsWith("ws")) return "workshop"
+  return "workshop" // default
+}
+
 function getEventIcon(type: string) {
   switch (type) {
     case "cpd":
@@ -272,46 +294,11 @@ export default function MyEventsPage() {
       console.log("[v0] Orders data:", ordersData)
       console.log("[v0] Orders error:", ordersError)
 
-      console.log(
-        "[v0] All item types in orders:",
-        ordersData?.flatMap(
-          (o: any) =>
-            o.order_items?.map((i: any) => ({
-              item_type: i.item_type,
-              event_id: i.event_id,
-              event_label: i.event_label,
-            })) || [],
-        ),
-      )
-
       // Filter to only verified orders with event items
       const verifiedOrders = (ordersData || []).filter((order) => {
         const hasVerifiedPayment = order.order_payments?.some((p: any) => p.payment_status === "verified")
-        const hasEventItems = order.order_items?.some((item: any) => {
-          const itemType = item.item_type?.toLowerCase()
-          const eventId = item.event_id?.toLowerCase()
-
-          // Check if item_type matches
-          const typeMatch = ["workshop", "cpd", "symposium", "event"].includes(itemType)
-
-          // Check if event_id indicates an event (ws1, ws2, cpd, symposium, etc)
-          const eventIdMatch =
-            eventId &&
-            (eventId.startsWith("ws") || eventId === "cpd" || eventId === "symposium" || eventId.includes("workshop"))
-
-          console.log("[v0] Item check:", { itemType, eventId, typeMatch, eventIdMatch })
-
-          return typeMatch || eventIdMatch
-        })
+        const hasEventItems = order.order_items?.some((item: any) => isEventItem(item))
         console.log("[v0] Order:", order.id, "hasVerifiedPayment:", hasVerifiedPayment, "hasEventItems:", hasEventItems)
-        console.log(
-          "[v0] Order items:",
-          order.order_items?.map((i: any) => ({ type: i.item_type, event_id: i.event_id })),
-        )
-        console.log(
-          "[v0] Order payments:",
-          order.order_payments?.map((p: any) => ({ status: p.payment_status })),
-        )
         return hasVerifiedPayment && hasEventItems
       })
 
@@ -322,7 +309,7 @@ export default function MyEventsPage() {
       const eventIds = new Set<string>()
       verifiedOrders.forEach((order) => {
         order.order_items?.forEach((item: any) => {
-          if (["workshop", "cpd", "symposium"].includes(item.item_type)) {
+          if (isEventItem(item)) {
             eventIds.add(item.event_id)
           }
         })
@@ -395,7 +382,7 @@ export default function MyEventsPage() {
     const items: { order: any; item: any }[] = []
     orders.forEach((order) => {
       order.order_items?.forEach((item: any) => {
-        if (["workshop", "cpd", "symposium"].includes(item.item_type)) {
+        if (isEventItem(item)) {
           items.push({ order, item })
         }
       })
@@ -420,11 +407,11 @@ export default function MyEventsPage() {
   // Stats - count unique items by type
   const stats = useMemo(() => {
     const allItems = orders.flatMap((o) => o.order_items || [])
-    const eventItems = allItems.filter((item: any) => ["workshop", "cpd", "symposium"].includes(item.item_type))
+    const eventItems = allItems.filter((item: any) => isEventItem(item))
     return {
-      cpd: eventItems.filter((i: any) => i.item_type === "cpd").length,
-      workshop: eventItems.filter((i: any) => i.item_type === "workshop").length,
-      symposium: eventItems.filter((i: any) => i.item_type === "symposium").length,
+      cpd: eventItems.filter((i: any) => getEventTypeFromId(i.event_id) === "cpd").length,
+      workshop: eventItems.filter((i: any) => getEventTypeFromId(i.event_id) === "workshop").length,
+      symposium: eventItems.filter((i: any) => getEventTypeFromId(i.event_id) === "symposium").length,
     }
   }, [orders])
 

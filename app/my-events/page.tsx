@@ -272,12 +272,37 @@ export default function MyEventsPage() {
       console.log("[v0] Orders data:", ordersData)
       console.log("[v0] Orders error:", ordersError)
 
+      console.log(
+        "[v0] All item types in orders:",
+        ordersData?.flatMap(
+          (o: any) =>
+            o.order_items?.map((i: any) => ({
+              item_type: i.item_type,
+              event_id: i.event_id,
+              event_label: i.event_label,
+            })) || [],
+        ),
+      )
+
       // Filter to only verified orders with event items
       const verifiedOrders = (ordersData || []).filter((order) => {
         const hasVerifiedPayment = order.order_payments?.some((p: any) => p.payment_status === "verified")
-        const hasEventItems = order.order_items?.some((item: any) =>
-          ["workshop", "cpd", "symposium"].includes(item.item_type),
-        )
+        const hasEventItems = order.order_items?.some((item: any) => {
+          const itemType = item.item_type?.toLowerCase()
+          const eventId = item.event_id?.toLowerCase()
+
+          // Check if item_type matches
+          const typeMatch = ["workshop", "cpd", "symposium", "event"].includes(itemType)
+
+          // Check if event_id indicates an event (ws1, ws2, cpd, symposium, etc)
+          const eventIdMatch =
+            eventId &&
+            (eventId.startsWith("ws") || eventId === "cpd" || eventId === "symposium" || eventId.includes("workshop"))
+
+          console.log("[v0] Item check:", { itemType, eventId, typeMatch, eventIdMatch })
+
+          return typeMatch || eventIdMatch
+        })
         console.log("[v0] Order:", order.id, "hasVerifiedPayment:", hasVerifiedPayment, "hasEventItems:", hasEventItems)
         console.log(
           "[v0] Order items:",

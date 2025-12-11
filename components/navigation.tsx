@@ -68,6 +68,21 @@ export default function Navigation() {
   const supabase = createClient()
   const router = useRouter()
 
+  const fetchUserRole = async (userId: string) => {
+    try {
+      const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
+
+      if (error) {
+        console.error("[v0] Error fetching user role:", error.message)
+        return "user"
+      }
+      return profile?.role || "user"
+    } catch (profileError) {
+      console.error("[v0] Failed to fetch profile:", profileError)
+      return "user"
+    }
+  }
+
   useEffect(() => {
     const checkUser = async () => {
       try {
@@ -77,25 +92,8 @@ export default function Navigation() {
         setUser(user)
 
         if (user) {
-          try {
-            const { data: profile, error } = await supabase
-              .from("profiles")
-              .select("role")
-              .eq("id", user.id)
-              .maybeSingle()
-
-            if (error) {
-              console.error("[v0] Error fetching user role:", error.message)
-              setUserRole("user")
-            } else if (profile?.role) {
-              setUserRole(profile.role)
-            } else {
-              setUserRole("user")
-            }
-          } catch (profileError) {
-            console.error("[v0] Failed to fetch profile, using default role:", profileError)
-            setUserRole("user")
-          }
+          const role = await fetchUserRole(user.id)
+          setUserRole(role)
         }
       } catch (authError) {
         console.error("[v0] Auth check failed:", authError)
@@ -109,8 +107,19 @@ export default function Navigation() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
+
+      if (currentUser) {
+        const role = await fetchUserRole(currentUser.id)
+        setUserRole(role)
+      } else {
+        setUserRole("user")
+      }
+
+      // Ensure loading is false after auth state changes
+      setIsLoading(false)
     })
 
     return () => subscription?.unsubscribe()

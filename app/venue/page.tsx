@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
 import { getRoomAvailability } from "@/app/actions/get-room-availability"
-import { DeluxeRoomGallery, PremierRoomGallery } from "@/components/room-galleries"
+import { DeluxeRoomGallery } from "@/components/deluxe-room-gallery"
+import { PremierRoomGallery } from "@/components/premier-room-gallery"
 
 export default async function VenuePage() {
   const roomAvailability = await getRoomAvailability()

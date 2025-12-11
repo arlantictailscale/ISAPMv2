@@ -76,9 +76,8 @@
 }
 
 @theme inline {
-  /* Updated font variables to use optimized fonts */
-  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
-  --font-display: var(--font-playfair), "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", "Inter Fallback";
+  --font-display: "Playfair Display", "Playfair Display Fallback";
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -140,7 +139,7 @@
     font-family: var(--font-display);
   }
 
-  /* Enhanced performance optimizations */
+  /* Add performance optimizations for below-fold content */
   /* Optimize rendering for sections that are below the fold */
   section:not(:first-child) {
     content-visibility: auto;
@@ -164,22 +163,6 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
-
-  /* Add touch-action for faster mobile interactions */
-  button,
-  a,
-  [role="button"] {
-    touch-action: manipulation;
-  }
-
-  /* Optimize will-change usage */
-  .animate-on-scroll {
-    will-change: auto;
-  }
-
-  .animate-on-scroll.is-animating {
-    will-change: transform, opacity;
   }
 
   /* PWA and Mobile-specific styles */

@@ -10,33 +10,30 @@ import { ScrollProgressBar } from "@/components/scroll-progress-bar"
 import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { OfflineIndicator } from "@/components/offline-indicator"
-import { WebVitalsReporter } from "@/components/web-vitals-reporter"
 
-import { Inter, Playfair_Display } from "next/font/google"
+import { Inter, Playfair_Display, Geist, Geist_Mono, Source_Serif_4 } from "next/font/google"
 
-const inter = Inter({
+// Initialize fonts
+const _geist = Geist({ subsets: ["latin"], weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"] })
+const _geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  display: "swap",
-  preload: true,
-  variable: "--font-inter",
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
+})
+const _sourceSerif_4 = Source_Serif_4({
+  subsets: ["latin"],
+  weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
 })
 
-const playfair = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-playfair",
-  display: "swap",
-})
+const inter = Inter({ subsets: ["latin"] })
+const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5, // Allow some zoom for accessibility
-  userScalable: true, // Better accessibility
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#14b8a6",
   viewportFit: "cover",
-  interactiveWidget: "resizes-content", // Better mobile keyboard handling
 }
 
 export const metadata: Metadata = {
@@ -73,11 +70,12 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
+      { url: "/favicon.png", type: "image/png" },
       { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
     ],
+    shortcut: "/favicon.png",
     apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-    other: [{ rel: "mask-icon", url: "/icons/safari-pinned-tab.svg", color: "#14b8a6" }],
   },
   appleWebApp: {
     capable: true,
@@ -175,21 +173,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${playfair.variable}`}>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com" />
-
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="ISAPM 2026" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
-      <body className={`${inter.className} antialiased overflow-x-hidden`}>
-        <WebVitalsReporter />
+      <body className={`${_geist.className} ${_geistMono.className} antialiased overflow-x-hidden`}>
         <OfflineIndicator />
         <ScrollProgressBar />
         <CartProvider>

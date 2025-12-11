@@ -281,6 +281,12 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                               {item.participant_type_label || "General"}
                             </p>
                           )}
+                          {item.item_type === "event" && item.event_label?.toLowerCase().includes("symposium") && (
+                            <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                              <Gift className="w-3 h-3" />
+                              +4 Bonus Webinars Included
+                            </p>
+                          )}
                           {item.item_type === "webinar" && (
                             <p className="text-xs text-muted-foreground mt-1">
                               {item.participant_type_label || "Online Webinar"}
@@ -478,6 +484,12 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                         {item.item_type === "event" && (
                           <p className="text-xs text-muted-foreground mt-1">
                             {item.participant_type_label || "General"}
+                          </p>
+                        )}
+                        {item.item_type === "event" && item.event_label?.toLowerCase().includes("symposium") && (
+                          <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                            <Gift className="w-3 h-3" />
+                            +4 Bonus Webinars Included
                           </p>
                         )}
                         {item.item_type === "webinar" && (
@@ -750,7 +762,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                         className="h-12 text-base border-purple-200 focus:border-purple-400 focus:ring-purple-400"
                         required
                       />
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-center text-muted-foreground">
                         Enter the name of the company, organization, or individual sponsoring your registration
                       </p>
                     </div>

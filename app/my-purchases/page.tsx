@@ -426,6 +426,12 @@ export default async function MyPurchasesPage() {
                                         <p className="text-xs text-muted-foreground">
                                           {item.participant_type_label || "Conference Registration"}
                                         </p>
+                                        {item.event_label?.toLowerCase().includes("symposium") && (
+                                          <p className="text-xs text-emerald-600 font-medium mt-1 flex items-center gap-1">
+                                            <Gift className="w-3 h-3" />
+                                            +4 Bonus Webinars Included
+                                          </p>
+                                        )}
                                       </>
                                     )}
                                     {item.item_type === "hotel" && (

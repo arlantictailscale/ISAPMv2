@@ -21,30 +21,34 @@ export async function getRoomAvailability() {
       }
     }
 
-    // First, get all non-cancelled order IDs
-    const { data: activeOrders, error: ordersError } = await supabase
+    const { data: verifiedOrders, error: ordersError } = await supabase
       .from("orders")
-      .select("id")
+      .select(`
+        id,
+        order_payments!inner(payment_status)
+      `)
       .neq("status", "cancelled")
+      .eq("order_payments.payment_status", "verified")
 
-    console.log("[v0] Active orders:", activeOrders)
+    console.log("[v0] Verified orders:", verifiedOrders)
 
     if (ordersError) {
       console.error("[v0] Error fetching orders:", ordersError)
       throw ordersError
     }
 
-    const activeOrderIds = activeOrders?.map((o) => o.id) || []
+    const verifiedOrderIds = verifiedOrders?.map((o) => o.id) || []
+    console.log("[v0] Verified order IDs:", verifiedOrderIds)
 
-    // Now get order_items for these active orders
+    // Now get order_items for these verified orders with hotel room bookings
     const { data: bookings, error: bookingsError } = await supabase
       .from("order_items")
       .select("hotel_room_type, order_id")
       .in("hotel_room_type", ["deluxe", "premier"])
-      .in("order_id", activeOrderIds.length > 0 ? activeOrderIds : [-1]) // Use -1 if no active orders
+      .in("order_id", verifiedOrderIds.length > 0 ? verifiedOrderIds : ["00000000-0000-0000-0000-000000000000"])
 
-    console.log("[v0] Bookings query result:", bookings)
-    console.log("[v0] Bookings error:", bookingsError)
+    console.log("[v0] Room bookings query result:", bookings)
+    console.log("[v0] Room bookings error:", bookingsError)
 
     if (bookingsError) {
       console.error("[v0] Error fetching bookings:", bookingsError)

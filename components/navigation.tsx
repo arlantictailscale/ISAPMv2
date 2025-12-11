@@ -28,6 +28,7 @@ import {
   BedDouble,
   UserCheck,
   FolderOpen,
+  Hotel,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -52,6 +53,7 @@ const adminNavItems = [
   { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen },
   { label: "E-Poster Submissions", href: "/admin/posters", icon: Presentation },
   { label: "Symposium Webinar Access", href: "/admin/symposium-webinar-access", icon: Gift },
+  { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel }, // Added Hotel Management link
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
 ]

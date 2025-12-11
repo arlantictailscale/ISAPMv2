@@ -1,65 +1,102 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 
 export default function CallbackPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const handleCallback = async () => {
       console.log("[v0] Auth callback page mounted")
+      console.log("[v0] URL:", window.location.href)
+      console.log("[v0] Hash:", window.location.hash)
+      console.log("[v0] Search params:", Object.fromEntries(searchParams.entries()))
 
       try {
         const supabase = createClient()
 
-        const hashParams = new URLSearchParams(window.location.hash.substring(1))
-        const accessToken = hashParams.get("access_token")
-        const refreshToken = hashParams.get("refresh_token")
-        const type = hashParams.get("type")
+        const errorParam = searchParams.get("error")
+        const errorDescription = searchParams.get("error_description")
 
-        console.log("[v0] Hash params:", { hasAccessToken: !!accessToken, type })
+        if (errorParam) {
+          console.error("[v0] Error in URL params:", errorParam, errorDescription)
+          setError(errorDescription || errorParam)
+          setTimeout(() => {
+            router.push(`/auth/login?error=${encodeURIComponent(errorDescription || errorParam)}`)
+          }, 2000)
+          return
+        }
 
-        // If we have tokens in the hash, set the session
-        if (accessToken && refreshToken) {
-          console.log("[v0] Setting session from hash tokens")
-          const { data, error: setSessionError } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+        const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(
+          window.location.href,
+        )
+
+        if (sessionError) {
+          console.error("[v0] exchangeCodeForSession error:", sessionError)
+          // Fall back to hash-based token extraction
+          console.log("[v0] Falling back to hash-based token extraction")
+
+          const hashParams = new URLSearchParams(window.location.hash.substring(1))
+          const accessToken = hashParams.get("access_token")
+          const refreshToken = hashParams.get("refresh_token")
+          const type = hashParams.get("type")
+
+          console.log("[v0] Hash params:", {
+            hasAccessToken: !!accessToken,
+            hasRefreshToken: !!refreshToken,
+            type,
           })
 
-          if (setSessionError) {
-            console.error("[v0] Error setting session:", setSessionError)
-            setError(setSessionError.message)
+          if (accessToken && refreshToken) {
+            console.log("[v0] Setting session from hash tokens")
+            const { data, error: setSessionError } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            })
+
+            if (setSessionError) {
+              console.error("[v0] Error setting session:", setSessionError)
+              setError(setSessionError.message)
+              setTimeout(() => {
+                router.push("/auth/login?error=" + encodeURIComponent(setSessionError.message))
+              }, 2000)
+              return
+            }
+
+            console.log("[v0] Session set successfully from hash")
+          } else {
+            console.error("[v0] No tokens found in hash")
+            setError("No authentication tokens found")
             setTimeout(() => {
-              router.push("/auth/login?error=" + encodeURIComponent(setSessionError.message))
+              router.push("/auth/login?error=no_session")
             }, 2000)
             return
           }
-
-          console.log("[v0] Session set successfully")
+        } else {
+          console.log("[v0] exchangeCodeForSession successful")
         }
 
-        // Now check for the session
-        console.log("[v0] Checking session...")
+        console.log("[v0] Verifying session...")
         const {
           data: { session },
-          error: sessionError,
+          error: getSessionError,
         } = await supabase.auth.getSession()
 
-        if (sessionError) {
-          console.error("[v0] Session error:", sessionError)
-          setError(sessionError.message)
+        if (getSessionError) {
+          console.error("[v0] Session error:", getSessionError)
+          setError(getSessionError.message)
           setTimeout(() => {
-            router.push("/auth/login?error=" + encodeURIComponent(sessionError.message))
+            router.push("/auth/login?error=" + encodeURIComponent(getSessionError.message))
           }, 2000)
           return
         }
 
         if (!session) {
-          console.error("[v0] No session found in callback")
+          console.error("[v0] No session found after callback processing")
           setError("Authentication failed - no session")
           setTimeout(() => {
             router.push("/auth/login?error=no_session")
@@ -74,7 +111,7 @@ export default function CallbackPage() {
           .from("profiles")
           .select("id, created_at, role")
           .eq("id", user.id)
-          .single()
+          .maybeSingle()
 
         if (!existingProfile && !profileError) {
           console.log("[v0] Creating profile for new user")
@@ -96,7 +133,6 @@ export default function CallbackPage() {
         if (isNewUser) {
           console.log("[v0] New user detected, sending welcome email to:", user.email)
 
-          // Send welcome email asynchronously
           fetch("/api/send-welcome-email", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -110,8 +146,10 @@ export default function CallbackPage() {
           })
         }
 
+        const type = searchParams.get("type") || new URLSearchParams(window.location.hash.substring(1)).get("type")
+
         if (type === "signup") {
-          console.log("[v0] Email confirmed, redirecting to email-confirmed page")
+          console.log("[v0] Email confirmed for signup, redirecting to email-confirmed page")
           router.replace("/auth/email-confirmed")
         } else {
           console.log("[v0] Redirecting to dashboard")
@@ -127,7 +165,7 @@ export default function CallbackPage() {
     }
 
     handleCallback()
-  }, [router])
+  }, [router, searchParams])
 
   if (error) {
     return (

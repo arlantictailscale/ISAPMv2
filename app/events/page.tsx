@@ -1146,7 +1146,8 @@ export default function EventsPage() {
                       </h2>
                       <p className="text-base text-foreground/80 leading-relaxed">
                         Join us for an in-depth symposium on practical pain management strategies for doctors and
-                        nurses.
+                        nurses. This comprehensive program also includes complimentary access to four exclusive
+                        pre-conference webinars, extending your learning experience beyond the main event.
                       </p>
                     </div>
                   </div>
@@ -1205,7 +1206,7 @@ export default function EventsPage() {
 
                   <p className="text-sm italic text-muted-foreground border-t border-cyan-500/20 pt-4">
                     This symposium offers a platform for discussing current challenges and best practices in pain
-                    management.
+                    management. Registration includes four bonus webinars covering foundational pain management topics.
                   </p>
                 </div>
 

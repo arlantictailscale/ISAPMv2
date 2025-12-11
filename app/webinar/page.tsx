@@ -7,7 +7,7 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, ArrowRight, Sparkles, ArrowLeft } from "lucide-react"
+import { Video, ArrowRight, Sparkles, ArrowLeft, Gift } from "lucide-react"
 import { WEBINARS, type Webinar } from "@/lib/data/webinars"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
@@ -94,6 +94,30 @@ export default function WebinarsPage() {
                   <div className="text-sm text-muted-foreground">Total Series</div>
                 </div>
               </div>
+
+              {/* Symposium Bonus Info Banner */}
+              <div className="mt-8 max-w-xl mx-auto">
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl border border-teal-200 shadow-sm">
+                  <div className="p-2 rounded-lg bg-teal-100">
+                    <Gift className="w-5 h-5 text-teal-600" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-teal-800">Symposium Registrants Get 4 Free Webinars</p>
+                    <p className="text-xs text-teal-600">
+                      Register for the symposium to receive complimentary access to all pre-conference webinars.
+                    </p>
+                  </div>
+                  <Link href="/symposium">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-teal-300 text-teal-700 hover:bg-teal-50 bg-transparent"
+                    >
+                      Learn More
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -138,7 +162,8 @@ export default function WebinarsPage() {
                   <h3 className="text-2xl md:text-3xl font-bold mb-4">Stay Updated on New Webinars</h3>
                   <p className="text-white/80 mb-6">
                     Be the first to know when new webinars are announced. Register for the main conference to get
-                    priority access and exclusive discounts on webinar registrations.
+                    priority access and exclusive discounts on webinar registrations. Symposium registrants receive
+                    complimentary access to all 4 pre-conference webinars.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link href="/pricing">

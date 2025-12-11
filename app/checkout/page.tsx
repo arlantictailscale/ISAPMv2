@@ -9,6 +9,7 @@ import { CheckoutForm } from "./checkout-form"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
+import { Gift } from "lucide-react"
 
 export default async function CheckoutPage() {
   const supabase = await createClient()
@@ -117,6 +118,12 @@ export default async function CheckoutPage() {
                             </div>
                             <div className="font-medium">{item.event_label}</div>
                             <div className="text-xs text-muted-foreground">{item.participant_type_label}</div>
+                            {item.event_id === "symposium" && (
+                              <div className="flex items-center gap-1 mt-1 text-teal-600">
+                                <Gift className="w-3 h-3" />
+                                <span className="text-xs font-medium">+4 Bonus Webinars Included</span>
+                              </div>
+                            )}
                           </>
                         )}
                         {item.item_type === "hotel" && (

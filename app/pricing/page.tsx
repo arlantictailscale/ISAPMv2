@@ -13,12 +13,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ChevronRight, Loader2, AlertCircle, User } from "lucide-react"
+import { ChevronRight, AlertCircle, Gift } from "lucide-react"
 import { AddToCartButton } from "@/components/add-to-cart-button"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
+import { User } from "lucide-react"
 
 export default function PricingPage() {
   const earlyBirdDeadline = parseISO("2027-01-20T23:59:59")
@@ -289,6 +291,7 @@ export default function PricingPage() {
       id: "symposium",
       label: "Symposium",
       date: "Saturday, April 18, 2026",
+      description: "Includes complimentary access to 4 pre-conference webinars",
       participantTypes: [
         {
           id: "span",
@@ -485,6 +488,12 @@ export default function PricingPage() {
                             {event.label}
                           </h3>
                           <p className="text-sm text-muted-foreground">{event.date}</p>
+                          {event.id === "symposium" && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Gift className="w-3 h-3 text-teal-600" />
+                              <span className="text-xs text-teal-600 font-medium">+4 Bonus Webinars</span>
+                            </div>
+                          )}
                         </div>
                         <ChevronRight
                           className={`ml-4 h-5 w-5 text-muted-foreground group-hover:${colorScheme.textColor} transition-colors flex-shrink-0`}
@@ -502,6 +511,14 @@ export default function PricingPage() {
                         </div>
                         <DialogTitle className="text-xl pr-8 break-words">{event.label}</DialogTitle>
                         <DialogDescription className="break-words">{event.date}</DialogDescription>
+                        {event.id === "symposium" && (
+                          <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg border border-teal-200">
+                            <Gift className="w-4 h-4 text-teal-600 flex-shrink-0" />
+                            <span className="text-sm text-teal-700 font-medium">
+                              Includes 4 bonus pre-conference webinars
+                            </span>
+                          </div>
+                        )}
                       </DialogHeader>
                       <div className="space-y-4 mt-4">
                         {event.participantTypes.map((pt) => {

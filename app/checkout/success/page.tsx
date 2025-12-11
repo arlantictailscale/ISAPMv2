@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Gift } from "lucide-react"
 import Link from "next/link"
 
 export default async function CheckoutSuccessPage({
@@ -71,6 +71,19 @@ export default async function CheckoutSuccessPage({
                 <span className="font-medium capitalize">{order.status.replace("_", " ")}</span>
               </div>
             </div>
+
+            {order.order_items?.some((item: any) => item.event_id === "symposium") && (
+              <div className="flex items-start gap-3 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg border border-teal-200">
+                <Gift className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-teal-800">Bonus Webinars Included!</p>
+                  <p className="text-xs text-teal-700 mt-0.5">
+                    Your symposium registration includes complimentary access to 4 pre-conference webinars. Access will
+                    be granted once your payment is verified.
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground text-center">

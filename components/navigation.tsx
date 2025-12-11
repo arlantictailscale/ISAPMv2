@@ -17,10 +17,16 @@ import {
   ShoppingBag,
   Calendar,
   CheckCircle,
-  Settings,
   Receipt,
   Video,
   Building2,
+  ChevronDown,
+  Shield,
+  Mail,
+  Gift,
+  BookOpen,
+  BedDouble,
+  UserCheck,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -30,11 +36,78 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuLabel,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { CartIcon } from "@/components/cart/cart-icon"
 
+const adminNavGroups = [
+  {
+    label: "Orders & Payments",
+    items: [
+      {
+        label: "Payment Validation",
+        href: "/admin/payment-validation",
+        icon: CheckCircle,
+        description: "Review and approve payments",
+      },
+      { label: "Cart Management", href: "/admin/carts", icon: ShoppingCart, description: "Monitor shopping carts" },
+      { label: "Invoice Management", href: "/admin/invoices", icon: Receipt, description: "Manage invoices" },
+    ],
+  },
+  {
+    label: "Users & Attendees",
+    items: [
+      { label: "User Management", href: "/admin/users", icon: Users, description: "Manage user accounts" },
+      {
+        label: "Confirmed Attendees",
+        href: "/admin/confirmed-attendees",
+        icon: UserCheck,
+        description: "View confirmed attendees",
+      },
+    ],
+  },
+  {
+    label: "Content Management",
+    items: [
+      { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen, description: "Manage webinar content" },
+      {
+        label: "E-Poster Submissions",
+        href: "/admin/posters",
+        icon: Presentation,
+        description: "Review poster submissions",
+      },
+    ],
+  },
+  {
+    label: "Access & Configuration",
+    items: [
+      {
+        label: "Symposium Webinar Access",
+        href: "/admin/symposium-webinar-access",
+        icon: Gift,
+        description: "Grant webinar access",
+      },
+      {
+        label: "Room Availability",
+        href: "/admin/room-availability",
+        icon: BedDouble,
+        description: "Configure hotel rooms",
+      },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [{ label: "Email Test", href: "/admin/email-test", icon: Mail, description: "Test email sending" }],
+  },
+]
+
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>("user")
@@ -159,7 +232,7 @@ export default function Navigation() {
                       {user.email}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent align="end" className="w-72">
                     <Link href="/dashboard">
                       <DropdownMenuItem>
                         <LayoutDashboard className="w-4 h-4 mr-2" />
@@ -167,89 +240,81 @@ export default function Navigation() {
                       </DropdownMenuItem>
                     </Link>
                     <DropdownMenuSeparator />
-                    <Link href="/profile">
-                      <DropdownMenuItem>
-                        <User className="w-4 h-4 mr-2" />
-                        My Profile
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-purchases">
-                      <DropdownMenuItem>
-                        <ShoppingBag className="w-4 h-4 mr-2" />
-                        My Purchases
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-events">
-                      <DropdownMenuItem>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        My Events
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-webinars">
-                      <DropdownMenuItem>
-                        <Video className="w-4 h-4 mr-2" />
-                        My Webinars
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-posters">
-                      <DropdownMenuItem>
-                        <FileText className="w-4 h-4 mr-2" />
-                        My E-Posters
-                      </DropdownMenuItem>
-                    </Link>
-                    <Link href="/my-hotels">
-                      <DropdownMenuItem>
-                        <Building2 className="w-4 h-4 mr-2" />
-                        My Hotels
-                      </DropdownMenuItem>
-                    </Link>
+
+                    <DropdownMenuGroup>
+                      <DropdownMenuLabel className="text-xs text-muted-foreground">My Account</DropdownMenuLabel>
+                      <Link href="/profile">
+                        <DropdownMenuItem>
+                          <User className="w-4 h-4 mr-2" />
+                          My Profile
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/my-purchases">
+                        <DropdownMenuItem>
+                          <ShoppingBag className="w-4 h-4 mr-2" />
+                          My Purchases
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/my-events">
+                        <DropdownMenuItem>
+                          <Calendar className="w-4 h-4 mr-2" />
+                          My Events
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/my-webinars">
+                        <DropdownMenuItem>
+                          <Video className="w-4 h-4 mr-2" />
+                          My Webinars
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/my-posters">
+                        <DropdownMenuItem>
+                          <FileText className="w-4 h-4 mr-2" />
+                          My E-Posters
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/my-hotels">
+                        <DropdownMenuItem>
+                          <Building2 className="w-4 h-4 mr-2" />
+                          My Hotels
+                        </DropdownMenuItem>
+                      </Link>
+                    </DropdownMenuGroup>
+
                     {userRole === "admin" && (
                       <>
                         <DropdownMenuSeparator />
-                        <Link href="/admin/users">
-                          <DropdownMenuItem className="text-primary">
-                            <Users className="w-4 h-4 mr-2" />
-                            User Management (Admin)
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href="/admin/payment-validation">
-                          <DropdownMenuItem className="text-primary">
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Payment Validation (Admin)
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href="/admin/posters">
-                          <DropdownMenuItem className="text-primary">
-                            <Presentation className="w-4 h-4 mr-2" />
-                            E-Poster Submissions (Admin)
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href="/admin/confirmed-attendees">
-                          <DropdownMenuItem className="text-primary">
-                            <Users className="w-4 h-4 mr-2" />
-                            Confirmed Attendees (Admin)
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href="/admin/room-availability">
-                          <DropdownMenuItem className="text-primary">
-                            <Settings className="w-4 h-4 mr-2" />
-                            Room Availability (Admin)
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href="/admin/carts">
-                          <DropdownMenuItem className="text-primary">
-                            <ShoppingCart className="w-4 h-4 mr-2" />
-                            Cart Management (Admin)
-                          </DropdownMenuItem>
-                        </Link>
-                        <Link href="/admin/invoices">
-                          <DropdownMenuItem className="text-primary">
-                            <Receipt className="w-4 h-4 mr-2" />
-                            Invoice Management (Admin)
-                          </DropdownMenuItem>
-                        </Link>
+                        <DropdownMenuLabel className="text-xs text-primary flex items-center gap-1">
+                          <Shield className="w-3 h-3" />
+                          Admin Panel
+                        </DropdownMenuLabel>
+
+                        {adminNavGroups.map((group) => (
+                          <DropdownMenuSub key={group.label}>
+                            <DropdownMenuSubTrigger className="text-primary">
+                              <span>{group.label}</span>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent className="w-64">
+                              {group.items.map((item) => {
+                                const Icon = item.icon
+                                return (
+                                  <Link key={item.href} href={item.href}>
+                                    <DropdownMenuItem className="flex items-start gap-3 py-2">
+                                      <Icon className="w-4 h-4 mt-0.5 text-primary" />
+                                      <div className="flex flex-col gap-0.5">
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                        <span className="text-xs text-muted-foreground">{item.description}</span>
+                                      </div>
+                                    </DropdownMenuItem>
+                                  </Link>
+                                )
+                              })}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        ))}
                       </>
                     )}
+
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
                       <LogOut className="w-4 h-4 mr-2" />
@@ -307,6 +372,9 @@ export default function Navigation() {
                   <LayoutDashboard className="w-4 h-4" />
                   Dashboard
                 </Link>
+
+                {/* User menu items */}
+                <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground font-medium">My Account</p>
                 <Link
                   href="/profile"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
@@ -358,63 +426,43 @@ export default function Navigation() {
 
                 {userRole === "admin" && (
                   <>
-                    <div className="border-t my-2" />
-                    <Link
-                      href="/admin/users"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
+                    <div className="border-t my-3" />
+                    <button
+                      onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                      className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
                     >
-                      <Users className="w-4 h-4" />
-                      User Management (Admin)
-                    </Link>
-                    <Link
-                      href="/admin/payment-validation"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Payment Validation (Admin)
-                    </Link>
-                    <Link
-                      href="/admin/posters"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Presentation className="w-4 h-4" />
-                      E-Poster Submissions (Admin)
-                    </Link>
-                    <Link
-                      href="/admin/confirmed-attendees"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Users className="w-4 h-4" />
-                      Confirmed Attendees (Admin)
-                    </Link>
-                    <Link
-                      href="/admin/room-availability"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Settings className="w-4 h-4" />
-                      Room Availability (Admin)
-                    </Link>
-                    <Link
-                      href="/admin/carts"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Cart Management (Admin)
-                    </Link>
-                    <Link
-                      href="/admin/invoices"
-                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
-                      onClick={() => setIsOpen(false)}
-                    >
-                      <Receipt className="w-4 h-4" />
-                      Invoice Management (Admin)
-                    </Link>
+                      <span className="flex items-center gap-2">
+                        <Shield className="w-4 h-4" />
+                        Admin Panel
+                      </span>
+                      <ChevronDown className={`w-4 h-4 transition-transform ${adminMenuOpen ? "rotate-180" : ""}`} />
+                    </button>
+
+                    {adminMenuOpen && (
+                      <div className="ml-2 border-l-2 border-primary/20 pl-2 space-y-1">
+                        {adminNavGroups.map((group) => (
+                          <div key={group.label}>
+                            <p className="px-3 pt-3 pb-1 text-xs text-primary/70 font-semibold uppercase tracking-wider">
+                              {group.label}
+                            </p>
+                            {group.items.map((item) => {
+                              const Icon = item.icon
+                              return (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                  onClick={() => setIsOpen(false)}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                  {item.label}
+                                </Link>
+                              )
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
 

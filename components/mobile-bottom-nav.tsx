@@ -16,7 +16,7 @@ const navItems = [
 
 export function MobileBottomNav() {
   const pathname = usePathname()
-  const { items } = useCart()
+  const { itemCount } = useCart()
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white pb-safe md:hidden">
@@ -35,9 +35,9 @@ export function MobileBottomNav() {
             >
               <div className="relative">
                 <item.icon className="h-5 w-5" />
-                {item.showBadge && items.length > 0 && (
+                {item.showBadge && itemCount > 0 && (
                   <span className="absolute -right-2 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
-                    {items.length}
+                    {itemCount > 9 ? "9+" : itemCount}
                   </span>
                 )}
               </div>

@@ -27,6 +27,7 @@ export default function PricingPage() {
   const [user, setUser] = useState<any>(null)
   const [userProfession, setUserProfession] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [openDialogId, setOpenDialogId] = useState<string | null>(null)
   const supabase = createClient()
   const router = useRouter()
 
@@ -463,7 +464,11 @@ export default function PricingPage() {
                 const colorScheme = getEventColorScheme(event.id)
 
                 return (
-                  <Dialog key={event.id}>
+                  <Dialog
+                    key={event.id}
+                    open={openDialogId === event.id}
+                    onOpenChange={(open) => (open ? setOpenDialogId(event.id) : setOpenDialogId(null))}
+                  >
                     <DialogTrigger asChild>
                       <button
                         className={`w-full bg-gradient-to-br ${colorScheme.bgGradient} border-2 ${colorScheme.borderColor} ${colorScheme.hoverBorder} rounded-xl p-4 transition-all duration-200 text-left flex items-center justify-between group shadow-sm hover:shadow-md`}
@@ -543,6 +548,7 @@ export default function PricingPage() {
                                   variant="default"
                                   size="default"
                                   className="w-full"
+                                  onSuccess={() => setOpenDialogId(null)}
                                 />
                               </div>
                             </div>

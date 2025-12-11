@@ -22,9 +22,16 @@ interface AddToCartButtonProps {
   variant?: "default" | "outline" | "secondary"
   size?: "default" | "sm" | "lg"
   className?: string
+  onSuccess?: () => void
 }
 
-export function AddToCartButton({ item, variant = "outline", size = "default", className }: AddToCartButtonProps) {
+export function AddToCartButton({
+  item,
+  variant = "outline",
+  size = "default",
+  className,
+  onSuccess,
+}: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
   const router = useRouter()
@@ -59,6 +66,7 @@ export function AddToCartButton({ item, variant = "outline", size = "default", c
         },
       })
       setIsAdding(false)
+      onSuccess?.()
       router.refresh()
     }
   }

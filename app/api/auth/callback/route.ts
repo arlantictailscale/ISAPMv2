@@ -1,6 +1,5 @@
-import { createClient } from "@/lib/supabase/client"
+import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
 
 export async function GET(request: Request) {
   console.log("[v0] Auth callback route triggered")
@@ -27,8 +26,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/auth/login?error=${encodeURIComponent(error_description || error)}`)
   }
 
-  const cookieStore = await cookies()
-  const supabase = createClient()
+  const supabase = await createClient()
 
   if (token_hash && type) {
     console.log("[v0] Processing email verification token...")
@@ -67,7 +65,7 @@ export async function GET(request: Request) {
         }
       }
 
-      return NextResponse.redirect(`${origin}/auth/email-confirmed`)
+      return NextResponse.redirect(`${origin}${redirect_to}`)
     } catch (err) {
       console.error("[v0] Unexpected error verifying email:", err)
       return NextResponse.redirect(`${origin}/auth/login?error=${encodeURIComponent("Email verification failed")}`)

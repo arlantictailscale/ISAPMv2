@@ -21,21 +21,10 @@ export async function getRoomAvailability() {
       }
     }
 
-    // Query order_items with hotel_room_type, joining orders and order_payments
-    const { data: allHotelItems, error: itemsError } = await supabase
+    // Step 1: Get all hotel room order items
+    const { data: hotelItems, error: itemsError } = await supabase
       .from("order_items")
-      .select(`
-        id,
-        hotel_room_type,
-        order_id,
-        orders!inner (
-          id,
-          status,
-          order_payments (
-            payment_status
-          )
-        )
-      `)
+      .select("id, order_id, hotel_room_type")
       .in("hotel_room_type", ["deluxe", "premier"])
 
     if (itemsError) {
@@ -43,18 +32,50 @@ export async function getRoomAvailability() {
       throw itemsError
     }
 
-    // Filter for verified bookings where order is not cancelled
-    const verifiedBookings =
-      allHotelItems?.filter((item) => {
-        const order = item.orders as any
-        if (!order || order.status === "cancelled") return false
+    if (!hotelItems || hotelItems.length === 0) {
+      const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
+      const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+      return {
+        deluxe: { total: deluxeCapacity, booked: 0, available: deluxeCapacity },
+        premier: { total: premierCapacity, booked: 0, available: premierCapacity },
+      }
+    }
 
-        // Check if any payment is verified
-        const payments = order.order_payments as any[]
-        return payments?.some((p) => p.payment_status === "verified")
-      }) || []
+    // Step 2: Get order IDs from hotel items
+    const orderIds = [...new Set(hotelItems.map((item) => item.order_id))]
 
-    // Count bookings by room type
+    // Step 3: Get orders that are not cancelled
+    const { data: orders, error: ordersError } = await supabase
+      .from("orders")
+      .select("id, status")
+      .in("id", orderIds)
+      .neq("status", "cancelled")
+
+    if (ordersError) {
+      console.error("[v0] Error fetching orders:", ordersError)
+      throw ordersError
+    }
+
+    const validOrderIds = orders?.map((o) => o.id) || []
+
+    // Step 4: Get verified payments for these orders
+    const { data: payments, error: paymentsError } = await supabase
+      .from("order_payments")
+      .select("order_id, payment_status")
+      .in("order_id", validOrderIds)
+      .eq("payment_status", "verified")
+
+    if (paymentsError) {
+      console.error("[v0] Error fetching payments:", paymentsError)
+      throw paymentsError
+    }
+
+    // Get order IDs with verified payments
+    const verifiedOrderIds = new Set(payments?.map((p) => p.order_id) || [])
+
+    // Step 5: Count bookings by room type for verified orders only
+    const verifiedBookings = hotelItems.filter((item) => verifiedOrderIds.has(item.order_id))
+
     const deluxeBookings = verifiedBookings.filter((b) => b.hotel_room_type === "deluxe").length
     const premierBookings = verifiedBookings.filter((b) => b.hotel_room_type === "premier").length
 

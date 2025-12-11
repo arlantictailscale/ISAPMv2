@@ -76,23 +76,10 @@ export default function SignUpPage() {
     setError(null)
 
     try {
-      const baseUrl = window.location.origin
-      const callbackPath = "/api/auth/callback"
-
-      // Use the dev redirect URL if it ends with /api/auth/callback, otherwise construct it
-      const devRedirectUrl = process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL
-      const redirectUrl = devRedirectUrl?.endsWith(callbackPath) ? devRedirectUrl : `${baseUrl}${callbackPath}`
-
-      console.log("[v0] Google OAuth redirect URL:", redirectUrl)
-
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
+          redirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`,
         },
       })
       if (error) throw error

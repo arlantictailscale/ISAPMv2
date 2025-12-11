@@ -27,6 +27,7 @@ import {
   BookOpen,
   BedDouble,
   UserCheck,
+  CalendarDays,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -47,6 +48,7 @@ const adminNavItems = [
   { label: "Invoice Management", href: "/admin/invoices", icon: Receipt },
   { label: "User Management", href: "/admin/users", icon: Users },
   { label: "Confirmed Attendees", href: "/admin/confirmed-attendees", icon: UserCheck },
+  { label: "Event CMS", href: "/admin/event-cms", icon: CalendarDays },
   { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen },
   { label: "E-Poster Submissions", href: "/admin/posters", icon: Presentation },
   { label: "Symposium Webinar Access", href: "/admin/symposium-webinar-access", icon: Gift },

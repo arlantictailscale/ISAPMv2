@@ -8,10 +8,30 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, MapPin, CheckCircle, Clock, Ticket, Users, Loader2, Info, Gift } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import {
+  Calendar,
+  MapPin,
+  CheckCircle,
+  Clock,
+  Ticket,
+  Users,
+  Loader2,
+  Info,
+  Gift,
+  Search,
+  Filter,
+  Download,
+  LinkIcon,
+  Video,
+  FileText,
+  Globe,
+  Building,
+} from "lucide-react"
 import Link from "next/link"
 import { toast } from "sonner"
 import { getBadgeColors } from "@/lib/badge-colors"
+import type { Event, EventResource } from "@/lib/event-cms/types"
 
 interface OrderItem {
   id: string
@@ -47,12 +67,20 @@ interface Order {
   order_payments?: OrderPayment[]
 }
 
+interface EnrichedEventData {
+  event: Event | null
+  resources: EventResource[]
+}
+
 export default function MyEventsPage() {
   const router = useRouter()
   const supabase = createClient()
 
   const [orders, setOrders] = useState<Order[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [eventDataMap, setEventDataMap] = useState<Record<string, EnrichedEventData>>({})
+  const [searchQuery, setSearchQuery] = useState("")
+  const [filterType, setFilterType] = useState<string>("all")
 
   useEffect(() => {
     loadUserEvents()
@@ -68,7 +96,6 @@ export default function MyEventsPage() {
       } = await supabase.auth.getUser()
 
       if (authError || !user) {
-        console.log("[v0] Not authenticated, redirecting to login")
         router.push("/auth/login")
         return
       }
@@ -94,69 +121,156 @@ export default function MyEventsPage() {
         .order("created_at", { ascending: false })
 
       if (ordersError) {
-        console.error("[v0] Error loading events:", ordersError)
+        console.error("Error loading events:", ordersError)
         toast.error("Failed to load your events")
         return
       }
 
       setOrders(ordersData || [])
+
+      if (ordersData && ordersData.length > 0) {
+        const eventIds = new Set<string>()
+        ordersData.forEach((order: Order) => {
+          order.order_items?.forEach((item) => {
+            if (item.event_id) {
+              eventIds.add(item.event_id)
+            }
+          })
+        })
+
+        // Fetch all events from CMS
+        const { data: events } = await supabase.from("events").select("*").in("slug", Array.from(eventIds))
+
+        // Fetch resources for these events
+        const eventIdList = events?.map((e: Event) => e.id) || []
+        const { data: resources } = await supabase
+          .from("event_resources")
+          .select("*")
+          .in("event_id", eventIdList)
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+
+        // Build event data map keyed by slug
+        const dataMap: Record<string, EnrichedEventData> = {}
+        Array.from(eventIds).forEach((slug) => {
+          const event = events?.find((e: Event) => e.slug === slug) || null
+          const eventResources = event ? resources?.filter((r: EventResource) => r.event_id === event.id) || [] : []
+          dataMap[slug] = { event, resources: eventResources }
+        })
+
+        setEventDataMap(dataMap)
+      }
     } catch (err) {
-      console.error("[v0] Error in loadUserEvents:", err)
+      console.error("Error in loadUserEvents:", err)
       toast.error("An error occurred while loading your events")
     } finally {
       setIsLoading(false)
     }
   }
 
-  const eventDetails: Record<
-    string,
-    { date: string; location: string; venue: string; type: "CPD" | "Workshop" | "Symposium" }
-  > = {
-    "cpd-day-1": {
-      date: "Thursday, April 16, 2026",
-      location: "Malang, East Java",
-      venue: "The Singhasari Resort & Convention, Batu, Malang",
-      type: "CPD",
-    },
-    "cpd-day-2": {
-      date: "Friday, April 17, 2026",
-      location: "Malang, East Java",
-      venue: "The Singhasari Resort & Convention, Batu, Malang",
-      type: "CPD",
-    },
-    "cpd-both": {
-      date: "April 16-17, 2026",
-      location: "Malang, East Java",
-      venue: "The Singhasari Resort & Convention, Batu, Malang",
-      type: "CPD",
-    },
-    workshop: {
-      date: "Friday, April 17, 2026",
-      location: "Malang, East Java",
-      venue: "The Singhasari Resort & Convention, Batu, Malang",
-      type: "Workshop",
-    },
-    symposium: {
-      date: "Friday, April 17, 2026",
-      location: "Malang, East Java",
-      venue: "The Singhasari Resort & Convention, Batu, Malang",
-      type: "Symposium",
-    },
-  }
-
-  const getEventType = (eventId: string, eventLabel: string): "CPD" | "Workshop" | "Symposium" => {
+  const getFallbackEventDetails = (eventId: string, eventLabel: string) => {
     const lowerLabel = eventLabel?.toLowerCase() || ""
     const lowerId = eventId?.toLowerCase() || ""
 
+    let type: "CPD" | "Workshop" | "Symposium" = "CPD"
     if (lowerLabel.startsWith("ws ") || lowerLabel.includes("workshop") || lowerId.includes("workshop")) {
-      return "Workshop"
+      type = "Workshop"
+    } else if (lowerLabel.includes("symposium") || lowerId.includes("symposium")) {
+      type = "Symposium"
     }
 
-    if (lowerLabel.includes("symposium") || lowerId.includes("symposium")) {
-      return "Symposium"
+    return {
+      date: "April 16-17, 2026",
+      location: "Malang, East Java",
+      venue: "The Singhasari Resort & Convention, Batu, Malang",
+      type,
+    }
+  }
+
+  const getEventInfo = (eventId: string, eventLabel: string) => {
+    const cmsData = eventDataMap[eventId]
+    if (cmsData?.event) {
+      const event = cmsData.event
+      const startDate = event.start_date
+        ? new Date(event.start_date).toLocaleDateString("en-US", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        : "TBA"
+
+      return {
+        date:
+          event.end_date && event.end_date !== event.start_date
+            ? `${startDate} - ${new Date(event.end_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+            : startDate,
+        location: event.location || "TBA",
+        venue: event.venue || "TBA",
+        type: (event.event_type?.charAt(0).toUpperCase() + event.event_type?.slice(1)) as
+          | "CPD"
+          | "Workshop"
+          | "Symposium",
+        description: event.description,
+        is_online: event.is_online,
+        online_url: event.online_url,
+        start_time: event.start_time,
+        end_time: event.end_time,
+      }
+    }
+    return getFallbackEventDetails(eventId, eventLabel)
+  }
+
+  const filteredOrders = orders.filter((order) => {
+    const eventItems = order.order_items?.filter((item) => item.item_type === "event") || []
+
+    // Search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const matchesSearch =
+        eventItems.some(
+          (item) => item.event_label.toLowerCase().includes(query) || item.event_id.toLowerCase().includes(query),
+        ) || order.full_name.toLowerCase().includes(query)
+
+      if (!matchesSearch) return false
     }
 
-    return "CPD"
+    // Type filter
+    if (filterType !== "all") {
+      const matchesType = eventItems.some((item) => {
+        const eventInfo = getEventInfo(item.event_id, item.event_label)
+        return eventInfo.type.toLowerCase() === filterType.toLowerCase()
+      })
+      if (!matchesType) return false
+    }
+
+    return true
+  })
+
+  const getUniqueEventTypes = () => {
+    const types = new Set<string>()
+    orders.forEach((order) => {
+      order.order_items?.forEach((item) => {
+        if (item.item_type === "event") {
+          const eventInfo = getEventInfo(item.event_id, item.event_label)
+          types.add(eventInfo.type)
+        }
+      })
+    })
+    return Array.from(types)
+  }
+
+  const getResourceIcon = (type: string) => {
+    switch (type) {
+      case "document":
+        return <FileText className="w-4 h-4" />
+      case "video":
+        return <Video className="w-4 h-4" />
+      case "link":
+        return <LinkIcon className="w-4 h-4" />
+      default:
+        return <Download className="w-4 h-4" />
+    }
   }
 
   if (isLoading) {
@@ -205,6 +319,35 @@ export default function MyEventsPage() {
               </div>
             </div>
 
+            {orders.length > 0 && (
+              <div className="mb-6 flex flex-col sm:flex-row gap-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search events..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  <select
+                    value={filterType}
+                    onChange={(e) => setFilterType(e.target.value)}
+                    className="px-3 py-2 border rounded-md bg-background text-sm"
+                  >
+                    <option value="all">All Types</option>
+                    {getUniqueEventTypes().map((type) => (
+                      <option key={type} value={type.toLowerCase()}>
+                        {type}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
             {!orders || orders.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="py-16 text-center">
@@ -232,9 +375,26 @@ export default function MyEventsPage() {
                   </div>
                 </CardContent>
               </Card>
+            ) : filteredOrders.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center">
+                  <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No matching events</h3>
+                  <p className="text-muted-foreground mb-4">Try adjusting your search or filter criteria.</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setSearchQuery("")
+                      setFilterType("all")
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                </CardContent>
+              </Card>
             ) : (
               <div className="space-y-6">
-                {orders.map((order) => {
+                {filteredOrders.map((order) => {
                   const eventItems = order.order_items?.filter((item) => item.item_type === "event") || []
                   const payment = order.order_payments?.[0]
 
@@ -285,12 +445,9 @@ export default function MyEventsPage() {
                       <CardContent className="pt-6">
                         <div className="space-y-6">
                           {eventItems.map((item) => {
-                            const eventInfo = eventDetails[item.event_id] || {
-                              date: "April 16-17, 2026",
-                              location: "Malang, East Java",
-                              venue: "The Singhasari Resort & Convention, Batu, Malang",
-                              type: getEventType(item.event_id, item.event_label),
-                            }
+                            const eventInfo = getEventInfo(item.event_id, item.event_label)
+                            const cmsData = eventDataMap[item.event_id]
+                            const resources = cmsData?.resources || []
 
                             return (
                               <div
@@ -311,42 +468,111 @@ export default function MyEventsPage() {
                                 <h3 className="text-xl font-bold mb-2">{item.event_label}</h3>
                                 <p className="text-sm text-muted-foreground mb-4">{item.participant_type_label}</p>
 
+                                {eventInfo.description && (
+                                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                                    {eventInfo.description}
+                                  </p>
+                                )}
+
                                 <div className="grid gap-4 sm:grid-cols-2 text-sm">
                                   <div className="flex items-start gap-2">
                                     <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                                     <div>
                                       <p className="font-semibold text-base mb-1">Event Date</p>
                                       <p className="text-muted-foreground">{eventInfo.date}</p>
+                                      {eventInfo.start_time && (
+                                        <p className="text-muted-foreground text-xs mt-1">
+                                          {eventInfo.start_time}
+                                          {eventInfo.end_time ? ` - ${eventInfo.end_time}` : ""}
+                                        </p>
+                                      )}
                                     </div>
                                   </div>
                                   <div className="flex items-start gap-2">
-                                    <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                    {eventInfo.is_online ? (
+                                      <Globe className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                    ) : (
+                                      <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                    )}
                                     <div>
-                                      <p className="font-semibold text-base mb-1">Location</p>
-                                      <p className="text-muted-foreground">{eventInfo.location}</p>
+                                      <p className="font-semibold text-base mb-1">
+                                        {eventInfo.is_online ? "Online Event" : "Location"}
+                                      </p>
+                                      <p className="text-muted-foreground">
+                                        {eventInfo.is_online ? "Virtual / Online" : eventInfo.location}
+                                      </p>
                                     </div>
                                   </div>
-                                  <div className="flex items-start gap-2 sm:col-span-2">
-                                    <Users className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                                    <div>
-                                      <p className="font-semibold text-base mb-1">Venue</p>
-                                      <p className="text-muted-foreground">{eventInfo.venue}</p>
+                                  {!eventInfo.is_online && (
+                                    <div className="flex items-start gap-2 sm:col-span-2">
+                                      <Building className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                                      <div>
+                                        <p className="font-semibold text-base mb-1">Venue</p>
+                                        <p className="text-muted-foreground">{eventInfo.venue}</p>
+                                      </div>
                                     </div>
-                                  </div>
+                                  )}
                                 </div>
+
+                                {resources.length > 0 && (
+                                  <div className="mt-6 border-t pt-4">
+                                    <h4 className="font-semibold mb-3 flex items-center gap-2 text-sm">
+                                      <Download className="w-4 h-4" />
+                                      Event Resources
+                                    </h4>
+                                    <div className="grid gap-2 sm:grid-cols-2">
+                                      {resources.map((resource) => (
+                                        <a
+                                          key={resource.id}
+                                          href={resource.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors text-sm"
+                                        >
+                                          {getResourceIcon(resource.resource_type)}
+                                          <span className="flex-1 truncate">{resource.title}</span>
+                                          {resource.file_size && (
+                                            <span className="text-xs text-muted-foreground">
+                                              {(resource.file_size / 1024 / 1024).toFixed(1)} MB
+                                            </span>
+                                          )}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {eventInfo.is_online && eventInfo.online_url && (
+                                  <div className="mt-4">
+                                    <a
+                                      href={eventInfo.online_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                                    >
+                                      <Video className="w-4 h-4" />
+                                      Join Online Event
+                                    </a>
+                                  </div>
+                                )}
 
                                 <div className="mt-6 p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-lg">
                                   <div className="flex items-start gap-3 text-sm">
                                     <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
                                     <div className="flex-1">
                                       <p className="font-semibold text-green-900 dark:text-green-100 mb-2">
-                                        ✓ Registration Confirmed & Verified
+                                        Registration Confirmed & Verified
                                       </p>
                                       <ul className="text-green-700 dark:text-green-300 space-y-1.5 list-disc list-inside">
                                         <li>Your payment has been verified by our team</li>
                                         <li>You are confirmed to attend this event</li>
-                                        <li>Please bring a valid ID on the event day</li>
-                                        <li>Arrive 30 minutes early for check-in</li>
+                                        {!eventInfo.is_online && (
+                                          <>
+                                            <li>Please bring a valid ID on the event day</li>
+                                            <li>Arrive 30 minutes early for check-in</li>
+                                          </>
+                                        )}
+                                        {eventInfo.is_online && <li>Join link will be available before the event</li>}
                                       </ul>
                                     </div>
                                   </div>

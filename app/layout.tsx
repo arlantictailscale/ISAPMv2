@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Metadata } from "next"
+import type { Metadata, Viewport } from "next"
 
 import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
@@ -7,6 +7,9 @@ import "./globals.css"
 import { Toaster } from "sonner"
 import { CartProvider } from "@/lib/cart/cart-context"
 import { ScrollProgressBar } from "@/components/scroll-progress-bar"
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
+import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+import { OfflineIndicator } from "@/components/offline-indicator"
 
 import { Inter, Playfair_Display, Geist, Geist_Mono, Source_Serif_4 } from "next/font/google"
 
@@ -23,6 +26,15 @@ const _sourceSerif_4 = Source_Serif_4({
 
 const inter = Inter({ subsets: ["latin"] })
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#14b8a6",
+  viewportFit: "cover",
+}
 
 export const metadata: Metadata = {
   title: {
@@ -57,8 +69,22 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: "/images/isapm-logo.png",
-    apple: "/images/isapm-logo.png",
+    icon: [
+      { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    other: [{ rel: "mask-icon", url: "/icons/safari-pinned-tab.svg", color: "#14b8a6" }],
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ISAPM 2026",
+  },
+  formatDetection: {
+    telephone: true,
+    email: true,
+    address: true,
   },
   openGraph: {
     title: "ISAPM 8th National Meeting 2026 | Pain Management Conference Indonesia",
@@ -149,10 +175,20 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="ISAPM 2026" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
       </head>
       <body className={`${_geist.className} ${_geistMono.className} antialiased overflow-x-hidden`}>
+        <OfflineIndicator />
         <ScrollProgressBar />
-        <CartProvider>{children}</CartProvider>
+        <CartProvider>
+          <div className="pb-16 md:pb-0">{children}</div>
+          <MobileBottomNav />
+          <PWAInstallPrompt />
+        </CartProvider>
         <Analytics />
         <SpeedInsights />
         <Toaster

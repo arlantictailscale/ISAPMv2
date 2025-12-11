@@ -21,46 +21,42 @@ export async function getRoomAvailability() {
       }
     }
 
-    const { data: verifiedOrders, error: ordersError } = await supabase
-      .from("orders")
+    // Query order_items with hotel_room_type, joining orders and order_payments
+    const { data: allHotelItems, error: itemsError } = await supabase
+      .from("order_items")
       .select(`
         id,
-        order_payments!inner(payment_status)
+        hotel_room_type,
+        order_id,
+        orders!inner (
+          id,
+          status,
+          order_payments (
+            payment_status
+          )
+        )
       `)
-      .neq("status", "cancelled")
-      .eq("order_payments.payment_status", "verified")
-
-    console.log("[v0] Verified orders:", verifiedOrders)
-
-    if (ordersError) {
-      console.error("[v0] Error fetching orders:", ordersError)
-      throw ordersError
-    }
-
-    const verifiedOrderIds = verifiedOrders?.map((o) => o.id) || []
-    console.log("[v0] Verified order IDs:", verifiedOrderIds)
-
-    // Now get order_items for these verified orders with hotel room bookings
-    const { data: bookings, error: bookingsError } = await supabase
-      .from("order_items")
-      .select("hotel_room_type, order_id")
       .in("hotel_room_type", ["deluxe", "premier"])
-      .in("order_id", verifiedOrderIds.length > 0 ? verifiedOrderIds : ["00000000-0000-0000-0000-000000000000"])
 
-    console.log("[v0] Room bookings query result:", bookings)
-    console.log("[v0] Room bookings error:", bookingsError)
-
-    if (bookingsError) {
-      console.error("[v0] Error fetching bookings:", bookingsError)
-      throw bookingsError
+    if (itemsError) {
+      console.error("[v0] Error fetching hotel items:", itemsError)
+      throw itemsError
     }
+
+    // Filter for verified bookings where order is not cancelled
+    const verifiedBookings =
+      allHotelItems?.filter((item) => {
+        const order = item.orders as any
+        if (!order || order.status === "cancelled") return false
+
+        // Check if any payment is verified
+        const payments = order.order_payments as any[]
+        return payments?.some((p) => p.payment_status === "verified")
+      }) || []
 
     // Count bookings by room type
-    const deluxeBookings = bookings?.filter((b) => b.hotel_room_type === "deluxe").length || 0
-    const premierBookings = bookings?.filter((b) => b.hotel_room_type === "premier").length || 0
-
-    console.log("[v0] Deluxe bookings count:", deluxeBookings)
-    console.log("[v0] Premier bookings count:", premierBookings)
+    const deluxeBookings = verifiedBookings.filter((b) => b.hotel_room_type === "deluxe").length
+    const premierBookings = verifiedBookings.filter((b) => b.hotel_room_type === "premier").length
 
     // Get default capacities
     const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120

@@ -1,14 +1,31 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import {
+  Hotel,
+  RefreshCw,
+  Users,
+  CheckCircle,
+  Clock,
+  DollarSign,
+  Search,
+  Eye,
+  XCircle,
+  BedDouble,
+  Crown,
+  Loader2,
+  BarChart3,
+  BookOpen,
+  Settings,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -17,37 +34,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  Hotel,
-  Search,
-  RefreshCw,
-  Users,
-  DollarSign,
-  BedDouble,
-  Crown,
-  CheckCircle,
-  Clock,
-  XCircle,
-  Eye,
-  Loader2,
-  Settings,
-  BarChart3,
-  BookOpen,
-} from "lucide-react"
-import {
-  getHotelBookings,
-  getBookingStats,
-  getRoomSettings,
-  updateRoomSettings,
-  cancelBooking,
-  type HotelBooking,
-  type BookingStats,
-} from "@/app/actions/hotel-management"
+import { getHotelBookings, getHotelStats, updateRoomSettings, cancelBooking } from "@/app/actions/hotel-management"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 
 export default function HotelManagementPage() {
   const [activeTab, setActiveTab] = useState("overview")
-  const [bookings, setBookings] = useState<HotelBooking[]>([])
-  const [stats, setStats] = useState<BookingStats | null>(null)
+  const [bookings, setBookings] = useState([])
+  const [stats, setStats] = useState(null)
   const [roomSettings, setRoomSettings] = useState({
     deluxe_rooms: 50,
     premier_rooms: 20,
@@ -61,12 +55,12 @@ export default function HotelManagementPage() {
   const [statusFilter, setStatusFilter] = useState("all")
 
   // Dialogs
-  const [selectedBooking, setSelectedBooking] = useState<HotelBooking | null>(null)
+  const [selectedBooking, setSelectedBooking] = useState(null)
   const [showDetailsDialog, setShowDetailsDialog] = useState(false)
   const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   // Load data
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
       const [bookingsRes, statsRes, settingsRes] = await Promise.all([
@@ -75,8 +69,8 @@ export default function HotelManagementPage() {
           roomType: roomTypeFilter,
           status: statusFilter,
         }),
-        getBookingStats(),
-        getRoomSettings(),
+        getHotelStats(),
+        updateRoomSettings(),
       ])
 
       setBookings(bookingsRes.bookings)
@@ -89,11 +83,11 @@ export default function HotelManagementPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [searchQuery, roomTypeFilter, statusFilter])
 
   useEffect(() => {
     loadData()
-  }, [searchQuery, roomTypeFilter, statusFilter])
+  }, [loadData])
 
   const handleSaveSettings = async () => {
     setSaving(true)
@@ -122,7 +116,7 @@ export default function HotelManagementPage() {
     }
   }
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
@@ -130,7 +124,7 @@ export default function HotelManagementPage() {
     }).format(amount)
   }
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("id-ID", {
       day: "numeric",
       month: "short",
@@ -138,7 +132,7 @@ export default function HotelManagementPage() {
     })
   }
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status) => {
     switch (status) {
       case "confirmed":
         return (
@@ -166,7 +160,7 @@ export default function HotelManagementPage() {
     }
   }
 
-  const getRoomTypeBadge = (roomType: string) => {
+  const getRoomTypeBadge = (roomType) => {
     if (roomType === "premier") {
       return (
         <Badge className="bg-purple-100 text-purple-700 border-purple-200">
@@ -185,7 +179,9 @@ export default function HotelManagementPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <Navigation />
+
+      <main className="container mx-auto px-4 py-8 pt-24 max-w-7xl">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
@@ -695,7 +691,9 @@ export default function HotelManagementPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   )
 }

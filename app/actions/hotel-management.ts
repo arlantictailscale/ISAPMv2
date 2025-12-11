@@ -387,3 +387,5 @@ export async function cancelBooking(orderId: string): Promise<{ success: boolean
     return { success: false, error: "Failed to cancel booking" }
   }
 }
+
+export { getBookingStats as getHotelStats }

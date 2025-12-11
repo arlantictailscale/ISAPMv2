@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server"
+import { createServerClient } from "@supabase/ssr"
+import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 
 export async function GET(request: Request) {
@@ -17,8 +18,29 @@ export async function GET(request: Request) {
   }
 
   if (code) {
+    const cookieStore = await cookies()
+
+    const response = NextResponse.redirect(`${origin}/dashboard`)
+
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "https://wilienulethgfxdiqghw.supabase.co",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbGllbnVsZXRoZ2Z4ZGlxZ2h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NzgxOTUsImV4cCI6MjA3ODU1NDE5NX0.AEvTooDW5Zswza55RXnf6e-A5bZu-kOYY6kuV6cZ9Cw",
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              response.cookies.set(name, value, options)
+            })
+          },
+        },
+      },
+    )
+
     try {
-      const supabase = await createClient()
       console.log("[v0] Exchanging code for session...")
 
       const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
@@ -46,10 +68,26 @@ export async function GET(request: Request) {
           if (profileError) {
             console.error("[v0] Error creating profile:", profileError)
           }
+
+          // Send welcome email for new OAuth users
+          try {
+            await fetch(`${origin}/api/send-welcome-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                email: data.user.email,
+                userId: data.user.id,
+                userName:
+                  data.user.user_metadata?.full_name || data.user.user_metadata?.name || data.user.email?.split("@")[0],
+              }),
+            })
+          } catch (emailError) {
+            console.error("[v0] Error sending welcome email:", emailError)
+          }
         }
       }
 
-      return NextResponse.redirect(`${origin}/dashboard`)
+      return response
     } catch (err) {
       console.error("[v0] Unexpected error in callback:", err)
       return NextResponse.redirect(`${origin}/auth/login?error=${encodeURIComponent("Authentication failed")}`)

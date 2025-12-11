@@ -259,7 +259,7 @@ export default function MyEventsPage() {
       }
 
       // Load orders with verified payments
-      const { data: ordersData } = await supabase
+      const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(`
           *,
@@ -269,15 +269,28 @@ export default function MyEventsPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
 
+      console.log("[v0] Orders data:", ordersData)
+      console.log("[v0] Orders error:", ordersError)
+
       // Filter to only verified orders with event items
       const verifiedOrders = (ordersData || []).filter((order) => {
         const hasVerifiedPayment = order.order_payments?.some((p: any) => p.payment_status === "verified")
         const hasEventItems = order.order_items?.some((item: any) =>
           ["workshop", "cpd", "symposium"].includes(item.item_type),
         )
+        console.log("[v0] Order:", order.id, "hasVerifiedPayment:", hasVerifiedPayment, "hasEventItems:", hasEventItems)
+        console.log(
+          "[v0] Order items:",
+          order.order_items?.map((i: any) => ({ type: i.item_type, event_id: i.event_id })),
+        )
+        console.log(
+          "[v0] Order payments:",
+          order.order_payments?.map((p: any) => ({ status: p.payment_status })),
+        )
         return hasVerifiedPayment && hasEventItems
       })
 
+      console.log("[v0] Verified orders:", verifiedOrders.length)
       setOrders(verifiedOrders)
 
       // Get unique event IDs from orders
@@ -290,9 +303,16 @@ export default function MyEventsPage() {
         })
       })
 
-      if (eventIds.size > 0) {
-        const { data: eventsData } = await supabase.from("events").select("*").in("slug", Array.from(eventIds))
+      console.log("[v0] Event IDs:", Array.from(eventIds))
 
+      if (eventIds.size > 0) {
+        const { data: eventsData, error: eventsError } = await supabase
+          .from("events")
+          .select("*")
+          .in("slug", Array.from(eventIds))
+
+        console.log("[v0] Events data:", eventsData)
+        console.log("[v0] Events error:", eventsError)
         setDbEvents(eventsData || [])
       }
 

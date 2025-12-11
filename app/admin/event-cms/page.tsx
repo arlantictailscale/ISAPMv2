@@ -1,14 +1,42 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import React from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import {
+  LinkIcon,
+  FileText,
+  Video,
+  ImageIcon,
+  Plus,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  History,
+  ExternalLink,
+  Loader2,
+  Eye,
+  EyeOff,
+  RotateCcw,
+  Settings,
+  Calendar,
+  GraduationCap,
+  Stethoscope,
+  Users,
+} from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -17,376 +45,455 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Switch } from "@/components/ui/switch"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Plus,
-  Search,
-  MoreHorizontal,
-  Edit,
-  Trash2,
-  Copy,
-  Eye,
-  Calendar,
-  Users,
-  FileText,
-  ImageIcon,
-  Link,
-  Video,
-  History,
-  ChevronLeft,
-  X,
-  Star,
-  RefreshCw,
-  AlertCircle,
-} from "lucide-react"
-import {
-  getEvents,
-  getEventById,
-  createEvent,
-  updateEvent,
-  deleteEvent,
-  duplicateEvent,
-  getEventResources,
-  createEventResource,
-  updateEventResource,
-  deleteEventResource,
-  getEventSpeakers,
-  createEventSpeaker,
-  updateEventSpeaker,
-  deleteEventSpeaker,
-  getEventHistory,
-  getEventStats,
-} from "@/app/actions/event-cms"
-import type {
-  Event,
-  EventResource,
-  EventSpeaker,
-  EventHistory,
-  EventFilters,
-  CreateEventInput,
-  CreateResourceInput,
-  CreateSpeakerInput,
-  EventType,
-  EventStatus,
-  ResourceType,
-  ParticipantPricing,
-} from "@/lib/event-cms/types"
-import { EVENT_TYPES, EVENT_STATUSES, RESOURCE_TYPES, SPEAKER_ROLES, PARTICIPANT_TYPES } from "@/lib/event-cms/types"
+import { formatDistanceToNow } from "date-fns"
 
-// Format date for display
-function formatDate(date: string | undefined): string {
-  if (!date) return "-"
-  return new Date(date).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })
+type ResourceType = "document" | "link" | "video" | "image"
+
+interface EventResource {
+  id: string
+  event_id: string
+  resource_type: ResourceType
+  title: string
+  description: string | null
+  url: string
+  file_type: string | null
+  file_size: number | null
+  sort_order: number
+  is_public: boolean
+  is_active: boolean
+  created_at: string
+  updated_at: string
 }
 
-// Format time for display
-function formatTime(time: string | undefined): string {
-  if (!time) return "-"
-  return time.substring(0, 5)
+interface EventHistory {
+  id: string
+  event_id: string
+  action: string
+  changes: Record<string, unknown>
+  changed_by: string
+  changed_at: string
+  change_reason: string | null
+  profiles?: { full_name: string }
 }
 
-// Get status badge color
-function getStatusColor(status: EventStatus): string {
-  const statusObj = EVENT_STATUSES.find((s) => s.value === status)
-  return statusObj?.color || "bg-gray-100 text-gray-700"
+interface Event {
+  id: string
+  slug: string
+  title: string
+  short_title: string
+  event_type: string
+  status: string
 }
 
-// Resource type icon
-function ResourceIcon({ type }: { type: ResourceType }) {
-  switch (type) {
-    case "document":
-      return <FileText className="h-4 w-4" />
-    case "image":
-      return <ImageIcon className="h-4 w-4" />
-    case "link":
-      return <Link className="h-4 w-4" />
-    case "video":
-      return <Video className="h-4 w-4" />
-    default:
-      return <FileText className="h-4 w-4" />
-  }
+const RESOURCE_TYPE_CONFIG: Record<ResourceType, { label: string; description: string }> = {
+  document: { label: "Documents", description: "PDFs, slides, handouts, and other downloadable files" },
+  link: { label: "Links", description: "External URLs, join links, and references" },
+  video: { label: "Videos", description: "Recordings, tutorials, and video content" },
+  image: { label: "Images", description: "Photos, diagrams, and visual materials" },
+}
+
+const RESOURCE_TYPE_ICONS: Record<ResourceType, React.ElementType> = {
+  document: FileText,
+  link: LinkIcon,
+  video: Video,
+  image: ImageIcon,
+}
+
+// Static event list based on event-pricing.ts
+const STATIC_EVENTS = [
+  {
+    id: "cpd",
+    slug: "cpd",
+    title: "CPD (Continuing Professional Development) Courses",
+    short_title: "CPD Courses",
+    event_type: "cpd",
+  },
+  {
+    id: "ws1",
+    slug: "ws1",
+    title: "WS 1 (Regenerative Pain Therapy)",
+    short_title: "Regenerative Pain Therapy",
+    event_type: "workshop",
+  },
+  {
+    id: "ws2",
+    slug: "ws2",
+    title: "WS 2 (Basic Interventional Pain Management)",
+    short_title: "Basic Interventional Pain",
+    event_type: "workshop",
+  },
+  {
+    id: "ws3",
+    slug: "ws3",
+    title: "WS 3 (Pediatric Essential Pain Management)",
+    short_title: "Pediatric Pain Management",
+    event_type: "workshop",
+  },
+  {
+    id: "ws4",
+    slug: "ws4",
+    title: "WS 4 (Adjunct Therapy for Pain Management)",
+    short_title: "Adjunct Therapy",
+    event_type: "workshop",
+  },
+  {
+    id: "ws5",
+    slug: "ws5",
+    title: "WS 5 (Developing a Pain Clinic)",
+    short_title: "Developing a Pain Clinic",
+    event_type: "workshop",
+  },
+  { id: "ws6", slug: "ws6", title: "WS 6 (Cancer Pain)", short_title: "Cancer Pain", event_type: "workshop" },
+  {
+    id: "ws7",
+    slug: "ws7",
+    title: "WS 7 (Advanced Intervention of Pain Management)",
+    short_title: "Advanced Intervention",
+    event_type: "workshop",
+  },
+  {
+    id: "symposium",
+    slug: "symposium",
+    title: "ISAPM 8th National Meeting Symposium",
+    short_title: "Symposium",
+    event_type: "symposium",
+  },
+]
+
+function getEventIcon(eventType: string) {
+  if (eventType === "cpd") return GraduationCap
+  if (eventType === "workshop") return Stethoscope
+  return Users
+}
+
+function getEventColor(eventType: string) {
+  if (eventType === "cpd") return "bg-purple-100 text-purple-700 border-purple-200"
+  if (eventType === "workshop") return "bg-orange-100 text-orange-700 border-orange-200"
+  return "bg-teal-100 text-teal-700 border-teal-200"
 }
 
 export default function EventCMSPage() {
   const router = useRouter()
+  const { toast } = useToast()
 
-  // State
-  const [events, setEvents] = useState<Event[]>([])
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
-  const [resources, setResources] = useState<EventResource[]>([])
-  const [speakers, setSpeakers] = useState<EventSpeaker[]>([])
-  const [history, setHistory] = useState<EventHistory[]>([])
-  const [stats, setStats] = useState<{
-    total: number
-    byType: Record<string, number>
-    byStatus: Record<string, number>
-  }>({
-    total: 0,
-    byType: {},
-    byStatus: {},
-  })
-
-  // UI State
+  const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState("details")
-  const [view, setView] = useState<"list" | "edit">("list")
+  const [selectedEvent, setSelectedEvent] = useState<string>("")
+  const [activeTab, setActiveTab] = useState<ResourceType | "history">("document")
+  const [resources, setResources] = useState<EventResource[]>([])
+  const [history, setHistory] = useState<EventHistory[]>([])
+  const [dbEvents, setDbEvents] = useState<Event[]>([])
 
-  // Filters
-  const [filters, setFilters] = useState<EventFilters>({})
-  const [searchQuery, setSearchQuery] = useState("")
+  // Dialog states
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [selectedResource, setSelectedResource] = useState<EventResource | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
-  // Dialogs
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showResourceDialog, setShowResourceDialog] = useState(false)
-  const [showSpeakerDialog, setShowSpeakerDialog] = useState(false)
-  const [editingResource, setEditingResource] = useState<EventResource | null>(null)
-  const [editingSpeaker, setEditingSpeaker] = useState<EventSpeaker | null>(null)
-
-  // Form State
-  const [formData, setFormData] = useState<CreateEventInput>({
-    event_type: "webinar",
+  // Form state
+  const [formData, setFormData] = useState({
     title: "",
-    status: "draft",
-  })
-  const [resourceForm, setResourceForm] = useState<CreateResourceInput>({
-    event_id: "",
-    resource_type: "document",
-    title: "",
+    description: "",
     url: "",
+    file_type: "",
+    file_size: 0,
+    sort_order: 0,
+    is_public: false,
   })
-  const [speakerForm, setSpeakerForm] = useState<CreateSpeakerInput>({
-    event_id: "",
-    name: "",
-  })
 
-  // Load events
-  const loadEvents = useCallback(async () => {
-    setLoading(true)
-    const { data, error } = await getEvents({ ...filters, search: searchQuery })
-    if (error) {
-      setError(error)
-    } else {
-      setEvents(data)
-    }
-    setLoading(false)
-  }, [filters, searchQuery])
-
-  // Load stats
-  const loadStats = useCallback(async () => {
-    const data = await getEventStats()
-    setStats(data)
-  }, [])
-
-  // Load event details
-  const loadEventDetails = useCallback(async (eventId: string) => {
-    const [eventRes, resourcesRes, speakersRes, historyRes] = await Promise.all([
-      getEventById(eventId),
-      getEventResources(eventId),
-      getEventSpeakers(eventId),
-      getEventHistory(eventId),
-    ])
-
-    if (eventRes.data) {
-      setSelectedEvent(eventRes.data)
-      setFormData({
-        event_type: eventRes.data.event_type,
-        title: eventRes.data.title,
-        short_title: eventRes.data.short_title || "",
-        slug: eventRes.data.slug,
-        description: eventRes.data.description || "",
-        short_description: eventRes.data.short_description || "",
-        start_date: eventRes.data.start_date || "",
-        end_date: eventRes.data.end_date || "",
-        start_time: eventRes.data.start_time || "",
-        end_time: eventRes.data.end_time || "",
-        timezone: eventRes.data.timezone,
-        location: eventRes.data.location || "",
-        venue: eventRes.data.venue || "",
-        address: eventRes.data.address || "",
-        is_online: eventRes.data.is_online,
-        online_url: eventRes.data.online_url || "",
-        status: eventRes.data.status,
-        is_featured: eventRes.data.is_featured,
-        thumbnail_url: eventRes.data.thumbnail_url || "",
-        hero_image_url: eventRes.data.hero_image_url || "",
-        pricing: eventRes.data.pricing,
-        settings: eventRes.data.settings,
-        meta_title: eventRes.data.meta_title || "",
-        meta_description: eventRes.data.meta_description || "",
-      })
-    }
-    setResources(resourcesRes.data)
-    setSpeakers(speakersRes.data)
-    setHistory(historyRes.data)
-  }, [])
-
+  // Check admin access
   useEffect(() => {
-    loadEvents()
-    loadStats()
-  }, [loadEvents, loadStats])
+    async function checkAccess() {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-  // Handlers
-  const handleCreateEvent = async () => {
-    setSaving(true)
-    setError(null)
+      if (!user) {
+        router.push("/auth/login")
+        return
+      }
 
-    const { data, error } = await createEvent(formData)
+      const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+
+      if (profile?.role !== "admin") {
+        router.push("/")
+        return
+      }
+
+      setIsAdmin(true)
+      setLoading(false)
+
+      // Load events from database
+      const { data: events } = await supabase
+        .from("events")
+        .select("id, slug, title, short_title, event_type, status")
+        .eq("is_active", true)
+        .order("event_type")
+        .order("title")
+
+      if (events && events.length > 0) {
+        setDbEvents(events as Event[])
+      }
+    }
+
+    checkAccess()
+  }, [router])
+
+  // Load resources when event changes
+  useEffect(() => {
+    if (selectedEvent && isAdmin) {
+      loadResources()
+      loadHistory()
+    }
+  }, [selectedEvent, isAdmin])
+
+  async function loadResources() {
+    setLoading(true)
+    const supabase = createClient()
+
+    // First check if this event exists in the database
+    const { data: eventData } = await supabase.from("events").select("id").eq("slug", selectedEvent).single()
+
+    if (eventData) {
+      const { data, error } = await supabase
+        .from("event_resources")
+        .select("*")
+        .eq("event_id", eventData.id)
+        .order("resource_type")
+        .order("sort_order")
+
+      if (!error && data) {
+        setResources(data as EventResource[])
+      }
+    } else {
+      setResources([])
+    }
+
+    setLoading(false)
+  }
+
+  async function loadHistory() {
+    const supabase = createClient()
+
+    // First check if this event exists in the database
+    const { data: eventData } = await supabase.from("events").select("id").eq("slug", selectedEvent).single()
+
+    if (eventData) {
+      const { data, error } = await supabase
+        .from("event_history")
+        .select(`*, profiles:changed_by(full_name)`)
+        .eq("event_id", eventData.id)
+        .order("changed_at", { ascending: false })
+        .limit(50)
+
+      if (!error && data) {
+        setHistory(data as EventHistory[])
+      }
+    } else {
+      setHistory([])
+    }
+  }
+
+  // Get or create event in database
+  async function getOrCreateEvent(slug: string): Promise<string | null> {
+    const supabase = createClient()
+
+    // Check if event exists
+    const { data: existingEvent } = await supabase.from("events").select("id").eq("slug", slug).single()
+
+    if (existingEvent) {
+      return existingEvent.id
+    }
+
+    // Create event from static data
+    const staticEvent = STATIC_EVENTS.find((e) => e.slug === slug)
+    if (!staticEvent) return null
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data: newEvent, error } = await supabase
+      .from("events")
+      .insert({
+        slug: staticEvent.slug,
+        title: staticEvent.title,
+        short_title: staticEvent.short_title,
+        event_type: staticEvent.event_type,
+        status: "active",
+        is_active: true,
+        created_by: user.id,
+        updated_by: user.id,
+      })
+      .select("id")
+      .single()
 
     if (error) {
-      setError(error)
-    } else if (data) {
-      setShowCreateDialog(false)
-      setFormData({ event_type: "webinar", title: "", status: "draft" })
-      loadEvents()
-      loadStats()
-      // Open the new event for editing
-      setSelectedEvent(data)
-      setView("edit")
-      loadEventDetails(data.id)
+      console.error("Error creating event:", error)
+      return null
     }
-    setSaving(false)
+
+    return newEvent?.id || null
   }
 
-  const handleUpdateEvent = async () => {
-    if (!selectedEvent) return
+  async function handleCreate() {
+    if (!selectedEvent || !formData.title || !formData.url) return
+    setIsProcessing(true)
 
-    setSaving(true)
-    setError(null)
+    try {
+      const eventId = await getOrCreateEvent(selectedEvent)
+      if (!eventId) {
+        toast({ title: "Error", description: "Failed to get or create event", variant: "destructive" })
+        return
+      }
 
-    const { error } = await updateEvent({ id: selectedEvent.id, ...formData })
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    if (error) {
-      setError(error)
-    } else {
-      loadEvents()
-      loadEventDetails(selectedEvent.id)
-    }
-    setSaving(false)
-  }
+      const { error } = await supabase.from("event_resources").insert({
+        event_id: eventId,
+        resource_type: activeTab as ResourceType,
+        title: formData.title,
+        description: formData.description || null,
+        url: formData.url,
+        file_type: formData.file_type || null,
+        file_size: formData.file_size || null,
+        sort_order: formData.sort_order || 0,
+        is_public: formData.is_public,
+        is_active: true,
+        created_by: user?.id,
+        updated_by: user?.id,
+      })
 
-  const handleDeleteEvent = async () => {
-    if (!selectedEvent) return
+      if (error) throw error
 
-    setSaving(true)
-    const { error } = await deleteEvent(selectedEvent.id)
+      // Log history
+      await supabase.from("event_history").insert({
+        event_id: eventId,
+        action: "resource_created",
+        changes: { resource_title: formData.title, resource_type: activeTab },
+        changed_by: user?.id,
+      })
 
-    if (error) {
-      setError(error)
-    } else {
-      setShowDeleteDialog(false)
-      setView("list")
-      setSelectedEvent(null)
-      loadEvents()
-      loadStats()
-    }
-    setSaving(false)
-  }
-
-  const handleDuplicateEvent = async (eventId: string) => {
-    setSaving(true)
-    const { data, error } = await duplicateEvent(eventId)
-
-    if (error) {
-      setError(error)
-    } else if (data) {
-      loadEvents()
-      loadStats()
-    }
-    setSaving(false)
-  }
-
-  const handleSaveResource = async () => {
-    if (!selectedEvent) return
-
-    setSaving(true)
-    setError(null)
-
-    if (editingResource) {
-      const { error } = await updateEventResource(editingResource.id, resourceForm)
-      if (error) setError(error)
-    } else {
-      const { error } = await createEventResource({ ...resourceForm, event_id: selectedEvent.id })
-      if (error) setError(error)
-    }
-
-    if (!error) {
-      setShowResourceDialog(false)
-      setEditingResource(null)
-      setResourceForm({ event_id: "", resource_type: "document", title: "", url: "" })
-      loadEventDetails(selectedEvent.id)
-    }
-    setSaving(false)
-  }
-
-  const handleDeleteResource = async (resourceId: string) => {
-    if (!selectedEvent) return
-
-    const { error } = await deleteEventResource(resourceId)
-    if (error) {
-      setError(error)
-    } else {
-      loadEventDetails(selectedEvent.id)
+      toast({ title: "Success", description: "Resource created successfully" })
+      setIsAddDialogOpen(false)
+      resetForm()
+      loadResources()
+      loadHistory()
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to create resource", variant: "destructive" })
+    } finally {
+      setIsProcessing(false)
     }
   }
 
-  const handleSaveSpeaker = async () => {
-    if (!selectedEvent) return
+  async function handleUpdate() {
+    if (!selectedResource || !formData.title || !formData.url) return
+    setIsProcessing(true)
 
-    setSaving(true)
-    setError(null)
+    try {
+      const supabase = createClient()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    if (editingSpeaker) {
-      const { error } = await updateEventSpeaker(editingSpeaker.id, speakerForm)
-      if (error) setError(error)
-    } else {
-      const { error } = await createEventSpeaker({ ...speakerForm, event_id: selectedEvent.id })
-      if (error) setError(error)
+      const { error } = await supabase
+        .from("event_resources")
+        .update({
+          title: formData.title,
+          description: formData.description || null,
+          url: formData.url,
+          file_type: formData.file_type || null,
+          file_size: formData.file_size || null,
+          sort_order: formData.sort_order || 0,
+          is_public: formData.is_public,
+          updated_by: user?.id,
+        })
+        .eq("id", selectedResource.id)
+
+      if (error) throw error
+
+      toast({ title: "Success", description: "Resource updated successfully" })
+      setIsEditDialogOpen(false)
+      resetForm()
+      loadResources()
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update resource", variant: "destructive" })
+    } finally {
+      setIsProcessing(false)
     }
-
-    if (!error) {
-      setShowSpeakerDialog(false)
-      setEditingSpeaker(null)
-      setSpeakerForm({ event_id: "", name: "" })
-      loadEventDetails(selectedEvent.id)
-    }
-    setSaving(false)
   }
 
-  const handleDeleteSpeaker = async (speakerId: string) => {
-    if (!selectedEvent) return
+  async function handleDelete() {
+    if (!selectedResource) return
+    setIsProcessing(true)
 
-    const { error } = await deleteEventSpeaker(speakerId)
-    if (error) {
-      setError(error)
-    } else {
-      loadEventDetails(selectedEvent.id)
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase
+        .from("event_resources")
+        .update({ is_active: false })
+        .eq("id", selectedResource.id)
+
+      if (error) throw error
+
+      toast({ title: "Success", description: "Resource deleted successfully" })
+      setIsDeleteDialogOpen(false)
+      setSelectedResource(null)
+      loadResources()
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete resource", variant: "destructive" })
+    } finally {
+      setIsProcessing(false)
     }
   }
 
-  const openEditEvent = (event: Event) => {
-    setSelectedEvent(event)
-    setView("edit")
-    loadEventDetails(event.id)
+  async function handleRestore(resource: EventResource) {
+    setIsProcessing(true)
+
+    try {
+      const supabase = createClient()
+
+      const { error } = await supabase.from("event_resources").update({ is_active: true }).eq("id", resource.id)
+
+      if (error) throw error
+
+      toast({ title: "Success", description: "Resource restored successfully" })
+      loadResources()
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to restore resource", variant: "destructive" })
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  const openEditResource = (resource: EventResource) => {
-    setEditingResource(resource)
-    setResourceForm({
-      event_id: resource.event_id,
-      resource_type: resource.resource_type,
+  function resetForm() {
+    setFormData({
+      title: "",
+      description: "",
+      url: "",
+      file_type: "",
+      file_size: 0,
+      sort_order: 0,
+      is_public: false,
+    })
+    setSelectedResource(null)
+  }
+
+  function openAddDialog() {
+    resetForm()
+    setIsAddDialogOpen(true)
+  }
+
+  function openEditDialog(resource: EventResource) {
+    setSelectedResource(resource)
+    setFormData({
       title: resource.title,
       description: resource.description || "",
       url: resource.url,
@@ -395,1073 +502,543 @@ export default function EventCMSPage() {
       sort_order: resource.sort_order,
       is_public: resource.is_public,
     })
-    setShowResourceDialog(true)
+    setIsEditDialogOpen(true)
   }
 
-  const openEditSpeaker = (speaker: EventSpeaker) => {
-    setEditingSpeaker(speaker)
-    setSpeakerForm({
-      event_id: speaker.event_id,
-      name: speaker.name,
-      title: speaker.title || "",
-      credentials: speaker.credentials || "",
-      role: speaker.role || "",
-      organization: speaker.organization || "",
-      bio: speaker.bio || "",
-      photo_url: speaker.photo_url || "",
-      sort_order: speaker.sort_order,
-    })
-    setShowSpeakerDialog(true)
+  function openDeleteDialog(resource: EventResource) {
+    setSelectedResource(resource)
+    setIsDeleteDialogOpen(true)
   }
 
-  // Pricing handlers
-  const addParticipantType = () => {
-    const currentPricing = formData.pricing || { participant_types: [] }
-    setFormData({
-      ...formData,
-      pricing: {
-        ...currentPricing,
-        participant_types: [
-          ...currentPricing.participant_types,
-          { type: "", label: "", early: 0, normal: 0, onsite: 0 },
-        ],
-      },
-    })
-  }
+  const resourcesByType = resources.filter(
+    (r) => r.resource_type === activeTab && (activeTab === "history" || r.is_active || !r.is_active),
+  )
 
-  const updateParticipantType = (index: number, field: keyof ParticipantPricing, value: string | number) => {
-    const currentPricing = formData.pricing || { participant_types: [] }
-    const updated = [...currentPricing.participant_types]
-    updated[index] = { ...updated[index], [field]: value }
-    setFormData({
-      ...formData,
-      pricing: { ...currentPricing, participant_types: updated },
-    })
-  }
+  const activeResources = resources.filter((r) => r.resource_type === activeTab && r.is_active)
+  const inactiveResources = resources.filter((r) => r.resource_type === activeTab && !r.is_active)
 
-  const removeParticipantType = (index: number) => {
-    const currentPricing = formData.pricing || { participant_types: [] }
-    const updated = currentPricing.participant_types.filter((_, i) => i !== index)
-    setFormData({
-      ...formData,
-      pricing: { ...currentPricing, participant_types: updated },
-    })
-  }
+  const selectedEventData = STATIC_EVENTS.find((e) => e.slug === selectedEvent)
+  const EventIcon = selectedEventData ? getEventIcon(selectedEventData.event_type) : Calendar
 
-  // LIST VIEW
-  if (view === "list") {
+  if (loading && !isAdmin) {
     return (
-      <div className="container mx-auto py-6 px-4 max-w-7xl">
-        {/* Header */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Event CMS</h1>
-            <p className="text-muted-foreground">Manage all events, resources, and speakers</p>
-          </div>
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Event
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">Total Events</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{stats.byStatus.active || 0}</div>
-              <p className="text-xs text-muted-foreground">Active</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{stats.byStatus.draft || 0}</div>
-              <p className="text-xs text-muted-foreground">Drafts</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{stats.byStatus.coming_soon || 0}</div>
-              <p className="text-xs text-muted-foreground">Coming Soon</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search events..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <Select
-                value={filters.event_type || "all"}
-                onValueChange={(v) =>
-                  setFilters({ ...filters, event_type: v === "all" ? undefined : (v as EventType) })
-                }
-              >
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="Event Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {EVENT_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={filters.status || "all"}
-                onValueChange={(v) => setFilters({ ...filters, status: v === "all" ? undefined : (v as EventStatus) })}
-              >
-                <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  {EVENT_STATUSES.map((status) => (
-                    <SelectItem key={status.value} value={status.value}>
-                      {status.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" onClick={loadEvents}>
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Error */}
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Events Table */}
-        <Card>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="p-8 text-center text-muted-foreground">Loading events...</div>
-            ) : events.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
-                No events found. Create your first event to get started.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Event</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {events.map((event) => (
-                    <TableRow key={event.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {event.is_featured && <Star className="h-4 w-4 text-amber-500 fill-amber-500" />}
-                          <div>
-                            <div className="font-medium">{event.title}</div>
-                            <div className="text-sm text-muted-foreground">{event.slug}</div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{EVENT_TYPES.find((t) => t.value === event.event_type)?.label}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1 text-sm">
-                          <Calendar className="h-3 w-3" />
-                          {formatDate(event.start_date)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(event.status)}>
-                          {EVENT_STATUSES.find((s) => s.value === event.status)?.label}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditEvent(event)}>
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push(`/events/${event.slug}`)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Page
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicateEvent(event.id)}>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                setSelectedEvent(event)
-                                setShowDeleteDialog(true)
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Create Event Dialog */}
-        <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Event</DialogTitle>
-              <DialogDescription>Enter the basic details to create a new event.</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Event Type</Label>
-                <Select
-                  value={formData.event_type}
-                  onValueChange={(v) => setFormData({ ...formData, event_type: v as EventType })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {EVENT_TYPES.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Enter event title"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Short Description</Label>
-                <Textarea
-                  value={formData.short_description || ""}
-                  onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-                  placeholder="Brief description of the event"
-                  rows={3}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateEvent} disabled={saving || !formData.title}>
-                {saving ? "Creating..." : "Create Event"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
-        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Event</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to delete "{selectedEvent?.title}"? This action can be undone.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={handleDeleteEvent} disabled={saving}>
-                {saving ? "Deleting..." : "Delete Event"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      <>
+        <Navigation />
+        <main className="pt-24 pb-20 min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        </main>
+        <Footer />
+      </>
     )
   }
 
-  // EDIT VIEW
   return (
-    <div className="container mx-auto py-6 px-4 max-w-7xl">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => setView("list")}>
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-foreground">{selectedEvent?.title || "Edit Event"}</h1>
-          <p className="text-muted-foreground">
-            {selectedEvent?.slug} • {EVENT_TYPES.find((t) => t.value === selectedEvent?.event_type)?.label}
-          </p>
-        </div>
-        <Badge className={getStatusColor(selectedEvent?.status || "draft")}>
-          {EVENT_STATUSES.find((s) => s.value === selectedEvent?.status)?.label}
-        </Badge>
-        <Button variant="outline" onClick={() => setShowDeleteDialog(true)}>
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete
-        </Button>
-        <Button onClick={handleUpdateEvent} disabled={saving}>
-          {saving ? "Saving..." : "Save Changes"}
-        </Button>
-      </div>
-
-      {/* Error */}
-      {error && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="details">Details</TabsTrigger>
-          <TabsTrigger value="datetime">Date & Time</TabsTrigger>
-          <TabsTrigger value="location">Location</TabsTrigger>
-          <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="resources">Resources ({resources.length})</TabsTrigger>
-          <TabsTrigger value="speakers">Speakers ({speakers.length})</TabsTrigger>
-          <TabsTrigger value="settings">Settings</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
-        </TabsList>
-
-        {/* Details Tab */}
-        <TabsContent value="details">
-          <Card>
-            <CardHeader>
-              <CardTitle>Event Details</CardTitle>
-              <CardDescription>Basic information about the event</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Event Type</Label>
-                  <Select
-                    value={formData.event_type}
-                    onValueChange={(v) => setFormData({ ...formData, event_type: v as EventType })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EVENT_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(v) => setFormData({ ...formData, status: v as EventStatus })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EVENT_STATUSES.map((status) => (
-                        <SelectItem key={status.value} value={status.value}>
-                          {status.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+    <>
+      <Navigation />
+      <main className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-slate-50 to-background">
+        {/* Header */}
+        <section className="py-8 px-4 border-b bg-white">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl font-bold">Event CMS</h1>
+                <p className="text-muted-foreground">Manage event resources and materials</p>
               </div>
-
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  placeholder="Enter event title"
-                />
+              <div className="flex items-center gap-3">
+                <Select value={selectedEvent} onValueChange={setSelectedEvent}>
+                  <SelectTrigger className="w-[300px]">
+                    <SelectValue placeholder="Select an event..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cpd" className="py-3">
+                      <div className="flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 text-purple-600" />
+                        <span>CPD Courses</span>
+                      </div>
+                    </SelectItem>
+                    {STATIC_EVENTS.filter((e) => e.event_type === "workshop").map((event) => (
+                      <SelectItem key={event.slug} value={event.slug} className="py-3">
+                        <div className="flex items-center gap-2">
+                          <Stethoscope className="w-4 h-4 text-orange-600" />
+                          <span>{event.short_title}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="symposium" className="py-3">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-teal-600" />
+                        <span>Symposium</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {selectedEvent && (
+                  <Button variant="outline" size="icon" onClick={loadResources}>
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
+            </div>
+          </div>
+        </section>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Short Title</Label>
-                  <Input
-                    value={formData.short_title || ""}
-                    onChange={(e) => setFormData({ ...formData, short_title: e.target.value })}
-                    placeholder="Abbreviated title for menus"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>URL Slug</Label>
-                  <Input
-                    value={formData.slug || ""}
-                    onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
-                    placeholder="event-url-slug"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Short Description</Label>
-                <Textarea
-                  value={formData.short_description || ""}
-                  onChange={(e) => setFormData({ ...formData, short_description: e.target.value })}
-                  placeholder="Brief summary for cards and previews"
-                  rows={2}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Full Description</Label>
-                <Textarea
-                  value={formData.description || ""}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Complete event description with details"
-                  rows={6}
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={formData.is_featured || false}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_featured: checked })}
-                />
-                <Label>Featured Event</Label>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Thumbnail URL</Label>
-                  <Input
-                    value={formData.thumbnail_url || ""}
-                    onChange={(e) => setFormData({ ...formData, thumbnail_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Hero Image URL</Label>
-                  <Input
-                    value={formData.hero_image_url || ""}
-                    onChange={(e) => setFormData({ ...formData, hero_image_url: e.target.value })}
-                    placeholder="https://..."
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Date & Time Tab */}
-        <TabsContent value="datetime">
-          <Card>
-            <CardHeader>
-              <CardTitle>Date & Time</CardTitle>
-              <CardDescription>When the event takes place</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Input
-                    type="date"
-                    value={formData.start_date || ""}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>End Date</Label>
-                  <Input
-                    type="date"
-                    value={formData.end_date || ""}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label>Start Time</Label>
-                  <Input
-                    type="time"
-                    value={formData.start_time || ""}
-                    onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>End Time</Label>
-                  <Input
-                    type="time"
-                    value={formData.end_time || ""}
-                    onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Timezone</Label>
-                  <Select
-                    value={formData.timezone || "Asia/Jakarta"}
-                    onValueChange={(v) => setFormData({ ...formData, timezone: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Asia/Jakarta">WIB (Jakarta)</SelectItem>
-                      <SelectItem value="Asia/Makassar">WITA (Makassar)</SelectItem>
-                      <SelectItem value="Asia/Jayapura">WIT (Jayapura)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Location Tab */}
-        <TabsContent value="location">
-          <Card>
-            <CardHeader>
-              <CardTitle>Location</CardTitle>
-              <CardDescription>Where the event takes place</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  checked={formData.is_online || false}
-                  onCheckedChange={(checked) => setFormData({ ...formData, is_online: checked })}
-                />
-                <Label>Online Event</Label>
-              </div>
-
-              {formData.is_online && (
-                <div className="space-y-2">
-                  <Label>Online URL (Zoom, Meet, etc.)</Label>
-                  <Input
-                    value={formData.online_url || ""}
-                    onChange={(e) => setFormData({ ...formData, online_url: e.target.value })}
-                    placeholder="https://zoom.us/j/..."
-                  />
-                </div>
+        {selectedEvent ? (
+          <section className="py-8 px-4">
+            <div className="max-w-7xl mx-auto space-y-6">
+              {/* Event Info Card */}
+              {selectedEventData && (
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div
+                        className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                          selectedEventData.event_type === "cpd"
+                            ? "bg-purple-100"
+                            : selectedEventData.event_type === "workshop"
+                              ? "bg-orange-100"
+                              : "bg-teal-100"
+                        }`}
+                      >
+                        <EventIcon
+                          className={`w-6 h-6 ${
+                            selectedEventData.event_type === "cpd"
+                              ? "text-purple-600"
+                              : selectedEventData.event_type === "workshop"
+                                ? "text-orange-600"
+                                : "text-teal-600"
+                          }`}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Badge className={getEventColor(selectedEventData.event_type)}>
+                          {selectedEventData.event_type.toUpperCase()}
+                        </Badge>
+                        <h2 className="text-xl font-bold mt-2">{selectedEventData.title}</h2>
+                        <p className="text-muted-foreground text-sm mt-1">
+                          Manage resources, materials, and content for this event
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-muted-foreground">Total Resources</p>
+                        <p className="text-2xl font-bold">{resources.filter((r) => r.is_active).length}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
 
-              <div className="space-y-2">
-                <Label>Location Name</Label>
-                <Input
-                  value={formData.location || ""}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="e.g., Bali, Indonesia"
-                />
-              </div>
+              {/* Content Tabs */}
+              <Card>
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ResourceType | "history")}>
+                  <CardHeader className="pb-0">
+                    <TabsList className="grid w-full grid-cols-5">
+                      {(Object.keys(RESOURCE_TYPE_CONFIG) as ResourceType[]).map((type) => {
+                        const Icon = RESOURCE_TYPE_ICONS[type]
+                        const config = RESOURCE_TYPE_CONFIG[type]
+                        return (
+                          <TabsTrigger key={type} value={type} className="gap-2">
+                            <Icon className="w-4 h-4" />
+                            <span className="hidden sm:inline">{config.label}</span>
+                          </TabsTrigger>
+                        )
+                      })}
+                      <TabsTrigger value="history" className="gap-2">
+                        <History className="w-4 h-4" />
+                        <span className="hidden sm:inline">History</span>
+                      </TabsTrigger>
+                    </TabsList>
+                  </CardHeader>
 
-              <div className="space-y-2">
-                <Label>Venue</Label>
-                <Input
-                  value={formData.venue || ""}
-                  onChange={(e) => setFormData({ ...formData, venue: e.target.value })}
-                  placeholder="e.g., Grand Ballroom, Hotel XYZ"
-                />
-              </div>
+                  <CardContent className="pt-6">
+                    {/* Resource Type Tabs */}
+                    {(Object.keys(RESOURCE_TYPE_CONFIG) as ResourceType[]).map((type) => (
+                      <TabsContent key={type} value={type} className="mt-0">
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <h3 className="font-medium">{RESOURCE_TYPE_CONFIG[type].label}</h3>
+                              <p className="text-sm text-muted-foreground">{RESOURCE_TYPE_CONFIG[type].description}</p>
+                            </div>
+                            <Button onClick={openAddDialog}>
+                              <Plus className="w-4 h-4 mr-2" />
+                              Add {RESOURCE_TYPE_CONFIG[type].label.slice(0, -1)}
+                            </Button>
+                          </div>
 
-              <div className="space-y-2">
-                <Label>Full Address</Label>
-                <Textarea
-                  value={formData.address || ""}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Complete street address"
-                  rows={2}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Pricing Tab */}
-        <TabsContent value="pricing">
-          <Card>
-            <CardHeader>
-              <CardTitle>Pricing</CardTitle>
-              <CardDescription>Set pricing for different participant types</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-4">
-                {(formData.pricing?.participant_types || []).map((pt, index) => (
-                  <div key={index} className="border rounded-lg p-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Participant Type {index + 1}</h4>
-                      <Button variant="ghost" size="icon" onClick={() => removeParticipantType(index)}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Type ID</Label>
-                        <Select value={pt.type} onValueChange={(v) => updateParticipantType(index, "type", v)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {PARTICIPANT_TYPES.map((type) => (
-                              <SelectItem key={type.type} value={type.type}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Display Label</Label>
-                        <Input
-                          value={pt.label}
-                          onChange={(e) => updateParticipantType(index, "label", e.target.value)}
-                          placeholder="e.g., Specialist Doctor"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label>Early Bird Price (Rp)</Label>
-                        <Input
-                          type="number"
-                          value={pt.early || 0}
-                          onChange={(e) => updateParticipantType(index, "early", Number.parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Normal Price (Rp)</Label>
-                        <Input
-                          type="number"
-                          value={pt.normal || 0}
-                          onChange={(e) => updateParticipantType(index, "normal", Number.parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Onsite Price (Rp)</Label>
-                        <Input
-                          type="number"
-                          value={pt.onsite || 0}
-                          onChange={(e) => updateParticipantType(index, "onsite", Number.parseInt(e.target.value) || 0)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <Button variant="outline" onClick={addParticipantType}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Participant Type
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Resources Tab */}
-        <TabsContent value="resources">
-          <Card>
-            <CardHeader>
-              <CardTitle>Resources</CardTitle>
-              <CardDescription>Documents, links, videos, and other materials</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {resources.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No resources added yet.</p>
-                ) : (
-                  resources.map((resource) => (
-                    <div key={resource.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="p-2 bg-muted rounded">
-                        <ResourceIcon type={resource.resource_type} />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">{resource.title}</div>
-                        <div className="text-sm text-muted-foreground truncate">{resource.url}</div>
-                      </div>
-                      <Badge variant={resource.is_public ? "default" : "secondary"}>
-                        {resource.is_public ? "Public" : "Private"}
-                      </Badge>
-                      <Button variant="ghost" size="icon" onClick={() => openEditResource(resource)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteResource(resource.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-              <Button
-                variant="outline"
-                className="mt-4 bg-transparent"
-                onClick={() => {
-                  setEditingResource(null)
-                  setResourceForm({ event_id: "", resource_type: "document", title: "", url: "" })
-                  setShowResourceDialog(true)
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Resource
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Speakers Tab */}
-        <TabsContent value="speakers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Speakers</CardTitle>
-              <CardDescription>Presenters, moderators, and panelists</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {speakers.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">No speakers added yet.</p>
-                ) : (
-                  speakers.map((speaker) => (
-                    <div key={speaker.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
-                        <Users className="h-5 w-5" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {speaker.title} {speaker.name}
-                          {speaker.credentials && (
-                            <span className="text-muted-foreground">, {speaker.credentials}</span>
+                          {loading ? (
+                            <div className="flex items-center justify-center py-12">
+                              <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+                            </div>
+                          ) : activeResources.length === 0 && inactiveResources.length === 0 ? (
+                            <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                              {React.createElement(RESOURCE_TYPE_ICONS[type], {
+                                className: "w-12 h-12 mx-auto mb-4 text-slate-300",
+                              })}
+                              <p className="text-muted-foreground mb-4">
+                                No {RESOURCE_TYPE_CONFIG[type].label.toLowerCase()} added yet
+                              </p>
+                              <Button variant="outline" onClick={openAddDialog}>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add First {RESOURCE_TYPE_CONFIG[type].label.slice(0, -1)}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {activeResources.map((item) => (
+                                <ResourceItem
+                                  key={item.id}
+                                  item={item}
+                                  onEdit={() => openEditDialog(item)}
+                                  onDelete={() => openDeleteDialog(item)}
+                                  onRestore={() => handleRestore(item)}
+                                />
+                              ))}
+                              {inactiveResources.length > 0 && (
+                                <>
+                                  <div className="pt-4 pb-2">
+                                    <p className="text-sm text-muted-foreground">Deleted Resources</p>
+                                  </div>
+                                  {inactiveResources.map((item) => (
+                                    <ResourceItem
+                                      key={item.id}
+                                      item={item}
+                                      onEdit={() => openEditDialog(item)}
+                                      onDelete={() => openDeleteDialog(item)}
+                                      onRestore={() => handleRestore(item)}
+                                    />
+                                  ))}
+                                </>
+                              )}
+                            </div>
                           )}
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          {speaker.role} • {speaker.organization}
-                        </div>
-                      </div>
-                      <Button variant="ghost" size="icon" onClick={() => openEditSpeaker(speaker)}>
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteSpeaker(speaker.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-              <Button
-                variant="outline"
-                className="mt-4 bg-transparent"
-                onClick={() => {
-                  setEditingSpeaker(null)
-                  setSpeakerForm({ event_id: "", name: "" })
-                  setShowSpeakerDialog(true)
-                }}
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Speaker
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                      </TabsContent>
+                    ))}
 
-        {/* Settings Tab */}
-        <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle>Settings & SEO</CardTitle>
-              <CardDescription>Additional configuration and search optimization</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label>Meta Title (SEO)</Label>
-                <Input
-                  value={formData.meta_title || ""}
-                  onChange={(e) => setFormData({ ...formData, meta_title: e.target.value })}
-                  placeholder="Custom page title for search engines"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Meta Description (SEO)</Label>
-                <Textarea
-                  value={formData.meta_description || ""}
-                  onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
-                  placeholder="Description shown in search results"
-                  rows={3}
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                    {/* History Tab */}
+                    <TabsContent value="history" className="mt-0">
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-medium">Change History</h3>
+                          <p className="text-sm text-muted-foreground">Track all changes made to event resources</p>
+                        </div>
 
-        {/* History Tab */}
-        <TabsContent value="history">
-          <Card>
-            <CardHeader>
-              <CardTitle>Change History</CardTitle>
-              <CardDescription>Track all modifications to this event</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {history.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No history records yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {history.map((record) => (
-                    <div key={record.id} className="flex items-start gap-4 p-4 border rounded-lg">
-                      <div className="p-2 bg-muted rounded">
-                        <History className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant={
-                              record.action === "created"
-                                ? "default"
-                                : record.action === "deleted"
-                                  ? "destructive"
-                                  : "secondary"
-                            }
-                          >
-                            {record.action}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">by {record.changed_by_name}</span>
-                        </div>
-                        <div className="text-sm text-muted-foreground mt-1">
-                          {new Date(record.changed_at).toLocaleString("id-ID")}
-                        </div>
-                        {Object.keys(record.changes).length > 0 && (
-                          <div className="mt-2 text-sm">
-                            {Object.entries(record.changes).map(([field, { old: oldVal, new: newVal }]) => (
-                              <div key={field} className="text-muted-foreground">
-                                <span className="font-medium">{field}:</span>{" "}
-                                {oldVal !== null && <span className="line-through">{String(oldVal)}</span>}{" "}
-                                {newVal !== null && <span className="text-foreground">{String(newVal)}</span>}
-                              </div>
+                        {history.length === 0 ? (
+                          <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                            <History className="w-12 h-12 mx-auto mb-4 text-slate-300" />
+                            <p className="text-muted-foreground">No history yet</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            {history.map((entry) => (
+                              <HistoryItem key={entry.id} entry={entry} />
                             ))}
                           </div>
                         )}
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                    </TabsContent>
+                  </CardContent>
+                </Tabs>
+              </Card>
+            </div>
+          </section>
+        ) : (
+          <section className="py-12 px-4">
+            <div className="max-w-7xl mx-auto">
+              <Card className="border-dashed">
+                <CardContent className="py-16 text-center">
+                  <Settings className="w-16 h-16 mx-auto mb-4 text-slate-300" />
+                  <h3 className="text-xl font-semibold mb-2">Select an Event</h3>
+                  <p className="text-muted-foreground">
+                    Choose an event from the dropdown above to manage its resources
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+        )}
+      </main>
+      <Footer />
 
-      {/* Resource Dialog */}
-      <Dialog open={showResourceDialog} onOpenChange={setShowResourceDialog}>
-        <DialogContent>
+      {/* Add Resource Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingResource ? "Edit Resource" : "Add Resource"}</DialogTitle>
+            <DialogTitle>
+              Add New {activeTab !== "history" && RESOURCE_TYPE_CONFIG[activeTab as ResourceType]?.label.slice(0, -1)}
+            </DialogTitle>
+            <DialogDescription>Add a new resource to this event</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Resource Type</Label>
-              <Select
-                value={resourceForm.resource_type}
-                onValueChange={(v) => setResourceForm({ ...resourceForm, resource_type: v as ResourceType })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {RESOURCE_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Title</Label>
-              <Input
-                value={resourceForm.title}
-                onChange={(e) => setResourceForm({ ...resourceForm, title: e.target.value })}
-                placeholder="Resource title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>URL</Label>
-              <Input
-                value={resourceForm.url}
-                onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Description (optional)</Label>
-              <Textarea
-                value={resourceForm.description || ""}
-                onChange={(e) => setResourceForm({ ...resourceForm, description: e.target.value })}
-                placeholder="Brief description"
-                rows={2}
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={resourceForm.is_public || false}
-                onCheckedChange={(checked) => setResourceForm({ ...resourceForm, is_public: checked })}
-              />
-              <Label>Public (visible to all)</Label>
-            </div>
-          </div>
+          <ResourceForm formData={formData} setFormData={setFormData} resourceType={activeTab as ResourceType} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowResourceDialog(false)}>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveResource} disabled={saving || !resourceForm.title || !resourceForm.url}>
-              {saving ? "Saving..." : "Save Resource"}
+            <Button onClick={handleCreate} disabled={isProcessing || !formData.title || !formData.url}>
+              {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+              Create
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Speaker Dialog */}
-      <Dialog open={showSpeakerDialog} onOpenChange={setShowSpeakerDialog}>
-        <DialogContent>
+      {/* Edit Resource Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingSpeaker ? "Edit Speaker" : "Add Speaker"}</DialogTitle>
+            <DialogTitle>Edit Resource</DialogTitle>
+            <DialogDescription>Update resource details</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Title</Label>
-                <Input
-                  value={speakerForm.title || ""}
-                  onChange={(e) => setSpeakerForm({ ...speakerForm, title: e.target.value })}
-                  placeholder="Dr., Prof., etc."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Name</Label>
-                <Input
-                  value={speakerForm.name}
-                  onChange={(e) => setSpeakerForm({ ...speakerForm, name: e.target.value })}
-                  placeholder="Full name"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Credentials</Label>
-                <Input
-                  value={speakerForm.credentials || ""}
-                  onChange={(e) => setSpeakerForm({ ...speakerForm, credentials: e.target.value })}
-                  placeholder="MD, PhD, SpAn, etc."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select
-                  value={speakerForm.role || ""}
-                  onValueChange={(v) => setSpeakerForm({ ...speakerForm, role: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SPEAKER_ROLES.map((role) => (
-                      <SelectItem key={role} value={role}>
-                        {role}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Organization</Label>
-              <Input
-                value={speakerForm.organization || ""}
-                onChange={(e) => setSpeakerForm({ ...speakerForm, organization: e.target.value })}
-                placeholder="Hospital, University, etc."
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Bio (optional)</Label>
-              <Textarea
-                value={speakerForm.bio || ""}
-                onChange={(e) => setSpeakerForm({ ...speakerForm, bio: e.target.value })}
-                placeholder="Brief biography"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Photo URL (optional)</Label>
-              <Input
-                value={speakerForm.photo_url || ""}
-                onChange={(e) => setSpeakerForm({ ...speakerForm, photo_url: e.target.value })}
-                placeholder="https://..."
-              />
-            </div>
-          </div>
+          <ResourceForm
+            formData={formData}
+            setFormData={setFormData}
+            resourceType={selectedResource?.resource_type as ResourceType}
+          />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSpeakerDialog(false)}>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveSpeaker} disabled={saving || !speakerForm.name}>
-              {saving ? "Saving..." : "Save Speaker"}
+            <Button onClick={handleUpdate} disabled={isProcessing || !formData.title || !formData.url}>
+              {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Pencil className="w-4 h-4 mr-2" />}
+              Update
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Dialog */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Event</DialogTitle>
+            <DialogTitle>Delete Resource</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete "{selectedEvent?.title}"? This action can be undone from the database.
+              Are you sure you want to delete &quot;{selectedResource?.title}&quot;? This action can be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteEvent} disabled={saving}>
-              {saving ? "Deleting..." : "Delete Event"}
+            <Button variant="destructive" onClick={handleDelete} disabled={isProcessing}>
+              {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </>
+  )
+}
+
+// Resource Form Component
+function ResourceForm({
+  formData,
+  setFormData,
+  resourceType,
+}: {
+  formData: {
+    title: string
+    description: string
+    url: string
+    file_type: string
+    file_size: number
+    sort_order: number
+    is_public: boolean
+  }
+  setFormData: React.Dispatch<React.SetStateAction<typeof formData>>
+  resourceType: ResourceType
+}) {
+  return (
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="title">Title *</Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
+          placeholder="e.g., Presentation Slides"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData((prev) => ({ ...prev, description: e.target.value }))}
+          placeholder="Optional description..."
+          rows={2}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="url">URL *</Label>
+        <Input
+          id="url"
+          value={formData.url}
+          onChange={(e) => setFormData((prev) => ({ ...prev, url: e.target.value }))}
+          placeholder={
+            resourceType === "link"
+              ? "https://zoom.us/j/..."
+              : resourceType === "video"
+                ? "https://youtube.com/watch?v=..."
+                : "https://storage.example.com/file.pdf"
+          }
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="file_type">File Type</Label>
+          <Select value={formData.file_type} onValueChange={(v) => setFormData((prev) => ({ ...prev, file_type: v }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="pdf">PDF</SelectItem>
+              <SelectItem value="doc">Word Document</SelectItem>
+              <SelectItem value="ppt">PowerPoint</SelectItem>
+              <SelectItem value="xls">Excel</SelectItem>
+              <SelectItem value="zip">ZIP Archive</SelectItem>
+              <SelectItem value="mp4">Video (MP4)</SelectItem>
+              <SelectItem value="jpg">Image (JPG)</SelectItem>
+              <SelectItem value="png">Image (PNG)</SelectItem>
+              <SelectItem value="url">External Link</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="file_size">File Size (MB)</Label>
+          <Input
+            id="file_size"
+            type="number"
+            value={formData.file_size ? formData.file_size / (1024 * 1024) : ""}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                file_size: Number.parseFloat(e.target.value) * 1024 * 1024 || 0,
+              }))
+            }
+            placeholder="Optional"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between p-4 border rounded-lg">
+        <div>
+          <Label htmlFor="is_public" className="font-medium">
+            Public Access
+          </Label>
+          <p className="text-sm text-muted-foreground">Visible to everyone, not just registered attendees</p>
+        </div>
+        <Switch
+          id="is_public"
+          checked={formData.is_public}
+          onCheckedChange={(v) => setFormData((prev) => ({ ...prev, is_public: v }))}
+        />
+      </div>
+    </div>
+  )
+}
+
+// Resource Item Component
+function ResourceItem({
+  item,
+  onEdit,
+  onDelete,
+  onRestore,
+}: {
+  item: EventResource
+  onEdit: () => void
+  onDelete: () => void
+  onRestore: () => void
+}) {
+  const Icon = RESOURCE_TYPE_ICONS[item.resource_type as ResourceType] || FileText
+
+  return (
+    <div
+      className={`flex items-center justify-between p-4 border rounded-lg ${
+        !item.is_active ? "opacity-50 bg-slate-50" : "bg-card hover:shadow-sm"
+      } transition-all`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">
+          <Icon className="w-5 h-5 text-slate-600" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <p className="font-medium truncate">{item.title}</p>
+            {item.is_public ? (
+              <Badge variant="outline" className="text-xs gap-1">
+                <Eye className="w-3 h-3" />
+                Public
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="text-xs gap-1">
+                <EyeOff className="w-3 h-3" />
+                Private
+              </Badge>
+            )}
+            {!item.is_active && (
+              <Badge variant="destructive" className="text-xs">
+                Deleted
+              </Badge>
+            )}
+          </div>
+          {item.description && <p className="text-sm text-muted-foreground truncate">{item.description}</p>}
+          <p className="text-xs text-muted-foreground truncate mt-1">{item.url}</p>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 ml-4">
+        <Button variant="ghost" size="icon" asChild>
+          <a href={item.url} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        </Button>
+        {item.is_active ? (
+          <>
+            <Button variant="ghost" size="icon" onClick={onEdit}>
+              <Pencil className="w-4 h-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onDelete}>
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </>
+        ) : (
+          <Button variant="ghost" size="icon" onClick={onRestore}>
+            <RotateCcw className="w-4 h-4" />
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// History Item Component
+function HistoryItem({ entry }: { entry: EventHistory }) {
+  const actionColors: Record<string, string> = {
+    resource_created: "bg-green-100 text-green-700",
+    resource_updated: "bg-blue-100 text-blue-700",
+    resource_deleted: "bg-red-100 text-red-700",
+    resource_restored: "bg-amber-100 text-amber-700",
+  }
+
+  return (
+    <div className="flex items-start gap-3 p-4 border rounded-lg bg-card">
+      <Badge className={actionColors[entry.action] || "bg-slate-100 text-slate-700"}>
+        {entry.action.replace(/_/g, " ")}
+      </Badge>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm">
+          {entry.changes?.resource_title && <span className="font-medium">{String(entry.changes.resource_title)}</span>}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          {entry.profiles?.full_name || "Unknown"} &bull;{" "}
+          {formatDistanceToNow(new Date(entry.changed_at), { addSuffix: true })}
+        </p>
+      </div>
     </div>
   )
 }

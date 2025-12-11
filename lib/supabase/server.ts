@@ -27,6 +27,4 @@ export async function createClient() {
   })
 }
 
-export const createServerSupabaseClient = createClient
-
 export { createServerClient } from "@supabase/ssr"

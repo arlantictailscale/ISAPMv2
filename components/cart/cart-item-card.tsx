@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, Calendar, HotelIcon, Users, Video, Loader2, Check } from "lucide-react"
+import { Trash2, Calendar, HotelIcon, Users, Video, Loader2, Check, Gift } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/cart/utils"
@@ -69,6 +69,8 @@ export function CartItemCard({ item }: CartItemCardProps) {
     }
   }
 
+  const isSymposium = item.item_type === "event" && item.event_label?.toLowerCase().includes("symposium")
+
   return (
     <Card
       className={`transition-all duration-300 ease-out ${
@@ -88,6 +90,12 @@ export function CartItemCard({ item }: CartItemCardProps) {
                 <p>
                   Participant Type: <span className="font-medium text-foreground">{item.participant_type_label}</span>
                 </p>
+                {isSymposium && (
+                  <div className="flex items-center gap-1.5 text-emerald-600 mt-1">
+                    <Gift className="h-3.5 w-3.5" />
+                    <span className="text-xs font-medium">+4 Bonus Webinars Included</span>
+                  </div>
+                )}
               </div>
             )}
 

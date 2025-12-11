@@ -107,7 +107,7 @@ export default function WebinarsPage() {
                       Register for the symposium to receive complimentary access to all pre-conference webinars.
                     </p>
                   </div>
-                  <Link href="/symposium">
+                  <Link href="/events?tab=symposium">
                     <Button
                       size="sm"
                       variant="outline"

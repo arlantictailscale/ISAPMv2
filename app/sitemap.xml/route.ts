@@ -13,7 +13,7 @@ export async function GET() {
     { url: "/call-for-papers", priority: "0.8", changefreq: "monthly" },
     { url: "/program", priority: "0.8", changefreq: "monthly" },
     { url: "/workshop", priority: "0.8", changefreq: "monthly" },
-    { url: "/symposium", priority: "0.8", changefreq: "monthly" },
+    { url: "/webinar", priority: "0.8", changefreq: "monthly" },
     { url: "/venue", priority: "0.8", changefreq: "monthly" },
     { url: "/hotel-booking", priority: "0.7", changefreq: "monthly" },
     { url: "/submit-poster", priority: "0.7", changefreq: "monthly" },

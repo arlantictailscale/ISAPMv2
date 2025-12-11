@@ -4,7 +4,7 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ChevronRight, Ticket } from "lucide-react"
+import { ArrowLeft, ChevronRight, Ticket, Gift, ArrowRight } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Clock } from "lucide-react"
 import Link from "next/link"
@@ -1135,6 +1135,27 @@ export default function EventsPage() {
               </TabsContent>
 
               <TabsContent value="symposium" className="space-y-8 animate-in fade-in-50 duration-500">
+                {/* CHANGE: Added prominent bonus webinars banner */}
+                <div className="bg-gradient-to-r from-emerald-50 to-cyan-50 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-full bg-emerald-100 p-2">
+                      <Gift className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-emerald-800">+4 Bonus Webinars Included</p>
+                      <p className="text-sm text-emerald-700">
+                        Get complimentary access to all pre-conference webinars when you register for the symposium.
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/webinar"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 hover:text-emerald-800 whitespace-nowrap"
+                  >
+                    View Webinars <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
                 <div className="bg-gradient-to-br from-cyan-500/10 via-cyan-500/5 to-transparent rounded-2xl border border-cyan-500/20 p-8 shadow-sm">
                   <div className="flex items-start gap-4 mb-6">
                     <div className="rounded-full bg-cyan-500/20 p-3">

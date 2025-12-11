@@ -436,22 +436,22 @@ export default async function DashboardPage() {
               {!isAdmin && (
                 <div className="flex flex-wrap gap-3">
                   <Link href="/pricing">
-                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700">
+                    <Button size="lg" className="bg-red-500 hover:bg-red-600 text-white">
                       Browse Events
                     </Button>
                   </Link>
                   <Link href="/webinar">
-                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700">
+                    <Button size="lg" className="bg-green-500 hover:bg-green-600 text-white">
                       Browse Webinars
                     </Button>
                   </Link>
                   <Link href="/submit-poster">
-                    <Button size="lg" variant="outline">
+                    <Button size="lg" className="bg-amber-500 hover:bg-amber-600 text-white">
                       Submit Poster
                     </Button>
                   </Link>
                   <Link href="/hotel-booking">
-                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700">
+                    <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white">
                       Book a Hotel
                     </Button>
                   </Link>

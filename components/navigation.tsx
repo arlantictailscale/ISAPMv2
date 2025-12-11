@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -53,9 +53,17 @@ const adminNavItems = [
   { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen },
   { label: "E-Poster Submissions", href: "/admin/posters", icon: Presentation },
   { label: "Symposium Webinar Access", href: "/admin/symposium-webinar-access", icon: Gift },
-  { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel }, // Added Hotel Management link
+  { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel },
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
+]
+
+const navItems = [
+  { label: "Home", href: "/" },
+  { label: "Events", href: "/events" },
+  { label: "Webinar", href: "/webinar" },
+  { label: "e-Poster", href: "/call-for-papers" },
+  { label: "Venue", href: "/venue" },
 ]
 
 export default function Navigation() {
@@ -65,23 +73,37 @@ export default function Navigation() {
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
-  const supabase = createClient()
   const router = useRouter()
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
+  const supabase = useMemo(() => createClient(), [])
 
-      if (error) {
-        console.error("[v0] Error fetching user role:", error.message)
+  const isAdmin = useMemo(() => userRole === "admin", [userRole])
+
+  const fetchUserRole = useCallback(
+    async (userId: string) => {
+      try {
+        const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
+
+        if (error) {
+          console.error("Error fetching user role:", error.message)
+          return "user"
+        }
+        return profile?.role || "user"
+      } catch (profileError) {
+        console.error("Failed to fetch profile:", profileError)
         return "user"
       }
-      return profile?.role || "user"
-    } catch (profileError) {
-      console.error("[v0] Failed to fetch profile:", profileError)
-      return "user"
-    }
-  }
+    },
+    [supabase],
+  )
+
+  const handleLogout = useCallback(async () => {
+    await supabase.auth.signOut()
+    setUser(null)
+    router.push("/")
+  }, [supabase, router])
+
+  const handleMenuClose = useCallback(() => setIsOpen(false), [])
 
   useEffect(() => {
     const checkUser = async () => {
@@ -96,7 +118,7 @@ export default function Navigation() {
           setUserRole(role)
         }
       } catch (authError) {
-        console.error("[v0] Auth check failed:", authError)
+        console.error("Auth check failed:", authError)
         setUser(null)
       } finally {
         setIsLoading(false)
@@ -118,35 +140,20 @@ export default function Navigation() {
         setUserRole("user")
       }
 
-      // Ensure loading is false after auth state changes
       setIsLoading(false)
     })
 
     return () => subscription?.unsubscribe()
-  }, [supabase])
+  }, [supabase, fetchUserRole])
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
 
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    setUser(null)
-    router.push("/")
-  }
-
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Events", href: "/events" },
-    { label: "Webinar", href: "/webinar" },
-    { label: "e-Poster", href: "/call-for-papers" },
-    { label: "Venue", href: "/venue" },
-  ]
 
   return (
     <nav
@@ -243,7 +250,7 @@ export default function Navigation() {
                       </Link>
                     </DropdownMenuGroup>
 
-                    {userRole === "admin" && (
+                    {isAdmin && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel className="text-xs text-primary flex items-center gap-1">
@@ -300,12 +307,12 @@ export default function Navigation() {
                 key={item.href}
                 href={item.href}
                 className="block px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                onClick={() => setIsOpen(false)}
+                onClick={handleMenuClose}
               >
                 {item.label}
               </Link>
             ))}
-            <Link href="/pricing" onClick={() => setIsOpen(false)}>
+            <Link href="/pricing" onClick={handleMenuClose}>
               <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
                 Register Now
               </Button>
@@ -316,7 +323,7 @@ export default function Navigation() {
                 <Link
                   href="/dashboard"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   Dashboard
@@ -326,7 +333,7 @@ export default function Navigation() {
                 <Link
                   href="/profile"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <User className="w-4 h-4" />
                   My Profile
@@ -334,7 +341,7 @@ export default function Navigation() {
                 <Link
                   href="/my-purchases"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <ShoppingBag className="w-4 h-4" />
                   My Purchases
@@ -342,7 +349,7 @@ export default function Navigation() {
                 <Link
                   href="/my-events"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <Calendar className="w-4 h-4" />
                   My Events
@@ -350,7 +357,7 @@ export default function Navigation() {
                 <Link
                   href="/my-webinars"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <Video className="w-4 h-4" />
                   My Webinars
@@ -358,7 +365,7 @@ export default function Navigation() {
                 <Link
                   href="/my-posters"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <FileText className="w-4 h-4" />
                   My E-Posters
@@ -366,13 +373,13 @@ export default function Navigation() {
                 <Link
                   href="/my-hotels"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleMenuClose}
                 >
                   <Building2 className="w-4 h-4" />
                   My Hotels
                 </Link>
 
-                {userRole === "admin" && (
+                {isAdmin && (
                   <>
                     <div className="border-t my-3" />
                     <button
@@ -395,7 +402,7 @@ export default function Navigation() {
                               key={item.href}
                               href={item.href}
                               className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                              onClick={() => setIsOpen(false)}
+                              onClick={handleMenuClose}
                             >
                               <Icon className="w-4 h-4" />
                               {item.label}
@@ -411,7 +418,7 @@ export default function Navigation() {
                 <button
                   onClick={() => {
                     handleLogout()
-                    setIsOpen(false)
+                    handleMenuClose()
                   }}
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-muted rounded-lg transition-colors w-full text-left"
                 >
@@ -420,7 +427,7 @@ export default function Navigation() {
                 </button>
               </div>
             ) : (
-              <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+              <Link href="/auth/login" onClick={handleMenuClose}>
                 <Button variant="outline" size="sm" className="w-full mt-2 bg-transparent">
                   Login
                 </Button>

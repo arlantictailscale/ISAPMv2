@@ -12,9 +12,9 @@ export default function CallbackPage() {
   useEffect(() => {
     const handleCallback = async () => {
       console.log("[v0] Auth callback page mounted")
-      console.log("[v0] URL:", window.location.href)
+      console.log("[v0] Full URL:", window.location.href)
       console.log("[v0] Hash:", window.location.hash)
-      console.log("[v0] Search params:", Object.fromEntries(searchParams.entries()))
+      console.log("[v0] Search:", window.location.search)
 
       try {
         const supabase = createClient()
@@ -31,46 +31,106 @@ export default function CallbackPage() {
           return
         }
 
-        const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(window.location.href)
+        // This works for both email confirmation (#access_token=...) and OAuth code exchange
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession()
 
-        if (exchangeError) {
-          console.error("[v0] Auth exchange error:", exchangeError)
-          setError(exchangeError.message)
+        console.log("[v0] Session check result:", { session: !!session, error: sessionError })
+
+        if (sessionError) {
+          console.error("[v0] Session error:", sessionError)
+          setError(sessionError.message)
           setTimeout(() => {
-            router.push(`/auth/login?error=${encodeURIComponent(exchangeError.message)}`)
+            router.push(`/auth/login?error=${encodeURIComponent(sessionError.message)}`)
           }, 2000)
           return
+        }
+
+        if (!session) {
+          const code = searchParams.get("code")
+
+          if (code) {
+            console.log("[v0] Found OAuth code, attempting exchange")
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+
+            if (exchangeError) {
+              console.error("[v0] Code exchange error:", exchangeError)
+              setError(exchangeError.message)
+              setTimeout(() => {
+                router.push(`/auth/login?error=${encodeURIComponent(exchangeError.message)}`)
+              }, 2000)
+              return
+            }
+
+            if (!data.session) {
+              setError("No session created from code exchange")
+              setTimeout(() => {
+                router.push("/auth/login?error=no_session")
+              }, 2000)
+              return
+            }
+          } else {
+            console.error("[v0] No session, code, or hash found")
+            setError("No authentication data found")
+            setTimeout(() => {
+              router.push("/auth/login?error=no_auth_data")
+            }, 2000)
+            return
+          }
         }
 
         const {
-          data: { session },
+          data: { session: currentSession },
         } = await supabase.auth.getSession()
 
-        if (!session) {
-          setError("No session created")
+        if (!currentSession) {
+          setError("Failed to establish session")
           setTimeout(() => {
-            router.push("/auth/login?error=no_session")
+            router.push("/auth/login?error=session_failed")
           }, 2000)
           return
         }
 
-        const user = session.user
+        const user = currentSession.user
+        console.log("[v0] User authenticated:", user.id, user.email)
 
-        const { data: profile } = await supabase.from("profiles").select("id, role").eq("id", user.id).maybeSingle()
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, role")
+          .eq("id", user.id)
+          .maybeSingle()
 
-        if (!profile) {
-          await supabase.from("profiles").insert({
+        if (profileError) {
+          console.error("[v0] Profile check error:", profileError)
+        }
+
+        if (!profile && !profileError) {
+          console.log("[v0] Creating new profile for user")
+          const { error: insertError } = await supabase.from("profiles").insert({
             id: user.id,
             full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
             email: user.email,
             role: "user",
           })
+
+          if (insertError) {
+            console.error("[v0] Profile creation error:", insertError)
+          }
         }
 
-        router.push("/dashboard")
+        const type = searchParams.get("type")
+        if (type === "signup" || window.location.hash.includes("type=signup")) {
+          console.log("[v0] Signup confirmation detected, redirecting to success page")
+          router.push("/auth/email-confirmed")
+        } else {
+          console.log("[v0] Redirecting to dashboard")
+          router.push("/dashboard")
+        }
       } catch (err) {
         console.error("[v0] Callback error:", err)
-        setError("Authentication failed")
+        setError(err instanceof Error ? err.message : "Authentication failed")
         setTimeout(() => {
           router.push("/auth/login?error=callback_failed")
         }, 2000)

@@ -57,70 +57,87 @@ export async function getHotelBookings(filters?: {
   const supabase = await createClient()
 
   try {
-    // Get all orders with hotel room items
-    const { data: orders, error: ordersError } = await supabase
+    // First get verified orders
+    const { data: allOrders, error: ordersError } = await supabase
       .from("orders")
       .select(`
         id,
         user_id,
         status,
         created_at,
-        order_items!inner (
-          id,
-          item_type,
-          event_id,
-          hotel_room_type,
-          check_in_date,
-          check_out_date,
-          nights,
-          quantity,
-          unit_price,
-          total_price
-        ),
         order_payments (
           payment_status
         )
       `)
-      .not("status", "eq", "cancelled")
+      .neq("status", "cancelled")
 
     if (ordersError) throw ordersError
 
+    console.log("[v0] All orders:", allOrders?.length)
+
+    // Get order items with hotel_room_type
+    const orderIds = allOrders?.map((o) => o.id) || []
+
+    const { data: hotelItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select(`
+        id,
+        order_id,
+        item_type,
+        event_id,
+        hotel_room_type,
+        check_in_date,
+        check_out_date,
+        nights,
+        quantity,
+        unit_price,
+        total_price
+      `)
+      .in("hotel_room_type", ["deluxe", "premier"])
+      .in("order_id", orderIds.length > 0 ? orderIds : ["00000000-0000-0000-0000-000000000000"])
+
+    if (itemsError) throw itemsError
+
+    console.log("[v0] Hotel items found:", hotelItems?.length, hotelItems)
+
     // Get user profiles for guest details
-    const userIds = [...new Set(orders?.map((o) => o.user_id) || [])]
+    const userIds = [...new Set(allOrders?.map((o) => o.user_id) || [])]
     const { data: profiles } = await supabase.from("profiles").select("id, full_name, email").in("id", userIds)
 
     const profileMap = new Map(profiles?.map((p) => [p.id, p]) || [])
+    const orderMap = new Map(allOrders?.map((o) => [o.id, o]) || [])
 
     // Transform to bookings
     let bookings: HotelBooking[] = []
 
-    for (const order of orders || []) {
-      const hotelItems = order.order_items.filter((item: any) => item.item_type === "hotel" && item.hotel_room_type)
+    for (const item of hotelItems || []) {
+      const order = orderMap.get(item.order_id)
+      if (!order) continue
 
-      for (const item of hotelItems) {
-        const profile = profileMap.get(order.user_id)
-        const paymentStatus = order.order_payments?.[0]?.payment_status || "pending"
+      const profile = profileMap.get(order.user_id)
+      const paymentStatus = order.order_payments?.[0]?.payment_status || "pending"
 
-        bookings.push({
-          id: item.id,
-          order_id: order.id,
-          user_id: order.user_id,
-          room_type: item.hotel_room_type,
-          check_in_date: item.check_in_date,
-          check_out_date: item.check_out_date,
-          nights: item.nights || 1,
-          quantity: item.quantity || 1,
-          unit_price: item.unit_price || 0,
-          total_price: item.total_price || 0,
-          status: paymentStatus === "verified" ? "confirmed" : "pending",
-          payment_status: paymentStatus,
-          created_at: order.created_at,
-          guest_name: profile?.full_name || "Unknown Guest",
-          guest_email: profile?.email || "",
-          order_status: order.status,
-        })
-      }
+      bookings.push({
+        id: item.id,
+        order_id: order.id,
+        user_id: order.user_id,
+        room_type: item.hotel_room_type,
+        check_in_date: item.check_in_date,
+        check_out_date: item.check_out_date,
+        nights: item.nights || 1,
+        quantity: item.quantity || 1,
+        unit_price: item.unit_price || 0,
+        total_price: item.total_price || 0,
+        status: paymentStatus === "verified" ? "confirmed" : "pending",
+        payment_status: paymentStatus,
+        created_at: order.created_at,
+        guest_name: profile?.full_name || "Unknown Guest",
+        guest_email: profile?.email || "",
+        order_status: order.status,
+      })
     }
+
+    console.log("[v0] Bookings transformed:", bookings.length)
 
     // Apply filters
     if (filters?.roomType && filters.roomType !== "all") {
@@ -168,29 +185,43 @@ export async function getBookingStats(): Promise<{
 
   try {
     // Get room availability settings
-    const { data: settings } = await supabase.from("room_availability_settings").select("*").single()
+    const { data: settings } = await supabase
+      .from("room_availability_settings")
+      .select("room_type, default_capacity")
+      .in("room_type", ["deluxe", "premier"])
 
-    const deluxeTotal = settings?.deluxe_rooms || 50
-    const premierTotal = settings?.premier_rooms || 20
+    const deluxeTotal = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
+    const premierTotal = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
 
-    // Get all hotel bookings
-    const { data: orders, error } = await supabase
+    const { data: allOrders, error: ordersError } = await supabase
       .from("orders")
       .select(`
         id,
         status,
-        order_items!inner (
-          hotel_room_type,
-          quantity,
-          total_price
-        ),
         order_payments (
           payment_status
         )
       `)
-      .not("status", "eq", "cancelled")
+      .neq("status", "cancelled")
 
-    if (error) throw error
+    if (ordersError) throw ordersError
+
+    const orderIds = allOrders?.map((o) => o.id) || []
+    const orderMap = new Map(allOrders?.map((o) => [o.id, o]) || [])
+
+    // Get hotel items
+    const { data: hotelItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select(`
+        order_id,
+        hotel_room_type,
+        quantity,
+        total_price
+      `)
+      .in("hotel_room_type", ["deluxe", "premier"])
+      .in("order_id", orderIds.length > 0 ? orderIds : ["00000000-0000-0000-0000-000000000000"])
+
+    if (itemsError) throw itemsError
 
     let totalBookings = 0
     let confirmedBookings = 0
@@ -200,27 +231,26 @@ export async function getBookingStats(): Promise<{
     let deluxeBooked = 0
     let premierBooked = 0
 
-    for (const order of orders || []) {
-      const hotelItems = order.order_items.filter((item: any) => item.hotel_room_type)
+    for (const item of hotelItems || []) {
+      const order = orderMap.get(item.order_id)
+      if (!order) continue
+
       const paymentStatus = order.order_payments?.[0]?.payment_status || "pending"
+      totalBookings++
 
-      for (const item of hotelItems) {
-        totalBookings++
+      if (paymentStatus === "verified") {
+        confirmedBookings++
+        totalRevenue += item.total_price || 0
 
-        if (paymentStatus === "verified") {
-          confirmedBookings++
-          totalRevenue += item.total_price || 0
-
-          if (item.hotel_room_type === "deluxe") {
-            deluxeBooked += item.quantity || 1
-          } else if (item.hotel_room_type === "premier") {
-            premierBooked += item.quantity || 1
-          }
-        } else if (paymentStatus === "pending") {
-          pendingBookings++
-        } else if (paymentStatus === "rejected") {
-          cancelledBookings++
+        if (item.hotel_room_type === "deluxe") {
+          deluxeBooked += item.quantity || 1
+        } else if (item.hotel_room_type === "premier") {
+          premierBooked += item.quantity || 1
         }
+      } else if (paymentStatus === "pending") {
+        pendingBookings++
+      } else if (paymentStatus === "rejected") {
+        cancelledBookings++
       }
     }
 
@@ -235,12 +265,12 @@ export async function getBookingStats(): Promise<{
           deluxe: {
             booked: deluxeBooked,
             total: deluxeTotal,
-            percentage: Math.round((deluxeBooked / deluxeTotal) * 100),
+            percentage: deluxeTotal > 0 ? Math.round((deluxeBooked / deluxeTotal) * 100) : 0,
           },
           premier: {
             booked: premierBooked,
             total: premierTotal,
-            percentage: Math.round((premierBooked / premierTotal) * 100),
+            percentage: premierTotal > 0 ? Math.round((premierBooked / premierTotal) * 100) : 0,
           },
         },
       },
@@ -256,8 +286,8 @@ export async function getBookingStats(): Promise<{
         cancelledBookings: 0,
         totalRevenue: 0,
         occupancyRate: {
-          deluxe: { booked: 0, total: 50, percentage: 0 },
-          premier: { booked: 0, total: 20, percentage: 0 },
+          deluxe: { booked: 0, total: 120, percentage: 0 },
+          premier: { booked: 0, total: 56, percentage: 0 },
         },
       },
       error: "Failed to fetch stats",

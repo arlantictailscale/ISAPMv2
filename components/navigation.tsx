@@ -109,8 +109,29 @@ export default function Navigation() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user || null)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      const currentUser = session?.user || null
+      setUser(currentUser)
+
+      if (currentUser) {
+        try {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", currentUser.id)
+            .maybeSingle()
+
+          if (profile?.role) {
+            setUserRole(profile.role)
+          }
+        } catch (e) {
+          // Silent fail, keep default role
+        }
+      } else {
+        setUserRole("user")
+      }
+
+      setIsLoading(false)
     })
 
     return () => subscription?.unsubscribe()

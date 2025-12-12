@@ -11,7 +11,6 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
 import { ArrowLeft, UserPlus, Mail, ArrowRight, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { checkAuthProvider } from "@/app/actions/check-auth-provider"
 
 type ErrorType = "user_not_found" | "invalid_credentials" | "oauth_only" | "general" | null
 
@@ -23,7 +22,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [showGoogleSuggestion, setShowGoogleSuggestion] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<string>("")
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -41,98 +39,33 @@ export default function LoginPage() {
     setError(null)
     setErrorType(null)
     setShowGoogleSuggestion(false)
-    setDebugInfo("Starting login...")
 
     try {
       const supabase = createClient()
 
-      setDebugInfo("Attempting signInWithPassword...")
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      console.log("[v0] signInError:", signInError)
-
       if (signInError) {
         const errorMessage = signInError.message.toLowerCase()
-        setDebugInfo(`Error: "${signInError.message}" (code: ${signInError.code})`)
 
         const isCredentialError =
           errorMessage.includes("invalid login credentials") ||
           errorMessage.includes("invalid credentials") ||
           signInError.code === "invalid_credentials"
 
-        setDebugInfo((prev) => prev + ` | isCredentialError: ${isCredentialError}`)
-
         if (isCredentialError) {
-          setDebugInfo((prev) => prev + " | Calling checkAuthProvider...")
-
-          try {
-            const providerResult = await checkAuthProvider(email)
-
-            const serverDebug = providerResult.debug || "no-debug"
-            setDebugInfo((prev) => prev + ` | ServerDebug: ${serverDebug}`)
-
-            console.log("[v0] providerResult:", providerResult)
-
-            if (providerResult.error) {
-              console.log("[v0] Server error, checking Gmail fallback")
-              setDebugInfo((prev) => prev + ` | ServerError: ${providerResult.error}`)
-
-              // Gmail addresses are likely Google OAuth accounts
-              if (email.toLowerCase().endsWith("@gmail.com")) {
-                setDebugInfo((prev) => prev + " | GMAIL_FALLBACK")
-                setErrorType("oauth_only")
-                setError("This appears to be a Google account. Please sign in with Google.")
-                setShowGoogleSuggestion(true)
-                return
-              }
-
-              // Non-Gmail with server error - show generic error
-              setErrorType("invalid_credentials")
-              setError("Invalid email or password. Please check your credentials.")
-              return
-            }
-
-            // Server action succeeded - use its results
-            if (providerResult.exists) {
-              if (providerResult.isOAuthOnly) {
-                setDebugInfo((prev) => prev + " | OAUTH_ONLY_DETECTED")
-                setErrorType("oauth_only")
-                setError("This account uses Google Sign-In only.")
-                setShowGoogleSuggestion(true)
-              } else {
-                setDebugInfo((prev) => prev + " | WRONG_PASSWORD")
-                setErrorType("invalid_credentials")
-                setError("Incorrect password. Please try again or reset your password.")
-              }
-            } else {
-              // Account doesn't exist - but for Gmail, still suggest Google
-              if (email.toLowerCase().endsWith("@gmail.com")) {
-                setDebugInfo((prev) => prev + " | NOT_FOUND_BUT_GMAIL")
-                setErrorType("oauth_only")
-                setError("Try signing in with Google - your account may have been created that way.")
-                setShowGoogleSuggestion(true)
-              } else {
-                setDebugInfo((prev) => prev + " | USER_NOT_FOUND")
-                setErrorType("user_not_found")
-                setError("No account found with this email address")
-              }
-            }
-          } catch (providerError: any) {
-            console.error("[v0] Provider check exception:", providerError)
-            setDebugInfo((prev) => prev + ` | EXCEPTION: ${providerError?.message || providerError}`)
-
-            // Fallback for Gmail addresses
-            if (email.toLowerCase().endsWith("@gmail.com")) {
-              setErrorType("oauth_only")
-              setError("This might be a Google Sign-In account. Try signing in with Google.")
-              setShowGoogleSuggestion(true)
-            } else {
-              setErrorType("invalid_credentials")
-              setError("Invalid email or password. Please check your credentials.")
-            }
+          // Gmail addresses are very likely Google OAuth accounts
+          if (email.toLowerCase().endsWith("@gmail.com")) {
+            setErrorType("oauth_only")
+            setError("This appears to be a Google account. Please sign in with Google.")
+            setShowGoogleSuggestion(true)
+          } else {
+            // Non-Gmail accounts - show password error
+            setErrorType("invalid_credentials")
+            setError("Invalid email or password. Please check your credentials.")
           }
         } else {
           setErrorType("general")
@@ -150,8 +83,6 @@ export default function LoginPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      console.error("[v0] Login error:", error)
-      setDebugInfo(`Catch block: ${error}`)
       setErrorType("general")
       if (error instanceof Error) {
         setError(error.message)
@@ -250,12 +181,6 @@ export default function LoginPage() {
                   </Link>
                 </div>
               </div>
-
-              {debugInfo && (
-                <div className="p-2 bg-yellow-100 border border-yellow-300 rounded text-xs font-mono break-all">
-                  <strong>DEBUG:</strong> {debugInfo}
-                </div>
-              )}
 
               {error && errorType === "oauth_only" && (
                 <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4 space-y-3">

@@ -1,5 +1,6 @@
 "use server"
 
+import { neon } from "@neondatabase/serverless"
 import { createClient } from "@supabase/supabase-js"
 
 export async function addPasswordToAccount(email: string, password: string) {
@@ -8,6 +9,7 @@ export async function addPasswordToAccount(email: string, password: string) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const databaseUrl = process.env.POSTGRES_URL
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("[v0] addPasswordToAccount: Missing Supabase configuration")
@@ -25,19 +27,30 @@ export async function addPasswordToAccount(email: string, password: string) {
       },
     })
 
-    // First, get the user by email to get their user ID
-    const { data: userData, error: userError } = await adminClient.auth.admin.getUserByEmail(email)
+    if (!databaseUrl) {
+      console.error("[v0] addPasswordToAccount: Missing database URL")
+      return {
+        success: false,
+        error: "Server configuration error",
+      }
+    }
 
-    if (userError || !userData?.user) {
-      console.error("[v0] addPasswordToAccount: Failed to get user:", userError)
+    const sql = neon(databaseUrl)
+
+    // Get the user ID from auth.users table
+    const users = await sql`
+      SELECT id FROM auth.users WHERE email = ${email} LIMIT 1
+    `
+
+    if (!users || users.length === 0) {
+      console.error("[v0] addPasswordToAccount: User not found")
       return {
         success: false,
         error: "User not found",
       }
     }
 
-    const userId = userData.user.id
-
+    const userId = users[0].id
     console.log("[v0] addPasswordToAccount: Found user ID:", userId)
 
     // Update the user's password using admin API

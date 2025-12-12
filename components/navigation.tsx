@@ -67,17 +67,12 @@ const navItems = [
   { label: "Venue", href: "/venue" },
 ]
 
-interface NavigationProps {
-  initialUser?: any
-  initialUserRole?: string
-}
-
-export default function Navigation({ initialUser, initialUserRole = "user" }: NavigationProps) {
+export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(initialUser || null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [userRole, setUserRole] = useState<string>(initialUserRole)
+  const [user, setUser] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
 
   const supabase = useMemo(() => createClient(), [])
@@ -105,11 +100,6 @@ export default function Navigation({ initialUser, initialUserRole = "user" }: Na
 
   useEffect(() => {
     const checkUser = async () => {
-      if (initialUser) {
-        setIsLoading(false)
-        return
-      }
-
       try {
         const {
           data: { user },
@@ -147,7 +137,7 @@ export default function Navigation({ initialUser, initialUserRole = "user" }: Na
     })
 
     return () => subscription?.unsubscribe()
-  }, [supabase, fetchUserRole, initialUser])
+  }, [supabase, fetchUserRole])
 
   useEffect(() => {
     const handleScroll = () => {

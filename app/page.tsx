@@ -1,3 +1,4 @@
+import Navigation from "@/components/navigation"
 import LandingHero from "@/components/landing-hero"
 import dynamic from "next/dynamic"
 import { getRegisteredCount } from "@/app/actions/public-stats"
@@ -59,6 +60,7 @@ export default async function Home() {
 
   return (
     <main className="overflow-x-hidden">
+      <Navigation />
       <LandingHero />
       <div id="content">
         <ScrollReveal direction="up" duration={800}>

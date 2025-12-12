@@ -1,32 +1,61 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+"use client"
+
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import { createClient } from "@/lib/supabase/client"
+import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Hotel, CheckCircle, XCircle, Clock } from "lucide-react"
+import { Loader2, Hotel, CheckCircle, XCircle, Clock } from "lucide-react"
+import { toast } from "sonner"
 import Link from "next/link"
 
-export default async function MyOrdersPage() {
-  const supabase = await createClient()
+export default function MyOrdersPage() {
+  const router = useRouter()
+  const supabase = createClient()
+  const [isLoading, setIsLoading] = useState(true)
+  const [orders, setOrders] = useState<any[]>([])
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  useEffect(() => {
+    checkAuthAndLoadOrders()
+  }, [])
 
-  if (!user) {
-    redirect("/auth/login")
+  const checkAuthAndLoadOrders = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push("/auth/login")
+        return
+      }
+
+      const { data: ordersData, error } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          order_items!inner (*)
+        `)
+        .eq("user_id", user.id)
+        .eq("order_items.item_type", "hotel")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("[v0] Error loading orders:", error.message)
+        throw error
+      }
+
+      setOrders(ordersData || [])
+    } catch (error: any) {
+      console.error("[v0] Error loading orders:", error.message)
+      toast.error("Failed to load bookings")
+    } finally {
+      setIsLoading(false)
+    }
   }
-
-  const { data: orders } = await supabase
-    .from("orders")
-    .select(`
-      *,
-      order_items!inner (*)
-    `)
-    .eq("user_id", user.id)
-    .eq("order_items.item_type", "hotel")
-    .order("created_at", { ascending: false })
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
@@ -47,8 +76,21 @@ export default async function MyOrdersPage() {
     )
   }
 
+  if (isLoading) {
+    return (
+      <>
+        <Navigation />
+        <main className="pt-24 min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
+      <Navigation />
       <main className="pt-24 pb-20 min-h-screen">
         <section className="py-12 px-4">
           <div className="max-w-6xl mx-auto">
@@ -57,7 +99,7 @@ export default async function MyOrdersPage() {
               <p className="text-muted-foreground">View and manage your hotel reservations</p>
             </div>
 
-            {!orders || orders.length === 0 ? (
+            {orders.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Hotel className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />

@@ -1,32 +1,32 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { createBrowserClient } from "@supabase/ssr"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 import {
   Calendar,
-  Clock,
   MapPin,
-  CheckCircle,
-  Search,
-  GraduationCap,
-  Wrench,
+  Clock,
   Users,
-  FileText,
-  LinkIcon,
+  CheckCircle,
+  Gift,
+  Ticket,
   Video,
   ExternalLink,
   Download,
-  Loader2,
   Building,
   DoorOpen,
+  FileText,
+  LinkIcon,
+  Search,
 } from "lucide-react"
-import Navigation from "@/components/navigation"
-import Footer from "@/components/footer"
-import Link from "next/link"
+import { PageLoader } from "@/components/ui/page-loader"
 
 // Fallback event details (used if database has no data)
 const fallbackEventDetails: Record<
@@ -144,17 +144,30 @@ const fallbackEventDetails: Record<
   },
 }
 
+function getEventDetails(eventId: string) {
+  return (
+    fallbackEventDetails[eventId] || {
+      title: eventId,
+      shortTitle: eventId,
+      date: "TBA",
+      time: "TBA",
+      location: "TBA",
+      venue: "TBA",
+      room: "",
+      type: "workshop" as const,
+      description: "",
+    }
+  )
+}
+
 function isEventItem(item: any): boolean {
   const itemType = item.item_type?.toLowerCase()
   const eventId = item.event_id?.toLowerCase()
 
-  // item_type is 'event' in the database
   if (itemType === "event") {
-    // Check event_id to confirm it's a CPD/workshop/symposium (not webinar)
     return eventId && (eventId.startsWith("ws") || eventId === "cpd" || eventId === "symposium")
   }
 
-  // Also support legacy item_type values
   return ["workshop", "cpd", "symposium"].includes(itemType)
 }
 
@@ -163,15 +176,15 @@ function getEventTypeFromId(eventId: string): "cpd" | "workshop" | "symposium" {
   if (id === "cpd") return "cpd"
   if (id === "symposium") return "symposium"
   if (id?.startsWith("ws")) return "workshop"
-  return "workshop" // default
+  return "workshop"
 }
 
 function getEventIcon(type: string) {
   switch (type) {
     case "cpd":
-      return GraduationCap
+      return Gift
     case "workshop":
-      return Wrench
+      return Ticket
     case "symposium":
       return Users
     default:
@@ -212,30 +225,6 @@ function getEventColorScheme(type: string) {
   }
 }
 
-function formatEventDate(startDate: string | null, endDate: string | null): string {
-  if (!startDate) return "TBA"
-  const start = new Date(startDate)
-  if (!endDate || startDate === endDate) {
-    return start.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
-  }
-  const end = new Date(endDate)
-  if (start.getMonth() === end.getMonth()) {
-    return `${start.toLocaleDateString("en-US", { month: "long" })} ${start.getDate()}-${end.getDate()}, ${end.getFullYear()}`
-  }
-  return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
-}
-
-function formatEventTime(startTime: string | null, endTime: string | null, timezone: string | null): string {
-  if (!startTime) return "TBA"
-  const formatTime = (time: string) => {
-    const [hours, minutes] = time.split(":")
-    return `${hours}:${minutes}`
-  }
-  const tz = timezone || "WIB"
-  if (!endTime) return `${formatTime(startTime)} ${tz}`
-  return `${formatTime(startTime)} - ${formatTime(endTime)} ${tz}`
-}
-
 interface EventResource {
   id: string
   event_id: string
@@ -272,11 +261,9 @@ export default function MyEventsPage() {
   const [resources, setResources] = useState<EventResource[]>([])
   const [dbEvents, setDbEvents] = useState<DBEventDetails[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const router = useRouter()
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
+  const supabase = createClient()
 
   useEffect(() => {
     loadUserEvents()
@@ -289,10 +276,10 @@ export default function MyEventsPage() {
       } = await supabase.auth.getUser()
       if (!user) {
         setLoading(false)
+        router.push("/login")
         return
       }
 
-      // Load orders with verified payments
       const { data: ordersData, error: ordersError } = await supabase
         .from("orders")
         .select(`
@@ -303,21 +290,14 @@ export default function MyEventsPage() {
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
 
-      console.log("[v0] Orders data:", ordersData)
-      console.log("[v0] Orders error:", ordersError)
-
-      // Filter to only verified orders with event items
       const verifiedOrders = (ordersData || []).filter((order) => {
         const hasVerifiedPayment = order.order_payments?.some((p: any) => p.payment_status === "verified")
         const hasEventItems = order.order_items?.some((item: any) => isEventItem(item))
-        console.log("[v0] Order:", order.id, "hasVerifiedPayment:", hasVerifiedPayment, "hasEventItems:", hasEventItems)
         return hasVerifiedPayment && hasEventItems
       })
 
-      console.log("[v0] Verified orders:", verifiedOrders.length)
       setOrders(verifiedOrders)
 
-      // Get unique event IDs from orders
       const eventIds = new Set<string>()
       verifiedOrders.forEach((order) => {
         order.order_items?.forEach((item: any) => {
@@ -327,20 +307,12 @@ export default function MyEventsPage() {
         })
       })
 
-      console.log("[v0] Event IDs:", Array.from(eventIds))
-
       if (eventIds.size > 0) {
-        const { data: eventsData, error: eventsError } = await supabase
-          .from("events")
-          .select("*")
-          .in("slug", Array.from(eventIds))
+        const { data: eventsData } = await supabase.from("events").select("*").in("slug", Array.from(eventIds))
 
-        console.log("[v0] Events data:", eventsData)
-        console.log("[v0] Events error:", eventsError)
         setDbEvents(eventsData || [])
       }
 
-      // Load resources for these events
       if (eventIds.size > 0) {
         const { data: resourcesData } = await supabase
           .from("event_resources")
@@ -358,40 +330,23 @@ export default function MyEventsPage() {
     }
   }
 
-  function getEventDetails(eventId: string) {
-    const dbEvent = dbEvents.find((e) => e.slug === eventId)
-    const fallback = fallbackEventDetails[eventId]
+  const eventDetails = useMemo(() => {
+    const allEventIds = new Set<string>()
+    orders.forEach((order) => {
+      order.order_items?.forEach((item: any) => {
+        if (isEventItem(item)) {
+          allEventIds.add(item.event_id)
+        }
+      })
+    })
 
-    if (dbEvent) {
-      return {
-        title: dbEvent.title || fallback?.title || eventId,
-        shortTitle: dbEvent.short_title || fallback?.shortTitle || eventId,
-        date: formatEventDate(dbEvent.start_date, dbEvent.end_date),
-        time: formatEventTime(dbEvent.start_time, dbEvent.end_time, dbEvent.timezone),
-        location: dbEvent.location || fallback?.location || "TBA",
-        venue: dbEvent.venue || fallback?.venue || "TBA",
-        room: dbEvent.room || "", // Added room field from database
-        type: (dbEvent.event_type || fallback?.type || "workshop") as "cpd" | "workshop" | "symposium",
-        description: dbEvent.description || fallback?.description || "",
-      }
-    }
+    const details: Record<string, any> = {}
+    allEventIds.forEach((eventId) => {
+      details[eventId] = getEventDetails(eventId)
+    })
+    return details
+  }, [orders])
 
-    return (
-      fallback || {
-        title: eventId,
-        shortTitle: eventId,
-        date: "TBA",
-        time: "TBA",
-        location: "TBA",
-        venue: "TBA",
-        room: "", // Added room field fallback
-        type: "workshop" as const,
-        description: "",
-      }
-    )
-  }
-
-  // Extract all event items from orders
   const allEventItems = useMemo(() => {
     const items: { order: any; item: any }[] = []
     orders.forEach((order) => {
@@ -404,21 +359,20 @@ export default function MyEventsPage() {
     return items
   }, [orders])
 
-  // Filter by search
   const filteredItems = useMemo(() => {
     if (!searchQuery) return allEventItems
     const query = searchQuery.toLowerCase()
     return allEventItems.filter(({ item }) => {
-      const details = getEventDetails(item.event_id)
+      const details = eventDetails[item.event_id]
+      if (!details) return false
       return (
-        details.title.toLowerCase().includes(query) ||
-        details.shortTitle.toLowerCase().includes(query) ||
+        details.title?.toLowerCase().includes(query) ||
+        details.shortTitle?.toLowerCase().includes(query) ||
         item.event_label?.toLowerCase().includes(query)
       )
     })
-  }, [allEventItems, searchQuery, dbEvents])
+  }, [allEventItems, searchQuery, eventDetails])
 
-  // Stats - count unique items by type
   const stats = useMemo(() => {
     const allItems = orders.flatMap((o) => o.order_items || [])
     const eventItems = allItems.filter((item: any) => isEventItem(item))
@@ -433,8 +387,8 @@ export default function MyEventsPage() {
     return (
       <>
         <Navigation />
-        <main className="pt-24 pb-20 min-h-screen flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
+        <main className="pt-24 pb-20 min-h-screen">
+          <PageLoader text="Loading your events..." fullScreen={false} />
         </main>
         <Footer />
       </>
@@ -456,7 +410,6 @@ export default function MyEventsPage() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="flex flex-wrap gap-3 mt-6">
               <Badge className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2">CPD: {stats.cpd}</Badge>
               <Badge className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2">
@@ -485,11 +438,12 @@ export default function MyEventsPage() {
               <div className="mb-6">
                 <div className="relative max-w-md">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
+                  <input
+                    type="text"
                     placeholder="Search events..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-300"
                   />
                 </div>
               </div>
@@ -497,7 +451,8 @@ export default function MyEventsPage() {
               {/* Event Cards */}
               <div className="space-y-6">
                 {filteredItems.map(({ order, item }, index) => {
-                  const details = getEventDetails(item.event_id)
+                  const details = eventDetails[item.event_id]
+                  if (!details) return null
                   const colors = getEventColorScheme(details.type)
                   const EventIcon = getEventIcon(details.type)
                   const eventResources = resources.filter((r) => r.event_id === item.event_id)
@@ -507,15 +462,16 @@ export default function MyEventsPage() {
 
                   return (
                     <Card key={`${order.id}-${item.id}-${index}`} className="overflow-hidden shadow-lg">
-                      {/* Event Header */}
-                      <div className={`bg-gradient-to-r ${colors.gradient} p-6 text-white`}>
+                      <CardHeader className={`bg-gradient-to-r ${colors.gradient} p-6 text-white`}>
                         <div className="flex items-start justify-between gap-4 flex-wrap">
                           <div className="flex-1 min-w-0">
                             <Badge className="bg-white/20 text-white border-white/30 mb-3">
                               <CheckCircle className="w-3 h-3 mr-1" />
                               Registered
                             </Badge>
-                            <h2 className="text-xl sm:text-2xl font-bold mb-2 text-balance">{details.shortTitle}</h2>
+                            <CardTitle className="text-xl sm:text-2xl font-bold mb-2 text-balance">
+                              {details.shortTitle}
+                            </CardTitle>
                             <p className="text-white/90 text-sm sm:text-base line-clamp-2">{details.title}</p>
                           </div>
                           <div className="shrink-0">
@@ -524,10 +480,9 @@ export default function MyEventsPage() {
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </CardHeader>
 
                       <CardContent className="p-6">
-                        {/* Event Details Grid */}
                         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8">
                           <div className={`flex items-center gap-3 p-4 ${colors.bg} rounded-xl`}>
                             <Calendar className={`w-5 h-5 ${colors.icon}`} />
@@ -568,19 +523,16 @@ export default function MyEventsPage() {
                           )}
                         </div>
 
-                        {/* Description */}
                         {details.description && (
                           <div className="mb-6 p-4 bg-slate-50 rounded-xl">
                             <p className="text-sm text-muted-foreground">{details.description}</p>
                           </div>
                         )}
 
-                        {/* Resources */}
                         {eventResources.length > 0 && (
                           <div className="space-y-4">
                             <h3 className="font-semibold text-slate-900">Event Resources</h3>
 
-                            {/* Materials */}
                             {materials.length > 0 && (
                               <div>
                                 <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
@@ -609,7 +561,6 @@ export default function MyEventsPage() {
                               </div>
                             )}
 
-                            {/* Links */}
                             {links.length > 0 && (
                               <div>
                                 <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
@@ -633,7 +584,6 @@ export default function MyEventsPage() {
                               </div>
                             )}
 
-                            {/* Videos */}
                             {videos.length > 0 && (
                               <div>
                                 <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
@@ -659,7 +609,6 @@ export default function MyEventsPage() {
                           </div>
                         )}
 
-                        {/* No Resources Message */}
                         {eventResources.length === 0 && (
                           <div className="text-center py-6 text-muted-foreground">
                             <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />

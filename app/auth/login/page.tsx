@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [showGoogleSuggestion, setShowGoogleSuggestion] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<string>("")
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -40,17 +41,26 @@ export default function LoginPage() {
     setError(null)
     setErrorType(null)
     setShowGoogleSuggestion(false)
+    setDebugInfo("Starting login...")
 
     try {
       const supabase = createClient()
 
+      setDebugInfo("Attempting signInWithPassword...")
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
+      console.log("[v0] signInError:", signInError)
+      console.log("[v0] signInError?.message:", signInError?.message)
+      console.log("[v0] signInError?.code:", signInError?.code)
+
       if (signInError) {
         const errorMessage = signInError.message.toLowerCase()
+        setDebugInfo(`Error received: "${signInError.message}" (code: ${signInError.code})`)
+
+        console.log("[v0] Error message lowercase:", errorMessage)
 
         // Supabase returns "Invalid login credentials" for both:
         // 1. Wrong password on email accounts
@@ -60,28 +70,43 @@ export default function LoginPage() {
           errorMessage.includes("invalid credentials") ||
           signInError.code === "invalid_credentials"
 
+        console.log("[v0] isCredentialError:", isCredentialError)
+        setDebugInfo((prev) => prev + ` | isCredentialError: ${isCredentialError}`)
+
         if (isCredentialError) {
+          setDebugInfo((prev) => prev + " | Calling checkAuthProvider...")
+          console.log("[v0] Calling checkAuthProvider for:", email)
+
           try {
             const providerResult = await checkAuthProvider(email)
+
+            console.log("[v0] providerResult:", providerResult)
+            setDebugInfo((prev) => prev + ` | Result: ${JSON.stringify(providerResult)}`)
 
             if (providerResult.exists) {
               if (providerResult.isOAuthOnly) {
                 // OAuth-only account - show Google sign-in suggestion
+                console.log("[v0] Setting oauth_only error type")
                 setErrorType("oauth_only")
                 setError(`This account uses Google Sign-In only.`)
                 setShowGoogleSuggestion(true)
+                setDebugInfo((prev) => prev + " | SET TO OAUTH_ONLY")
               } else {
                 // Account exists with password, so wrong password
+                console.log("[v0] Setting invalid_credentials error type")
                 setErrorType("invalid_credentials")
                 setError("Incorrect password. Please try again or reset your password.")
               }
             } else {
               // No account exists
+              console.log("[v0] Setting user_not_found error type")
               setErrorType("user_not_found")
               setError("No account found with this email address")
             }
           } catch (providerError) {
-            console.error("Provider check failed:", providerError)
+            console.error("[v0] Provider check failed:", providerError)
+            setDebugInfo((prev) => prev + ` | Provider check FAILED: ${providerError}`)
+
             // Fallback: if Gmail address, suggest Google login
             if (email.toLowerCase().endsWith("@gmail.com")) {
               setErrorType("oauth_only")
@@ -93,6 +118,7 @@ export default function LoginPage() {
             }
           }
         } else {
+          setDebugInfo((prev) => prev + " | NOT a credential error, setting general")
           setErrorType("general")
           setError(signInError.message)
         }
@@ -108,7 +134,8 @@ export default function LoginPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error: unknown) {
-      console.error("Login error:", error)
+      console.error("[v0] Login error:", error)
+      setDebugInfo(`Catch block error: ${error}`)
       setErrorType("general")
       if (error instanceof Error) {
         setError(error.message)
@@ -207,6 +234,12 @@ export default function LoginPage() {
                   </Link>
                 </div>
               </div>
+
+              {debugInfo && (
+                <div className="p-2 bg-yellow-100 border border-yellow-300 rounded text-xs font-mono break-all">
+                  <strong>DEBUG:</strong> {debugInfo}
+                </div>
+              )}
 
               {error && errorType === "oauth_only" && (
                 <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4 space-y-3">

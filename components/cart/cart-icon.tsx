@@ -55,27 +55,29 @@ export function CartIcon() {
   }
 
   return (
-    <Link href="/cart">
-      <Button
-        variant="ghost"
-        size="icon"
-        className={`relative transition-transform duration-200 ${getCartAnimationClass()}`}
-      >
-        <ShoppingCart className={`h-5 w-5 transition-all duration-200 ${getIconAnimationClass()}`} />
-        {itemCount > 0 && (
-          <span
-            className={`absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 ${getBadgeAnimationClass()}`}
-          >
-            {itemCount > 9 ? "9+" : itemCount}
-          </span>
-        )}
-        {itemCount === 0 && animationType === "remove" && (
-          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-[badgeFadeOut_0.4s_ease-out_forwards]">
-            0
-          </span>
-        )}
-        <span className="sr-only">Shopping cart with {itemCount} items</span>
-      </Button>
-    </Link>
+    <div className="relative p-1">
+      <Link href="/cart">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={`relative overflow-visible transition-transform duration-200 ${getCartAnimationClass()}`}
+        >
+          <ShoppingCart className={`h-5 w-5 transition-all duration-200 ${getIconAnimationClass()}`} />
+          {itemCount > 0 && (
+            <span
+              className={`absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-sm transition-all duration-300 ${getBadgeAnimationClass()}`}
+            >
+              {itemCount > 99 ? "99+" : itemCount}
+            </span>
+          )}
+          {itemCount === 0 && animationType === "remove" && (
+            <span className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-sm animate-[badgeFadeOut_0.4s_ease-out_forwards]">
+              0
+            </span>
+          )}
+          <span className="sr-only">Shopping cart with {itemCount} items</span>
+        </Button>
+      </Link>
+    </div>
   )
 }

@@ -179,8 +179,8 @@ export default function Navigation() {
         isScrolled ? "glass-nav shadow-lg" : "bg-background/60 backdrop-blur-sm border-b border-border/50",
       )}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
-        <div className="flex items-center justify-between h-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-visible">
+        <div className="flex items-center justify-between h-16 overflow-visible">
           <Link href="/" className="flex items-center">
             <Image
               src="/images/isapm-2026-banner.png"
@@ -192,7 +192,7 @@ export default function Navigation() {
             />
           </Link>
 
-          <div className="hidden md:flex flex-grow justify-end items-center gap-8">
+          <div className="hidden md:flex flex-grow justify-end items-center gap-8 overflow-visible">
             {navItems.map((item) => (
               <Link
                 key={item.href}
@@ -210,7 +210,7 @@ export default function Navigation() {
                 Register Now
               </Button>
             </Link>
-            <div className="flex gap-3 items-center">
+            <div className="flex gap-3 items-center overflow-visible">
               {user && <CartIcon />}
               {isLoading ? (
                 <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
@@ -314,7 +314,7 @@ export default function Navigation() {
             </div>
           </div>
 
-          <div className="flex justify-end items-center gap-2 md:hidden">
+          <div className="flex justify-end items-center gap-2 md:hidden overflow-visible">
             {user && <CartIcon />}
             <button
               type="button"

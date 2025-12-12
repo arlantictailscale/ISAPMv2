@@ -14,7 +14,7 @@ import { isBefore, parseISO } from "date-fns"
 import Image from "next/image"
 import { MapPin } from "lucide-react"
 
-export const revalidate = 300 // 5 minutes
+// ISR configuration only works with server components
 
 const tabHeroImages = {
   program: {

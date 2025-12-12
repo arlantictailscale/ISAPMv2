@@ -1,4 +1,3 @@
-import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { MapPin, Phone, Mail, Clock, Hotel, Calendar, ExternalLink } from "lucide-react"
 import Link from "next/link"
@@ -16,7 +15,6 @@ export const revalidate = 3600 // 1 hour
 export default async function VenuePage() {
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">

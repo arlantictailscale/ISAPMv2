@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Key, Mail, CheckCircle2, Shield, Lock } from "lucide-react"
 import { toast } from "sonner"
+// Import the server action for adding password
+import { addPasswordToAccount } from "@/app/actions/add-password"
 
 export default function SecurityPage() {
   const [user, setUser] = useState<any>(null)
@@ -76,12 +78,12 @@ export default function SecurityPage() {
     setIsAddingPassword(true)
 
     try {
-      // Update user to add password authentication
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      })
+      // Use server action instead of client-side updateUser
+      const result = await addPasswordToAccount(user.email, password)
 
-      if (error) throw error
+      if (!result.success) {
+        throw new Error(result.error || "Failed to add password")
+      }
 
       toast.success("Password added successfully!", {
         description: "You can now login with your email and password.",

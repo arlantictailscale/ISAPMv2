@@ -1,12 +1,27 @@
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
+import { Redis } from "@upstash/redis"
+
+const redis = new Redis({
+  url: process.env.KV_REST_API_URL!,
+  token: process.env.KV_REST_API_TOKEN!,
+})
+
+const CACHE_KEY = "room_availability"
+const CACHE_TTL = 60 // 60 seconds (very fast updates)
 
 export async function getRoomAvailability() {
   const supabase = await createClient()
 
   try {
-    // Get room availability settings
+    const cachedData = await redis.get(CACHE_KEY)
+    if (cachedData) {
+      console.log("[v0] Room availability from cache")
+      return JSON.parse(cachedData)
+    }
+
+    // Step 1: Get room settings
     const { data: settings, error: settingsError } = await supabase
       .from("room_availability_settings")
       .select("room_type, default_capacity")
@@ -20,69 +35,36 @@ export async function getRoomAvailability() {
       }
     }
 
-    // Step 1: Get all hotel room order items
-    const { data: hotelItems, error: itemsError } = await supabase
+    const { data: hotelBookings, error: bookingsError } = await supabase
       .from("order_items")
-      .select("id, order_id, hotel_room_type")
+      .select(`
+        id,
+        hotel_room_type,
+        order:orders!inner(status),
+        payment:order_payments!inner(payment_status)
+      `)
       .not("hotel_room_type", "is", null)
+      .eq("orders.status", "pending")
+      .eq("order_payments.payment_status", "verified")
 
-    if (itemsError) {
-      console.error("Error fetching hotel items:", itemsError)
-      throw itemsError
-    }
-
-    if (!hotelItems || hotelItems.length === 0) {
-      const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
-      const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+    if (bookingsError) {
+      console.error("Error fetching hotel bookings:", bookingsError)
+      // Return cached data or defaults on error
       return {
-        deluxe: { total: deluxeCapacity, booked: 0, available: deluxeCapacity },
-        premier: { total: premierCapacity, booked: 0, available: premierCapacity },
+        deluxe: { total: 120, booked: 0, available: 120 },
+        premier: { total: 56, booked: 0, available: 56 },
       }
     }
 
-    // Step 2: Get order IDs from hotel items
-    const orderIds = [...new Set(hotelItems.map((item) => item.order_id))]
-
-    // Step 3: Get orders that are not cancelled
-    const { data: orders, error: ordersError } = await supabase
-      .from("orders")
-      .select("id, status")
-      .in("id", orderIds)
-      .neq("status", "cancelled")
-
-    if (ordersError) {
-      console.error("Error fetching orders:", ordersError)
-      throw ordersError
-    }
-
-    const validOrderIds = orders?.map((o) => o.id) || []
-
-    // Step 4: Get verified payments for these orders
-    const { data: payments, error: paymentsError } = await supabase
-      .from("order_payments")
-      .select("order_id, payment_status")
-      .in("order_id", validOrderIds)
-      .eq("payment_status", "verified")
-
-    if (paymentsError) {
-      console.error("Error fetching payments:", paymentsError)
-      throw paymentsError
-    }
-
-    // Get order IDs with verified payments
-    const verifiedOrderIds = new Set(payments?.map((p) => p.order_id) || [])
-
-    // Step 5: Count bookings by room type for verified orders only
-    const verifiedBookings = hotelItems.filter((item) => verifiedOrderIds.has(item.order_id))
-
-    const deluxeBookings = verifiedBookings.filter((b) => b.hotel_room_type === "deluxe").length
-    const premierBookings = verifiedBookings.filter((b) => b.hotel_room_type === "premier").length
+    // Count bookings by room type
+    const deluxeBookings = hotelBookings?.filter((b: any) => b.hotel_room_type === "deluxe").length || 0
+    const premierBookings = hotelBookings?.filter((b: any) => b.hotel_room_type === "premier").length || 0
 
     // Get default capacities
     const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
     const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
 
-    return {
+    const result = {
       deluxe: {
         total: deluxeCapacity,
         booked: deluxeBookings,
@@ -94,6 +76,10 @@ export async function getRoomAvailability() {
         available: Math.max(0, premierCapacity - premierBookings),
       },
     }
+
+    await redis.setex(CACHE_KEY, CACHE_TTL, JSON.stringify(result))
+
+    return result
   } catch (error) {
     console.error("Error in getRoomAvailability:", error)
     return {

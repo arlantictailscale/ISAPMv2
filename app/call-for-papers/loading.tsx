@@ -1,38 +1,5 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { PageLoader } from "@/components/ui/page-loader"
 
 export default function CallForPapersLoading() {
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="h-16 bg-background border-b border-border" />
-
-      <section className="pt-32 pb-16 px-4 bg-gradient-to-b from-primary/5 to-background">
-        <div className="max-w-4xl mx-auto text-center animate-pulse">
-          <div className="h-10 bg-muted rounded w-56 mx-auto mb-4"></div>
-          <div className="h-5 bg-muted rounded w-80 mx-auto"></div>
-        </div>
-      </section>
-
-      <section className="py-12 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8">
-            {[1, 2].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded w-48 mb-2"></div>
-                  <div className="h-4 bg-muted rounded w-full"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {[1, 2, 3, 4].map((j) => (
-                      <div key={j} className="h-4 bg-muted rounded w-full"></div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-    </div>
-  )
+  return <PageLoader text="Loading call for papers..." />
 }

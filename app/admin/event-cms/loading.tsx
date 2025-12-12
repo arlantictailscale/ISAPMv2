@@ -1,9 +1,5 @@
-import { Loader2 } from "lucide-react"
+import { PageLoader } from "@/components/ui/page-loader"
 
 export default function Loading() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-    </div>
-  )
+  return <PageLoader text="Loading event CMS..." />
 }

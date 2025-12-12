@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
@@ -9,7 +7,7 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Key, Mail, CheckCircle2, Shield, Lock } from "lucide-react"
+import { Loader2, Key, Mail, CheckCircle2, Shield, Lock, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
 export default function SecurityPage() {
@@ -19,9 +17,10 @@ export default function SecurityPage() {
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [currentPassword, setCurrentPassword] = useState("")
   const [isAddingPassword, setIsAddingPassword] = useState(false)
   const [hasExistingPassword, setHasExistingPassword] = useState(false)
+  const [passwordError, setPasswordError] = useState("")
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -78,12 +77,26 @@ export default function SecurityPage() {
     loadSecurityInfo()
   }, [supabase, router])
 
-  const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  useEffect(() => {
+    if (confirmPassword && password !== confirmPassword) {
+      setPasswordError("Passwords do not match")
+    } else {
+      setPasswordError("")
+    }
+  }, [password, confirmPassword])
+
+  const handlePasswordSubmit = async () => {
     console.log("[v0] handlePasswordSubmit called")
 
+    // Validation
+    if (!password || !confirmPassword) {
+      toast.error("Please fill in both password fields")
+      return
+    }
+
     if (password !== confirmPassword) {
-      toast.error("Passwords don't match")
+      setPasswordError("Passwords do not match")
+      toast.error("Passwords do not match")
       return
     }
 
@@ -92,76 +105,60 @@ export default function SecurityPage() {
       return
     }
 
+    // Start loading
     setIsAddingPassword(true)
-    console.log("[v0] Starting password update...")
+    setPasswordError("")
+    setPasswordSuccess(false)
 
-    try {
-      // Step 1: Update password only
-      console.log("[v0] Step 1: Updating password...")
-      const { data: passwordData, error: passwordError } = await supabase.auth.updateUser({
-        password: password,
-      })
+    console.log("[v0] Calling supabase.auth.updateUser...")
 
-      console.log("[v0] Password update response:", { passwordData, passwordError })
+    supabase.auth
+      .updateUser({ password: password })
+      .then(({ data, error }) => {
+        console.log("[v0] updateUser completed:", { data, error })
 
-      if (passwordError) {
-        console.log("[v0] Password update error:", passwordError.message)
-        if (passwordError.message.includes("different from the old password")) {
-          toast.error("New password must be different from your current password")
-          setHasExistingPassword(true)
+        if (error) {
+          console.log("[v0] Error:", error.message)
+          if (error.message.includes("different from the old password")) {
+            toast.error("New password must be different from your current password")
+            setHasExistingPassword(true)
+          } else {
+            toast.error("Failed to update password: " + error.message)
+          }
         } else {
-          toast.error("Failed to update password", {
-            description: passwordError.message || "Please try again later.",
-          })
+          console.log("[v0] Success! Password updated")
+          toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!")
+
+          // Update states
+          setHasExistingPassword(true)
+          setPasswordSuccess(true)
+          setShowPasswordForm(false)
+          setPassword("")
+          setConfirmPassword("")
+
+          if (!providers.includes("email")) {
+            setProviders([...providers, "email"])
+          }
+
+          if (data?.user) {
+            setUser(data.user)
+          }
+
+          // Also update user_metadata to track has_password
+          supabase.auth
+            .updateUser({ data: { has_password: true } })
+            .then(() => console.log("[v0] Metadata updated"))
+            .catch((e) => console.warn("[v0] Metadata update failed:", e))
         }
-        return // Exit early on error
-      }
-
-      // Step 2: Update user_metadata separately to mark password as set
-      console.log("[v0] Step 2: Updating user metadata...")
-      const { data: metaData, error: metaError } = await supabase.auth.updateUser({
-        data: { has_password: true },
       })
-
-      console.log("[v0] Metadata update response:", { metaData, metaError })
-
-      if (metaError) {
-        console.warn("[v0] Metadata update warning:", metaError.message)
-        // Don't fail the whole operation if metadata update fails
-      }
-
-      // Success!
-      console.log("[v0] Password added successfully!")
-      toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!", {
-        description: hasExistingPassword
-          ? "Your password has been updated."
-          : "You can now login with your email and password.",
+      .catch((err) => {
+        console.error("[v0] Unexpected error:", err)
+        toast.error("An unexpected error occurred")
       })
-
-      setHasExistingPassword(true)
-      if (!providers.includes("email")) {
-        setProviders([...providers, "email"])
-      }
-
-      if (metaData?.user) {
-        setUser(metaData.user)
-      } else if (passwordData?.user) {
-        setUser(passwordData.user)
-      }
-
-      setShowPasswordForm(false)
-      setPassword("")
-      setConfirmPassword("")
-      setCurrentPassword("")
-    } catch (error: any) {
-      console.error("[v0] Catch block error:", error)
-      toast.error("Failed to update password", {
-        description: error.message || "Please try again later.",
+      .finally(() => {
+        console.log("[v0] Finally block - setting isAddingPassword to false")
+        setIsAddingPassword(false)
       })
-    } finally {
-      console.log("[v0] Finally block: Setting isAddingPassword to false")
-      setIsAddingPassword(false)
-    }
   }
 
   if (isLoading) {
@@ -179,8 +176,10 @@ export default function SecurityPage() {
     )
   }
 
-  const hasPasswordAuth = hasExistingPassword || providers.includes("email")
+  const hasPasswordAuth = hasExistingPassword || passwordSuccess || providers.includes("email")
   const hasGoogleAuth = providers.includes("google")
+  const isSubmitDisabled =
+    isAddingPassword || !password || !confirmPassword || password !== confirmPassword || password.length < 8
 
   return (
     <>
@@ -302,7 +301,7 @@ export default function SecurityPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                  <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">New Password</label>
                       <input
@@ -311,9 +310,11 @@ export default function SecurityPage() {
                         onChange={(e) => setPassword(e.target.value)}
                         className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
                         placeholder="At least 8 characters"
-                        required
                         minLength={8}
                       />
+                      {password && password.length < 8 && (
+                        <p className="text-xs text-amber-600 mt-1">Password must be at least 8 characters</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-2">Confirm New Password</label>
@@ -321,13 +322,20 @@ export default function SecurityPage() {
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-4 py-2 border border-input rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                        className={`w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary ${
+                          passwordError ? "border-red-500" : "border-input"
+                        }`}
                         placeholder="Re-enter your password"
-                        required
                         minLength={8}
                       />
+                      {passwordError && (
+                        <div className="flex items-center gap-1 mt-1 text-red-500">
+                          <AlertCircle className="w-3 h-3" />
+                          <p className="text-xs">{passwordError}</p>
+                        </div>
+                      )}
                     </div>
-                    <Button type="submit" disabled={isAddingPassword} className="w-full">
+                    <Button type="button" onClick={handlePasswordSubmit} disabled={isSubmitDisabled} className="w-full">
                       {isAddingPassword ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -339,7 +347,7 @@ export default function SecurityPage() {
                         "Add Password"
                       )}
                     </Button>
-                  </form>
+                  </div>
                 </CardContent>
               </Card>
             )}

@@ -148,6 +148,27 @@ export default function Navigation() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  useEffect(() => {
+    if (isOpen) {
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = "hidden"
+      document.body.style.position = "fixed"
+      document.body.style.width = "100%"
+    } else {
+      // Restore body scroll when menu is closed
+      document.body.style.overflow = ""
+      document.body.style.position = ""
+      document.body.style.width = ""
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = ""
+      document.body.style.position = ""
+      document.body.style.width = ""
+    }
+  }, [isOpen])
+
   const handleLogout = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)

@@ -1,254 +1,299 @@
 "use client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { AlertCircle, FileText, CheckCircle, Award } from 'lucide-react'
-import Link from 'next/link'
+import { AlertCircle, FileText, CheckCircle, Award, Sparkles, ArrowRight } from "lucide-react"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 
-export default function EPoster() {
-  // Main content rendering without authentication check
+export default function CallForPapersPage() {
   return (
     <>
       <Navigation />
-      <main className="pt-24 overflow-x-hidden">
-        <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6">e-Poster ISAPM 2026</h1>
-            <p className="text-lg text-muted-foreground">
-              Guidelines and requirements for submitting e-Posters to the ISAPM National Meeting
-            </p>
-          </div>
-        </section>
+      <main className="pt-16">
+        <section className="relative py-16 md:py-24 overflow-hidden">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50" />
+          <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-5" />
 
-        <section className="py-16 px-4">
-          <div className="max-w-4xl mx-auto space-y-12">
-            <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 flex gap-4">
-              <AlertCircle className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-foreground mb-2">Submission Deadline: March 15, 2026</p>
-                <p className="text-sm text-muted-foreground">
-                  All e-Poster abstracts must be submitted online through our submission form by March 15, 2026
-                </p>
-              </div>
-            </div>
+          {/* Decorative Elements */}
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full blur-3xl opacity-30" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-200 rounded-full blur-3xl opacity-30" />
 
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
-                <FileText className="w-6 h-6 text-primary" />
-                e-Poster File Requirements
-              </h2>
-              <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">1.</span>
-                    <span>e-Posters will be displayed on LED screens</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">2.</span>
-                    <span>File format: TIFF (*.tif/8.tiff) or JPEG</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">3.</span>
-                    <span>Maximum file size: 10 MB</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">4.</span>
-                    <span>Maximum slides per e-Poster: 2 slides</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">5.</span>
-                    <span>All posters displayed in portrait layout</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">6.</span>
-                    <span>No animated files, films, or audio files accepted</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">7.</span>
-                    <span>Include PERDATIN logo (top right) and institution logo (top left)</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">8.</span>
-                    <span>
-                      References must use AMA (American Medical Association) format using Mendeley. Maximum 20
-                      references. Learn more:{" "}
-                      <a
-                        href="https://guides.lib.berkeley.edu/index.php/jap/about/submissions#authorGuidelines"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline"
-                      >
-                        AMA Style Guide
-                      </a>
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="max-w-3xl mx-auto text-center">
+              {/* Badge */}
+              <Badge className="mb-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 px-4 py-1.5">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Call for Papers - ISAPM 2026
+              </Badge>
 
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
-                <FileText className="w-6 h-6 text-primary" />
-                e-Poster Writing Guidelines
-              </h2>
-              <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">1.</span>
-                    <span>Poster must include abstract and full paper</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">2.</span>
-                    <span>
-                      Follow guidelines from{" "}
-                      <a
-                        href="https://jap.ub.ac.id/index.php/jap/about/submissions#authorGuidelines"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline"
-                      >
-                        Journal of Anesthesia and Pain
-                      </a>
-                    </span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">3.</span>
-                    <span>Abstract must be in English</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">4.</span>
-                    <span>Title: capitalized and bold, concise and specific</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">5.</span>
-                    <span>Include full author names (without degrees) underlined</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">6.</span>
-                    <span>Include institution names and author cities</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">7.</span>
-                    <span>Avoid non-standard abbreviations, unclear terms, symbols, or acronyms</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">8.</span>
-                    <span>Use Arial font, size 11</span>
-                  </li>
-                </ul>
+              <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
+                <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">
+                  Submit Your Research
+                </span>
+                <br />
+                <span className="text-foreground">Share Your Expertise in Pain Management</span>
+              </h1>
 
-                <div className="mt-6 p-4 bg-primary/5 rounded-lg">
-                  <p className="font-semibold mb-2">Select One Topic:</p>
-                  <ul className="space-y-2 text-sm">
-                    <li>• Emergencies (Kegawatdaruratan)</li>
-                    <li>• Pain Management (Manajemen Nyeri)</li>
-                    <li>• ICU Management (Manajemen ICU)</li>
-                    <li>• Anesthesia Management (Manajemen Anestesi)</li>
-                  </ul>
+              <p className="text-lg text-muted-foreground mb-8 text-pretty">
+                Submit your e-Posters and research presentations to be considered for the ISAPM National Meeting.
+                Selected presentations will be featured on our LED screens and outstanding submissions will be
+                considered for publication.
+              </p>
+
+              {/* Deadline Highlight */}
+              <div className="max-w-xl mx-auto">
+                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 shadow-sm">
+                  <div className="p-2 rounded-lg bg-orange-100">
+                    <AlertCircle className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-semibold text-orange-800">Submission Deadline: March 15, 2026</p>
+                    <p className="text-xs text-orange-600">
+                      All e-Poster abstracts must be submitted online through our submission form.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
-                <CheckCircle className="w-6 h-6 text-primary" />
-                e-Poster Display & Selection
-              </h2>
-              <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">1.</span>
-                    <span>All approved e-Posters will be automatically displayed on LED screens as a slide show</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">2.</span>
-                    <span>10 selected posters will be presented in front of evaluation committee</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">3.</span>
-                    <span>Presentation schedule and location will be announced later</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">4.</span>
-                    <span>All accepted participants must pay conference registration fee</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">5.</span>
-                    <span>Presentation details will be sent via email before April 2026</span>
-                  </li>
-                </ul>
+        {/* Main Content */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            {/* Section Headers with Icons */}
+            <div className="space-y-16">
+              {/* File Requirements */}
+              <div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">File Requirements</h2>
+                    <p className="text-sm text-muted-foreground">Technical specifications for e-Poster submissions</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    { num: 1, text: "Posters will be displayed on LED screens" },
+                    { num: 2, text: "File format: TIFF (*.tif/*.tiff) or JPEG" },
+                    { num: 3, text: "Maximum file size: 10 MB" },
+                    { num: 4, text: "Maximum slides per e-Poster: 2 slides" },
+                    { num: 5, text: "All posters displayed in portrait layout" },
+                    { num: 6, text: "No animated files, films, or audio files accepted" },
+                    { num: 7, text: "Include PERDATIN logo (top right) and institution logo (top left)" },
+                    {
+                      num: 8,
+                      text: "References must use AMA format using Mendeley. Max 20 references. Learn more: AMA Style Guide",
+                    },
+                  ].map((item) => (
+                    <Card key={item.num} className="border-l-4 border-l-primary hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          <span className="text-primary font-bold flex-shrink-0">{item.num}.</span>
+                          <span className="text-sm">{item.text}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Writing Guidelines */}
+              <div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 rounded-lg bg-blue-100">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Writing Guidelines</h2>
+                    <p className="text-sm text-muted-foreground">Content and formatting standards</p>
+                  </div>
+                </div>
+
+                <Card className="border-l-4 border-l-blue-600">
+                  <CardContent className="p-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="font-semibold mb-4 text-blue-900">Content Requirements</h3>
+                        <ul className="space-y-2">
+                          {[
+                            "Poster must include abstract and full paper",
+                            "Follow guidelines from Journal of Anesthesia and Pain",
+                            "Abstract must be in English",
+                            "Title: capitalized, bold, concise and specific",
+                            "Include full author names (without degrees) underlined",
+                            "Include institution names and author cities",
+                          ].map((item, idx) => (
+                            <li key={idx} className="flex gap-2 text-sm">
+                              <span className="text-blue-600 font-bold">{idx + 1}.</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div>
+                        <h3 className="font-semibold mb-4 text-blue-900">Formatting</h3>
+                        <ul className="space-y-2 mb-4">
+                          <li className="flex gap-2 text-sm">
+                            <span className="text-blue-600 font-bold">•</span>
+                            <span>Avoid non-standard abbreviations, unclear terms, symbols, or acronyms</span>
+                          </li>
+                          <li className="flex gap-2 text-sm">
+                            <span className="text-blue-600 font-bold">•</span>
+                            <span>Use Arial font, size 11</span>
+                          </li>
+                        </ul>
+
+                        <div className="mt-6 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                          <p className="font-semibold mb-3 text-sm">Select One Topic:</p>
+                          <ul className="space-y-1 text-sm">
+                            <li>• Emergencies (Kegawatdaruratan)</li>
+                            <li>• Pain Management (Manajemen Nyeri)</li>
+                            <li>• ICU Management (Manajemen ICU)</li>
+                            <li>• Anesthesia Management (Manajemen Anestesi)</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Display & Selection */}
+              <div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 rounded-lg bg-green-100">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Display & Selection Process</h2>
+                    <p className="text-sm text-muted-foreground">How your submission will be reviewed and displayed</p>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[
+                    {
+                      num: 1,
+                      text: "All approved e-Posters will be automatically displayed on LED screens as a slide show",
+                    },
+                    { num: 2, text: "10 selected posters will be presented in front of evaluation committee" },
+                    { num: 3, text: "Presentation schedule and location will be announced later" },
+                    { num: 4, text: "All accepted participants must pay conference registration fee" },
+                    { num: 5, text: "Presentation details will be sent via email before April 2026" },
+                  ].map((item) => (
+                    <Card key={item.num} className="border-l-4 border-l-green-600 hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex gap-3">
+                          <span className="text-green-600 font-bold flex-shrink-0">{item.num}.</span>
+                          <span className="text-sm">{item.text}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Awards & Recognition */}
+              <div>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="p-2 rounded-lg bg-amber-100">
+                    <Award className="w-5 h-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">Awards & Recognition</h2>
+                    <p className="text-sm text-muted-foreground">Recognition for outstanding submissions</p>
+                  </div>
+                </div>
+
+                <Card className="border-l-4 border-l-amber-600">
+                  <CardContent className="p-6">
+                    <ul className="space-y-3">
+                      {[
+                        "10 best posters will be selected for presentation",
+                        "3 best posters will be published in Journal of Anesthesia and Pain",
+                        "Winners receive cash prize and certificate",
+                        "Winners announced by April 2026",
+                        "Case presentations: wear traditional attire from your region",
+                      ].map((item, idx) => (
+                        <li key={idx} className="flex gap-3">
+                          <span className="text-amber-600 font-bold">{idx + 1}.</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div>
-              <h2 className="font-display text-2xl font-bold mb-6 flex items-center gap-2">
-                <Award className="w-6 h-6 text-primary" />
-                Awards & Recognition
-              </h2>
-              <div className="bg-card border border-border rounded-lg p-6 space-y-4">
-                <ul className="space-y-3">
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">1.</span>
-                    <span>10 best posters will be selected for presentation</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">2.</span>
-                    <span>
-                      3 best posters will be published in{" "}
-                      <a
-                        href="https://jap.ub.ac.id/index.php/jap"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary underline"
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <Card className="bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 border-0 text-white overflow-hidden">
+              <CardContent className="p-8 md:p-12 relative">
+                {/* Background Pattern */}
+                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+
+                <div className="relative z-10 max-w-2xl mx-auto text-center">
+                  <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to Share Your Research?</h3>
+                  <p className="text-white/80 mb-6">
+                    Submit your e-Poster before March 15, 2026. Selected presentations will be featured at the ISAPM
+                    National Meeting, and the best submissions will be published in the Journal of Anesthesia and Pain.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link href="/submit-poster">
+                      <Button size="lg" className="bg-white text-cyan-600 hover:bg-white/90 font-semibold">
+                        Submit Your E-Poster
+                        <ArrowRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    </Link>
+                    <Link href="/call-for-papers">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="border-white/30 text-white hover:bg-white/10 bg-transparent font-semibold"
                       >
-                        Journal of Anesthesia and Pain
-                      </a>
-                    </span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">3.</span>
-                    <span>Winners receive cash prize and certificate</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">4.</span>
-                    <span>Winners announced by April 2026</span>
-                  </li>
-                  <li className="flex gap-3">
-                    <span className="text-primary font-bold">5.</span>
-                    <span>Case presentations: wear traditional attire from your region</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
+                        Learn More
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
 
-            <div className="bg-primary/10 border border-primary/30 rounded-lg p-8">
-              <h3 className="font-display text-xl font-bold mb-4">How to Submit</h3>
-              <p className="text-foreground mb-4">
-                Submit your e-Poster abstract through our online submission form.
-              </p>
-              <p className="text-foreground mb-6">
-                <strong>Submission Deadline:</strong> March 15, 2026
-              </p>
-              
-              <Link href="/submit-poster">
-                <button className="w-full bg-primary text-primary-foreground px-6 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity mb-4">
-                  Submit Your E-Poster
-                </button>
-              </Link>
-
-              <div className="bg-background rounded p-4">
-                <p className="font-semibold mb-2">For more information, contact:</p>
-                <p className="text-sm">
-                  <a 
-                    href="https://wa.me/6289602626709" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline"
-                  >
-                    +62 896-0262-6709 (WhatsApp)
-                  </a>
+        {/* Contact Section */}
+        <section className="py-16 bg-muted/30">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <Card className="border-l-4 border-l-primary">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold mb-4">Have Questions?</h3>
+                <p className="text-muted-foreground mb-6">
+                  For additional information or technical support regarding your submission, please get in touch with
+                  us.
                 </p>
-              </div>
-            </div>
+
+                <div className="space-y-3">
+                  <p className="font-semibold">Contact us via WhatsApp:</p>
+                  <Link href="https://wa.me/6289602626709" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full justify-center bg-transparent">
+                      <ArrowRight className="w-4 h-4 mr-2" />
+                      +62 896-0262-6709
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </section>
       </main>

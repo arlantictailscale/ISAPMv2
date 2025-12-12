@@ -30,7 +30,6 @@ import {
   UserCheck,
   FolderOpen,
   Hotel,
-  Settings,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -239,10 +238,10 @@ export default function Navigation() {
                           My Profile
                         </DropdownMenuItem>
                       </Link>
-                      <Link href="/profile/settings">
+                      <Link href="/profile/security">
                         <DropdownMenuItem>
-                          <Settings className="w-4 h-4 mr-2" />
-                          Settings
+                          <Shield className="w-4 h-4 mr-2" />
+                          Account Security
                         </DropdownMenuItem>
                       </Link>
                       <Link href="/my-purchases">
@@ -369,12 +368,12 @@ export default function Navigation() {
                   My Profile
                 </Link>
                 <Link
-                  href="/profile/settings"
+                  href="/profile/security"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
-                  <Settings className="w-4 h-4" />
-                  Settings
+                  <Shield className="w-4 h-4" />
+                  Account Security
                 </Link>
                 <Link
                   href="/my-purchases"

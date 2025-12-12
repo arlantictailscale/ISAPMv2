@@ -44,15 +44,26 @@ export default function SecurityPage() {
         const userProviders = user.identities.map((identity: any) => identity.provider)
         setProviders(userProviders)
 
-        // Check if any identity has email provider OR if user has confirmed email with password
-        // OAuth users who added password will have email in their identities
+        // Check multiple sources to determine if user has password authentication:
+
+        // 1. Check if "email" identity exists (users who signed up with email/password)
         const hasEmailIdentity = userProviders.includes("email")
 
-        // Also check if user signed up with email (not OAuth) - they have password by default
-        const hasEmailSignup =
-          user.app_metadata?.provider === "email" || user.app_metadata?.providers?.includes("email")
+        // 2. Check app_metadata.providers - Supabase adds "email" here when password is set via updateUser
+        const appMetaProviders = user.app_metadata?.providers || []
+        const hasEmailInAppMeta = appMetaProviders.includes("email")
 
-        setHasExistingPassword(hasEmailIdentity || hasEmailSignup)
+        // 3. Check app_metadata.provider (primary provider)
+        const primaryProvider = user.app_metadata?.provider
+        const primaryIsEmail = primaryProvider === "email"
+
+        // 4. Check if user_metadata indicates password was added (we set this ourselves)
+        const hasPasswordFlag = user.user_metadata?.has_password === true
+
+        // User has password if any of these conditions are true
+        const hasPassword = hasEmailIdentity || hasEmailInAppMeta || primaryIsEmail || hasPasswordFlag
+
+        setHasExistingPassword(hasPassword)
       }
 
       setIsLoading(false)
@@ -77,9 +88,11 @@ export default function SecurityPage() {
     setIsAddingPassword(true)
 
     try {
-      // Use client-side updateUser to add/change password
       const { data, error } = await supabase.auth.updateUser({
         password: password,
+        data: {
+          has_password: true, // Store flag in user_metadata for reliable detection
+        },
       })
 
       if (error) {
@@ -102,6 +115,11 @@ export default function SecurityPage() {
         setHasExistingPassword(true)
         if (!providers.includes("email")) {
           setProviders([...providers, "email"])
+        }
+
+        // Update user state with new data
+        if (data.user) {
+          setUser(data.user)
         }
 
         setShowPasswordForm(false)

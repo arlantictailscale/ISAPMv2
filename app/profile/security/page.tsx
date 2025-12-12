@@ -11,8 +11,6 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, Key, Mail, CheckCircle2, Shield, Lock } from "lucide-react"
 import { toast } from "sonner"
-// Import the server action for adding password
-import { addPasswordToAccount } from "@/app/actions/add-password"
 
 export default function SecurityPage() {
   const [user, setUser] = useState<any>(null)
@@ -41,19 +39,9 @@ export default function SecurityPage() {
       setUser(user)
 
       // Fetch user's authentication providers
-      try {
-        const response = await fetch("/api/auth/check-providers", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: user.email }),
-        })
-
-        if (response.ok) {
-          const { providers: userProviders } = await response.json()
-          setProviders(userProviders)
-        }
-      } catch (error) {
-        console.error("[v0] Error fetching providers:", error)
+      if (user.identities && user.identities.length > 0) {
+        const userProviders = user.identities.map((identity: any) => identity.provider)
+        setProviders(userProviders)
       }
 
       setIsLoading(false)
@@ -78,19 +66,32 @@ export default function SecurityPage() {
     setIsAddingPassword(true)
 
     try {
-      // Use server action instead of client-side updateUser
-      const result = await addPasswordToAccount(user.email, password)
+      // Use client-side updateUser instead of server-side action
+      const { data, error } = await supabase.auth.updateUser({
+        password: password,
+      })
 
-      if (!result.success) {
-        throw new Error(result.error || "Failed to add password")
+      if (error) {
+        throw error
       }
 
       toast.success("Password added successfully!", {
         description: "You can now login with your email and password.",
       })
 
-      // Refresh providers list
-      setProviders([...providers, "email"])
+      const {
+        data: { user: refreshedUser },
+      } = await supabase.auth.getUser()
+      if (refreshedUser?.identities) {
+        const updatedProviders = refreshedUser.identities.map((identity: any) => identity.provider)
+        setProviders(updatedProviders)
+      } else {
+        // Fallback: add email to providers list
+        if (!providers.includes("email")) {
+          setProviders([...providers, "email"])
+        }
+      }
+
       setShowPasswordForm(false)
       setPassword("")
       setConfirmPassword("")

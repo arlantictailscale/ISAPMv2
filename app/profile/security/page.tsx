@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { addPasswordToAccount } from "@/app/actions/add-password"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -38,14 +39,6 @@ export default function SecurityPage() {
         return
       }
 
-      console.log("[v0] User loaded:", {
-        id: user.id,
-        email: user.email,
-        identities: user.identities?.map((i: any) => i.provider),
-        app_metadata: user.app_metadata,
-        user_metadata: user.user_metadata,
-      })
-
       setUser(user)
 
       if (user.identities && user.identities.length > 0) {
@@ -60,14 +53,6 @@ export default function SecurityPage() {
         const hasPasswordFlag = user.user_metadata?.has_password === true
 
         const hasPassword = hasEmailIdentity || hasEmailInAppMeta || primaryIsEmail || hasPasswordFlag
-
-        console.log("[v0] Password detection:", {
-          hasEmailIdentity,
-          hasEmailInAppMeta,
-          primaryIsEmail,
-          hasPasswordFlag,
-          finalResult: hasPassword,
-        })
 
         setHasExistingPassword(hasPassword)
       }
@@ -87,48 +72,43 @@ export default function SecurityPage() {
   }, [password, confirmPassword])
 
   const handlePasswordSubmit = async () => {
-    console.log("[v0] handlePasswordSubmit START")
-
     // Validation
     if (!password || !confirmPassword) {
       toast.error("Please fill in both password fields")
-      console.log("[v0] Validation failed: empty fields")
       return
     }
 
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match")
       toast.error("Passwords do not match")
-      console.log("[v0] Validation failed: passwords don't match")
       return
     }
 
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters long")
-      console.log("[v0] Validation failed: password too short")
+      return
+    }
+
+    if (!user?.email) {
+      toast.error("Unable to get user email")
       return
     }
 
     setIsAddingPassword(true)
     setPasswordError("")
-    console.log("[v0] Starting Supabase updateUser call...")
 
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase.auth.updateUser({ password: password })
+      // Call server action that uses admin.updateUserById
+      const result = await addPasswordToAccount(user.email, password)
 
-      console.log("[v0] Supabase response:", { data: data?.user?.id, error: error?.message })
-
-      if (error) {
-        if (error.message.includes("different from the old password")) {
+      if (!result.success) {
+        if (result.error?.includes("different from the old password")) {
           toast.error("New password must be different from your current password")
           setHasExistingPassword(true)
         } else {
-          toast.error("Failed to update password: " + error.message)
+          toast.error(result.error || "Failed to update password")
         }
-        console.log("[v0] Error handled, returning")
       } else {
-        console.log("[v0] Password updated successfully!")
         toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!")
 
         setHasExistingPassword(true)
@@ -140,24 +120,11 @@ export default function SecurityPage() {
         if (!providers.includes("email")) {
           setProviders([...providers, "email"])
         }
-
-        if (data?.user) {
-          setUser(data.user)
-        }
-
-        // Update user_metadata
-        try {
-          await supabase.auth.updateUser({ data: { has_password: true } })
-          console.log("[v0] Metadata updated")
-        } catch (metaError) {
-          console.warn("[v0] Metadata update failed:", metaError)
-        }
       }
     } catch (err) {
-      console.error("[v0] Unexpected error:", err)
+      console.error("Password update error:", err)
       toast.error("An unexpected error occurred")
     } finally {
-      console.log("[v0] Setting isAddingPassword to false")
       setIsAddingPassword(false)
     }
   }
@@ -337,28 +304,23 @@ export default function SecurityPage() {
                       )}
                     </div>
 
-                    {isAddingPassword ? (
-                      <Button disabled className="w-full">
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        {hasPasswordAuth ? "Changing Password..." : "Adding Password..."}
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          console.log("[v0] Button clicked!")
-                          handlePasswordSubmit()
-                        }}
-                        disabled={!canSubmit}
-                        className="w-full"
-                      >
-                        {hasPasswordAuth ? "Change Password" : "Add Password"}
-                      </Button>
-                    )}
-
-                    <p className="text-xs text-muted-foreground text-center">
-                      Debug: canSubmit={canSubmit.toString()}, isAddingPassword={isAddingPassword.toString()}
-                    </p>
+                    <Button
+                      type="button"
+                      onClick={handlePasswordSubmit}
+                      disabled={!canSubmit || isAddingPassword}
+                      className="w-full"
+                    >
+                      {isAddingPassword ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          {hasPasswordAuth ? "Changing Password..." : "Adding Password..."}
+                        </>
+                      ) : hasPasswordAuth ? (
+                        "Change Password"
+                      ) : (
+                        "Add Password"
+                      )}
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

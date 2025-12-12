@@ -12,6 +12,7 @@ import Navigation from "@/components/navigation"
 import { LinkPrefetch } from "@/components/link-prefetch"
 import { OfflineIndicator } from "@/components/offline-indicator"
 import { WebVitalsReporter } from "@/components/web-vitals-reporter"
+import { createClient } from "@/lib/supabase/server"
 
 import { Inter, Playfair_Display } from "next/font/google"
 
@@ -172,11 +173,22 @@ const jsonLd = {
   image: "https://www.isapm2026.org/images/og-image.jpg",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  let userRole = "user"
+  if (user) {
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle()
+    userRole = profile?.role || "user"
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -199,11 +211,10 @@ export default function RootLayout({
         <OfflineIndicator />
         <ScrollProgressBar />
         <LinkPrefetch />
-        <Navigation />
+        <Navigation initialUser={user} initialUserRole={userRole} />
         <CartProvider>
           <div className="pb-16 md:pb-0">{children}</div>
           <MobileBottomNav />
-          {/* <PWAInstallPrompt /> */}
         </CartProvider>
         <Analytics />
         <SpeedInsights />

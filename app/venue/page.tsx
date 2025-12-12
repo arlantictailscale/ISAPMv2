@@ -4,11 +4,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import { DeluxeRoomGallery } from "@/components/deluxe-room-gallery"
-import { PremierRoomGallery } from "@/components/premier-room-gallery"
 import { Suspense } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { RoomAvailabilitySection } from "@/components/room-availability-section"
+import { VenueRoomGalleries } from "@/components/venue-room-galleries"
 
 export const revalidate = 3600 // 1 hour
 
@@ -148,15 +147,7 @@ export default async function VenuePage() {
           <RoomAvailabilitySection />
         </Suspense>
 
-        {/* Room Galleries */}
-        <section className="py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
-            <div className="space-y-16">
-              <DeluxeRoomGallery />
-              <PremierRoomGallery />
-            </div>
-          </div>
-        </section>
+        <VenueRoomGalleries />
 
         {/* Contact Section */}
         <section className="py-16">

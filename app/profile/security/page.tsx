@@ -22,9 +22,10 @@ export default function SecurityPage() {
   const [passwordError, setPasswordError] = useState("")
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
+    const supabase = createClient()
+
     const loadSecurityInfo = async () => {
       setIsLoading(true)
 
@@ -75,7 +76,7 @@ export default function SecurityPage() {
     }
 
     loadSecurityInfo()
-  }, [supabase, router])
+  }, [router])
 
   useEffect(() => {
     if (confirmPassword && password !== confirmPassword) {
@@ -86,79 +87,79 @@ export default function SecurityPage() {
   }, [password, confirmPassword])
 
   const handlePasswordSubmit = async () => {
-    console.log("[v0] handlePasswordSubmit called")
+    console.log("[v0] handlePasswordSubmit START")
 
     // Validation
     if (!password || !confirmPassword) {
       toast.error("Please fill in both password fields")
+      console.log("[v0] Validation failed: empty fields")
       return
     }
 
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match")
       toast.error("Passwords do not match")
+      console.log("[v0] Validation failed: passwords don't match")
       return
     }
 
     if (password.length < 8) {
       toast.error("Password must be at least 8 characters long")
+      console.log("[v0] Validation failed: password too short")
       return
     }
 
-    // Start loading
     setIsAddingPassword(true)
     setPasswordError("")
-    setPasswordSuccess(false)
+    console.log("[v0] Starting Supabase updateUser call...")
 
-    console.log("[v0] Calling supabase.auth.updateUser...")
+    try {
+      const supabase = createClient()
+      const { data, error } = await supabase.auth.updateUser({ password: password })
 
-    supabase.auth
-      .updateUser({ password: password })
-      .then(({ data, error }) => {
-        console.log("[v0] updateUser completed:", { data, error })
+      console.log("[v0] Supabase response:", { data: data?.user?.id, error: error?.message })
 
-        if (error) {
-          console.log("[v0] Error:", error.message)
-          if (error.message.includes("different from the old password")) {
-            toast.error("New password must be different from your current password")
-            setHasExistingPassword(true)
-          } else {
-            toast.error("Failed to update password: " + error.message)
-          }
-        } else {
-          console.log("[v0] Success! Password updated")
-          toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!")
-
-          // Update states
+      if (error) {
+        if (error.message.includes("different from the old password")) {
+          toast.error("New password must be different from your current password")
           setHasExistingPassword(true)
-          setPasswordSuccess(true)
-          setShowPasswordForm(false)
-          setPassword("")
-          setConfirmPassword("")
-
-          if (!providers.includes("email")) {
-            setProviders([...providers, "email"])
-          }
-
-          if (data?.user) {
-            setUser(data.user)
-          }
-
-          // Also update user_metadata to track has_password
-          supabase.auth
-            .updateUser({ data: { has_password: true } })
-            .then(() => console.log("[v0] Metadata updated"))
-            .catch((e) => console.warn("[v0] Metadata update failed:", e))
+        } else {
+          toast.error("Failed to update password: " + error.message)
         }
-      })
-      .catch((err) => {
-        console.error("[v0] Unexpected error:", err)
-        toast.error("An unexpected error occurred")
-      })
-      .finally(() => {
-        console.log("[v0] Finally block - setting isAddingPassword to false")
-        setIsAddingPassword(false)
-      })
+        console.log("[v0] Error handled, returning")
+      } else {
+        console.log("[v0] Password updated successfully!")
+        toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!")
+
+        setHasExistingPassword(true)
+        setPasswordSuccess(true)
+        setShowPasswordForm(false)
+        setPassword("")
+        setConfirmPassword("")
+
+        if (!providers.includes("email")) {
+          setProviders([...providers, "email"])
+        }
+
+        if (data?.user) {
+          setUser(data.user)
+        }
+
+        // Update user_metadata
+        try {
+          await supabase.auth.updateUser({ data: { has_password: true } })
+          console.log("[v0] Metadata updated")
+        } catch (metaError) {
+          console.warn("[v0] Metadata update failed:", metaError)
+        }
+      }
+    } catch (err) {
+      console.error("[v0] Unexpected error:", err)
+      toast.error("An unexpected error occurred")
+    } finally {
+      console.log("[v0] Setting isAddingPassword to false")
+      setIsAddingPassword(false)
+    }
   }
 
   if (isLoading) {
@@ -178,8 +179,8 @@ export default function SecurityPage() {
 
   const hasPasswordAuth = hasExistingPassword || passwordSuccess || providers.includes("email")
   const hasGoogleAuth = providers.includes("google")
-  const isSubmitDisabled =
-    isAddingPassword || !password || !confirmPassword || password !== confirmPassword || password.length < 8
+
+  const canSubmit = password.length >= 8 && confirmPassword.length >= 8 && password === confirmPassword
 
   return (
     <>
@@ -335,18 +336,29 @@ export default function SecurityPage() {
                         </div>
                       )}
                     </div>
-                    <Button type="button" onClick={handlePasswordSubmit} disabled={isSubmitDisabled} className="w-full">
-                      {isAddingPassword ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {hasPasswordAuth ? "Changing Password..." : "Adding Password..."}
-                        </>
-                      ) : hasPasswordAuth ? (
-                        "Change Password"
-                      ) : (
-                        "Add Password"
-                      )}
-                    </Button>
+
+                    {isAddingPassword ? (
+                      <Button disabled className="w-full">
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        {hasPasswordAuth ? "Changing Password..." : "Adding Password..."}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        onClick={() => {
+                          console.log("[v0] Button clicked!")
+                          handlePasswordSubmit()
+                        }}
+                        disabled={!canSubmit}
+                        className="w-full"
+                      >
+                        {hasPasswordAuth ? "Change Password" : "Add Password"}
+                      </Button>
+                    )}
+
+                    <p className="text-xs text-muted-foreground text-center">
+                      Debug: canSubmit={canSubmit.toString()}, isAddingPassword={isAddingPassword.toString()}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

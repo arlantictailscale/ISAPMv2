@@ -99,21 +99,39 @@ export default function Navigation() {
   )
 
   useEffect(() => {
+    // then validate with getUser() for security
     const checkUser = async () => {
       try {
+        // First, get session from local storage for immediate feedback
         const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        setUser(user)
+          data: { session },
+        } = await supabase.auth.getSession()
 
-        if (user) {
-          const role = await fetchUserRole(user.id)
+        if (session?.user) {
+          // Immediately set user from session for fast UI update
+          setUser(session.user)
+          setIsLoading(false)
+
+          // Fetch role in parallel
+          const role = await fetchUserRole(session.user.id)
           setUserRole(role)
+
+          // Optionally validate token in background (for security)
+          // This won't block the UI
+          supabase.auth.getUser().then(({ data: { user: validatedUser } }) => {
+            if (!validatedUser) {
+              // Token was invalid, clear state
+              setUser(null)
+              setUserRole("user")
+            }
+          })
+        } else {
+          setUser(null)
+          setIsLoading(false)
         }
       } catch (authError) {
         console.error("[v0] Auth check failed:", authError)
         setUser(null)
-      } finally {
         setIsLoading(false)
       }
     }
@@ -193,8 +211,10 @@ export default function Navigation() {
               </Button>
             </Link>
             <div className="flex gap-3 items-center">
-              {!isLoading && user && <CartIcon />}
-              {!isLoading && user ? (
+              {user && <CartIcon />}
+              {isLoading ? (
+                <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
+              ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -295,8 +315,9 @@ export default function Navigation() {
           </div>
 
           <div className="flex justify-end items-center gap-2 md:hidden">
-            {!isLoading && user && <CartIcon />}
+            {user && <CartIcon />}
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
               aria-label="Toggle menu"
@@ -324,7 +345,9 @@ export default function Navigation() {
               </Button>
             </Link>
 
-            {!isLoading && user ? (
+            {isLoading ? (
+              <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
+            ) : user ? (
               <div className="border-t pt-4 mt-4 space-y-1">
                 <Link
                   href="/dashboard"
@@ -397,6 +420,7 @@ export default function Navigation() {
                   <>
                     <div className="border-t my-3" />
                     <button
+                      type="button"
                       onClick={() => setAdminMenuOpen(!adminMenuOpen)}
                       className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
                     >
@@ -430,6 +454,7 @@ export default function Navigation() {
 
                 <div className="border-t my-2" />
                 <button
+                  type="button"
                   onClick={() => {
                     handleLogout()
                     setIsOpen(false)

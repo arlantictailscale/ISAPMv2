@@ -238,12 +238,6 @@ export default function Navigation() {
                           My Profile
                         </DropdownMenuItem>
                       </Link>
-                      <Link href="/profile/security">
-                        <DropdownMenuItem>
-                          <Shield className="w-4 h-4 mr-2" />
-                          Account Security
-                        </DropdownMenuItem>
-                      </Link>
                       <Link href="/my-purchases">
                         <DropdownMenuItem>
                           <ShoppingBag className="w-4 h-4 mr-2" />
@@ -366,14 +360,6 @@ export default function Navigation() {
                 >
                   <User className="w-4 h-4" />
                   My Profile
-                </Link>
-                <Link
-                  href="/profile/security"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Shield className="w-4 h-4" />
-                  Account Security
                 </Link>
                 <Link
                   href="/my-purchases"

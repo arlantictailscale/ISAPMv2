@@ -1,5 +1,3 @@
-import { createClient } from "@/lib/supabase/client"
-
 export type AuthProvider = "email" | "google" | "multiple" | "none"
 
 export interface ProviderDetectionResult {
@@ -12,50 +10,34 @@ export interface ProviderDetectionResult {
 
 /**
  * Detect which authentication providers are associated with an email address
+ * This calls the server API endpoint which has admin access to query auth.users
  */
 export async function detectAuthProviders(email: string): Promise<ProviderDetectionResult> {
   try {
-    const supabase = createClient()
+    console.log("[v0] detectAuthProviders called for:", email)
 
-    // Check if user exists in profiles table
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("id, email")
-      .eq("email", email.toLowerCase())
-      .maybeSingle()
-
-    if (!profile) {
-      return {
-        providers: [],
-        hasPassword: false,
-        primaryProvider: "none",
-        canLoginWithPassword: false,
-        canLoginWithGoogle: false,
-      }
-    }
-
-    // For client-side, we can't directly query auth.identities
-    // Instead, we attempt a sign-in to detect the provider
-    // This is a limitation - ideally we'd use an API route with admin access
-
-    // Try to check via an API endpoint
+    // Call API endpoint directly which has admin access
     const response = await fetch("/api/auth/check-providers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     })
 
+    console.log("[v0] API response status:", response.status)
+
     if (response.ok) {
       const data = await response.json()
+      console.log("[v0] API returned:", data)
       return data
     }
 
-    // Fallback: assume email provider if profile exists
+    console.log("[v0] API call failed, returning default")
+    // If API fails, return unknown state
     return {
-      providers: ["email"],
-      hasPassword: true,
-      primaryProvider: "email",
-      canLoginWithPassword: true,
+      providers: [],
+      hasPassword: false,
+      primaryProvider: "none",
+      canLoginWithPassword: false,
       canLoginWithGoogle: false,
     }
   } catch (error) {

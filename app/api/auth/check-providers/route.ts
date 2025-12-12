@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
@@ -11,25 +11,68 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.admin.listUsers()
+    console.log("[v0] Environment check:", {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!serviceRoleKey,
+    })
 
-    console.log("[v0] List users result:", { error, userCount: user?.users?.length })
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("[v0] Missing Supabase configuration")
+      return NextResponse.json({
+        providers: [],
+        hasPassword: false,
+        primaryProvider: "none",
+        canLoginWithPassword: false,
+        canLoginWithGoogle: false,
+      })
+    }
 
-    // Find user by email
-    const foundUser = user?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase())
+    // Create admin client with service role key
+    const adminClient = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+
+    const { data, error } = await adminClient.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000, // Get all users to search
+    })
+
+    console.log("[v0] List users result:", {
+      error: error?.message,
+      userCount: data?.users?.length,
+    })
+
+    if (error) {
+      console.error("[v0] Admin API error:", error)
+      return NextResponse.json({
+        providers: [],
+        hasPassword: false,
+        primaryProvider: "none",
+        canLoginWithPassword: false,
+        canLoginWithGoogle: false,
+      })
+    }
+
+    // Find user by email (case-insensitive)
+    const foundUser = data?.users?.find((u) => u.email?.toLowerCase() === email.toLowerCase())
 
     console.log("[v0] Found user:", {
       found: !!foundUser,
-      identities: foundUser?.identities?.map((i) => i.provider),
+      userId: foundUser?.id,
+      identities: foundUser?.identities?.map((i) => ({
+        provider: i.provider,
+        id: i.id,
+      })),
     })
 
-    if (error || !foundUser) {
-      console.log("[v0] No user found or error:", error?.message)
+    if (!foundUser) {
+      console.log("[v0] No user found with email:", email)
       return NextResponse.json({
         providers: [],
         hasPassword: false,

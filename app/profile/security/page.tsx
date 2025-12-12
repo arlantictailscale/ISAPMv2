@@ -19,7 +19,9 @@ export default function SecurityPage() {
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [currentPassword, setCurrentPassword] = useState("")
   const [isAddingPassword, setIsAddingPassword] = useState(false)
+  const [hasExistingPassword, setHasExistingPassword] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -38,10 +40,19 @@ export default function SecurityPage() {
 
       setUser(user)
 
-      // Fetch user's authentication providers
       if (user.identities && user.identities.length > 0) {
         const userProviders = user.identities.map((identity: any) => identity.provider)
         setProviders(userProviders)
+
+        // Check if any identity has email provider OR if user has confirmed email with password
+        // OAuth users who added password will have email in their identities
+        const hasEmailIdentity = userProviders.includes("email")
+
+        // Also check if user signed up with email (not OAuth) - they have password by default
+        const hasEmailSignup =
+          user.app_metadata?.provider === "email" || user.app_metadata?.providers?.includes("email")
+
+        setHasExistingPassword(hasEmailIdentity || hasEmailSignup)
       }
 
       setIsLoading(false)
@@ -50,69 +61,56 @@ export default function SecurityPage() {
     loadSecurityInfo()
   }, [supabase, router])
 
-  const handleAddPassword = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    console.log("[v0] handleAddPassword called")
-    console.log("[v0] password length:", password.length)
-    console.log("[v0] confirmPassword length:", confirmPassword.length)
-
     if (password !== confirmPassword) {
-      console.log("[v0] Passwords don't match")
       toast.error("Passwords don't match")
       return
     }
 
     if (password.length < 8) {
-      console.log("[v0] Password too short")
       toast.error("Password must be at least 8 characters long")
       return
     }
 
     setIsAddingPassword(true)
-    console.log("[v0] Calling supabase.auth.updateUser with password")
 
     try {
-      // Use client-side updateUser to add password to OAuth account
+      // Use client-side updateUser to add/change password
       const { data, error } = await supabase.auth.updateUser({
         password: password,
       })
 
-      console.log("[v0] updateUser response - data:", data)
-      console.log("[v0] updateUser response - error:", error)
-
       if (error) {
-        throw error
+        if (error.message.includes("different from the old password")) {
+          toast.error("New password must be different from your current password")
+          // User already has password - update state
+          setHasExistingPassword(true)
+        } else {
+          throw error
+        }
+        return
       }
 
-      toast.success("Password added successfully!", {
-        description: "You can now login with your email and password.",
+      toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!", {
+        description: hasExistingPassword
+          ? "Your password has been updated."
+          : "You can now login with your email and password.",
       })
 
-      // Refresh user data to get updated identities
-      const {
-        data: { user: refreshedUser },
-      } = await supabase.auth.getUser()
-
-      console.log("[v0] Refreshed user identities:", refreshedUser?.identities)
-
-      if (refreshedUser?.identities) {
-        const updatedProviders = refreshedUser.identities.map((identity: any) => identity.provider)
-        console.log("[v0] Updated providers:", updatedProviders)
-        setProviders(updatedProviders)
-      } else {
-        // Fallback: add email to providers list
-        if (!providers.includes("email")) {
-          setProviders([...providers, "email"])
-        }
+      setHasExistingPassword(true)
+      if (!providers.includes("email")) {
+        setProviders([...providers, "email"])
       }
 
       setShowPasswordForm(false)
       setPassword("")
       setConfirmPassword("")
+      setCurrentPassword("")
     } catch (error: any) {
-      console.error("[v0] Error adding password:", error)
-      toast.error("Failed to add password", {
+      console.error("Error updating password:", error)
+      toast.error("Failed to update password", {
         description: error.message || "Please try again later.",
       })
     } finally {
@@ -135,7 +133,7 @@ export default function SecurityPage() {
     )
   }
 
-  const hasPasswordAuth = providers.includes("email")
+  const hasPasswordAuth = hasExistingPassword || providers.includes("email")
   const hasGoogleAuth = providers.includes("google")
 
   return (
@@ -207,7 +205,7 @@ export default function SecurityPage() {
                   </div>
                 )}
 
-                {/* Password Authentication */}
+                {/* Password Authentication - Updated to show change password option */}
                 {hasPasswordAuth ? (
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
                     <div className="flex items-center gap-3">
@@ -217,7 +215,17 @@ export default function SecurityPage() {
                         <p className="text-xs text-muted-foreground">Sign in with your password</p>
                       </div>
                     </div>
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setShowPasswordForm(!showPasswordForm)}
+                        className="text-primary text-xs"
+                      >
+                        {showPasswordForm ? "Cancel" : "Change"}
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between p-4 border border-dashed border-muted-foreground/30 rounded-lg">
@@ -241,17 +249,19 @@ export default function SecurityPage() {
               </CardContent>
             </Card>
 
-            {/* Add Password Form */}
-            {showPasswordForm && !hasPasswordAuth && (
+            {/* Add/Change Password Form - Updated to handle both scenarios */}
+            {showPasswordForm && (
               <Card className="border-primary/50">
                 <CardHeader>
-                  <CardTitle>Add Password Authentication</CardTitle>
+                  <CardTitle>{hasPasswordAuth ? "Change Password" : "Add Password Authentication"}</CardTitle>
                   <CardDescription>
-                    Set a password to enable email and password login in addition to Google sign-in
+                    {hasPasswordAuth
+                      ? "Enter a new password to update your current password"
+                      : "Set a password to enable email and password login in addition to Google sign-in"}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleAddPassword} className="space-y-4">
+                  <form onSubmit={handlePasswordSubmit} className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium mb-2">New Password</label>
                       <input
@@ -265,7 +275,7 @@ export default function SecurityPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Confirm Password</label>
+                      <label className="block text-sm font-medium mb-2">Confirm New Password</label>
                       <input
                         type="password"
                         value={confirmPassword}
@@ -280,8 +290,10 @@ export default function SecurityPage() {
                       {isAddingPassword ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Adding Password...
+                          {hasPasswordAuth ? "Changing Password..." : "Adding Password..."}
                         </>
+                      ) : hasPasswordAuth ? (
+                        "Change Password"
                       ) : (
                         "Add Password"
                       )}

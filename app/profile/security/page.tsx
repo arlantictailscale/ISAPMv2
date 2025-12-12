@@ -21,7 +21,7 @@ export default function SecurityPage() {
   const [isAddingPassword, setIsAddingPassword] = useState(false)
   const [hasExistingPassword, setHasExistingPassword] = useState(false)
   const [passwordError, setPasswordError] = useState("")
-  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [passwordSuccess, setPasswordSuccess] = useState(false) // Declared passwordSuccess variable
   const router = useRouter()
 
   useEffect(() => {
@@ -45,14 +45,14 @@ export default function SecurityPage() {
         const userProviders = user.identities.map((identity: any) => identity.provider)
         setProviders(userProviders)
 
+        const hasPasswordFlag = user.user_metadata?.has_password === true
         const hasEmailIdentity = userProviders.includes("email")
         const appMetaProviders = user.app_metadata?.providers || []
         const hasEmailInAppMeta = appMetaProviders.includes("email")
         const primaryProvider = user.app_metadata?.provider
         const primaryIsEmail = primaryProvider === "email"
-        const hasPasswordFlag = user.user_metadata?.has_password === true
 
-        const hasPassword = hasEmailIdentity || hasEmailInAppMeta || primaryIsEmail || hasPasswordFlag
+        const hasPassword = hasPasswordFlag || hasEmailIdentity || hasEmailInAppMeta || primaryIsEmail
 
         setHasExistingPassword(hasPassword)
       }
@@ -120,14 +120,22 @@ export default function SecurityPage() {
         toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!")
 
         setHasExistingPassword(true)
-        setPasswordSuccess(true)
         setShowPasswordForm(false)
         setPassword("")
         setConfirmPassword("")
+        setPasswordSuccess(true) // Set passwordSuccess to true on successful password update
 
         if (!providers.includes("email")) {
           setProviders([...providers, "email"])
         }
+
+        setUser((prev: any) => ({
+          ...prev,
+          user_metadata: {
+            ...prev?.user_metadata,
+            has_password: true,
+          },
+        }))
       }
     } catch (err) {
       console.error("[v0] Password update error:", err)

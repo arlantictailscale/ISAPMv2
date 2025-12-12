@@ -453,7 +453,8 @@ export default async function VenuePage() {
                     <Link href="/hotel-booking" className="block">
                       <Button
                         size="lg"
-                        className="w-full bg-white text-cyan-600 hover:bg-white/90 shadow-md hover:shadow-lg transition-all"
+                        className="w-full bg-white text-cyan-700 hover:bg-gray-100 shadow-md hover:shadow-lg transition-all font-semibold border-2 border-white"
+                        style={{ backgroundColor: "white", color: "#0e7490" }}
                       >
                         <Hotel className="w-5 h-5 mr-2" />
                         Book Hotel Room

@@ -38,30 +38,36 @@ export default function SecurityPage() {
         return
       }
 
+      console.log("[v0] User loaded:", {
+        id: user.id,
+        email: user.email,
+        identities: user.identities?.map((i: any) => i.provider),
+        app_metadata: user.app_metadata,
+        user_metadata: user.user_metadata,
+      })
+
       setUser(user)
 
       if (user.identities && user.identities.length > 0) {
         const userProviders = user.identities.map((identity: any) => identity.provider)
         setProviders(userProviders)
 
-        // Check multiple sources to determine if user has password authentication:
-
-        // 1. Check if "email" identity exists (users who signed up with email/password)
         const hasEmailIdentity = userProviders.includes("email")
-
-        // 2. Check app_metadata.providers - Supabase adds "email" here when password is set via updateUser
         const appMetaProviders = user.app_metadata?.providers || []
         const hasEmailInAppMeta = appMetaProviders.includes("email")
-
-        // 3. Check app_metadata.provider (primary provider)
         const primaryProvider = user.app_metadata?.provider
         const primaryIsEmail = primaryProvider === "email"
-
-        // 4. Check if user_metadata indicates password was added (we set this ourselves)
         const hasPasswordFlag = user.user_metadata?.has_password === true
 
-        // User has password if any of these conditions are true
         const hasPassword = hasEmailIdentity || hasEmailInAppMeta || primaryIsEmail || hasPasswordFlag
+
+        console.log("[v0] Password detection:", {
+          hasEmailIdentity,
+          hasEmailInAppMeta,
+          primaryIsEmail,
+          hasPasswordFlag,
+          finalResult: hasPassword,
+        })
 
         setHasExistingPassword(hasPassword)
       }
@@ -74,6 +80,7 @@ export default function SecurityPage() {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("[v0] handlePasswordSubmit called")
 
     if (password !== confirmPassword) {
       toast.error("Passwords don't match")
@@ -86,53 +93,73 @@ export default function SecurityPage() {
     }
 
     setIsAddingPassword(true)
+    console.log("[v0] Starting password update...")
 
     try {
-      const { data, error } = await supabase.auth.updateUser({
+      // Step 1: Update password only
+      console.log("[v0] Step 1: Updating password...")
+      const { data: passwordData, error: passwordError } = await supabase.auth.updateUser({
         password: password,
-        data: {
-          has_password: true, // Store flag in user_metadata for reliable detection
-        },
       })
 
-      if (error) {
-        if (error.message.includes("different from the old password")) {
+      console.log("[v0] Password update response:", { passwordData, passwordError })
+
+      if (passwordError) {
+        console.log("[v0] Password update error:", passwordError.message)
+        if (passwordError.message.includes("different from the old password")) {
           toast.error("New password must be different from your current password")
-          // User already has password - update state
           setHasExistingPassword(true)
         } else {
           toast.error("Failed to update password", {
-            description: error.message || "Please try again later.",
+            description: passwordError.message || "Please try again later.",
           })
         }
-      } else {
-        toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!", {
-          description: hasExistingPassword
-            ? "Your password has been updated."
-            : "You can now login with your email and password.",
-        })
-
-        setHasExistingPassword(true)
-        if (!providers.includes("email")) {
-          setProviders([...providers, "email"])
-        }
-
-        // Update user state with new data
-        if (data.user) {
-          setUser(data.user)
-        }
-
-        setShowPasswordForm(false)
-        setPassword("")
-        setConfirmPassword("")
-        setCurrentPassword("")
+        return // Exit early on error
       }
+
+      // Step 2: Update user_metadata separately to mark password as set
+      console.log("[v0] Step 2: Updating user metadata...")
+      const { data: metaData, error: metaError } = await supabase.auth.updateUser({
+        data: { has_password: true },
+      })
+
+      console.log("[v0] Metadata update response:", { metaData, metaError })
+
+      if (metaError) {
+        console.warn("[v0] Metadata update warning:", metaError.message)
+        // Don't fail the whole operation if metadata update fails
+      }
+
+      // Success!
+      console.log("[v0] Password added successfully!")
+      toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!", {
+        description: hasExistingPassword
+          ? "Your password has been updated."
+          : "You can now login with your email and password.",
+      })
+
+      setHasExistingPassword(true)
+      if (!providers.includes("email")) {
+        setProviders([...providers, "email"])
+      }
+
+      if (metaData?.user) {
+        setUser(metaData.user)
+      } else if (passwordData?.user) {
+        setUser(passwordData.user)
+      }
+
+      setShowPasswordForm(false)
+      setPassword("")
+      setConfirmPassword("")
+      setCurrentPassword("")
     } catch (error: any) {
-      console.error("Error updating password:", error)
+      console.error("[v0] Catch block error:", error)
       toast.error("Failed to update password", {
         description: error.message || "Please try again later.",
       })
     } finally {
+      console.log("[v0] Finally block: Setting isAddingPassword to false")
       setIsAddingPassword(false)
     }
   }
@@ -171,7 +198,6 @@ export default function SecurityPage() {
 
         <section className="py-16 px-4">
           <div className="max-w-2xl mx-auto space-y-6">
-            {/* Current Login Methods */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -181,7 +207,6 @@ export default function SecurityPage() {
                 <CardDescription>You can use any of these methods to sign in</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Email Address */}
                 <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
                   <div className="flex items-center gap-3">
                     <Mail className="w-5 h-5 text-muted-foreground" />
@@ -193,7 +218,6 @@ export default function SecurityPage() {
                   <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                 </div>
 
-                {/* Google OAuth */}
                 {hasGoogleAuth && (
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
                     <div className="flex items-center gap-3">
@@ -224,7 +248,6 @@ export default function SecurityPage() {
                   </div>
                 )}
 
-                {/* Password Authentication - Updated to show change password option */}
                 {hasPasswordAuth ? (
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-muted/30">
                     <div className="flex items-center gap-3">
@@ -268,7 +291,6 @@ export default function SecurityPage() {
               </CardContent>
             </Card>
 
-            {/* Add/Change Password Form - Updated to handle both scenarios */}
             {showPasswordForm && (
               <Card className="border-primary/50">
                 <CardHeader>
@@ -322,7 +344,6 @@ export default function SecurityPage() {
               </Card>
             )}
 
-            {/* Security Recommendations */}
             <Card className="bg-muted/30">
               <CardHeader>
                 <CardTitle className="text-base">Security Recommendations</CardTitle>

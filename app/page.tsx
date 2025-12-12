@@ -1,16 +1,59 @@
 import Navigation from "@/components/navigation"
 import LandingHero from "@/components/landing-hero"
-import ConferenceHighlights from "@/components/conference-highlights"
-import FlipBookSection from "@/components/flip-book-section"
-import WelcomeSection from "@/components/welcome-section"
-import AboutSection from "@/components/about-section"
-import ImportantInfo from "@/components/important-info"
-import CTA from "@/components/cta"
-import Footer from "@/components/footer"
+import dynamic from "next/dynamic"
 import { getRegisteredCount } from "@/app/actions/public-stats"
-import RegistrationStats from "@/components/registration-stats"
 import { ParallaxSection } from "@/components/parallax-section"
 import { ScrollReveal } from "@/components/scroll-reveal"
+import {
+  FlipBookSkeleton,
+  StatsSkeleton,
+  WelcomeSkeleton,
+  HighlightsSkeleton,
+  AboutSkeleton,
+  ImportantInfoSkeleton,
+  CTASkeleton,
+  FooterSkeleton,
+} from "@/components/skeleton-loaders"
+
+const FlipBookSection = dynamic(() => import("@/components/flip-book-section"), {
+  loading: () => <FlipBookSkeleton />,
+  ssr: true,
+})
+
+const RegistrationStats = dynamic(() => import("@/components/registration-stats"), {
+  loading: () => <StatsSkeleton />,
+  ssr: true,
+})
+
+const WelcomeSection = dynamic(() => import("@/components/welcome-section"), {
+  loading: () => <WelcomeSkeleton />,
+  ssr: true,
+})
+
+const ConferenceHighlights = dynamic(() => import("@/components/conference-highlights"), {
+  loading: () => <HighlightsSkeleton />,
+  ssr: true,
+})
+
+const AboutSection = dynamic(() => import("@/components/about-section"), {
+  loading: () => <AboutSkeleton />,
+  ssr: true,
+})
+
+const ImportantInfo = dynamic(() => import("@/components/important-info"), {
+  loading: () => <ImportantInfoSkeleton />,
+  ssr: true,
+})
+
+const CTA = dynamic(() => import("@/components/cta"), {
+  loading: () => <CTASkeleton />,
+  ssr: true,
+})
+
+const Footer = dynamic(() => import("@/components/footer"), {
+  loading: () => <FooterSkeleton />,
+  ssr: true,
+})
 
 export default async function Home() {
   const registeredCount = await getRegisteredCount()

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -53,9 +53,17 @@ const adminNavItems = [
   { label: "Webinar CMS", href: "/admin/webinar-cms", icon: BookOpen },
   { label: "E-Poster Submissions", href: "/admin/posters", icon: Presentation },
   { label: "Symposium Webinar Access", href: "/admin/symposium-webinar-access", icon: Gift },
-  { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel }, // Added Hotel Management link
+  { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel },
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
+]
+
+const navItems = [
+  { label: "Home", href: "/" },
+  { label: "Events", href: "/events" },
+  { label: "Webinar", href: "/webinar" },
+  { label: "e-Poster", href: "/call-for-papers" },
+  { label: "Venue", href: "/venue" },
 ]
 
 export default function Navigation() {
@@ -65,23 +73,29 @@ export default function Navigation() {
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
-  const supabase = createClient()
+
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
-  const fetchUserRole = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
+  const isAdmin = useMemo(() => userRole === "admin", [userRole])
 
-      if (error) {
-        console.error("[v0] Error fetching user role:", error.message)
+  const fetchUserRole = useCallback(
+    async (userId: string) => {
+      try {
+        const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
+
+        if (error) {
+          console.error("[v0] Error fetching user role:", error.message)
+          return "user"
+        }
+        return profile?.role || "user"
+      } catch (profileError) {
+        console.error("[v0] Failed to fetch profile:", profileError)
         return "user"
       }
-      return profile?.role || "user"
-    } catch (profileError) {
-      console.error("[v0] Failed to fetch profile:", profileError)
-      return "user"
-    }
-  }
+    },
+    [supabase],
+  )
 
   useEffect(() => {
     const checkUser = async () => {
@@ -118,35 +132,26 @@ export default function Navigation() {
         setUserRole("user")
       }
 
-      // Ensure loading is false after auth state changes
       setIsLoading(false)
     })
 
     return () => subscription?.unsubscribe()
-  }, [supabase])
+  }, [supabase, fetchUserRole])
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
 
-    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("scroll", handleScroll, { passive: true })
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await supabase.auth.signOut()
     setUser(null)
     router.push("/")
-  }
-
-  const navItems = [
-    { label: "Home", href: "/" },
-    { label: "Events", href: "/events" },
-    { label: "Webinar", href: "/webinar" },
-    { label: "e-Poster", href: "/call-for-papers" },
-    { label: "Venue", href: "/venue" },
-  ]
+  }, [supabase, router])
 
   return (
     <nav
@@ -243,7 +248,7 @@ export default function Navigation() {
                       </Link>
                     </DropdownMenuGroup>
 
-                    {userRole === "admin" && (
+                    {isAdmin && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuLabel className="text-xs text-primary flex items-center gap-1">
@@ -372,7 +377,7 @@ export default function Navigation() {
                   My Hotels
                 </Link>
 
-                {userRole === "admin" && (
+                {isAdmin && (
                   <>
                     <div className="border-t my-3" />
                     <button

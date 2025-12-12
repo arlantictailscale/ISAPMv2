@@ -14,6 +14,8 @@ import { isBefore, parseISO } from "date-fns"
 import Image from "next/image"
 import { MapPin } from "lucide-react"
 
+export const revalidate = 300 // 5 minutes
+
 const tabHeroImages = {
   program: {
     src: "/images/dsc07187.jpg",

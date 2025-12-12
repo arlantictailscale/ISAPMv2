@@ -47,11 +47,9 @@ export default function LandingHero() {
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index)
     setIsAutoPlaying(false)
-    // Resume auto-play after 5 seconds of inactivity
     setTimeout(() => setIsAutoPlaying(true), 5000)
   }, [])
 
-  // Auto-play effect
   useEffect(() => {
     if (!isAutoPlaying) return
     const interval = setInterval(nextSlide, 4000)
@@ -169,6 +167,7 @@ export default function LandingHero() {
                       className="object-cover"
                       priority={index === 0}
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      quality={index === 0 ? 90 : 75}
                     />
                   </div>
                 ))}

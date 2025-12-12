@@ -24,6 +24,7 @@ const nextConfig = {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256],
+    minimumCacheTTL: 31536000, // 1 year
   },
   async headers() {
     return [
@@ -52,10 +53,46 @@ const nextConfig = {
           },
         ],
       },
+      {
+        source: "/fonts/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
     ]
   },
   experimental: {
-    optimizePackageImports: ["lucide-react", "date-fns", "@radix-ui/react-icons"],
+    optimizePackageImports: [
+      "lucide-react", 
+      "date-fns", 
+      "@radix-ui/react-icons",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-accordion",
+      "recharts",
+      "react-hook-form",
+      "sonner"
+    ],
+  },
+  poweredByHeader: false,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === "production" ? {
+      exclude: ["error", "warn"]
+    } : false,
   },
 }
 

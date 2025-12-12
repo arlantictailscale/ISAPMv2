@@ -9,6 +9,8 @@ import { getRoomAvailability } from "@/app/actions/get-room-availability"
 import { DeluxeRoomGallery } from "@/components/deluxe-room-gallery"
 import { PremierRoomGallery } from "@/components/premier-room-gallery"
 
+export const revalidate = 3600 // 1 hour
+
 export default async function VenuePage() {
   const roomAvailability = await getRoomAvailability()
 

@@ -75,39 +75,98 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!formData.fullName.trim()) {
+      toast.error("Full name is required")
+      return
+    }
+    if (!formData.nik.trim() || formData.nik.length !== 16) {
+      toast.error("NIK must be exactly 16 digits")
+      return
+    }
+    if (!formData.phone.trim()) {
+      toast.error("Phone number is required")
+      return
+    }
+    if (!formData.institution.trim()) {
+      toast.error("Institution is required")
+      return
+    }
+    if (!formData.position) {
+      toast.error("Please select your profession")
+      return
+    }
+
     setIsSaving(true)
     setSaveSuccess(false)
 
-    try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        full_name: formData.fullName,
-        satu_sehat_name: formData.satuSehatName,
-        satu_sehat_email: formData.satuSehatEmail,
-        nik: formData.nik,
-        phone: formData.phone,
-        institution: formData.institution,
-        position: formData.position,
-        updated_at: new Date().toISOString(),
-      })
+    const saveWithTimeout = new Promise(async (resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error("Request timed out. Please check your connection and try again."))
+      }, 15000) // 15 second timeout
 
-      if (error) {
-        console.error("[v0] Error saving profile:", error)
-        toast.error("Failed to save profile", {
-          description: error.message,
+      try {
+        console.log("[v0] Starting profile save for user:", user?.id)
+
+        const { error, data } = await supabase.from("profiles").upsert(
+          {
+            id: user.id,
+            full_name: formData.fullName,
+            satu_sehat_name: formData.satuSehatName,
+            satu_sehat_email: formData.satuSehatEmail,
+            nik: formData.nik,
+            phone: formData.phone,
+            institution: formData.institution,
+            position: formData.position,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "id" },
+        )
+
+        clearTimeout(timeoutId)
+
+        if (error) {
+          console.error("[v0] Supabase error:", error)
+          reject(error)
+        } else {
+          console.log("[v0] Profile saved successfully:", data)
+          resolve(data)
+        }
+      } catch (err) {
+        clearTimeout(timeoutId)
+        console.error("[v0] Unexpected error in save:", err)
+        reject(err)
+      }
+    })
+
+    try {
+      await saveWithTimeout
+
+      setSaveSuccess(true)
+      toast.success("Profile saved successfully!", {
+        description: "Your information has been updated.",
+      })
+      setTimeout(() => setSaveSuccess(false), 3000)
+    } catch (err: any) {
+      console.error("[v0] Error in handleSubmit:", err)
+
+      if (err.message?.includes("timeout")) {
+        toast.error("Request timed out", {
+          description: "Please check your internet connection and try again.",
+        })
+      } else if (err.code === "PGRST301" || err.message?.includes("permission")) {
+        toast.error("Permission denied", {
+          description: "You don't have permission to update this profile. Please contact support.",
+        })
+      } else if (err.message?.includes("network") || err.message?.includes("fetch")) {
+        toast.error("Network error", {
+          description: "Unable to connect to the server. Please check your connection.",
         })
       } else {
-        setSaveSuccess(true)
-        toast.success("Profile saved successfully!", {
-          description: "Your information has been updated.",
+        toast.error("Failed to save profile", {
+          description: err.message || "Please try again later.",
         })
-        setTimeout(() => setSaveSuccess(false), 3000)
       }
-    } catch (err) {
-      console.error("[v0] Error in handleSubmit:", err)
-      toast.error("An unexpected error occurred", {
-        description: "Please try again later.",
-      })
     } finally {
       setIsSaving(false)
     }

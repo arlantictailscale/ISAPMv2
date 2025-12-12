@@ -328,145 +328,164 @@ export default function Navigation() {
         </div>
 
         {isOpen && (
-          <div className="md:hidden pb-4 space-y-2 max-h-[calc(100vh-5rem)] overflow-y-auto">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link href="/pricing" onClick={() => setIsOpen(false)}>
-              <Button size="sm" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold">
-                Register Now
-              </Button>
-            </Link>
-
-            {!isLoading && user ? (
-              <div className="border-t pt-4 mt-4 space-y-1">
-                <Link
-                  href="/dashboard"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <LayoutDashboard className="w-4 h-4" />
-                  Dashboard
+          <div className="md:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t overflow-hidden flex flex-col">
+            {/* Scrollable content area */}
+            <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+              <div className="space-y-2">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="block px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+                <Link href="/pricing" onClick={() => setIsOpen(false)}>
+                  <Button
+                    size="sm"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                  >
+                    Register Now
+                  </Button>
                 </Link>
 
-                <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground font-medium">My Account</p>
-                <Link
-                  href="/profile"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <User className="w-4 h-4" />
-                  My Profile
-                </Link>
-                <Link
-                  href="/profile/security"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Shield className="w-4 h-4" />
-                  Account Security
-                </Link>
-                <Link
-                  href="/my-purchases"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <ShoppingBag className="w-4 h-4" />
-                  My Purchases
-                </Link>
-                <Link
-                  href="/my-events"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Calendar className="w-4 h-4" />
-                  My Events
-                </Link>
-                <Link
-                  href="/my-webinars"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Video className="w-4 h-4" />
-                  My Webinars
-                </Link>
-                <Link
-                  href="/my-posters"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <FileText className="w-4 h-4" />
-                  My E-Posters
-                </Link>
-                <Link
-                  href="/my-hotels"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
-                  onClick={() => setIsOpen(false)}
-                >
-                  <Building2 className="w-4 h-4" />
-                  My Hotels
-                </Link>
-
-                {isAdmin && (
-                  <>
-                    <div className="border-t my-3" />
-                    <button
-                      onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                      className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                {!isLoading && user && (
+                  <div className="border-t pt-4 mt-4 space-y-1">
+                    <Link
+                      href="/dashboard"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
                     >
-                      <span className="flex items-center gap-2">
-                        <Shield className="w-4 h-4" />
-                        Admin Panel
-                      </span>
-                      <ChevronDown className={`w-4 h-4 transition-transform ${adminMenuOpen ? "rotate-180" : ""}`} />
-                    </button>
+                      <LayoutDashboard className="w-4 h-4" />
+                      Dashboard
+                    </Link>
 
-                    {adminMenuOpen && (
-                      <div className="ml-2 border-l-2 border-primary/20 pl-2 space-y-1">
-                        {adminNavItems.map((item) => {
-                          const Icon = item.icon
-                          return (
-                            <Link
-                              key={item.href}
-                              href={item.href}
-                              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                              onClick={() => setIsOpen(false)}
-                            >
-                              <Icon className="w-4 h-4" />
-                              {item.label}
-                            </Link>
-                          )
-                        })}
-                      </div>
+                    <p className="px-3 pt-2 pb-1 text-xs text-muted-foreground font-medium">My Account</p>
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <User className="w-4 h-4" />
+                      My Profile
+                    </Link>
+                    <Link
+                      href="/profile/security"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Shield className="w-4 h-4" />
+                      Account Security
+                    </Link>
+                    <Link
+                      href="/my-purchases"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      My Purchases
+                    </Link>
+                    <Link
+                      href="/my-events"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Calendar className="w-4 h-4" />
+                      My Events
+                    </Link>
+                    <Link
+                      href="/my-webinars"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Video className="w-4 h-4" />
+                      My Webinars
+                    </Link>
+                    <Link
+                      href="/my-posters"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <FileText className="w-4 h-4" />
+                      My E-Posters
+                    </Link>
+                    <Link
+                      href="/my-hotels"
+                      className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                      onClick={() => setIsOpen(false)}
+                    >
+                      <Building2 className="w-4 h-4" />
+                      My Hotels
+                    </Link>
+
+                    {isAdmin && (
+                      <>
+                        <div className="border-t my-3" />
+                        <button
+                          onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                          className="flex items-center justify-between w-full px-3 py-2 text-sm font-medium text-primary hover:bg-muted rounded-lg transition-colors"
+                        >
+                          <span className="flex items-center gap-2">
+                            <Shield className="w-4 h-4" />
+                            Admin Panel
+                          </span>
+                          <ChevronDown
+                            className={`w-4 h-4 transition-transform ${adminMenuOpen ? "rotate-180" : ""}`}
+                          />
+                        </button>
+
+                        {adminMenuOpen && (
+                          <div className="ml-2 border-l-2 border-primary/20 pl-2 space-y-1">
+                            {adminNavItems.map((item) => {
+                              const Icon = item.icon
+                              return (
+                                <Link
+                                  key={item.href}
+                                  href={item.href}
+                                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                  onClick={() => setIsOpen(false)}
+                                >
+                                  <Icon className="w-4 h-4" />
+                                  {item.label}
+                                </Link>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </>
                     )}
-                  </>
+
+                    {/* Add padding at bottom to ensure last item is scrollable above Sign Out button */}
+                    <div className="h-20" />
+                  </div>
                 )}
 
-                <div className="border-t my-2" />
+                {!isLoading && !user && (
+                  <Link href="/auth/login" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" size="sm" className="w-full mt-2 bg-transparent">
+                      Login
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* Sticky Sign Out button at bottom (only shown when logged in) */}
+            {!isLoading && user && (
+              <div className="border-t bg-background p-4">
                 <button
                   onClick={() => {
                     handleLogout()
                     setIsOpen(false)
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-muted rounded-lg transition-colors w-full text-left"
+                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-lg transition-colors w-full border border-red-200 dark:border-red-900"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out
                 </button>
               </div>
-            ) : (
-              <Link href="/auth/login" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" size="sm" className="w-full mt-2 bg-transparent">
-                  Login
-                </Button>
-              </Link>
             )}
           </div>
         )}

@@ -53,23 +53,33 @@ export default function SecurityPage() {
   const handleAddPassword = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    console.log("[v0] handleAddPassword called")
+    console.log("[v0] password length:", password.length)
+    console.log("[v0] confirmPassword length:", confirmPassword.length)
+
     if (password !== confirmPassword) {
+      console.log("[v0] Passwords don't match")
       toast.error("Passwords don't match")
       return
     }
 
     if (password.length < 8) {
+      console.log("[v0] Password too short")
       toast.error("Password must be at least 8 characters long")
       return
     }
 
     setIsAddingPassword(true)
+    console.log("[v0] Calling supabase.auth.updateUser with password")
 
     try {
-      // Use client-side updateUser instead of server-side action
+      // Use client-side updateUser to add password to OAuth account
       const { data, error } = await supabase.auth.updateUser({
         password: password,
       })
+
+      console.log("[v0] updateUser response - data:", data)
+      console.log("[v0] updateUser response - error:", error)
 
       if (error) {
         throw error
@@ -79,11 +89,16 @@ export default function SecurityPage() {
         description: "You can now login with your email and password.",
       })
 
+      // Refresh user data to get updated identities
       const {
         data: { user: refreshedUser },
       } = await supabase.auth.getUser()
+
+      console.log("[v0] Refreshed user identities:", refreshedUser?.identities)
+
       if (refreshedUser?.identities) {
         const updatedProviders = refreshedUser.identities.map((identity: any) => identity.provider)
+        console.log("[v0] Updated providers:", updatedProviders)
         setProviders(updatedProviders)
       } else {
         // Fallback: add email to providers list

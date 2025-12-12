@@ -182,7 +182,7 @@ export default function Navigation() {
         isScrolled ? "glass-nav shadow-lg" : "bg-background/60 backdrop-blur-sm border-b border-border/50",
       )}
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
+      <div className="max-w-6xl mx-auto px-4 pr-6 sm:px-6 lg:px-8 max-w-full">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="flex items-center">
             <Image
@@ -315,9 +315,14 @@ export default function Navigation() {
             </div>
           </div>
 
-          <div className="flex justify-end items-center gap-2 md:hidden">
-            {!isLoading && user && <CartIcon />}
+          <div className="flex justify-end items-center gap-2 md:hidden mr-2">
+            {!isLoading && user && (
+              <div className="relative">
+                <CartIcon />
+              </div>
+            )}
             <button
+              type="button"
               onClick={() => setIsOpen(!isOpen)}
               className="p-2 hover:bg-muted rounded-lg transition-colors"
               aria-label="Toggle menu"
@@ -328,7 +333,7 @@ export default function Navigation() {
         </div>
 
         {isOpen && (
-          <div className="md:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t overflow-hidden flex flex-col">
+          <div className="md:hidden fixed inset-x-0 top-16 bottom-0 bg-background border-t overflow-hidden flex flex-col z-40">
             {/* Scrollable content area */}
             <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4">
               <div className="space-y-2">

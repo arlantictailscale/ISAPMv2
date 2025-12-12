@@ -59,18 +59,18 @@ export function CartIcon() {
       <Button
         variant="ghost"
         size="icon"
-        className={`relative transition-transform duration-200 ${getCartAnimationClass()}`}
+        className={`relative transition-transform duration-200 mr-1 ${getCartAnimationClass()}`}
       >
         <ShoppingCart className={`h-5 w-5 transition-all duration-200 ${getIconAnimationClass()}`} />
         {itemCount > 0 && (
           <span
-            className={`absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 ${getBadgeAnimationClass()}`}
+            className={`absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 ${getBadgeAnimationClass()}`}
           >
             {itemCount > 9 ? "9+" : itemCount}
           </span>
         )}
         {itemCount === 0 && animationType === "remove" && (
-          <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-[badgeFadeOut_0.4s_ease-out_forwards]">
+          <span className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center animate-[badgeFadeOut_0.4s_ease-out_forwards]">
             0
           </span>
         )}

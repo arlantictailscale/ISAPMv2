@@ -113,16 +113,14 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
   return (
     <>
       <Card
-        className={`group relative overflow-hidden transition-all duration-300 ${
-          isActive
-            ? "border-primary/20 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/5"
-            : "border-muted bg-muted/30"
+        className={`group relative overflow-hidden transition-all duration-300 card-lift perspective-1000 ${
+          isActive ? "border-primary/20 hover:border-primary/40 elevated-card" : "border-muted bg-muted/30"
         }`}
       >
         {/* Status Badge */}
         <div className="absolute top-4 right-4 z-10">
           {isActive && (
-            <Badge className="bg-green-500 text-white border-0">
+            <Badge className="bg-green-500 text-white border-0 group-hover:scale-110 transition-transform">
               <CheckCircle2 className="w-3 h-3 mr-1" />
               Open Registration
             </Badge>
@@ -139,18 +137,20 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
         {/* Webinar Number Indicator */}
         <div className="absolute top-4 left-4 z-10">
           <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-              isActive ? "bg-primary text-primary-foreground" : "bg-muted-foreground/20 text-muted-foreground"
+            className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all group-hover:scale-110 ${
+              isActive
+                ? "bg-primary text-primary-foreground glow-accent-cyan"
+                : "bg-muted-foreground/20 text-muted-foreground"
             }`}
           >
             {index + 1}
           </div>
         </div>
 
-        <CardContent className="p-6 pt-16">
-          {/* Title */}
+        <CardContent className="p-6 pt-16 transition-transform duration-300 group-hover:scale-[1.02]">
+          {/* Title with gradient on active */}
           <h3
-            className={`text-xl font-bold mb-3 line-clamp-2 ${isActive ? "text-foreground" : "text-muted-foreground"}`}
+            className={`text-xl font-bold mb-3 line-clamp-2 ${isActive ? "text-foreground group-hover:gradient-text" : "text-muted-foreground"}`}
           >
             {isActive ? webinar.shortTitle : webinar.title}
           </h3>

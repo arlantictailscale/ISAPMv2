@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { cn } from "@/lib/utils"
 import {
   Menu,
   X,
@@ -155,9 +156,10 @@ export default function Navigation() {
 
   return (
     <nav
-      className={`fixed top-0 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border z-50 transition-all duration-300 ${
-        isScrolled ? "bg-background/98 border-b border-border shadow-md" : "bg-background/60 border-b border-border/50"
-      }`}
+      className={cn(
+        "fixed top-0 w-full z-50 transition-all duration-300",
+        isScrolled ? "glass-nav shadow-lg" : "bg-background/60 backdrop-blur-sm border-b border-border/50",
+      )}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 max-w-full overflow-x-hidden">
         <div className="flex items-center justify-between h-16">
@@ -214,6 +216,12 @@ export default function Navigation() {
                         <DropdownMenuItem>
                           <User className="w-4 h-4 mr-2" />
                           My Profile
+                        </DropdownMenuItem>
+                      </Link>
+                      <Link href="/profile/security">
+                        <DropdownMenuItem>
+                          <Shield className="w-4 h-4 mr-2" />
+                          Account Security
                         </DropdownMenuItem>
                       </Link>
                       <Link href="/my-purchases">
@@ -335,6 +343,14 @@ export default function Navigation() {
                 >
                   <User className="w-4 h-4" />
                   My Profile
+                </Link>
+                <Link
+                  href="/profile/security"
+                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Shield className="w-4 h-4" />
+                  Account Security
                 </Link>
                 <Link
                   href="/my-purchases"

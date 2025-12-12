@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { getRegisteredCount } from "@/app/actions/public-stats"
+import { AnimatedCounter } from "@/components/animated-counter"
 
 interface RegistrationStatsProps {
   initialCount: number
@@ -26,6 +27,11 @@ export default function RegistrationStats({ initialCount }: RegistrationStatsPro
       <div className="container mx-auto px-4">
         <div className="text-center max-w-2xl mx-auto">
           <h3 className="text-2xl font-bold text-gray-800 mb-3">Join the Community!</h3>
+          <div className="mb-4">
+            <AnimatedCounter to={count} duration={2000} className="text-5xl font-black gradient-text" suffix="+" />
+            <p className="text-sm text-muted-foreground mt-2">Healthcare professionals registered</p>
+          </div>
+          {/* </CHANGE> */}
           <p className="text-muted-foreground text-base">
             Be part of the 8th National Meeting of ISAPM. Secure your spot today.
           </p>

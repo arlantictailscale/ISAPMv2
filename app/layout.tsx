@@ -10,6 +10,7 @@ import { ScrollProgressBar } from "@/components/scroll-progress-bar"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { LinkPrefetch } from "@/components/link-prefetch"
 import { OfflineIndicator } from "@/components/offline-indicator"
+import { WebVitalsReporter } from "@/components/web-vitals-reporter"
 
 import { Inter, Playfair_Display } from "next/font/google"
 
@@ -193,6 +194,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://hebbkx1anhila5yf.public.blob.vercel-storage.com" />
       </head>
       <body className={`${inter.className} antialiased overflow-x-hidden`}>
+        <WebVitalsReporter />
         <OfflineIndicator />
         <ScrollProgressBar />
         <LinkPrefetch />

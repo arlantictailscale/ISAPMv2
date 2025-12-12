@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, useEffect } from "react"
-import { ArrowLeft, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { detectAuthProviders } from "@/lib/auth/provider-detection"
 
 export default function SignUpPage() {
   const [email, setEmail] = useState("")
@@ -20,6 +21,8 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [fromLogin, setFromLogin] = useState(false)
+  const [showOAuthSuggestion, setShowOAuthSuggestion] = useState(false)
+  const [detectedProvider, setDetectedProvider] = useState<string | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -36,6 +39,7 @@ export default function SignUpPage() {
     const supabase = createClient()
     setIsLoading(true)
     setError(null)
+    setShowOAuthSuggestion(false)
 
     if (password !== repeatPassword) {
       setError("Passwords do not match")
@@ -55,7 +59,20 @@ export default function SignUpPage() {
       if (error) throw error
 
       if (data?.user?.identities?.length === 0) {
-        setError("This email is already registered. Please sign in instead.")
+        // Email already exists - detect which provider
+        const providers = await detectAuthProviders(email)
+
+        if (providers.primaryProvider === "google") {
+          setError(
+            `This email is already registered with Google Sign-In. Please use the "Sign in with Google" button below, or go to login and use Google.`,
+          )
+          setShowOAuthSuggestion(true)
+          setDetectedProvider("google")
+        } else if (providers.primaryProvider === "email") {
+          setError("This email is already registered with email/password. Please sign in instead.")
+        } else {
+          setError("This email is already registered. Please sign in instead.")
+        }
       } else if (data?.user && !data?.session) {
         // Email confirmation required - show success page
         router.push("/auth/sign-up-success")
@@ -114,6 +131,20 @@ export default function SignUpPage() {
                 </AlertDescription>
               </Alert>
             )}
+
+            {showOAuthSuggestion && detectedProvider === "google" && (
+              <Alert className="mb-4 border-blue-200 bg-blue-50">
+                <AlertCircle className="h-4 w-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-900">
+                  This email already has an account with Google Sign-In. Please use the button below to sign in, or{" "}
+                  <Link href="/auth/login" className="font-medium underline">
+                    go to login page
+                  </Link>
+                  .
+                </AlertDescription>
+              </Alert>
+            )}
+
             <form onSubmit={handleSignUp} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -146,7 +177,7 @@ export default function SignUpPage() {
                   onChange={(e) => setRepeatPassword(e.target.value)}
                 />
               </div>
-              {error && <p className="text-sm text-red-500">{error}</p>}
+              {error && !showOAuthSuggestion && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
                 {isLoading ? "Creating account..." : "Create Account"}
               </Button>
@@ -162,8 +193,8 @@ export default function SignUpPage() {
 
               <Button
                 type="button"
-                variant="outline"
-                className="w-full bg-transparent"
+                variant={showOAuthSuggestion ? "default" : "outline"}
+                className={showOAuthSuggestion ? "w-full animate-pulse" : "w-full bg-transparent"}
                 onClick={handleGoogleSignUp}
                 disabled={isLoading || isGoogleLoading}
               >

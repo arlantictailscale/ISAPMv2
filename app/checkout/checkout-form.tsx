@@ -11,6 +11,7 @@ import { Loader2, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { createOrderFromCart } from "@/app/actions/checkout"
 import { useCart } from "@/lib/cart/cart-context"
+import { ConfettiTrigger } from "@/components/confetti-trigger"
 
 interface CheckoutFormProps {
   defaultValues: {
@@ -28,6 +29,7 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
   const { refreshCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState(defaultValues)
+  const [showConfetti, setShowConfetti] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -68,14 +70,17 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
 
       await refreshCart()
 
+      setShowConfetti(true)
+
       toast.success("Order created successfully!")
 
-      if (result.data?.id) {
-        router.replace(`/payment/order/${result.data.id}`)
-      } else {
-        // Fallback to my-purchases if order ID is not available
-        router.replace("/my-purchases")
-      }
+      setTimeout(() => {
+        if (result.data?.id) {
+          router.replace(`/payment/order/${result.data.id}`)
+        } else {
+          router.replace("/my-purchases")
+        }
+      }, 1500)
     } catch (error) {
       console.error("[v0] Checkout error:", error)
       toast.error("An unexpected error occurred")
@@ -84,84 +89,88 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="full_name">Full Name *</Label>
-        <Input
-          id="full_name"
-          name="full_name"
-          value={formData.full_name}
-          onChange={handleChange}
-          required
-          disabled={!profileComplete}
-        />
-      </div>
+    <>
+      <ConfettiTrigger trigger={showConfetti} />
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email *</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-          disabled={!profileComplete}
-        />
-      </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="full_name">Full Name *</Label>
+          <Input
+            id="full_name"
+            name="full_name"
+            value={formData.full_name}
+            onChange={handleChange}
+            required
+            disabled={!profileComplete}
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone">Phone Number *</Label>
-        <Input
-          id="phone"
-          name="phone"
-          type="tel"
-          value={formData.phone}
-          onChange={handleChange}
-          required
-          disabled={!profileComplete}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="email">Email *</Label>
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            disabled={!profileComplete}
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="institution">Institution / Organization *</Label>
-        <Input
-          id="institution"
-          name="institution"
-          value={formData.institution}
-          onChange={handleChange}
-          required
-          disabled={!profileComplete}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Phone Number *</Label>
+          <Input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            required
+            disabled={!profileComplete}
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="position">Position / Profession *</Label>
-        <Input
-          id="position"
-          name="position"
-          value={formData.position}
-          onChange={handleChange}
-          required
-          disabled={!profileComplete}
-        />
-      </div>
+        <div className="space-y-2">
+          <Label htmlFor="institution">Institution / Organization *</Label>
+          <Input
+            id="institution"
+            name="institution"
+            value={formData.institution}
+            onChange={handleChange}
+            required
+            disabled={!profileComplete}
+          />
+        </div>
 
-      <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !profileComplete}>
-        {!profileComplete ? (
-          <>
-            <Lock className="w-4 h-4 mr-2" />
-            Complete Profile to Continue
-          </>
-        ) : isSubmitting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Processing Order...
-          </>
-        ) : (
-          "Place Order"
-        )}
-      </Button>
-    </form>
+        <div className="space-y-2">
+          <Label htmlFor="position">Position / Profession *</Label>
+          <Input
+            id="position"
+            name="position"
+            value={formData.position}
+            onChange={handleChange}
+            required
+            disabled={!profileComplete}
+          />
+        </div>
+
+        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !profileComplete}>
+          {!profileComplete ? (
+            <>
+              <Lock className="w-4 h-4 mr-2" />
+              Complete Profile to Continue
+            </>
+          ) : isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing Order...
+            </>
+          ) : (
+            "Place Order"
+          )}
+        </Button>
+      </form>
+    </>
   )
 }

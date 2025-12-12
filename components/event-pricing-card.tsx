@@ -64,14 +64,21 @@ export function EventPricingCard({
   const hasMultiplePrices = pricing.participantTypes.length > 1
 
   return (
-    <div className={cn("rounded-lg border p-4 transition-all duration-200", colors.bg, colors.border, className)}>
+    <div
+      className={cn(
+        "rounded-lg border p-4 transition-all duration-300 card-lift glass-card",
+        colors.bg,
+        colors.border,
+        className,
+      )}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
             <Tag className={cn("h-4 w-4", colors.text)} />
-            <span className={cn("text-sm font-semibold", colors.text)}>Registration Fee</span>
+            <span className={cn("text-sm font-semibold gradient-text")}>Registration Fee</span>
             {isEarlyBirdPeriod && (
-              <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs">
+              <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs animate-pulse">
                 Early Bird Active
               </Badge>
             )}
@@ -79,7 +86,7 @@ export function EventPricingCard({
 
           {/* Compact price display */}
           <div className="flex items-baseline gap-2 flex-wrap">
-            <span className={cn("text-xl font-bold", colors.text)}>
+            <span className={cn("text-xl font-bold gradient-text")}>
               {hasMultiplePrices ? "From " : ""}
               {formatPrice(isEarlyBirdPeriod ? minEarlyBird : minNormal)}
             </span>

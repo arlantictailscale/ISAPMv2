@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
-import { Loader2, CheckCircle2, Save } from "lucide-react"
+import { Loader2, CheckCircle2, Save, Shield } from "lucide-react"
 import { toast } from "sonner"
 
 export default function ProfilePage() {
@@ -197,6 +197,12 @@ export default function ProfilePage() {
             <p className="text-lg text-muted-foreground">
               Save your information once and it will be automatically used for registrations
             </p>
+            <div className="mt-6">
+              <Button variant="outline" onClick={() => router.push("/profile/security")} className="gap-2">
+                <Shield className="w-4 h-4" />
+                Account Security Settings
+              </Button>
+            </div>
           </div>
         </section>
 

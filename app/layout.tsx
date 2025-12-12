@@ -8,6 +8,7 @@ import { Toaster } from "sonner"
 import { CartProvider } from "@/lib/cart/cart-context"
 import { ScrollProgressBar } from "@/components/scroll-progress-bar"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+import Navigation from "@/components/navigation"
 import { LinkPrefetch } from "@/components/link-prefetch"
 import { OfflineIndicator } from "@/components/offline-indicator"
 import { WebVitalsReporter } from "@/components/web-vitals-reporter"
@@ -198,6 +199,7 @@ export default function RootLayout({
         <OfflineIndicator />
         <ScrollProgressBar />
         <LinkPrefetch />
+        <Navigation />
         <CartProvider>
           <div className="pb-16 md:pb-0">{children}</div>
           <MobileBottomNav />

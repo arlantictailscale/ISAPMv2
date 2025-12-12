@@ -1,7 +1,5 @@
-"use client"
-import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
-import Navigation from "@/components/navigation"
+import { redirect } from "next/navigation"
+import { createClient } from "@/lib/supabase/server"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -43,15 +41,13 @@ interface Order {
 
 export default async function MyHotelBookingsPage() {
   const supabase = await createClient()
-  const router = useRouter()
 
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
-    router.push("/auth/login")
-    return null
+    redirect("/auth/login")
   }
 
   const { data: bookings } = await supabase
@@ -89,7 +85,6 @@ export default async function MyHotelBookingsPage() {
 
   return (
     <>
-      <Navigation />
       <main className="pt-24 pb-20 min-h-screen bg-gradient-to-b from-background to-muted/20">
         <section className="py-12 px-4">
           <div className="max-w-6xl mx-auto">

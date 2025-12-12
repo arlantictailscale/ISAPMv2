@@ -1,6 +1,5 @@
-"use client"
-import { createClient } from "@/lib/supabase/client"
-import Navigation from "@/components/navigation"
+import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -58,7 +57,7 @@ export default async function MyRegistrationsPage() {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    window.location.href = "/auth/login"
+    redirect("/auth/login")
     return null
   }
 
@@ -83,7 +82,6 @@ export default async function MyRegistrationsPage() {
 
   return (
     <>
-      <Navigation />
       <main className="pt-24 pb-20 overflow-x-hidden">
         <section className="py-12 px-4 bg-gradient-to-br from-primary/5 to-secondary/5 overflow-hidden">
           <div className="max-w-6xl mx-auto">

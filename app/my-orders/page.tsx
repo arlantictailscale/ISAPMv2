@@ -1,7 +1,5 @@
-"use client"
-
 import { redirect } from "next/navigation"
-import Navigation from "@/components/navigation"
+import { createClient } from "@/lib/supabase/server"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +8,7 @@ import { Hotel, CheckCircle, XCircle, Clock } from "lucide-react"
 import Link from "next/link"
 
 export default async function MyOrdersPage() {
-  const supabase = await import("@/lib/supabase/server").then((mod) => mod.createClient())
+  const supabase = await createClient()
 
   const {
     data: { user },
@@ -51,7 +49,6 @@ export default async function MyOrdersPage() {
 
   return (
     <>
-      <Navigation />
       <main className="pt-24 pb-20 min-h-screen">
         <section className="py-12 px-4">
           <div className="max-w-6xl mx-auto">

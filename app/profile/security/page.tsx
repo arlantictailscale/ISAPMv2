@@ -88,26 +88,27 @@ export default function SecurityPage() {
           // User already has password - update state
           setHasExistingPassword(true)
         } else {
-          throw error
+          toast.error("Failed to update password", {
+            description: error.message || "Please try again later.",
+          })
         }
-        return
+      } else {
+        toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!", {
+          description: hasExistingPassword
+            ? "Your password has been updated."
+            : "You can now login with your email and password.",
+        })
+
+        setHasExistingPassword(true)
+        if (!providers.includes("email")) {
+          setProviders([...providers, "email"])
+        }
+
+        setShowPasswordForm(false)
+        setPassword("")
+        setConfirmPassword("")
+        setCurrentPassword("")
       }
-
-      toast.success(hasExistingPassword ? "Password changed successfully!" : "Password added successfully!", {
-        description: hasExistingPassword
-          ? "Your password has been updated."
-          : "You can now login with your email and password.",
-      })
-
-      setHasExistingPassword(true)
-      if (!providers.includes("email")) {
-        setProviders([...providers, "email"])
-      }
-
-      setShowPasswordForm(false)
-      setPassword("")
-      setConfirmPassword("")
-      setCurrentPassword("")
     } catch (error: any) {
       console.error("Error updating password:", error)
       toast.error("Failed to update password", {

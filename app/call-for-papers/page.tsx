@@ -1,11 +1,8 @@
 "use client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
-import { AlertCircle, FileText, CheckCircle, Award, Sparkles, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
 
 export default function CallForPapersPage() {
   return (
@@ -24,17 +21,16 @@ export default function CallForPapersPage() {
           <div className="container mx-auto px-4 relative z-10">
             <div className="max-w-3xl mx-auto text-center">
               {/* Badge */}
-              <Badge className="mb-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 px-4 py-1.5">
+              {/* <Badge className="mb-4 bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0 px-4 py-1.5">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Call for Papers - ISAPM 2026
-              </Badge>
+              </Badge> */}
 
               <h1 className="text-4xl md:text-5xl font-bold mb-4 text-balance">
-                <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">
+                {/* <span className="bg-gradient-to-r from-blue-600 via-cyan-600 to-teal-600 bg-clip-text text-transparent">
                   Submit Your Research
-                </span>
-                <br />
-                <span className="text-foreground">Share Your Expertise in Pain Management</span>
+                </span> */}
+                <span className="text-foreground">Call for Papers</span>
               </h1>
 
               <p className="text-lg text-muted-foreground mb-8 text-pretty">
@@ -45,7 +41,7 @@ export default function CallForPapersPage() {
 
               {/* Deadline Highlight */}
               <div className="max-w-xl mx-auto">
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 shadow-sm">
+                {/* <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 shadow-sm">
                   <div className="p-2 rounded-lg bg-orange-100">
                     <AlertCircle className="w-5 h-5 text-orange-600" />
                   </div>
@@ -55,7 +51,10 @@ export default function CallForPapersPage() {
                       All e-Poster abstracts must be submitted online through our submission form.
                     </p>
                   </div>
-                </div>
+                </div> */}
+                <p className="text-sm font-semibold text-orange-700 bg-orange-50 p-4 rounded">
+                  Submission Deadline: March 15, 2026
+                </p>
               </div>
             </div>
           </div>
@@ -67,7 +66,7 @@ export default function CallForPapersPage() {
             {/* Section Headers with Icons */}
             <div className="space-y-16">
               {/* File Requirements */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-3 mb-8">
                   <div className="p-2 rounded-lg bg-primary/10">
                     <FileText className="w-5 h-5 text-primary" />
@@ -102,10 +101,24 @@ export default function CallForPapersPage() {
                     </Card>
                   ))}
                 </div>
+              </div> */}
+
+              <div>
+                <h2 className="text-2xl font-bold mb-6">File Requirements</h2>
+                <ol className="space-y-2 text-sm list-decimal list-inside">
+                  <li>Posters will be displayed on LED screens</li>
+                  <li>File format: TIFF (*.tif/*.tiff) or JPEG</li>
+                  <li>Maximum file size: 10 MB</li>
+                  <li>Maximum slides per e-Poster: 2 slides</li>
+                  <li>All posters displayed in portrait layout</li>
+                  <li>No animated files, films, or audio files accepted</li>
+                  <li>Include PERDATIN logo (top right) and institution logo (top left)</li>
+                  <li>References must use AMA format using Mendeley. Max 20 references.</li>
+                </ol>
               </div>
 
               {/* Writing Guidelines */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-3 mb-8">
                   <div className="p-2 rounded-lg bg-blue-100">
                     <FileText className="w-5 h-5 text-blue-600" />
@@ -164,10 +177,44 @@ export default function CallForPapersPage() {
                     </div>
                   </CardContent>
                 </Card>
+              </div> */}
+
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Writing Guidelines</h2>
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Content Requirements</h3>
+                    <ol className="space-y-2 text-sm list-decimal list-inside">
+                      <li>Poster must include abstract and full paper</li>
+                      <li>Follow guidelines from Journal of Anesthesia and Pain</li>
+                      <li>Abstract must be in English</li>
+                      <li>Title: capitalized, bold, concise and specific</li>
+                      <li>Include full author names (without degrees) underlined</li>
+                      <li>Include institution names and author cities</li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <h3 className="font-semibold mb-3">Formatting</h3>
+                    <ul className="space-y-2 text-sm list-disc list-inside">
+                      <li>Avoid non-standard abbreviations, unclear terms, symbols, or acronyms</li>
+                      <li>Use Arial font, size 11</li>
+                    </ul>
+                    <div className="mt-4">
+                      <p className="font-semibold text-sm mb-3">Select One Topic:</p>
+                      <ul className="space-y-1 text-sm list-disc list-inside">
+                        <li>Emergencies (Kegawatdaruratan)</li>
+                        <li>Pain Management (Manajemen Nyeri)</li>
+                        <li>ICU Management (Manajemen ICU)</li>
+                        <li>Anesthesia Management (Manajemen Anestesi)</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Display & Selection */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-3 mb-8">
                   <div className="p-2 rounded-lg bg-green-100">
                     <CheckCircle className="w-5 h-5 text-green-600" />
@@ -199,10 +246,21 @@ export default function CallForPapersPage() {
                     </Card>
                   ))}
                 </div>
+              </div> */}
+
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Display & Selection Process</h2>
+                <ol className="space-y-2 text-sm list-decimal list-inside">
+                  <li>All approved e-Posters will be automatically displayed on LED screens as a slide show</li>
+                  <li>10 selected posters will be presented in front of evaluation committee</li>
+                  <li>Presentation schedule and location will be announced later</li>
+                  <li>All accepted participants must pay conference registration fee</li>
+                  <li>Presentation details will be sent via email before April 2026</li>
+                </ol>
               </div>
 
               {/* Awards & Recognition */}
-              <div>
+              {/* <div>
                 <div className="flex items-center gap-3 mb-8">
                   <div className="p-2 rounded-lg bg-amber-100">
                     <Award className="w-5 h-5 text-amber-600" />
@@ -231,19 +289,31 @@ export default function CallForPapersPage() {
                     </ul>
                   </CardContent>
                 </Card>
+              </div> */}
+
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Awards & Recognition</h2>
+                <ol className="space-y-2 text-sm list-decimal list-inside">
+                  <li>10 best posters will be selected for presentation</li>
+                  <li>3 best posters will be published in Journal of Anesthesia and Pain</li>
+                  <li>Winners receive cash prize and certificate</li>
+                  <li>Winners announced by April 2026</li>
+                  <li>Case presentations: wear traditional attire from your region</li>
+                </ol>
               </div>
             </div>
           </div>
         </section>
 
-        <section className="py-16">
+        {/* CTA Section */}
+        {/* <section className="py-16">
           <div className="container mx-auto px-4">
             <Card className="bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 border-0 text-white overflow-hidden">
               <CardContent className="p-8 md:p-12 relative">
                 {/* Background Pattern */}
-                <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" />
+        {/* <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-10" /> */}
 
-                <div className="relative z-10 max-w-2xl mx-auto text-center">
+        {/* <div className="relative z-10 max-w-2xl mx-auto text-center">
                   <h3 className="text-2xl md:text-3xl font-bold mb-4">Ready to Share Your Research?</h3>
                   <p className="text-white/80 mb-6">
                     Submit your e-Poster before March 15, 2026. Selected presentations will be featured at the ISAPM
@@ -270,10 +340,24 @@ export default function CallForPapersPage() {
               </CardContent>
             </Card>
           </div>
+        </section> */}
+
+        <section className="py-12 bg-gray-50">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <div className="text-center">
+              <h3 className="text-2xl font-bold mb-3">Ready to Submit Your Research?</h3>
+              <p className="text-muted-foreground mb-6">Submit your e-Poster before March 15, 2026.</p>
+              <Link href="/submit-poster">
+                <Button size="lg" className="bg-primary hover:bg-primary/90">
+                  Submit Your E-Poster
+                </Button>
+              </Link>
+            </div>
+          </div>
         </section>
 
         {/* Contact Section */}
-        <section className="py-16 bg-muted/30">
+        {/* <section className="py-16 bg-muted/30">
           <div className="container mx-auto px-4 max-w-3xl">
             <Card className="border-l-4 border-l-primary">
               <CardContent className="p-8">
@@ -294,6 +378,18 @@ export default function CallForPapersPage() {
                 </div>
               </CardContent>
             </Card>
+          </div>
+        </section> */}
+
+        <section className="py-12">
+          <div className="container mx-auto px-4 max-w-3xl">
+            <h3 className="text-2xl font-bold mb-4">Have Questions?</h3>
+            <p className="text-muted-foreground mb-4">
+              For additional information or technical support regarding your submission, please contact us via WhatsApp.
+            </p>
+            <Link href="https://wa.me/6289602626709" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline">Contact us: +62 896-0262-6709</Button>
+            </Link>
           </div>
         </section>
       </main>

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { differenceInSeconds, parseISO } from "date-fns"
-import { Users } from "lucide-react"
 
 interface FlipBookSectionProps {
   registeredCount: number
@@ -106,21 +105,8 @@ export default function FlipBookSection({ registeredCount }: FlipBookSectionProp
             </p>
 
             <div className="flex flex-col md:flex-row items-stretch justify-center gap-4 w-full max-w-md">
-              {/* Registered Accounts Section */}
-              <div className="flex items-center justify-center gap-3 bg-white px-6 py-4 rounded-xl shadow-md border-2 border-primary/30 flex-1 min-h-[72px]">
-                <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
-                  <Users className="w-6 h-6 text-primary" />
-                </div>
-                <div className="flex flex-col justify-center">
-                  <div className="text-2xl md:text-3xl font-bold text-primary tabular-nums leading-tight">
-                    {registeredCount.toLocaleString()}
-                  </div>
-                  <div className="text-xs font-medium text-muted-foreground leading-tight">Registered Accounts</div>
-                </div>
-              </div>
-
               {/* Register Now Button */}
-              <Link href="/pricing" className="flex-1">
+              <Link href="/pricing" className="w-full">
                 <Button
                   size="lg"
                   className="w-full h-full min-h-[72px] text-lg md:text-xl px-6 py-4 font-bold animate-pulse rounded-xl shadow-md"

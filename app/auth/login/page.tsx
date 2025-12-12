@@ -53,61 +53,78 @@ export default function LoginPage() {
       })
 
       console.log("[v0] signInError:", signInError)
-      console.log("[v0] signInError?.message:", signInError?.message)
-      console.log("[v0] signInError?.code:", signInError?.code)
 
       if (signInError) {
         const errorMessage = signInError.message.toLowerCase()
-        setDebugInfo(`Error received: "${signInError.message}" (code: ${signInError.code})`)
+        setDebugInfo(`Error: "${signInError.message}" (code: ${signInError.code})`)
 
-        console.log("[v0] Error message lowercase:", errorMessage)
-
-        // Supabase returns "Invalid login credentials" for both:
-        // 1. Wrong password on email accounts
-        // 2. Attempting email login on OAuth-only accounts
         const isCredentialError =
           errorMessage.includes("invalid login credentials") ||
           errorMessage.includes("invalid credentials") ||
           signInError.code === "invalid_credentials"
 
-        console.log("[v0] isCredentialError:", isCredentialError)
         setDebugInfo((prev) => prev + ` | isCredentialError: ${isCredentialError}`)
 
         if (isCredentialError) {
           setDebugInfo((prev) => prev + " | Calling checkAuthProvider...")
-          console.log("[v0] Calling checkAuthProvider for:", email)
 
           try {
             const providerResult = await checkAuthProvider(email)
 
-            console.log("[v0] providerResult:", providerResult)
-            setDebugInfo((prev) => prev + ` | Result: ${JSON.stringify(providerResult)}`)
+            const serverDebug = providerResult.debug || "no-debug"
+            setDebugInfo((prev) => prev + ` | ServerDebug: ${serverDebug}`)
 
+            console.log("[v0] providerResult:", providerResult)
+
+            if (providerResult.error) {
+              console.log("[v0] Server error, checking Gmail fallback")
+              setDebugInfo((prev) => prev + ` | ServerError: ${providerResult.error}`)
+
+              // Gmail addresses are likely Google OAuth accounts
+              if (email.toLowerCase().endsWith("@gmail.com")) {
+                setDebugInfo((prev) => prev + " | GMAIL_FALLBACK")
+                setErrorType("oauth_only")
+                setError("This appears to be a Google account. Please sign in with Google.")
+                setShowGoogleSuggestion(true)
+                return
+              }
+
+              // Non-Gmail with server error - show generic error
+              setErrorType("invalid_credentials")
+              setError("Invalid email or password. Please check your credentials.")
+              return
+            }
+
+            // Server action succeeded - use its results
             if (providerResult.exists) {
               if (providerResult.isOAuthOnly) {
-                // OAuth-only account - show Google sign-in suggestion
-                console.log("[v0] Setting oauth_only error type")
+                setDebugInfo((prev) => prev + " | OAUTH_ONLY_DETECTED")
                 setErrorType("oauth_only")
-                setError(`This account uses Google Sign-In only.`)
+                setError("This account uses Google Sign-In only.")
                 setShowGoogleSuggestion(true)
-                setDebugInfo((prev) => prev + " | SET TO OAUTH_ONLY")
               } else {
-                // Account exists with password, so wrong password
-                console.log("[v0] Setting invalid_credentials error type")
+                setDebugInfo((prev) => prev + " | WRONG_PASSWORD")
                 setErrorType("invalid_credentials")
                 setError("Incorrect password. Please try again or reset your password.")
               }
             } else {
-              // No account exists
-              console.log("[v0] Setting user_not_found error type")
-              setErrorType("user_not_found")
-              setError("No account found with this email address")
+              // Account doesn't exist - but for Gmail, still suggest Google
+              if (email.toLowerCase().endsWith("@gmail.com")) {
+                setDebugInfo((prev) => prev + " | NOT_FOUND_BUT_GMAIL")
+                setErrorType("oauth_only")
+                setError("Try signing in with Google - your account may have been created that way.")
+                setShowGoogleSuggestion(true)
+              } else {
+                setDebugInfo((prev) => prev + " | USER_NOT_FOUND")
+                setErrorType("user_not_found")
+                setError("No account found with this email address")
+              }
             }
-          } catch (providerError) {
-            console.error("[v0] Provider check failed:", providerError)
-            setDebugInfo((prev) => prev + ` | Provider check FAILED: ${providerError}`)
+          } catch (providerError: any) {
+            console.error("[v0] Provider check exception:", providerError)
+            setDebugInfo((prev) => prev + ` | EXCEPTION: ${providerError?.message || providerError}`)
 
-            // Fallback: if Gmail address, suggest Google login
+            // Fallback for Gmail addresses
             if (email.toLowerCase().endsWith("@gmail.com")) {
               setErrorType("oauth_only")
               setError("This might be a Google Sign-In account. Try signing in with Google.")
@@ -118,7 +135,6 @@ export default function LoginPage() {
             }
           }
         } else {
-          setDebugInfo((prev) => prev + " | NOT a credential error, setting general")
           setErrorType("general")
           setError(signInError.message)
         }
@@ -135,7 +151,7 @@ export default function LoginPage() {
       router.refresh()
     } catch (error: unknown) {
       console.error("[v0] Login error:", error)
-      setDebugInfo(`Catch block error: ${error}`)
+      setDebugInfo(`Catch block: ${error}`)
       setErrorType("general")
       if (error instanceof Error) {
         setError(error.message)
@@ -265,13 +281,10 @@ export default function LoginPage() {
                       </svg>
                     </div>
                     <div className="space-y-1 flex-1">
-                      <p className="font-semibold text-blue-900">Account found with Google Sign-In</p>
+                      <p className="font-semibold text-blue-900">Google Account Detected</p>
                       <p className="text-sm text-blue-800">
-                        Your account <span className="font-medium">{email}</span> was created using Google. Please sign
-                        in with Google below.
-                      </p>
-                      <p className="text-xs text-blue-700 mt-2">
-                        Tip: You can add a password to your account from your profile settings after logging in.
+                        Your account <span className="font-medium">{email}</span> uses Google Sign-In. Please click the
+                        button below to continue.
                       </p>
                     </div>
                   </div>

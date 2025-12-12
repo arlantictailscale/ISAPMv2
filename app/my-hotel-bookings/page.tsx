@@ -1,6 +1,4 @@
 "use client"
-
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
@@ -8,20 +6,8 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  Calendar,
-  MapPin,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Hotel,
-  Loader2,
-  BedDouble,
-  Users,
-  ShieldCheck,
-} from "lucide-react"
+import { Calendar, MapPin, CheckCircle, Clock, Hotel, BedDouble, Users, ShieldCheck } from "lucide-react"
 import Link from "next/link"
-import { toast } from "sonner"
 
 interface OrderItem {
   id: string
@@ -55,82 +41,34 @@ interface Order {
   order_payments?: OrderPayment[]
 }
 
-export default function MyHotelBookingsPage() {
+export default async function MyHotelBookingsPage() {
+  const supabase = await createClient()
   const router = useRouter()
-  const supabase = createClient()
 
-  const [bookings, setBookings] = useState<Order[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  useEffect(() => {
-    loadHotelBookings()
-  }, [])
-
-  const loadHotelBookings = async () => {
-    try {
-      setIsLoading(true)
-
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser()
-
-      if (authError || !user) {
-        console.log("[v0] Not authenticated, redirecting to login")
-        router.push("/auth/login")
-        return
-      }
-
-      const { data: ordersData, error: ordersError } = await supabase
-        .from("orders")
-        .select(
-          `
-          *,
-          order_items!inner (*),
-          order_payments!inner (
-            payment_status,
-            payment_proof_url,
-            verified_at
-          )
-        `,
-        )
-        .eq("user_id", user.id)
-        .eq("order_items.item_type", "hotel")
-        .eq("order_payments.payment_status", "verified")
-        .order("created_at", { ascending: false })
-
-      if (ordersError) {
-        console.error("[v0] Error loading hotel bookings:", ordersError.message)
-        toast.error("Failed to load your hotel bookings")
-        return
-      }
-
-      setBookings(ordersData || [])
-    } catch (err) {
-      console.error("[v0] Error in loadHotelBookings:", err)
-      toast.error("An error occurred while loading your hotel bookings")
-    } finally {
-      setIsLoading(false)
-    }
+  if (!user) {
+    router.push("/auth/login")
+    return null
   }
 
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; variant: any; icon: any }> = {
-      pending: { label: "Pending Payment", variant: "secondary", icon: Clock },
-      paid: { label: "Confirmed", variant: "default", icon: CheckCircle },
-      cancelled: { label: "Cancelled", variant: "destructive", icon: XCircle },
-    }
-
-    const config = statusConfig[status] || statusConfig.pending
-    const Icon = config.icon
-
-    return (
-      <Badge variant={config.variant} className="flex items-center gap-1 w-fit">
-        <Icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    )
-  }
+  const { data: bookings } = await supabase
+    .from("orders")
+    .select(`
+      *,
+      order_items!inner (*),
+      order_payments!inner (
+        payment_status,
+        payment_proof_url,
+        verified_at
+      )
+    `)
+    .eq("user_id", user.id)
+    .eq("order_items.item_type", "hotel")
+    .eq("order_payments.payment_status", "verified")
+    .order("created_at", { ascending: false })
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -147,21 +85,6 @@ export default function MyHotelBookingsPage() {
       return <BedDouble className="w-5 h-5 text-primary" />
     }
     return <Hotel className="w-5 h-5 text-primary" />
-  }
-
-  if (isLoading) {
-    return (
-      <>
-        <Navigation />
-        <main className="pt-24 min-h-screen flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading your hotel bookings...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
   }
 
   return (
@@ -226,7 +149,6 @@ export default function MyHotelBookingsPage() {
                 {bookings.map((booking) => {
                   const hotelItems = booking.order_items?.filter((item) => item.item_type === "hotel") || []
                   const payment = booking.order_payments?.[0]
-                  const isPaid = booking.status === "paid" || payment?.payment_status === "verified"
 
                   return (
                     <Card

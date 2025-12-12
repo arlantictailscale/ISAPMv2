@@ -1,27 +1,13 @@
 "use client"
-
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, CheckCircle2, Clock, XCircle, Trash2, Download, ImageIcon } from "lucide-react"
+import { CheckCircle2, Clock, XCircle, Download, ImageIcon } from "lucide-react"
 import Link from "next/link"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { RegistrationActions } from "@/components/registration-actions"
 
 interface Registration {
   id: string
@@ -64,149 +50,35 @@ const paymentStatusColors: Record<string, string> = {
   rejected: "bg-red-100 text-red-800 hover:bg-red-100",
 }
 
-export default function MyRegistrationsPage() {
-  const [registrations, setRegistrations] = useState<Registration[]>([])
-  const [payments, setPayments] = useState<Record<string, Payment>>({})
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [cancellingPaymentId, setCancellingPaymentId] = useState<string | null>(null)
-  const [showImageDialog, setShowImageDialog] = useState(false)
-  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null)
-  const router = useRouter()
-  const supabase = createClient()
+export default async function MyRegistrationsPage() {
+  const supabase = await createClient()
 
-  useEffect(() => {
-    const fetchUserAndRegistrations = async () => {
-      try {
-        setIsLoading(true)
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser()
-
-        if (userError || !user) {
-          router.push("/auth/login")
-          return
-        }
-
-        setUser(user)
-
-        const { data, error: fetchError } = await supabase
-          .from("registrations")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("order_date", { ascending: false })
-
-        if (fetchError) {
-          console.error("Error fetching registrations:", fetchError)
-          setError("Failed to load registrations")
-          return
-        }
-
-        setRegistrations(data || [])
-
-        if (data && data.length > 0) {
-          const registrationIds = data.map((r) => r.id)
-          const { data: paymentsData, error: paymentsError } = await supabase
-            .from("payments")
-            .select("*")
-            .in("registration_id", registrationIds)
-
-          if (!paymentsError && paymentsData) {
-            const paymentsMap: Record<string, Payment> = {}
-            paymentsData.forEach((payment) => {
-              paymentsMap[payment.registration_id] = payment
-            })
-            setPayments(paymentsMap)
-          }
-        }
-      } catch (err) {
-        console.error("Error in fetchUserAndRegistrations:", err)
-        setError("An unexpected error occurred")
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchUserAndRegistrations()
-  }, [router, supabase])
-
-  const handleDeleteRegistration = async (registrationId: string) => {
-    try {
-      setDeletingId(registrationId)
-
-      const { error: deleteError } = await supabase
-        .from("registrations")
-        .delete()
-        .eq("id", registrationId)
-        .eq("user_id", user.id)
-
-      if (deleteError) {
-        console.error("Error deleting registration:", deleteError)
-        setError("Failed to delete registration")
-        return
-      }
-
-      setRegistrations((prev) => prev.filter((r) => r.id !== registrationId))
-      setPayments((prev) => {
-        const newPayments = { ...prev }
-        delete newPayments[registrationId]
-        return newPayments
-      })
-    } catch (err) {
-      console.error("Error in handleDeleteRegistration:", err)
-      setError("An unexpected error occurred")
-    } finally {
-      setDeletingId(null)
-    }
+  if (!user) {
+    window.location.href = "/auth/login"
+    return null
   }
 
-  const handleCancelPayment = async (registrationId: string, paymentId: string) => {
-    try {
-      setCancellingPaymentId(paymentId)
+  const { data: registrations } = await supabase
+    .from("registrations")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("order_date", { ascending: false })
 
-      const { error: deleteError } = await supabase
-        .from("payments")
-        .delete()
-        .eq("id", paymentId)
-        .eq("user_id", user.id)
-        .eq("payment_status", "pending")
+  // Load payments for registrations
+  const payments: Record<string, any> = {}
+  if (registrations && registrations.length > 0) {
+    const registrationIds = registrations.map((r) => r.id)
+    const { data: paymentsData } = await supabase.from("payments").select("*").in("registration_id", registrationIds)
 
-      if (deleteError) {
-        console.error("Error cancelling payment:", deleteError)
-        setError("Failed to cancel payment submission")
-        return
-      }
-
-      setPayments((prev) => {
-        const newPayments = { ...prev }
-        delete newPayments[registrationId]
-        return newPayments
+    if (paymentsData) {
+      paymentsData.forEach((payment) => {
+        payments[payment.registration_id] = payment
       })
-    } catch (err) {
-      console.error("Error in handleCancelPayment:", err)
-      setError("An unexpected error occurred")
-    } finally {
-      setCancellingPaymentId(null)
     }
-  }
-
-  if (isLoading) {
-    return (
-      <>
-        <Navigation />
-        <main className="pt-24 min-h-screen flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading your registrations...</p>
-          </div>
-        </main>
-        <Footer />
-      </>
-    )
   }
 
   return (
@@ -222,15 +94,7 @@ export default function MyRegistrationsPage() {
 
         <section className="py-12 px-4 overflow-hidden">
           <div className="max-w-6xl mx-auto">
-            {error && (
-              <Card className="mb-6 border-red-200 bg-red-50">
-                <CardContent className="pt-6">
-                  <p className="text-red-800 break-words">{error}</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {registrations.length === 0 ? (
+            {!registrations || registrations.length === 0 ? (
               <Card>
                 <CardContent className="pt-12 pb-12 text-center">
                   <p className="text-muted-foreground mb-6">You don&apos;t have any registrations yet.</p>
@@ -389,16 +253,15 @@ export default function MyRegistrationsPage() {
                                   className="w-full h-full object-cover"
                                 />
                               </div>
-                              <button
-                                onClick={() => {
-                                  setSelectedImageUrl(payment.payment_proof_url!)
-                                  setShowImageDialog(true)
-                                }}
+                              <a
+                                href={payment.payment_proof_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="flex items-center gap-2 text-sm text-primary hover:underline"
                               >
                                 <ImageIcon className="w-4 h-4" />
                                 View Full Size
-                              </button>
+                              </a>
                             </div>
                           </div>
                         )}
@@ -428,90 +291,12 @@ export default function MyRegistrationsPage() {
                                 </Link>
                               )}
 
-                              <div className="flex flex-col sm:flex-row gap-2 w-full">
-                                {payment?.payment_status === "pending" && (
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        className="border-orange-200 text-orange-700 hover:bg-orange-50 w-full bg-transparent"
-                                        disabled={cancellingPaymentId === payment.id}
-                                      >
-                                        {cancellingPaymentId === payment.id ? (
-                                          <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Cancelling...
-                                          </>
-                                        ) : (
-                                          "Cancel Submission"
-                                        )}
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Cancel Payment Submission?</AlertDialogTitle>
-                                        <AlertDialogDescription className="break-words">
-                                          This will remove your payment submission. You will need to submit payment
-                                          proof again if you want to continue with this registration.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                                        <AlertDialogCancel className="w-full sm:w-auto">
-                                          Keep Submission
-                                        </AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => handleCancelPayment(registration.id, payment.id)}
-                                          className="bg-orange-600 hover:bg-orange-700 w-full sm:w-auto"
-                                        >
-                                          Yes, Cancel Submission
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                )}
-
-                                {!payment && (
-                                  <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                      <Button
-                                        variant="outline"
-                                        className="border-red-200 text-red-700 hover:bg-red-50 w-full bg-transparent"
-                                        disabled={deletingId === registration.id}
-                                      >
-                                        {deletingId === registration.id ? (
-                                          <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                            Deleting...
-                                          </>
-                                        ) : (
-                                          <>
-                                            <Trash2 className="w-4 h-4 mr-2" />
-                                            Delete
-                                          </>
-                                        )}
-                                      </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent className="max-w-[90vw] sm:max-w-md">
-                                      <AlertDialogHeader>
-                                        <AlertDialogTitle>Delete Registration?</AlertDialogTitle>
-                                        <AlertDialogDescription className="break-words">
-                                          This action cannot be undone. This will permanently delete your registration
-                                          for {registration.first_name} {registration.last_name}.
-                                        </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                                        <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
-                                        <AlertDialogAction
-                                          onClick={() => handleDeleteRegistration(registration.id)}
-                                          className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
-                                        >
-                                          Yes, Delete Registration
-                                        </AlertDialogAction>
-                                      </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                  </AlertDialog>
-                                )}
-                              </div>
+                              {/* Client component for delete/cancel actions */}
+                              <RegistrationActions
+                                registrationId={registration.id}
+                                payment={payment}
+                                registrationStatus={registration.status}
+                              />
                             </div>
                           </div>
                         )}
@@ -525,20 +310,6 @@ export default function MyRegistrationsPage() {
         </section>
       </main>
       <Footer />
-
-      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
-          <div className="relative w-full h-full flex items-center justify-center bg-black/90 p-4">
-            {selectedImageUrl && (
-              <img
-                src={selectedImageUrl || "/placeholder.svg"}
-                alt="Payment Proof Full Size"
-                className="max-w-full max-h-[85vh] object-contain"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

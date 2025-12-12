@@ -106,7 +106,7 @@ export default function FlipBookSection({ registeredCount }: FlipBookSectionProp
 
             <div className="flex flex-col md:flex-row items-stretch justify-center gap-4 w-full max-w-md">
               {/* Register Now Button */}
-              <Link href="/pricing" className="w-full">
+              <Link href="/pricing" className="flex-1">
                 <Button
                   size="lg"
                   className="w-full h-full min-h-[72px] text-lg md:text-xl px-6 py-4 font-bold animate-pulse rounded-xl shadow-md"

@@ -1,5 +1,6 @@
 "use server"
 
+import { neon } from "@neondatabase/serverless"
 import { createClient } from "@supabase/supabase-js"
 
 export async function addPasswordToAccount(email: string, password: string) {
@@ -8,6 +9,7 @@ export async function addPasswordToAccount(email: string, password: string) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const databaseUrl = process.env.POSTGRES_URL
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("[v0] addPasswordToAccount: Missing Supabase configuration")
@@ -17,6 +19,7 @@ export async function addPasswordToAccount(email: string, password: string) {
       }
     }
 
+    // Create admin client with service role key
     const adminClient = createClient(supabaseUrl, serviceRoleKey, {
       auth: {
         autoRefreshToken: false,
@@ -24,19 +27,33 @@ export async function addPasswordToAccount(email: string, password: string) {
       },
     })
 
-    const { data: userData, error: userError } = await adminClient.auth.admin.getUserByEmail(email)
-
-    if (userError || !userData?.user) {
-      console.error("[v0] addPasswordToAccount: User lookup failed:", userError?.message)
+    if (!databaseUrl) {
+      console.error("[v0] addPasswordToAccount: Missing database URL")
       return {
         success: false,
-        error: userError?.message || "User not found",
+        error: "Server configuration error",
       }
     }
 
-    const userId = userData.user.id
+    const sql = neon(databaseUrl)
+
+    // Get the user ID from auth.users table
+    const users = await sql`
+      SELECT id FROM auth.users WHERE email = ${email} LIMIT 1
+    `
+
+    if (!users || users.length === 0) {
+      console.error("[v0] addPasswordToAccount: User not found")
+      return {
+        success: false,
+        error: "User not found",
+      }
+    }
+
+    const userId = users[0].id
     console.log("[v0] addPasswordToAccount: Found user ID:", userId)
 
+    // Update the user's password using admin API
     const { data: updateData, error: updateError } = await adminClient.auth.admin.updateUserById(userId, {
       password: password,
     })

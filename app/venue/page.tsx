@@ -19,7 +19,7 @@ export default async function VenuePage() {
         <section className="relative h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0">
             <Image
-              src="/singhasari-hotel-hero.jpg"
+              src="/luxury-hotel-conference-venue-with-modern-architec.jpg"
               alt="The Singhasari Hotel - Exterior View"
               fill
               className="object-cover"

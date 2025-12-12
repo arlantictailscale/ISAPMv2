@@ -384,15 +384,7 @@ export default function MyEventsPage() {
   }, [orders])
 
   if (loading) {
-    return (
-      <>
-        <Navigation />
-        <main className="pt-24 pb-20 min-h-screen">
-          <PageLoader text="Loading your events..." fullScreen={false} />
-        </main>
-        <Footer />
-      </>
-    )
+    return <PageLoader text="Loading your events..." />
   }
 
   return (

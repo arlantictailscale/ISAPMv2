@@ -45,26 +45,34 @@ export default function LoginPage() {
     try {
       const supabase = createClient()
 
+      console.log("[v0] Attempting login with email:", email)
+
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
       if (signInError) {
+        console.log("[v0] Sign in error:", signInError.message)
         const errorMessage = signInError.message.toLowerCase()
 
         if (errorMessage.includes("invalid login credentials")) {
+          console.log("[v0] Invalid credentials, checking providers...")
           const providers = await detectAuthProviders(email)
+          console.log("[v0] Provider detection result:", providers)
           setProviderInfo(providers)
 
           if (providers.primaryProvider === "google") {
+            console.log("[v0] OAuth-only account detected")
             setErrorType("oauth_only")
             setError(`This email is registered with Google Sign-In. No password has been set for email login.`)
             setShowGoogleSuggestion(true)
           } else if (providers.primaryProvider === "none") {
+            console.log("[v0] No account found")
             setErrorType("user_not_found")
             setError("No account found with this email address")
           } else {
+            console.log("[v0] Account exists with password, wrong password entered")
             setErrorType("invalid_credentials")
             setError("Incorrect password. Please try again or reset your password.")
           }

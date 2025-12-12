@@ -7,8 +7,8 @@ import "./globals.css"
 import { Toaster } from "sonner"
 import { CartProvider } from "@/lib/cart/cart-context"
 import { ScrollProgressBar } from "@/components/scroll-progress-bar"
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
+// import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 import { OfflineIndicator } from "@/components/offline-indicator"
 
 import { Inter, Playfair_Display, Geist, Geist_Mono, Source_Serif_4 } from "next/font/google"
@@ -188,7 +188,7 @@ export default function RootLayout({
         <CartProvider>
           <div className="pb-16 md:pb-0">{children}</div>
           <MobileBottomNav />
-          <PWAInstallPrompt />
+          {/* <PWAInstallPrompt /> */}
         </CartProvider>
         <Analytics />
         <SpeedInsights />

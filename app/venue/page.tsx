@@ -78,9 +78,9 @@ export default async function VenuePage() {
         <section className="py-20 px-4 bg-gradient-to-br from-slate-50 to-slate-100">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Resort Facilities & Amenities</h2>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Visual Tour of Our Facilities</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Discover our premium facilities designed to enhance your conference experience
+                Explore the premium facilities designed to enhance your conference experience
               </p>
             </div>
 
@@ -199,9 +199,9 @@ export default async function VenuePage() {
         {/* Venue Details Section with Improved Styling */}
         <section className="py-20 px-4 bg-white">
           <div className="max-w-6xl mx-auto">
-            <h2 className="font-display text-3xl font-bold mb-8 text-center">Venue Details</h2>
+            <h2 className="font-display text-3xl font-bold mb-8 text-center">Venue Details & Location</h2>
 
-            <div className="grid md:grid-cols-2 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
               {/* Venue Information - Left Column */}
               <div className="space-y-6">
                 <div className="flex gap-4">
@@ -363,11 +363,11 @@ export default async function VenuePage() {
           <div className="max-w-6xl mx-auto">
             <div className="flex items-center gap-3 mb-8">
               <Hotel className="w-8 h-8 text-cyan-600" />
-              <h2 className="font-display text-3xl font-bold">Hotel Accommodations & Booking</h2>
+              <h2 className="font-display text-3xl font-bold">Room Options & Reservations</h2>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 mb-8">
-              {/* Room Types & Pricing */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+              {/* Room Types & Pricing - Full width on mobile */}
               <div className="space-y-6">
                 <Card className="border-cyan-200 shadow-md">
                   <CardHeader>
@@ -446,7 +446,7 @@ export default async function VenuePage() {
                 </Card>
               </div>
 
-              {/* Resort Facilities & Booking CTA */}
+              {/* Booking CTA & Why Stay Here */}
               <div className="space-y-6">
                 <Card className="bg-gradient-to-br from-cyan-600 to-teal-600 text-white border-0 shadow-xl">
                   <CardHeader>
@@ -486,30 +486,34 @@ export default async function VenuePage() {
 
                 <Card className="shadow-md">
                   <CardHeader>
-                    <CardTitle>Resort Facilities</CardTitle>
+                    <CardTitle>Why Choose The Singhasari?</CardTitle>
+                    <CardDescription>Premium amenities for conference attendees</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-2 text-muted-foreground text-sm">
+                    <ul className="space-y-3 text-muted-foreground text-sm">
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> Modern convention center & conference rooms
+                        <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
+                        <span>Modern convention center with state-of-the-art conference facilities</span>
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> High-speed WiFi throughout the resort
+                        <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
+                        <span>High-speed WiFi & dedicated business center access</span>
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> Multiple on-site restaurants & cafes
+                        <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
+                        <span>Multiple on-site restaurants, cafes & room service</span>
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> Business center & meeting facilities
+                        <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
+                        <span>Recreation: pool, fitness center, spa & mountain activities</span>
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> Swimming pool, fitness center & spa
+                        <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
+                        <span>24/7 concierge support & transportation coordination</span>
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> Beautiful mountain views and resort grounds
-                      </li>
-                      <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> 24-hour room service & concierge
+                        <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
+                        <span>Scenic mountain views & peaceful resort atmosphere</span>
                       </li>
                     </ul>
                     <Button
@@ -518,7 +522,7 @@ export default async function VenuePage() {
                       className="w-full mt-6 border-cyan-600 text-cyan-600 hover:bg-cyan-50 bg-transparent"
                     >
                       <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
-                        Visit Resort Website
+                        Explore Full Resort Details
                         <ExternalLink className="w-4 h-4 ml-2" />
                       </a>
                     </Button>

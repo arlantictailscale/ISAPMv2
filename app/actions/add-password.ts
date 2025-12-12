@@ -1,6 +1,5 @@
 "use server"
 
-import { neon } from "@neondatabase/serverless"
 import { createClient } from "@supabase/supabase-js"
 
 export async function addPasswordToAccount(email: string, password: string) {
@@ -9,13 +8,12 @@ export async function addPasswordToAccount(email: string, password: string) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-    const databaseUrl = process.env.POSTGRES_URL
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("[v0] addPasswordToAccount: Missing Supabase configuration")
       return {
         success: false,
-        error: "Server configuration error",
+        error: "Server configuration error - missing Supabase credentials",
       }
     }
 
@@ -27,30 +25,28 @@ export async function addPasswordToAccount(email: string, password: string) {
       },
     })
 
-    if (!databaseUrl) {
-      console.error("[v0] addPasswordToAccount: Missing database URL")
+    // List users and find by email (Supabase admin API method)
+    const { data: usersData, error: listError } = await adminClient.auth.admin.listUsers()
+
+    if (listError) {
+      console.error("[v0] addPasswordToAccount: Failed to list users:", listError)
       return {
         success: false,
-        error: "Server configuration error",
+        error: "Failed to find user",
       }
     }
 
-    const sql = neon(databaseUrl)
+    const user = usersData.users.find((u) => u.email === email)
 
-    // Get the user ID from auth.users table
-    const users = await sql`
-      SELECT id FROM auth.users WHERE email = ${email} LIMIT 1
-    `
-
-    if (!users || users.length === 0) {
-      console.error("[v0] addPasswordToAccount: User not found")
+    if (!user) {
+      console.error("[v0] addPasswordToAccount: User not found with email:", email)
       return {
         success: false,
         error: "User not found",
       }
     }
 
-    const userId = users[0].id
+    const userId = user.id
     console.log("[v0] addPasswordToAccount: Found user ID:", userId)
 
     // Update the user's password using admin API
@@ -66,7 +62,7 @@ export async function addPasswordToAccount(email: string, password: string) {
       }
     }
 
-    console.log("[v0] addPasswordToAccount: Password added successfully")
+    console.log("[v0] addPasswordToAccount: Password updated successfully for user:", userId)
 
     return {
       success: true,

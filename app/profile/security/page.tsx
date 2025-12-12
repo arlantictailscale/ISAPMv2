@@ -94,12 +94,20 @@ export default function SecurityPage() {
       return
     }
 
+    console.log("[v0] handlePasswordSubmit called")
+    console.log("[v0] password length:", password.length)
+    console.log("[v0] confirmPassword length:", confirmPassword.length)
+    console.log("[v0] user email:", user?.email)
+
+    console.log("[v0] Validation passed, calling server action...")
     setIsAddingPassword(true)
     setPasswordError("")
 
     try {
       // Call server action that uses admin.updateUserById
+      console.log("[v0] Calling addPasswordToAccount...")
       const result = await addPasswordToAccount(user.email, password)
+      console.log("[v0] Server action result:", result)
 
       if (!result.success) {
         if (result.error?.includes("different from the old password")) {
@@ -122,9 +130,10 @@ export default function SecurityPage() {
         }
       }
     } catch (err) {
-      console.error("Password update error:", err)
+      console.error("[v0] Password update error:", err)
       toast.error("An unexpected error occurred")
     } finally {
+      console.log("[v0] Setting isAddingPassword to false")
       setIsAddingPassword(false)
     }
   }

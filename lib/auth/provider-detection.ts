@@ -6,6 +6,7 @@ export interface ProviderDetectionResult {
   primaryProvider: AuthProvider
   canLoginWithPassword: boolean
   canLoginWithGoogle: boolean
+  debug?: string
 }
 
 /**
@@ -13,41 +14,51 @@ export interface ProviderDetectionResult {
  * This calls the server API endpoint which has admin access to query auth.users
  */
 export async function detectAuthProviders(email: string): Promise<ProviderDetectionResult> {
-  try {
-    console.log("[v0] detectAuthProviders called for:", email)
+  const defaultResult: ProviderDetectionResult = {
+    providers: [],
+    hasPassword: false,
+    primaryProvider: "none",
+    canLoginWithPassword: false,
+    canLoginWithGoogle: false,
+  }
 
-    // Call API endpoint directly which has admin access
-    const response = await fetch("/api/auth/check-providers", {
+  try {
+    console.log("[v0] detectAuthProviders: Starting for email:", email)
+
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : ""
+    const apiUrl = `${baseUrl}/api/auth/check-providers`
+
+    console.log("[v0] detectAuthProviders: Calling API at:", apiUrl)
+
+    const response = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({ email }),
     })
 
-    console.log("[v0] API response status:", response.status)
+    console.log("[v0] detectAuthProviders: Response status:", response.status)
 
-    if (response.ok) {
-      const data = await response.json()
-      console.log("[v0] API returned:", data)
-      return data
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error("[v0] detectAuthProviders: API error response:", errorText)
+      return defaultResult
     }
 
-    console.log("[v0] API call failed, returning default")
-    // If API fails, return unknown state
+    const data = await response.json()
+    console.log("[v0] detectAuthProviders: API returned data:", data)
+
     return {
-      providers: [],
-      hasPassword: false,
-      primaryProvider: "none",
-      canLoginWithPassword: false,
-      canLoginWithGoogle: false,
+      providers: data.providers || [],
+      hasPassword: data.hasPassword || false,
+      primaryProvider: data.primaryProvider || "none",
+      canLoginWithPassword: data.canLoginWithPassword || false,
+      canLoginWithGoogle: data.canLoginWithGoogle || false,
+      debug: data.debug,
     }
   } catch (error) {
-    console.error("[v0] Provider detection error:", error)
-    return {
-      providers: [],
-      hasPassword: false,
-      primaryProvider: "none",
-      canLoginWithPassword: false,
-      canLoginWithGoogle: false,
-    }
+    console.error("[v0] detectAuthProviders: Exception:", error)
+    return defaultResult
   }
 }

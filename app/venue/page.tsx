@@ -358,18 +358,20 @@ export default async function VenuePage() {
           />
         </Suspense>
 
-        {/* Accommodations & Hotel Booking */}
+        {/* Hotel Accommodations & Booking - Consolidated Section */}
         <section className="py-20 px-4 bg-gradient-to-br from-slate-50 to-cyan-50">
           <div className="max-w-6xl mx-auto">
-            <div className="flex items-center gap-3 mb-8">
+            {/* Section Header */}
+            <div className="flex items-center gap-3 mb-12">
               <Hotel className="w-8 h-8 text-cyan-600" />
-              <h2 className="font-display text-3xl font-bold">Room Options & Reservations</h2>
+              <h2 className="font-display text-3xl font-bold text-balance">Hotel Accommodations & Room Booking</h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-              {/* Room Types & Pricing - Full width on mobile */}
-              <div className="space-y-6">
-                <Card className="border-cyan-200 shadow-md">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Room Cards - Takes 2 columns on large screens */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Deluxe Room Card */}
+                <Card className="border-cyan-200 shadow-md hover:shadow-lg transition-shadow overflow-hidden">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-cyan-600" />
@@ -377,37 +379,36 @@ export default async function VenuePage() {
                     </CardTitle>
                     <CardDescription>Spacious comfort with modern amenities</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
-                        <span className="text-sm font-medium text-cyan-900">Rooms Available:</span>
-                        <span className="text-lg font-bold text-cyan-600">
-                          {roomAvailability.deluxe.available} / {roomAvailability.deluxe.total}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-cyan-600">Rp 1,250,000</span>
-                        <span className="text-muted-foreground">/ night</span>
-                      </div>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> King or twin beds
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Mountain or garden view
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Modern bathroom with amenities
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi & breakfast
-                        </li>
-                      </ul>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
+                      <span className="text-sm font-medium text-cyan-900">Rooms Available:</span>
+                      <span className="text-lg font-bold text-cyan-600">
+                        {roomAvailability.deluxe.available} / {roomAvailability.deluxe.total}
+                      </span>
                     </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-cyan-600">Rp 1,250,000</span>
+                      <span className="text-muted-foreground">/ night</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> King or twin beds
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Mountain or garden view
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Modern bathroom with amenities
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi & breakfast
+                      </li>
+                    </ul>
                   </CardContent>
                 </Card>
 
-                <Card className="border-cyan-200 shadow-md">
+                {/* Premier Room Card */}
+                <Card className="border-cyan-200 shadow-md hover:shadow-lg transition-shadow overflow-hidden">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-cyan-600" />
@@ -415,52 +416,50 @@ export default async function VenuePage() {
                     </CardTitle>
                     <CardDescription>Enhanced luxury and exclusive amenities</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
-                        <span className="text-sm font-medium text-cyan-900">Rooms Available:</span>
-                        <span className="text-lg font-bold text-cyan-600">
-                          {roomAvailability.premier.available} / {roomAvailability.premier.total}
-                        </span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-cyan-600">Rp 1,350,000</span>
-                        <span className="text-muted-foreground">/ night</span>
-                      </div>
-                      <ul className="space-y-2 text-sm text-muted-foreground">
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Larger room with premium furnishings
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Panoramic mountain views
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Executive bathroom with bathtub
-                        </li>
-                        <li className="flex gap-2">
-                          <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi, breakfast & minibar
-                        </li>
-                      </ul>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-cyan-50 rounded-lg border border-cyan-200">
+                      <span className="text-sm font-medium text-cyan-900">Rooms Available:</span>
+                      <span className="text-lg font-bold text-cyan-600">
+                        {roomAvailability.premier.available} / {roomAvailability.premier.total}
+                      </span>
                     </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-3xl font-bold text-cyan-600">Rp 1,350,000</span>
+                      <span className="text-muted-foreground">/ night</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Larger room with premium furnishings
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Panoramic mountain views
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Executive bathroom with bathtub
+                      </li>
+                      <li className="flex gap-2">
+                        <span className="text-cyan-600 font-bold">•</span> Complimentary WiFi, breakfast & minibar
+                      </li>
+                    </ul>
                   </CardContent>
                 </Card>
               </div>
 
-              {/* Booking CTA & Why Stay Here */}
-              <div className="space-y-6">
-                <Card className="bg-gradient-to-br from-cyan-600 to-teal-600 text-white border-0 shadow-xl">
+              {/* Booking CTA & Amenities - Takes 1 column on large screens, stacks below on mobile */}
+              <div className="lg:col-span-1 space-y-6">
+                {/* Book Your Stay CTA */}
+                <Card className="bg-gradient-to-br from-cyan-600 to-teal-600 text-white border-0 shadow-xl sticky top-24 lg:top-32">
                   <CardHeader>
                     <CardTitle className="text-white">Book Your Stay</CardTitle>
-                    <CardDescription className="text-white/90">Reserve your room for ISAPM 2026</CardDescription>
+                    <CardDescription className="text-white/90">Reserve for ISAPM 2026</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <p className="text-sm text-white/90">
-                      Stay at the conference venue for maximum convenience. Book your room now and enjoy easy access to
-                      all sessions, networking opportunities, and resort amenities.
+                      Stay on-site for maximum convenience and networking opportunities.
                     </p>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-white/80">Conference Dates:</span>
+                        <span className="text-white/80">Dates:</span>
                         <span className="font-medium">April 16-18, 2026</span>
                       </div>
                       <div className="flex justify-between">
@@ -484,36 +483,37 @@ export default async function VenuePage() {
                   </CardContent>
                 </Card>
 
+                {/* Why Choose The Singhasari */}
                 <Card className="shadow-md">
                   <CardHeader>
-                    <CardTitle>Why Choose The Singhasari?</CardTitle>
+                    <CardTitle className="text-lg">Why Choose The Singhasari?</CardTitle>
                     <CardDescription>Premium amenities for conference attendees</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-3 text-muted-foreground text-sm">
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
-                        <span>Modern convention center with state-of-the-art conference facilities</span>
+                        <span>Modern convention center with state-of-the-art facilities</span>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
-                        <span>High-speed WiFi & dedicated business center access</span>
+                        <span>High-speed WiFi & dedicated business center</span>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
-                        <span>Multiple on-site restaurants, cafes & room service</span>
+                        <span>Multiple on-site restaurants & cafes</span>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
-                        <span>Recreation: pool, fitness center, spa & mountain activities</span>
+                        <span>Pool, fitness center, spa & activities</span>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
-                        <span>24/7 concierge support & transportation coordination</span>
+                        <span>24/7 concierge & transportation support</span>
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold flex-shrink-0">•</span>
-                        <span>Scenic mountain views & peaceful resort atmosphere</span>
+                        <span>Scenic mountain views & peaceful atmosphere</span>
                       </li>
                     </ul>
                     <Button

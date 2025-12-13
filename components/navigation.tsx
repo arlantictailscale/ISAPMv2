@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -74,6 +74,7 @@ export default function Navigation() {
   const [isLoading, setIsLoading] = useState(true)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
+  const isMounted = useRef(true)
 
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -99,28 +100,30 @@ export default function Navigation() {
   )
 
   useEffect(() => {
-    // then validate with getUser() for security
+    isMounted.current = true
+
+    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
+      return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))])
+    }
+
     const checkUser = async () => {
       try {
-        // First, get session from local storage for immediate feedback
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+        const sessionResult = await withTimeout(supabase.auth.getSession(), 5000)
 
-        if (session?.user) {
-          // Immediately set user from session for fast UI update
-          setUser(session.user)
+        if (!isMounted.current) return
+
+        if (sessionResult && sessionResult.data?.session?.user) {
+          const sessionUser = sessionResult.data.session.user
+          setUser(sessionUser)
           setIsLoading(false)
 
-          // Fetch role in parallel
-          const role = await fetchUserRole(session.user.id)
-          setUserRole(role)
+          fetchUserRole(sessionUser.id).then((role) => {
+            if (isMounted.current) setUserRole(role)
+          })
 
-          // Optionally validate token in background (for security)
-          // This won't block the UI
-          supabase.auth.getUser().then(({ data: { user: validatedUser } }) => {
-            if (!validatedUser) {
-              // Token was invalid, clear state
+          withTimeout(supabase.auth.getUser(), 5000).then((result) => {
+            if (!isMounted.current) return
+            if (!result || !result.data?.user) {
               setUser(null)
               setUserRole("user")
             }
@@ -131,22 +134,33 @@ export default function Navigation() {
         }
       } catch (authError) {
         console.error("[v0] Auth check failed:", authError)
-        setUser(null)
-        setIsLoading(false)
+        if (isMounted.current) {
+          setUser(null)
+          setIsLoading(false)
+        }
       }
     }
+
+    const hardTimeout = setTimeout(() => {
+      if (isMounted.current && isLoading) {
+        console.warn("[v0] Auth check hard timeout - defaulting to logged out state")
+        setIsLoading(false)
+      }
+    }, 6000)
 
     checkUser()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted.current) return
+
       const currentUser = session?.user || null
       setUser(currentUser)
 
       if (currentUser) {
         const role = await fetchUserRole(currentUser.id)
-        setUserRole(role)
+        if (isMounted.current) setUserRole(role)
       } else {
         setUserRole("user")
       }
@@ -154,7 +168,11 @@ export default function Navigation() {
       setIsLoading(false)
     })
 
-    return () => subscription?.unsubscribe()
+    return () => {
+      isMounted.current = false
+      clearTimeout(hardTimeout)
+      subscription?.unsubscribe()
+    }
   }, [supabase, fetchUserRole])
 
   useEffect(() => {

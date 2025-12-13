@@ -122,7 +122,7 @@ export default function Navigation() {
     }
 
     try {
-      const timeout = 5000
+      const timeout = 2500
       const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
 
       if (!isMounted.current) return
@@ -174,7 +174,7 @@ export default function Navigation() {
           setAutoRetryDone(true)
           checkUser()
         }
-      }, 500)
+      }, 250)
       return () => clearTimeout(retryTimer)
     }
 
@@ -184,7 +184,7 @@ export default function Navigation() {
           sessionStorage.setItem("auth_auto_reloaded", "true")
           window.location.reload()
         }
-      }, 500)
+      }, 250)
       return () => clearTimeout(reloadTimer)
     }
   }, [authTimedOut, autoRetryDone, autoReloadDone, checkUser])

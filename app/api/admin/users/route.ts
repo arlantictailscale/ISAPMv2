@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
         email: authUser.email || "",
         first_name: profile?.first_name || null,
         last_name: profile?.last_name || null,
+        full_name: profile?.full_name || null,
         phone: profile?.phone || null,
         institution: profile?.institution || null,
         position: profile?.position || null,

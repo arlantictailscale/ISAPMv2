@@ -25,6 +25,7 @@ interface UserProfile {
   id: string
   first_name: string | null
   last_name: string | null
+  full_name: string | null
   email: string
   phone: string | null
   institution: string | null
@@ -223,9 +224,11 @@ export default function AdminUsersPage() {
                       {users.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">
-                            {user.first_name && user.last_name
-                              ? `${user.first_name} ${user.last_name}`
-                              : user.first_name || user.last_name || "-"}
+                            {user.full_name
+                              ? user.full_name
+                              : user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.first_name || user.last_name || "-"}
                           </TableCell>
                           <TableCell className="text-sm">{user.email}</TableCell>
                           <TableCell className="text-sm">{user.institution || "-"}</TableCell>

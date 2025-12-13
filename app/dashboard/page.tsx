@@ -30,6 +30,7 @@ import {
 import Link from "next/link"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
+import { getAuthUserCount } from "@/app/actions/get-user-count"
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -192,8 +193,9 @@ export default async function DashboardPage() {
   }
 
   if (isAdmin) {
+    const authUserCountResult = await getAuthUserCount()
+
     const [
-      usersResult,
       postersResult,
       pendingPostersResult,
       paymentsResult,
@@ -202,7 +204,6 @@ export default async function DashboardPage() {
       eventsResult,
       hotelBookingsResult,
     ] = await Promise.all([
-      supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("abstracts").select("id", { count: "exact", head: true }),
       supabase.from("abstracts").select("id", { count: "exact", head: true }).eq("submission_status", "pending"),
       supabase.from("order_payments").select("id", { count: "exact", head: true }).eq("payment_status", "pending"),
@@ -225,7 +226,7 @@ export default async function DashboardPage() {
       .eq("payment_status", "verified")
 
     adminStats = {
-      totalUsers: usersResult.count || 0,
+      totalUsers: authUserCountResult.count || 0,
       totalPosters: postersResult.count || 0,
       pendingPosters: pendingPostersResult.count || 0,
       pendingPayments: paymentsResult.count || 0,

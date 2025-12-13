@@ -74,7 +74,8 @@ export default function Navigation() {
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authTimedOut, setAuthTimedOut] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
+  const [autoRetryDone, setAutoRetryDone] = useState(false)
+  const [autoReloadDone, setAutoReloadDone] = useState(false)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
   const isMounted = useRef(true)
@@ -83,6 +84,14 @@ export default function Navigation() {
   const router = useRouter()
 
   const isAdmin = useMemo(() => userRole === "admin", [userRole])
+
+  useEffect(() => {
+    const hasAutoReloaded = sessionStorage.getItem("auth_auto_reloaded")
+    if (hasAutoReloaded === "true") {
+      setAutoReloadDone(true)
+      sessionStorage.removeItem("auth_auto_reloaded")
+    }
+  }, [])
 
   const fetchUserRole = useCallback(
     async (userId: string) => {
@@ -113,7 +122,7 @@ export default function Navigation() {
     }
 
     try {
-      const timeout = 5000 + retryCount * 3000
+      const timeout = 5000
       const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
 
       if (!isMounted.current) return
@@ -123,6 +132,7 @@ export default function Navigation() {
         setUser(sessionUser)
         setIsLoading(false)
         setAuthTimedOut(false)
+        setAutoRetryDone(false)
 
         fetchUserRole(sessionUser.id).then((role) => {
           if (isMounted.current) setUserRole(role)
@@ -137,33 +147,51 @@ export default function Navigation() {
         })
       } else if (sessionResult === null) {
         if (isMounted.current) {
-          if (retryCount < 2) {
-            setRetryCount((prev) => prev + 1)
-          } else {
-            setAuthTimedOut(true)
-            setIsLoading(false)
-          }
+          setAuthTimedOut(true)
+          setIsLoading(false)
         }
       } else {
         setUser(null)
         setIsLoading(false)
         setAuthTimedOut(false)
+        setAutoRetryDone(false)
       }
     } catch (authError) {
       console.error("Auth check failed:", authError)
       if (isMounted.current) {
-        if (retryCount < 2) {
-          setRetryCount((prev) => prev + 1)
-        } else {
-          setAuthTimedOut(true)
-          setIsLoading(false)
-        }
+        setAuthTimedOut(true)
+        setIsLoading(false)
       }
     }
-  }, [supabase, fetchUserRole, retryCount])
+  }, [supabase, fetchUserRole])
+
+  useEffect(() => {
+    if (!authTimedOut) return
+
+    if (!autoRetryDone) {
+      const retryTimer = setTimeout(() => {
+        if (isMounted.current) {
+          setAutoRetryDone(true)
+          checkUser()
+        }
+      }, 500)
+      return () => clearTimeout(retryTimer)
+    }
+
+    if (autoRetryDone && !autoReloadDone) {
+      const reloadTimer = setTimeout(() => {
+        if (isMounted.current) {
+          sessionStorage.setItem("auth_auto_reloaded", "true")
+          window.location.reload()
+        }
+      }, 500)
+      return () => clearTimeout(reloadTimer)
+    }
+  }, [authTimedOut, autoRetryDone, autoReloadDone, checkUser])
 
   const handleRetry = useCallback(() => {
-    setRetryCount(0)
+    setAuthTimedOut(false)
+    setAutoRetryDone(false)
     checkUser()
   }, [checkUser])
 
@@ -201,16 +229,6 @@ export default function Navigation() {
   }, [supabase, fetchUserRole, checkUser])
 
   useEffect(() => {
-    if (retryCount > 0 && retryCount <= 2) {
-      const retryDelay = retryCount * 1000
-      const timer = setTimeout(() => {
-        checkUser()
-      }, retryDelay)
-      return () => clearTimeout(timer)
-    }
-  }, [retryCount, checkUser])
-
-  useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50)
     }
@@ -225,37 +243,49 @@ export default function Navigation() {
     router.push("/")
   }, [supabase, router])
 
-  const renderAuthTimeoutUI = () => (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">
-        <RefreshCw className="w-3.5 h-3.5" />
-        Retry
-      </Button>
-      <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="text-xs text-muted-foreground">
-        Refresh
-      </Button>
-    </div>
-  )
+  const renderAuthTimeoutUI = () => {
+    if (!autoRetryDone || !autoReloadDone) {
+      return <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
+    }
 
-  const renderMobileAuthTimeoutUI = () => (
-    <div className="flex flex-col gap-2 mt-2">
-      <p className="text-xs text-muted-foreground px-3">Connection slow. Please retry.</p>
-      <div className="flex gap-2 px-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRetry}
-          className="flex-1 flex items-center justify-center gap-1.5 bg-transparent"
-        >
+    return (
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">
           <RefreshCw className="w-3.5 h-3.5" />
           Retry
         </Button>
-        <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="flex-1">
-          Refresh Page
+        <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="text-xs text-muted-foreground">
+          Refresh
         </Button>
       </div>
-    </div>
-  )
+    )
+  }
+
+  const renderMobileAuthTimeoutUI = () => {
+    if (!autoRetryDone || !autoReloadDone) {
+      return <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
+    }
+
+    return (
+      <div className="flex flex-col gap-2 mt-2">
+        <p className="text-xs text-muted-foreground px-3">Connection slow. Please retry.</p>
+        <div className="flex gap-2 px-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRetry}
+            className="flex-1 flex items-center justify-center gap-1.5 bg-transparent"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            Retry
+          </Button>
+          <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="flex-1">
+            Refresh Page
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <nav

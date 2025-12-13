@@ -30,6 +30,7 @@ import {
   UserCheck,
   FolderOpen,
   Hotel,
+  RefreshCw,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -72,6 +73,8 @@ export default function Navigation() {
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [authTimedOut, setAuthTimedOut] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
   const isMounted = useRef(true)
@@ -87,67 +90,89 @@ export default function Navigation() {
         const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
 
         if (error) {
-          console.error("[v0] Error fetching user role:", error.message)
+          console.error("Error fetching user role:", error.message)
           return "user"
         }
         return profile?.role || "user"
       } catch (profileError) {
-        console.error("[v0] Failed to fetch profile:", profileError)
+        console.error("Failed to fetch profile:", profileError)
         return "user"
       }
     },
     [supabase],
   )
 
-  useEffect(() => {
-    isMounted.current = true
+  const checkUser = useCallback(async () => {
+    if (!isMounted.current) return
+
+    setIsLoading(true)
+    setAuthTimedOut(false)
 
     const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
       return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))])
     }
 
-    const checkUser = async () => {
-      try {
-        const sessionResult = await withTimeout(supabase.auth.getSession(), 5000)
+    try {
+      const timeout = 5000 + retryCount * 3000
+      const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
 
-        if (!isMounted.current) return
+      if (!isMounted.current) return
 
-        if (sessionResult && sessionResult.data?.session?.user) {
-          const sessionUser = sessionResult.data.session.user
-          setUser(sessionUser)
-          setIsLoading(false)
+      if (sessionResult && sessionResult.data?.session?.user) {
+        const sessionUser = sessionResult.data.session.user
+        setUser(sessionUser)
+        setIsLoading(false)
+        setAuthTimedOut(false)
 
-          fetchUserRole(sessionUser.id).then((role) => {
-            if (isMounted.current) setUserRole(role)
-          })
+        fetchUserRole(sessionUser.id).then((role) => {
+          if (isMounted.current) setUserRole(role)
+        })
 
-          withTimeout(supabase.auth.getUser(), 5000).then((result) => {
-            if (!isMounted.current) return
-            if (!result || !result.data?.user) {
-              setUser(null)
-              setUserRole("user")
-            }
-          })
-        } else {
-          setUser(null)
-          setIsLoading(false)
-        }
-      } catch (authError) {
-        console.error("[v0] Auth check failed:", authError)
+        withTimeout(supabase.auth.getUser(), timeout).then((result) => {
+          if (!isMounted.current) return
+          if (!result || !result.data?.user) {
+            setUser(null)
+            setUserRole("user")
+          }
+        })
+      } else if (sessionResult === null) {
         if (isMounted.current) {
-          setUser(null)
+          if (retryCount < 2) {
+            setRetryCount((prev) => prev + 1)
+          } else {
+            setAuthTimedOut(true)
+            setIsLoading(false)
+          }
+        }
+      } else {
+        setUser(null)
+        setIsLoading(false)
+        setAuthTimedOut(false)
+      }
+    } catch (authError) {
+      console.error("Auth check failed:", authError)
+      if (isMounted.current) {
+        if (retryCount < 2) {
+          setRetryCount((prev) => prev + 1)
+        } else {
+          setAuthTimedOut(true)
           setIsLoading(false)
         }
       }
     }
+  }, [supabase, fetchUserRole, retryCount])
 
-    const hardTimeout = setTimeout(() => {
-      if (isMounted.current && isLoading) {
-        console.warn("[v0] Auth check hard timeout - defaulting to logged out state")
-        setIsLoading(false)
-      }
-    }, 6000)
+  const handleRetry = useCallback(() => {
+    setRetryCount(0)
+    checkUser()
+  }, [checkUser])
 
+  const handleRefreshPage = useCallback(() => {
+    window.location.reload()
+  }, [])
+
+  useEffect(() => {
+    isMounted.current = true
     checkUser()
 
     const {
@@ -157,6 +182,7 @@ export default function Navigation() {
 
       const currentUser = session?.user || null
       setUser(currentUser)
+      setAuthTimedOut(false)
 
       if (currentUser) {
         const role = await fetchUserRole(currentUser.id)
@@ -170,10 +196,19 @@ export default function Navigation() {
 
     return () => {
       isMounted.current = false
-      clearTimeout(hardTimeout)
       subscription?.unsubscribe()
     }
-  }, [supabase, fetchUserRole])
+  }, [supabase, fetchUserRole, checkUser])
+
+  useEffect(() => {
+    if (retryCount > 0 && retryCount <= 2) {
+      const retryDelay = retryCount * 1000
+      const timer = setTimeout(() => {
+        checkUser()
+      }, retryDelay)
+      return () => clearTimeout(timer)
+    }
+  }, [retryCount, checkUser])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -189,6 +224,38 @@ export default function Navigation() {
     setUser(null)
     router.push("/")
   }, [supabase, router])
+
+  const renderAuthTimeoutUI = () => (
+    <div className="flex items-center gap-2">
+      <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">
+        <RefreshCw className="w-3.5 h-3.5" />
+        Retry
+      </Button>
+      <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="text-xs text-muted-foreground">
+        Refresh
+      </Button>
+    </div>
+  )
+
+  const renderMobileAuthTimeoutUI = () => (
+    <div className="flex flex-col gap-2 mt-2">
+      <p className="text-xs text-muted-foreground px-3">Connection slow. Please retry.</p>
+      <div className="flex gap-2 px-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRetry}
+          className="flex-1 flex items-center justify-center gap-1.5 bg-transparent"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          Retry
+        </Button>
+        <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="flex-1">
+          Refresh Page
+        </Button>
+      </div>
+    </div>
+  )
 
   return (
     <nav
@@ -232,6 +299,8 @@ export default function Navigation() {
               {user && <CartIcon />}
               {isLoading ? (
                 <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
+              ) : authTimedOut ? (
+                renderAuthTimeoutUI()
               ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -359,6 +428,8 @@ export default function Navigation() {
 
             {isLoading ? (
               <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
+            ) : authTimedOut ? (
+              renderMobileAuthTimeoutUI()
             ) : user ? (
               <div className="border-t pt-4 mt-4 space-y-1">
                 <Link

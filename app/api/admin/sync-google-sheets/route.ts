@@ -381,6 +381,7 @@ export async function POST(request: NextRequest) {
       "Payment Date",
       "Payment Proof ID",
       "Payment File Type",
+      "Webinar Access",
     ]
 
     const paymentProofMap = new Map()
@@ -403,9 +404,20 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    const userWebinarMap = new Map<string, string[]>()
+    webinarList.forEach((reg) => {
+      if (reg.user_id) {
+        const existing = userWebinarMap.get(reg.user_id) || []
+        const accessLabel = reg.access_type === "purchased" ? "(Purchased)" : "(Bonus)"
+        existing.push(`${reg.webinar_short_title || reg.webinar_title} ${accessLabel}`)
+        userWebinarMap.set(reg.user_id, existing)
+      }
+    })
+
     const comprehensiveRows = comprehensiveAttendees.map((attendee) => {
       const paymentProof = paymentProofMap.get(attendee.user_id)
       const isSponsored = paymentProof?.is_sponsored
+      const webinarAccess = userWebinarMap.get(attendee.user_id) || []
 
       return [
         attendee.title_degree
@@ -427,7 +439,47 @@ export async function POST(request: NextRequest) {
         paymentProof?.created_at ? new Date(paymentProof.created_at).toLocaleDateString() : "",
         paymentProof?.transaction_reference || "",
         paymentProof?.file_type || "",
+        webinarAccess.length > 0 ? webinarAccess.join(", ") : "None",
       ]
+    })
+
+    const eventUserIds = new Set(comprehensiveAttendees.map((a) => a.user_id))
+    const webinarOnlyUsers = webinarList.filter((w) => !eventUserIds.has(w.user_id))
+
+    // Group webinar-only users by user_id to avoid duplicates
+    const webinarOnlyUsersMap = new Map<string, any>()
+    webinarOnlyUsers.forEach((reg) => {
+      if (reg.user_id && !webinarOnlyUsersMap.has(reg.user_id)) {
+        webinarOnlyUsersMap.set(reg.user_id, reg)
+      }
+    })
+
+    // Add webinar-only users to comprehensive rows
+    webinarOnlyUsersMap.forEach((reg, userId) => {
+      const paymentProof = paymentProofMap.get(userId)
+      const isSponsored = paymentProof?.is_sponsored
+      const webinarAccess = userWebinarMap.get(userId) || []
+
+      comprehensiveRows.push([
+        reg.title_degree ? `${reg.title_degree} ${reg.full_name || ""}`.trim() : reg.full_name || "",
+        reg.satu_sehat_name || "",
+        reg.satu_sehat_email || reg.email || "",
+        reg.nik || "",
+        reg.institution || "",
+        reg.phone || "",
+        "Webinar Only", // Event label for webinar-only users
+        "Webinar Participant", // Participant type
+        reg.verified_at ? new Date(reg.verified_at).toLocaleDateString() : "",
+        isSponsored ? "Sponsored" : reg.unit_price > 0 ? "Bank Transfer" : "Free (Bonus)",
+        paymentProof?.sponsor_name || "",
+        isSponsored ? "N/A" : paymentProof ? "Yes" : "No",
+        paymentProof?.payment_proof_url || "",
+        paymentProof ? `Rp ${paymentProof.amount?.toLocaleString("id-ID")}` : "",
+        paymentProof?.created_at ? new Date(paymentProof.created_at).toLocaleDateString() : "",
+        paymentProof?.transaction_reference || "",
+        paymentProof?.file_type || "",
+        webinarAccess.length > 0 ? webinarAccess.join(", ") : "None",
+      ])
     })
 
     const comprehensiveValues = [comprehensiveHeaders, ...comprehensiveRows]

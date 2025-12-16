@@ -77,7 +77,7 @@ Functions to remove/replace:
 - Link to view order details
 
 **Template Design**:
-\`\`\`html
+```html
 Subject: Order Confirmation #[ORDER_ID] - ISAPM 2026
 
 [HEADER: ISAPM 2026 Logo + "Order Confirmed"]
@@ -136,7 +136,7 @@ Next Steps - Complete Your Payment:
 Questions? Contact us at admin@isapm2026.org
 
 [FOOTER]
-\`\`\`
+```
 
 #### B. Payment Approved Email
 **Function**: `sendPaymentApprovedEmail`  
@@ -176,7 +176,7 @@ Currently exists but needs to be integrated into the admin actions:
 ### Phase 1: Create New Email Functions (Week 1)
 
 #### Step 1.1: Create Order Confirmation Email
-\`\`\`typescript
+```typescript
 // lib/email.tsx
 
 export async function sendOrderConfirmation({
@@ -207,10 +207,10 @@ export async function sendOrderConfirmation({
 }) {
   // Full HTML email template with order items
 }
-\`\`\`
+```
 
 #### Step 1.2: Create Payment Status Emails
-\`\`\`typescript
+```typescript
 export async function sendPaymentApprovedEmail({
   email,
   customerName,
@@ -228,12 +228,12 @@ export async function sendPaymentRejectedEmail({
   rejectionReason,
   resubmitLink,
 })
-\`\`\`
+```
 
 ### Phase 2: Integrate Email Triggers (Week 1-2)
 
 #### Step 2.1: Add Order Confirmation to Checkout
-\`\`\`typescript
+```typescript
 // app/actions/checkout.ts
 
 export async function createOrderFromCart(guestInfo) {
@@ -263,10 +263,10 @@ export async function createOrderFromCart(guestInfo) {
   
   return { data: order }
 }
-\`\`\`
+```
 
 #### Step 2.2: Add Payment Emails to Validation Actions
-\`\`\`typescript
+```typescript
 // app/actions/payment-validation.ts
 
 export async function approvePayment(paymentId: string, orderId: string) {
@@ -320,7 +320,7 @@ export async function rejectPayment(paymentId: string, rejectionReason: string) 
   
   return { success: true }
 }
-\`\`\`
+```
 
 ### Phase 3: Remove Deprecated Functions (Week 2)
 
@@ -337,7 +337,7 @@ export async function rejectPayment(paymentId: string, rejectionReason: string) 
 ### Phase 4: Testing & Validation (Week 2)
 
 #### Step 4.1: Unit Testing
-\`\`\`typescript
+```typescript
 // __tests__/email.test.ts
 
 describe('Order Confirmation Email', () => {
@@ -358,7 +358,7 @@ describe('Order Confirmation Email', () => {
     expect(result.success).toBe(true)
   })
 })
-\`\`\`
+```
 
 #### Step 4.2: Integration Testing
 1. Create test order through cart checkout
@@ -517,7 +517,7 @@ If issues occur:
 
 ### 8.2 Logging Strategy
 
-\`\`\`typescript
+```typescript
 // Log all email sends
 console.log('[Email] Sending order confirmation', {
   orderId,
@@ -533,7 +533,7 @@ console.error('[Email] Failed to send order confirmation', {
   error: error.message,
   timestamp: new Date().toISOString(),
 })
-\`\`\`
+```
 
 ### 8.3 Alerts
 
@@ -567,7 +567,7 @@ Set up alerts for:
 ### 9.2 Developer Documentation
 
 Create new file: `docs/EMAIL_SYSTEM.md`
-\`\`\`markdown
+```markdown
 # Email System Documentation
 
 ## Overview
@@ -586,7 +586,7 @@ Sent when admin rejects payment proof...
 
 ## Testing
 Use `/admin/email-test` to preview emails...
-\`\`\`
+```
 
 ---
 

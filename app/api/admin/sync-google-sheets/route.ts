@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js"
 import { google } from "googleapis"
+import { getWebinarById } from "@/lib/data/webinars"
 
 const EVENT_OPTIONS = [
   { id: "cpd", label: "CPD (Continuing Professional Development) Courses" },
@@ -127,6 +128,8 @@ export async function POST(request: NextRequest) {
     // Process Hotel Bookings
     const hotelList: any[] = []
 
+    const webinarList: any[] = []
+
     paymentsData?.forEach((payment) => {
       const order = payment.orders
       if (!order || !order.order_items) return
@@ -162,9 +165,64 @@ export async function POST(request: NextRequest) {
             order_items: [item],
             verified_at: payment.verified_at,
           })
+        } else if (item.item_type === "webinar") {
+          const webinarInfo = getWebinarById(item.event_id)
+          webinarList.push({
+            ...order,
+            ...profile,
+            webinar_id: item.event_id,
+            webinar_title: webinarInfo?.title || item.event_label || item.event_id,
+            webinar_short_title: webinarInfo?.shortTitle || item.event_label || item.event_id,
+            webinar_date: webinarInfo?.date || "",
+            webinar_time: webinarInfo?.time || "",
+            access_type: "purchased",
+            unit_price: item.unit_price,
+            verified_at: payment.verified_at,
+          })
         }
       })
     })
+
+    const { data: webinarGrantsData, error: webinarGrantsError } = await supabaseAdmin
+      .from("symposium_webinar_grants")
+      .select("*")
+      .eq("status", "active")
+      .order("granted_at", { ascending: false })
+
+    if (webinarGrantsError) {
+      console.error("[v0] Error fetching webinar grants:", webinarGrantsError)
+    }
+
+    console.log("[v0] Found webinar grants:", webinarGrantsData?.length || 0)
+
+    // Get profiles for webinar grant users
+    const grantUserIds = webinarGrantsData?.map((g) => g.user_id).filter(Boolean) as string[]
+    const { data: grantProfilesData } = await supabaseAdmin.from("profiles").select("*").in("id", grantUserIds)
+
+    const grantProfilesMap = new Map(grantProfilesData?.map((p) => [p.id, p]) || [])
+
+    // Add granted webinars to the list
+    webinarGrantsData?.forEach((grant) => {
+      const profile = grantProfilesMap.get(grant.user_id) || {}
+      const webinarInfo = getWebinarById(grant.webinar_id)
+
+      webinarList.push({
+        user_id: grant.user_id,
+        ...profile,
+        webinar_id: grant.webinar_id,
+        webinar_title: webinarInfo?.title || grant.webinar_id,
+        webinar_short_title: webinarInfo?.shortTitle || grant.webinar_id,
+        webinar_date: webinarInfo?.date || "",
+        webinar_time: webinarInfo?.time || "",
+        access_type: grant.grant_type || "symposium_bonus",
+        unit_price: 0, // Bonus webinars are free
+        verified_at: grant.granted_at,
+        order_id: grant.order_id,
+        grant_id: grant.id,
+      })
+    })
+
+    console.log("[v0] Total webinar registrations:", webinarList.length)
 
     const { data: allPaymentsData, error: allPaymentsError } = await supabaseAdmin
       .from("order_payments")
@@ -287,6 +345,15 @@ export async function POST(request: NextRequest) {
         properties: {
           sheetId: EVENT_OPTIONS.length + 3,
           title: "E-Poster Submissions",
+        },
+      },
+    })
+
+    updateRequests.push({
+      addSheet: {
+        properties: {
+          sheetId: EVENT_OPTIONS.length + 4,
+          title: "Webinar Registrations",
         },
       },
     })
@@ -553,6 +620,51 @@ export async function POST(request: NextRequest) {
       requestBody: { values: posterValues },
     })
 
+    const webinarHeaders = [
+      "Full Name with Titles/Degrees",
+      "Email",
+      "Phone",
+      "Institution",
+      "Position",
+      "Webinar Title",
+      "Webinar Date",
+      "Webinar Time",
+      "Access Type",
+      "Amount Paid",
+      "Order ID",
+      "Registered/Granted At",
+    ]
+
+    const webinarRows = webinarList.map((reg) => [
+      reg.title_degree ? `${reg.title_degree} ${reg.full_name || ""}`.trim() : reg.full_name || "",
+      reg.email || "",
+      reg.phone || "",
+      reg.institution || "",
+      reg.position || "",
+      reg.webinar_short_title || reg.webinar_title || "",
+      reg.webinar_date ? new Date(reg.webinar_date).toLocaleDateString() : "TBD",
+      reg.webinar_time ? `${reg.webinar_time} WIB` : "TBD",
+      reg.access_type === "purchased"
+        ? "Purchased"
+        : reg.access_type === "symposium_bonus"
+          ? "Symposium Bonus"
+          : reg.access_type || "Unknown",
+      reg.unit_price ? `Rp ${reg.unit_price.toLocaleString("id-ID")}` : "Free (Bonus)",
+      reg.order_id || "",
+      reg.verified_at ? new Date(reg.verified_at).toLocaleDateString() : "",
+    ])
+
+    const webinarValues = [webinarHeaders, ...webinarRows]
+
+    console.log("[v0] Writing webinar data to sheet. Rows:", webinarRows.length)
+
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: "'Webinar Registrations'!A1",
+      valueInputOption: "RAW",
+      requestBody: { values: webinarValues },
+    })
+
     console.log("[v0] Successfully synced to Google Sheets")
 
     return NextResponse.json({
@@ -563,7 +675,8 @@ export async function POST(request: NextRequest) {
         totalAttendees: comprehensiveAttendees.length,
         hotelBookings: hotelList.length,
         posterSubmissions: postersData?.length || 0,
-        paymentProofs: allPaymentsData?.length || 0, // Added payment proofs count
+        paymentProofs: allPaymentsData?.length || 0,
+        webinarRegistrations: webinarList.length,
       },
     })
   } catch (error: any) {

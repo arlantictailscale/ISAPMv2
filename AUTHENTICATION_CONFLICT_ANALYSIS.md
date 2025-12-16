@@ -29,26 +29,26 @@ Modern authentication systems (like Supabase, Auth0, Firebase) treat different a
 #### Database Structure
 
 In Supabase's `auth.users` table:
-\`\`\`sql
+```sql
 CREATE TABLE auth.users (
   id uuid PRIMARY KEY,
   email text,
   encrypted_password text,  -- NULL for OAuth users
   ...
 )
-\`\`\`
+```
 
 #### Identity Linking Table
 
 Supabase uses `auth.identities` to track authentication methods:
-\`\`\`sql
+```sql
 CREATE TABLE auth.identities (
   id uuid PRIMARY KEY,
   user_id uuid REFERENCES auth.users(id),
   provider text,  -- 'email' or 'google'
   ...
 )
-\`\`\`
+```
 
 **Key Insight**: A user who signs up via Google has:
 - `provider = 'google'` in auth.identities
@@ -60,13 +60,13 @@ CREATE TABLE auth.identities (
 
 When attempting email/password login, the system:
 
-\`\`\`typescript
+```typescript
 // From app/auth/login/page.tsx
 const { data, error } = await supabase.auth.signInWithPassword({
   email,
   password,
 })
-\`\`\`
+```
 
 This checks for:
 1. User exists with matching email
@@ -82,7 +82,7 @@ For Google OAuth users:
 
 When attempting to create a new account:
 
-\`\`\`typescript
+```typescript
 // From app/auth/sign-up/page.tsx
 const { data, error } = await supabase.auth.signUp({
   email,
@@ -92,7 +92,7 @@ const { data, error } = await supabase.auth.signUp({
 if (data?.user?.identities?.length === 0) {
   setError("This email is already registered. Please sign in instead.")
 }
-\`\`\`
+```
 
 Supabase prevents duplicate emails across all providers:
 - The email `rofiudin.kupenk@gmail.com` already exists (Google OAuth)
@@ -108,7 +108,7 @@ Supabase prevents duplicate emails across all providers:
 
 #### Login Logic (app/auth/login/page.tsx)
 
-\`\`\`typescript
+```typescript
 // Attempts password authentication
 const { data, error: signInError } = await supabase.auth.signInWithPassword({
   email,
@@ -131,7 +131,7 @@ if (signInError) {
     setErrorType("invalid_credentials")
   }
 }
-\`\`\`
+```
 
 **Issue**: This logic checks the `profiles` table, but doesn't distinguish between:
 - OAuth-only accounts (no password)
@@ -139,7 +139,7 @@ if (signInError) {
 
 #### Sign-Up Logic (app/auth/sign-up/page.tsx)
 
-\`\`\`typescript
+```typescript
 const { data, error } = await supabase.auth.signUp({
   email,
   password,
@@ -149,7 +149,7 @@ if (data?.user?.identities?.length === 0) {
   // Email already exists with ANY provider
   setError("This email is already registered. Please sign in instead.")
 }
-\`\`\`
+```
 
 **Issue**: Generic error doesn't explain that the account exists via Google OAuth.
 
@@ -160,7 +160,7 @@ if (data?.user?.identities?.length === 0) {
 ### Scenario Breakdown
 
 #### Step 1: Google Sign-In (First Time)
-\`\`\`
+```
 User clicks "Sign in with Google"
   ↓
 Redirected to Google OAuth
@@ -172,12 +172,12 @@ Supabase creates:
   - auth.identities record (provider='google')
   - profiles record
   - encrypted_password = NULL
-\`\`\`
+```
 
 **State**: Account exists with Google provider only.
 
 #### Step 2: Email/Password Login Attempt
-\`\`\`
+```
 User enters email + password
   ↓
 System checks: Does this email have password credentials?
@@ -185,12 +185,12 @@ System checks: Does this email have password credentials?
 encrypted_password is NULL
   ↓
 ERROR: "No account found" or "Invalid credentials"
-\`\`\`
+```
 
 **Why**: The system can't authenticate with a password that was never set.
 
 #### Step 3: Email/Password Sign-Up Attempt
-\`\`\`
+```
 User tries to create account with same email
   ↓
 System checks: Does this email already exist?
@@ -198,7 +198,7 @@ System checks: Does this email already exist?
 YES - exists with Google OAuth
   ↓
 ERROR: "This email is already registered"
-\`\`\`
+```
 
 **Why**: Email uniqueness constraint prevents duplicate accounts.
 
@@ -211,29 +211,29 @@ ERROR: "This email is already registered"
 For user `rofiudin.kupenk@gmail.com`:
 
 **auth.users table**:
-\`\`\`sql
+```sql
 id: 12345-uuid
 email: rofiudin.kupenk@gmail.com
 encrypted_password: NULL  -- ❌ No password set
 email_confirmed_at: 2024-12-12
 created_at: 2024-12-12
-\`\`\`
+```
 
 **auth.identities table**:
-\`\`\`sql
+```sql
 id: 67890-uuid
 user_id: 12345-uuid
 provider: google  -- ✅ Google OAuth only
 provider_id: 102847563...  -- Google user ID
-\`\`\`
+```
 
 **profiles table**:
-\`\`\`sql
+```sql
 id: 12345-uuid
 email: rofiudin.kupenk@gmail.com
 full_name: Rofiul Din
 -- Other profile data
-\`\`\`
+```
 
 ### Authentication Method Matrix
 
@@ -254,25 +254,25 @@ full_name: Rofiul Din
 
 Most modern auth systems support multiple providers per account, but many implementations don't enable automatic linking:
 
-\`\`\`typescript
+```typescript
 // Ideal implementation (not currently in ISAPM)
 await supabase.auth.linkIdentity({
   provider: 'email',
   email: user.email,
   password: password
 })
-\`\`\`
+```
 
 ### 2. **Insufficient Provider Detection**
 
 Login pages should detect which providers are associated with an email:
 
-\`\`\`typescript
+```typescript
 // What should happen (not currently implemented)
 const providers = await supabase.auth.getProvidersByEmail(email)
 // Returns: ['google']
 // Then show: "This email uses Google Sign-In. Please use the Google button."
-\`\`\`
+```
 
 ### 3. **Silent OAuth Account Creation**
 
@@ -286,11 +286,11 @@ OAuth flows create accounts automatically without user awareness:
 
 OAuth users can't use "Forgot Password" because no password exists:
 
-\`\`\`typescript
+```typescript
 // Current forgot-password logic fails for OAuth users
 await supabase.auth.resetPasswordForEmail(email)
 // Returns error: "Email not found" (technically has no password)
-\`\`\`
+```
 
 ---
 
@@ -302,7 +302,7 @@ await supabase.auth.resetPasswordForEmail(email)
 
 Update login page to detect OAuth accounts:
 
-\`\`\`typescript
+```typescript
 // Improved login logic
 if (signInError) {
   // Check which auth providers this email uses
@@ -318,11 +318,11 @@ if (signInError) {
     }
   }
 }
-\`\`\`
+```
 
 #### 2. **Email Provider Detection on Sign-Up**
 
-\`\`\`typescript
+```typescript
 // Improved sign-up logic
 if (data?.user?.identities?.length === 0) {
   // Check which provider owns this email
@@ -338,7 +338,7 @@ if (data?.user?.identities?.length === 0) {
     setError("This email is already registered. Please sign in instead.")
   }
 }
-\`\`\`
+```
 
 ### Medium-Term Solutions
 
@@ -346,7 +346,7 @@ if (data?.user?.identities?.length === 0) {
 
 Allow users to add password to OAuth accounts:
 
-\`\`\`typescript
+```typescript
 // New page: /auth/add-password
 const handleAddPassword = async (password: string) => {
   const supabase = createClient()
@@ -359,13 +359,13 @@ const handleAddPassword = async (password: string) => {
     // Now user can login with both Google AND email/password
   }
 }
-\`\`\`
+```
 
 #### 4. **Provider Detection Widget**
 
 Add a "Check your login method" feature:
 
-\`\`\`typescript
+```typescript
 // Component: <LoginMethodChecker email={email} />
 const LoginMethodChecker = ({ email }) => {
   const checkProviders = async () => {
@@ -377,7 +377,7 @@ const LoginMethodChecker = ({ email }) => {
     // Show: "This email uses: Google, Email/Password"
   }
 }
-\`\`\`
+```
 
 ### Long-Term Architecture
 
@@ -385,17 +385,17 @@ const LoginMethodChecker = ({ email }) => {
 
 Implement true multi-provider support:
 
-\`\`\`sql
+```sql
 -- Migration: Allow multiple identities per user
 -- User can have both 'email' AND 'google' providers
 -- Supabase already supports this natively
-\`\`\`
+```
 
 #### 6. **Smart Login Page**
 
 Auto-detect and suggest correct login method:
 
-\`\`\`
+```
 [Email Input: rofiudin.kupenk@gmail.com]
 ↓
 System detects: Google OAuth
@@ -406,7 +406,7 @@ UI shows:
   
   Or add a password to enable email login:
   [Add Password to Account]
-\`\`\`
+```
 
 ---
 
@@ -424,13 +424,13 @@ UI shows:
 
 Automatically linking OAuth to existing email accounts can be dangerous:
 
-\`\`\`
+```
 Attacker scenario:
 1. Victim uses email/password (email@example.com)
 2. Attacker creates Google account with same email
 3. If automatic linking is enabled:
    → Attacker gains access to victim's account via Google OAuth
-\`\`\`
+```
 
 **Solution**: Require email verification or additional authentication before linking.
 

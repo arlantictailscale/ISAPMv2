@@ -22,11 +22,11 @@ This audit identifies **15 critical performance issues** and **12 optimization o
 ### 1.1 Image Optimization Disabled (CRITICAL)
 
 **Location:** `next.config.mjs`
-\`\`\`javascript
+```javascript
 images: {
   unoptimized: true, // ❌ CRITICAL: Disables all image optimization
 }
-\`\`\`
+```
 
 **Impact:** 
 - Images served at original size (some are 2-5MB)
@@ -35,7 +35,7 @@ images: {
 - No lazy loading optimization
 
 **Recommendation:** Enable image optimization with proper domains:
-\`\`\`javascript
+```javascript
 images: {
   unoptimized: false,
   formats: ['image/avif', 'image/webp'],
@@ -46,7 +46,7 @@ images: {
     { protocol: 'https', hostname: '*.blob.vercel-storage.com' },
   ],
 }
-\`\`\`
+```
 
 ### 1.2 Excessive Client Components (HIGH)
 
@@ -89,7 +89,7 @@ images: {
 ### 1.5 Font Loading Issues (MEDIUM)
 
 **Location:** `app/layout.tsx`
-\`\`\`typescript
+```typescript
 const _geist = Geist({ 
   subsets: ["latin"], 
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"] // ❌ All weights loaded
@@ -98,7 +98,7 @@ const _geistMono = Geist_Mono({
   subsets: ["latin"],
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"] // ❌ All weights loaded
 })
-\`\`\`
+```
 
 **Impact:** Loading 18+ font files when only 3-4 weights are typically used
 
@@ -111,7 +111,7 @@ const _geistMono = Geist_Mono({
 **Location:** Multiple admin pages
 
 **Example in `app/admin/carts/page.tsx`:**
-\`\`\`typescript
+```typescript
 // First query: Get all carts
 const { data: carts } = await supabase.from("carts").select(`...`)
 
@@ -120,10 +120,10 @@ const { data: profiles } = await supabase.from("profiles").select("id, full_name
 
 // Third query: Get orders separately ❌
 const { data: orders } = await supabase.from("orders").select(`...`)
-\`\`\`
+```
 
 **Recommendation:** Use Supabase joins:
-\`\`\`typescript
+```typescript
 const { data: carts } = await supabase
   .from("carts")
   .select(`
@@ -132,7 +132,7 @@ const { data: carts } = await supabase
     profiles!user_id(id, full_name, phone),
     orders!user_id(id, status, total_amount)
   `)
-\`\`\`
+```
 
 ### 2.2 No Query Caching (MEDIUM)
 
@@ -146,7 +146,7 @@ const { data: carts } = await supabase
 ### 2.3 Missing Database Indexes
 
 **Likely Missing Indexes Based on Query Patterns:**
-\`\`\`sql
+```sql
 -- High-frequency lookups
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_status ON orders(status);
@@ -155,7 +155,7 @@ CREATE INDEX idx_abstracts_user_id ON abstracts(user_id);
 CREATE INDEX idx_abstracts_status ON abstracts(submission_status);
 CREATE INDEX idx_profiles_role ON profiles(role);
 CREATE INDEX idx_carts_user_status ON carts(user_id, status);
-\`\`\`
+```
 
 ---
 
@@ -215,7 +215,7 @@ CREATE INDEX idx_carts_user_status ON carts(user_id, status);
 ### 5.1 Missing Cache Headers
 
 **Recommendation for `next.config.mjs`:**
-\`\`\`javascript
+```javascript
 async headers() {
   return [
     {
@@ -232,7 +232,7 @@ async headers() {
     },
   ]
 }
-\`\`\`
+```
 
 ### 5.2 No Service Worker
 
@@ -286,12 +286,12 @@ async headers() {
 ## 8. Quick Wins (Immediate Implementation)
 
 ### 8.1 Enable Image Optimization
-\`\`\`javascript
+```javascript
 // next.config.mjs
 images: {
   unoptimized: false, // Remove this line or set to false
 }
-\`\`\`
+```
 
 ### 8.2 Add Critical Loading States
 Create `loading.tsx` for high-traffic routes:
@@ -301,15 +301,15 @@ Create `loading.tsx` for high-traffic routes:
 - `/payment/*`
 
 ### 8.3 Reduce Font Weights
-\`\`\`typescript
+```typescript
 const geist = Geist({ 
   subsets: ["latin"], 
   weight: ["400", "500", "600", "700"] // Only used weights
 })
-\`\`\`
+```
 
 ### 8.4 Add Route-Level Caching
-\`\`\`typescript
+```typescript
 // For static pages
 export const revalidate = 3600 // Revalidate every hour
 
@@ -321,7 +321,7 @@ const getCachedStats = unstable_cache(
   ['registration-stats'],
   { revalidate: 300 } // 5 minutes
 )
-\`\`\`
+```
 
 ---
 

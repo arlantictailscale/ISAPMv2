@@ -9,33 +9,59 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Hotel, Loader2, Calendar, MapPin, Users } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Hotel, Loader2, Calendar, MapPin, Plus, Trash2, UserCircle } from "lucide-react"
 import { toast } from "sonner"
-import { format, differenceInDays } from "date-fns"
-import { AddToCartButton } from "@/components/add-to-cart-button"
+import { format, differenceInDays, parseISO } from "date-fns"
+import { addToCart } from "@/app/actions/cart"
+import { getRoomAvailability } from "@/app/actions/get-room-availability"
+import { useCart } from "@/lib/cart/cart-context"
+import { Badge } from "@/components/ui/badge"
 
 const ROOM_TYPES = [
-  { id: "deluxe", name: "Deluxe Room", price: 1250000 },
-  { id: "premier", name: "Premier Room", price: 1350000 },
+  { id: "deluxe", name: "Deluxe Room", price: 1250000, amenities: ["Queen Bed", "Garden View", "WiFi", "Mini Bar"] },
+  {
+    id: "premier",
+    name: "Premier Room",
+    price: 1350000,
+    amenities: ["King Bed", "Mountain View", "WiFi", "Mini Bar", "Bathtub"],
+  },
 ]
+
+interface RoomBooking {
+  id: string
+  roomType: string
+  guestName: string
+  guestEmail: string
+  guestPhone: string
+  specialRequests: string
+}
 
 export default function HotelBookingPage() {
   const router = useRouter()
   const supabase = createClient()
+  const { refreshCart, user, isLoading: isCartLoading } = useCart()
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [user, setUser] = useState<any>(null)
   const [profile, setProfile] = useState<any>(null)
+  const [availability, setAvailability] = useState<any>(null)
 
   const [checkInDate, setCheckInDate] = useState("2026-04-16")
   const [checkOutDate, setCheckOutDate] = useState("2026-04-19")
-  const [roomType, setRoomType] = useState("")
-  const [guestName, setGuestName] = useState("")
-  const [guestEmail, setGuestEmail] = useState("")
-  const [guestPhone, setGuestPhone] = useState("")
+  const [rooms, setRooms] = useState<RoomBooking[]>([
+    {
+      id: "room-1",
+      roomType: "",
+      guestName: "",
+      guestEmail: "",
+      guestPhone: "",
+      specialRequests: "",
+    },
+  ])
 
   useEffect(() => {
     checkAuth()
+    loadRoomAvailability()
   }, [])
 
   const checkAuth = async () => {
@@ -45,11 +71,9 @@ export default function HotelBookingPage() {
       } = await supabase.auth.getUser()
 
       if (!user) {
-        router.push("/auth/login")
+        router.push("/auth/login?redirect=/hotel-booking")
         return
       }
-
-      setUser(user)
 
       const { data: profileData } = await supabase.from("profiles").select("*").eq("id", user.id).single()
 
@@ -57,9 +81,16 @@ export default function HotelBookingPage() {
         setProfile(profileData)
         const fullName =
           profileData.full_name || `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim()
-        setGuestName(fullName)
-        setGuestEmail(user.email || "")
-        setGuestPhone(profileData.phone || "")
+
+        // Set first room guest info from profile
+        setRooms((prev) => [
+          {
+            ...prev[0],
+            guestName: fullName,
+            guestEmail: user.email || "",
+            guestPhone: profileData.phone || "",
+          },
+        ])
       }
     } catch (error) {
       console.error("[v0] Auth error:", error)
@@ -69,81 +100,155 @@ export default function HotelBookingPage() {
     }
   }
 
+  const loadRoomAvailability = async () => {
+    const data = await getRoomAvailability()
+    setAvailability(data)
+  }
+
   const calculateNights = () => {
     if (!checkInDate || !checkOutDate) return 0
-    const nights = differenceInDays(new Date(checkOutDate), new Date(checkInDate))
+    const nights = differenceInDays(parseISO(checkOutDate), parseISO(checkInDate))
     return nights > 0 ? nights : 0
   }
 
-  const calculateTotal = () => {
-    const selectedRoom = ROOM_TYPES.find((r) => r.id === roomType)
-    if (!selectedRoom) return 0
-    return selectedRoom.price * calculateNights()
+  const addRoom = () => {
+    const newRoom: RoomBooking = {
+      id: `room-${Date.now()}`,
+      roomType: "",
+      guestName: "",
+      guestEmail: "",
+      guestPhone: "",
+      specialRequests: "",
+    }
+    setRooms([...rooms, newRoom])
   }
 
-  const handleBookNow = async () => {
-    if (!user || !profile) {
-      toast.error("Please log in to continue")
+  const removeRoom = (id: string) => {
+    if (rooms.length === 1) {
+      toast.error("You must have at least one room")
       return
     }
+    setRooms(rooms.filter((room) => room.id !== id))
+  }
 
-    if (!checkInDate || !checkOutDate || !roomType || !guestName || !guestEmail || !guestPhone) {
-      toast.error("Please fill in all fields")
-      return
-    }
+  const updateRoom = (id: string, field: keyof RoomBooking, value: string) => {
+    setRooms(rooms.map((room) => (room.id === id ? { ...room, [field]: value } : room)))
+  }
 
+  const copyGuestInfoToAll = (sourceRoom: RoomBooking) => {
+    setRooms(
+      rooms.map((room) => ({
+        ...room,
+        guestName: sourceRoom.guestName,
+        guestEmail: sourceRoom.guestEmail,
+        guestPhone: sourceRoom.guestPhone,
+      })),
+    )
+    toast.success("Guest information copied to all rooms")
+  }
+
+  const validateBooking = () => {
     const nights = calculateNights()
     if (nights <= 0) {
       toast.error("Check-out date must be after check-in date")
-      return
+      return false
     }
 
+    // Check if all rooms have required fields
+    for (const room of rooms) {
+      if (!room.roomType) {
+        toast.error("Please select a room type for all rooms")
+        return false
+      }
+      if (!room.guestName || !room.guestEmail || !room.guestPhone) {
+        toast.error("Please fill in guest information for all rooms")
+        return false
+      }
+    }
+
+    // Check availability
+    const deluxeCount = rooms.filter((r) => r.roomType === "deluxe").length
+    const premierCount = rooms.filter((r) => r.roomType === "premier").length
+
+    if (availability) {
+      if (deluxeCount > availability.deluxe.available) {
+        toast.error(`Only ${availability.deluxe.available} Deluxe rooms available`)
+        return false
+      }
+      if (premierCount > availability.premier.available) {
+        toast.error(`Only ${availability.premier.available} Premier rooms available`)
+        return false
+      }
+    }
+
+    return true
+  }
+
+  const calculateTotal = () => {
+    const nights = calculateNights()
+    return rooms.reduce((total, room) => {
+      const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
+      return total + (roomType?.price || 0) * nights
+    }, 0)
+  }
+
+  const handleAddToCart = async () => {
+    if (!validateBooking()) return
+
+    setIsSubmitting(true)
+
     try {
-      setIsSubmitting(true)
+      const nights = calculateNights()
 
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          total_amount: calculateTotal(),
-          status: "pending",
-          full_name: guestName,
-          email: guestEmail,
-          phone: guestPhone,
-          position: profile.position || "",
-          institution: profile.institution || "",
+      // Add each room to cart
+      for (const room of rooms) {
+        const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
+        if (!roomType) continue
+
+        const result = await addToCart({
+          item_type: "hotel",
+          event_label: `${roomType.name} - ${nights} night(s) - ${room.guestName}`,
+          hotel_room_type: room.roomType,
+          check_in_date: checkInDate,
+          check_out_date: checkOutDate,
+          nights: nights,
+          unit_price: roomType.price,
+          currency: "IDR",
         })
-        .select()
-        .single()
 
-      if (orderError) throw orderError
+        if (result.error) {
+          throw new Error(result.error)
+        }
+      }
 
-      const selectedRoom = ROOM_TYPES.find((r) => r.id === roomType)
-      const { error: itemError } = await supabase.from("order_items").insert({
-        order_id: orderData.id,
-        item_type: "hotel",
-        event_label: `${selectedRoom?.name} - ${nights} night(s)`,
-        hotel_room_type: roomType,
-        check_in_date: checkInDate,
-        check_out_date: checkOutDate,
-        nights: nights,
-        unit_price: selectedRoom?.price || 0,
-        currency: "IDR",
+      await refreshCart()
+      toast.success(`${rooms.length} room(s) added to cart!`, {
+        action: {
+          label: "View Cart",
+          onClick: () => router.push("/cart"),
+        },
       })
 
-      if (itemError) throw itemError
-
-      toast.success("Booking created successfully!")
-      router.push(`/payment/order/${orderData.id}`)
+      // Reset form
+      setRooms([
+        {
+          id: "room-1",
+          roomType: "",
+          guestName: profile?.full_name || "",
+          guestEmail: user?.email || "",
+          guestPhone: profile?.phone || "",
+          specialRequests: "",
+        },
+      ])
     } catch (error: any) {
       console.error("[v0] Booking error:", error)
-      toast.error(`Booking error: ${error.message}`)
+      toast.error(`Failed to add to cart: ${error.message}`)
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (isLoading) {
+  if (isLoading || isCartLoading) {
     return (
       <>
         <Navigation />
@@ -155,15 +260,15 @@ export default function HotelBookingPage() {
     )
   }
 
-  const selectedRoom = ROOM_TYPES.find((r) => r.id === roomType)
   const nights = calculateNights()
   const total = calculateTotal()
-  const isFormValid = checkInDate && checkOutDate && roomType && nights > 0
+  const isFormValid = checkInDate && checkOutDate && nights > 0 && rooms.every((r) => r.roomType && r.guestName)
 
   return (
     <>
       <Navigation />
       <main className="pt-24 pb-20 min-h-screen bg-gradient-to-br from-background via-primary/5 to-secondary/5">
+        {/* Header Section */}
         <section className="py-12 px-4 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
           <div className="max-w-7xl mx-auto">
             <div className="grid lg:grid-cols-2 gap-8 items-start">
@@ -176,8 +281,8 @@ export default function HotelBookingPage() {
                   </div>
                 </div>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Reserve your accommodation at our exclusive event venue and enjoy convenient access to all conference
-                  activities, workshops, and networking opportunities.
+                  Reserve your accommodation at our exclusive event venue. Book multiple rooms for your group in one
+                  transaction with flexible guest information management.
                 </p>
               </div>
 
@@ -211,15 +316,28 @@ export default function HotelBookingPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <Users className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p className="font-semibold text-foreground">Expected Participants</p>
-                      <p className="text-sm text-muted-foreground">
-                        Anesthesiologists, Pain Specialists, General Practitioners, Nurses, Healthcare Professionals
-                      </p>
+                  {availability && (
+                    <div className="flex items-start gap-3">
+                      <Hotel className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                      <div className="w-full">
+                        <p className="font-semibold text-foreground mb-2">Room Availability</p>
+                        <div className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Deluxe Room</span>
+                            <Badge variant={availability.deluxe.available > 10 ? "default" : "destructive"}>
+                              {availability.deluxe.available} available
+                            </Badge>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">Premier Room</span>
+                            <Badge variant={availability.premier.available > 10 ? "default" : "destructive"}>
+                              {availability.premier.available} available
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -228,20 +346,19 @@ export default function HotelBookingPage() {
 
         {/* Booking Form Section */}
         <section className="py-12 px-4 bg-background">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-5xl mx-auto">
             <div className="mb-8">
-              <h2 className="font-display text-3xl font-bold mb-2">Complete Your Booking</h2>
-              <p className="text-muted-foreground">
-                Fill in your details below to reserve your accommodation for ISAPM 2026
-              </p>
+              <h2 className="font-display text-3xl font-bold mb-2">Reserve Multiple Rooms</h2>
+              <p className="text-muted-foreground">Book accommodation for your entire group in one transaction</p>
             </div>
 
-            <Card className="border-primary/20">
+            {/* Check-in/Check-out Dates */}
+            <Card className="border-primary/20 mb-6">
               <CardHeader>
-                <CardTitle>Booking Details</CardTitle>
-                <CardDescription>Select your room type and dates</CardDescription>
+                <CardTitle>Stay Dates</CardTitle>
+                <CardDescription>Select your check-in and check-out dates (applies to all rooms)</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent>
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="checkIn">Check-in Date</Label>
@@ -266,105 +383,204 @@ export default function HotelBookingPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="roomType">Room Type</Label>
-                  <Select value={roomType} onValueChange={setRoomType}>
-                    <SelectTrigger id="roomType">
-                      <SelectValue placeholder="Select room type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROOM_TYPES.map((room) => (
-                        <SelectItem key={room.id} value={room.id}>
-                          {room.name} - Rp {room.price.toLocaleString("id-ID")}/night
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="border-t pt-6 space-y-4">
-                  <h3 className="font-semibold text-lg">Guest Information</h3>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="guestName">Full Name</Label>
-                    <Input id="guestName" value={guestName} onChange={(e) => setGuestName(e.target.value)} />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="guestEmail">Email</Label>
-                      <Input
-                        id="guestEmail"
-                        type="email"
-                        value={guestEmail}
-                        onChange={(e) => setGuestEmail(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="guestPhone">Phone</Label>
-                      <Input
-                        id="guestPhone"
-                        type="tel"
-                        value={guestPhone}
-                        onChange={(e) => setGuestPhone(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {nights > 0 && selectedRoom && (
-                  <div className="bg-gradient-to-br from-primary/5 to-transparent p-6 rounded-lg border border-primary/20 space-y-2">
-                    <h3 className="font-semibold text-lg mb-4">Booking Summary</h3>
-                    <div className="flex justify-between">
-                      <span>Room Type:</span>
-                      <span className="font-medium">{selectedRoom.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Check-in:</span>
-                      <span className="font-medium">{format(new Date(checkInDate), "PPP")}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Check-out:</span>
-                      <span className="font-medium">{format(new Date(checkOutDate), "PPP")}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Number of Nights:</span>
-                      <span className="font-medium">{nights}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Price per Night:</span>
-                      <span className="font-medium">Rp {selectedRoom.price.toLocaleString("id-ID")}</span>
-                    </div>
-                    <div className="border-t pt-2 mt-2">
-                      <div className="flex justify-between text-lg font-bold">
-                        <span>Total Amount:</span>
-                        <span className="text-primary">Rp {total.toLocaleString("id-ID")}</span>
-                      </div>
-                    </div>
+                {nights > 0 && (
+                  <div className="mt-4 p-3 bg-primary/5 rounded-lg">
+                    <p className="text-sm font-medium">
+                      <Calendar className="inline w-4 h-4 mr-1" />
+                      {nights} night{nights > 1 ? "s" : ""} selected ({format(parseISO(checkInDate), "MMM dd")} -{" "}
+                      {format(parseISO(checkOutDate), "MMM dd, yyyy")})
+                    </p>
                   </div>
                 )}
-
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {isFormValid && selectedRoom && (
-                    <AddToCartButton
-                      item={{
-                        item_type: "hotel",
-                        hotel_room_type: roomType,
-                        check_in_date: checkInDate,
-                        check_out_date: checkOutDate,
-                        nights: nights,
-                        unit_price: selectedRoom.price,
-                        currency: "IDR",
-                      }}
-                      variant="default"
-                      size="lg"
-                      className="w-full"
-                    />
-                  )}
-                </div>
               </CardContent>
             </Card>
+
+            {/* Rooms */}
+            <div className="space-y-6">
+              {rooms.map((room, index) => (
+                <Card key={room.id} className="border-primary/20">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="flex items-center gap-2">
+                          <Hotel className="w-5 h-5" />
+                          Room {index + 1}
+                        </CardTitle>
+                        <CardDescription>Specify room type and guest information</CardDescription>
+                      </div>
+                      {rooms.length > 1 && (
+                        <Button variant="ghost" size="icon" onClick={() => removeRoom(room.id)}>
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Room Type Selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor={`roomType-${room.id}`}>Room Type</Label>
+                      <Select value={room.roomType} onValueChange={(value) => updateRoom(room.id, "roomType", value)}>
+                        <SelectTrigger id={`roomType-${room.id}`}>
+                          <SelectValue placeholder="Select room type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROOM_TYPES.map((roomType) => (
+                            <SelectItem key={roomType.id} value={roomType.id}>
+                              <div className="flex items-center justify-between w-full">
+                                <span>{roomType.name}</span>
+                                <span className="ml-4 text-primary font-semibold">
+                                  Rp {roomType.price.toLocaleString("id-ID")}/night
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {room.roomType && (
+                        <div className="mt-2 p-3 bg-primary/5 rounded-lg">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {ROOM_TYPES.find((r) => r.id === room.roomType)?.amenities.map((amenity) => (
+                              <Badge key={amenity} variant="secondary">
+                                {amenity}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Guest Information */}
+                    <div className="border-t pt-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-semibold flex items-center gap-2">
+                          <UserCircle className="w-4 h-4" />
+                          Guest Information
+                        </h4>
+                        {index === 0 && rooms.length > 1 && (
+                          <Button variant="outline" size="sm" onClick={() => copyGuestInfoToAll(room)}>
+                            Copy to All Rooms
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`guestName-${room.id}`}>Full Name</Label>
+                        <Input
+                          id={`guestName-${room.id}`}
+                          value={room.guestName}
+                          onChange={(e) => updateRoom(room.id, "guestName", e.target.value)}
+                          placeholder="Guest full name"
+                        />
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor={`guestEmail-${room.id}`}>Email</Label>
+                          <Input
+                            id={`guestEmail-${room.id}`}
+                            type="email"
+                            value={room.guestEmail}
+                            onChange={(e) => updateRoom(room.id, "guestEmail", e.target.value)}
+                            placeholder="guest@example.com"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor={`guestPhone-${room.id}`}>Phone</Label>
+                          <Input
+                            id={`guestPhone-${room.id}`}
+                            type="tel"
+                            value={room.guestPhone}
+                            onChange={(e) => updateRoom(room.id, "guestPhone", e.target.value)}
+                            placeholder="+62 812 3456 7890"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor={`specialRequests-${room.id}`}>Special Requests (Optional)</Label>
+                        <Input
+                          id={`specialRequests-${room.id}`}
+                          value={room.specialRequests}
+                          onChange={(e) => updateRoom(room.id, "specialRequests", e.target.value)}
+                          placeholder="e.g., high floor, near elevator, smoking room"
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Add Room Button */}
+              <Button variant="outline" onClick={addRoom} className="w-full bg-transparent" size="lg">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Another Room
+              </Button>
+            </div>
+
+            {/* Booking Summary */}
+            {nights > 0 && rooms.some((r) => r.roomType) && (
+              <Card className="mt-8 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+                <CardHeader>
+                  <CardTitle>Booking Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {rooms.map((room, index) => {
+                    const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
+                    if (!roomType) return null
+
+                    const roomTotal = roomType.price * nights
+
+                    return (
+                      <div key={room.id} className="flex justify-between items-start pb-3 border-b last:border-0">
+                        <div>
+                          <p className="font-medium">
+                            Room {index + 1}: {roomType.name}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{room.guestName || "Guest name not provided"}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {nights} night{nights > 1 ? "s" : ""} × Rp {roomType.price.toLocaleString("id-ID")}
+                          </p>
+                        </div>
+                        <p className="font-semibold">Rp {roomTotal.toLocaleString("id-ID")}</p>
+                      </div>
+                    )
+                  })}
+
+                  <div className="border-t pt-4 mt-4">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total Amount:</span>
+                      <span className="text-primary text-2xl">Rp {total.toLocaleString("id-ID")}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {rooms.length} room{rooms.length > 1 ? "s" : ""} for {nights} night{nights > 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Add to Cart Button */}
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+              <Button
+                onClick={handleAddToCart}
+                disabled={!isFormValid || isSubmitting}
+                size="lg"
+                className="w-full sm:flex-1"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Adding to Cart...
+                  </>
+                ) : (
+                  <>
+                    Add {rooms.length} Room{rooms.length > 1 ? "s" : ""} to Cart
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </section>
       </main>

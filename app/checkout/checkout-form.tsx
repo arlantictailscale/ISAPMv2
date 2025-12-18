@@ -2,12 +2,10 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useImperativeHandle, forwardRef } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Loader2, Lock } from "lucide-react"
 import { toast } from "sonner"
 import { createOrderFromCart } from "@/app/actions/checkout"
 import { useCart } from "@/lib/cart/cart-context"
@@ -24,7 +22,15 @@ interface CheckoutFormProps {
   profileComplete: boolean
 }
 
-export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormProps) {
+export interface CheckoutFormHandle {
+  submit: () => Promise<void>
+  isSubmitting: boolean
+}
+
+export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(function CheckoutForm(
+  { defaultValues, profileComplete },
+  ref,
+) {
   const router = useRouter()
   const { refreshCart } = useCart()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -38,9 +44,7 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-
+  const handleSubmit = async () => {
     if (!profileComplete) {
       toast.error("Complete your profile first", {
         description: "You must complete all required profile fields before placing an order.",
@@ -88,11 +92,16 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
     }
   }
 
+  useImperativeHandle(ref, () => ({
+    submit: handleSubmit,
+    isSubmitting,
+  }))
+
   return (
     <>
       <ConfettiTrigger trigger={showConfetti} />
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="full_name">Full Name *</Label>
           <Input
@@ -154,23 +163,7 @@ export function CheckoutForm({ defaultValues, profileComplete }: CheckoutFormPro
             disabled={!profileComplete}
           />
         </div>
-
-        <Button type="submit" size="lg" className="w-full" disabled={isSubmitting || !profileComplete}>
-          {!profileComplete ? (
-            <>
-              <Lock className="w-4 h-4 mr-2" />
-              Complete Profile to Continue
-            </>
-          ) : isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Processing Order...
-            </>
-          ) : (
-            "Place Order"
-          )}
-        </Button>
-      </form>
+      </div>
     </>
   )
-}
+})

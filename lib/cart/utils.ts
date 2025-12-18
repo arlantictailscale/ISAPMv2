@@ -72,7 +72,8 @@ export function isDuplicateCartItem(item1: Partial<CartItem>, item2: Partial<Car
     return (
       item1.hotel_room_type === item2.hotel_room_type &&
       item1.check_in_date === item2.check_in_date &&
-      item1.check_out_date === item2.check_out_date
+      item1.check_out_date === item2.check_out_date &&
+      item1.event_label === item2.event_label
     )
   }
 

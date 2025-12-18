@@ -10,16 +10,12 @@ import {
   Calendar,
   Clock,
   CheckCircle,
-  Moon,
   MapPin,
   Phone,
   Mail,
   CreditCard,
   BedDouble,
   Users,
-  Coffee,
-  Wifi,
-  Car,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -204,12 +200,13 @@ export default async function MyHotelsPage() {
             ) : (
               <div className="space-y-6">
                 {approvedBookings.map((order: HotelOrder) => {
-                  const hotelItem = order.order_items.find((item) => item.item_type === "hotel")
+                  const hotelItems = order.order_items.filter((item) => item.item_type === "hotel")
                   const payment = order.order_payments?.[0]
-                  const roomType = hotelItem?.hotel_room_type?.toLowerCase() || "deluxe"
-                  const roomDetails = ROOM_DETAILS[roomType] || ROOM_DETAILS.deluxe
 
-                  if (!hotelItem) return null
+                  if (hotelItems.length === 0) return null
+
+                  const totalAmount = hotelItems.reduce((sum, item) => sum + item.unit_price * item.nights, 0)
+                  const currency = hotelItems[0].currency
 
                   return (
                     <Card key={order.id} className="overflow-hidden border-amber-200 shadow-lg">
@@ -226,6 +223,9 @@ export default async function MyHotelsPage() {
                               <MapPin className="w-4 h-4" />
                               Batu, Malang, East Java, Indonesia
                             </p>
+                            <p className="text-amber-100 text-sm mt-2">
+                              {hotelItems.length} Room{hotelItems.length > 1 ? "s" : ""} Reserved
+                            </p>
                           </div>
                           <div className="shrink-0">
                             <div className="w-16 h-16 rounded-xl bg-white/20 flex items-center justify-center">
@@ -236,83 +236,70 @@ export default async function MyHotelsPage() {
                       </div>
 
                       <CardContent className="p-6">
-                        {/* Booking Summary */}
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-                          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
-                            <Calendar className="w-5 h-5 text-green-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Check-in</p>
-                              <p className="font-semibold text-sm">{formatShortDate(hotelItem.check_in_date)}</p>
-                              <p className="text-xs text-muted-foreground">From 14:00</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl">
-                            <Calendar className="w-5 h-5 text-red-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Check-out</p>
-                              <p className="font-semibold text-sm">{formatShortDate(hotelItem.check_out_date)}</p>
-                              <p className="text-xs text-muted-foreground">Until 12:00</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 bg-amber-50 rounded-xl">
-                            <Moon className="w-5 h-5 text-amber-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Duration</p>
-                              <p className="font-semibold text-sm">
-                                {hotelItem.nights} Night{hotelItem.nights > 1 ? "s" : ""}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-                            <BedDouble className="w-5 h-5 text-purple-600" />
-                            <div>
-                              <p className="text-xs text-muted-foreground">Room Type</p>
-                              <p className="font-semibold text-sm">{roomDetails.name}</p>
-                            </div>
-                          </div>
-                        </div>
+                        <div className="space-y-6 mb-8">
+                          {hotelItems.map((hotelItem, roomIndex) => {
+                            const roomType = hotelItem.hotel_room_type?.toLowerCase() || "deluxe"
+                            const roomDetails = ROOM_DETAILS[roomType] || ROOM_DETAILS.deluxe
 
-                        {/* Room Details */}
-                        <div className="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-6 mb-8">
-                          <h3 className="font-semibold mb-4 flex items-center gap-2">
-                            <BedDouble className="w-5 h-5 text-amber-600" />
-                            Room Details
-                          </h3>
-                          <div className="grid gap-6 lg:grid-cols-2">
-                            <div>
-                              <h4 className="font-medium text-lg mb-2">{roomDetails.name}</h4>
-                              <p className="text-sm text-muted-foreground mb-4">{roomDetails.description}</p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {roomDetails.amenities.map((amenity, index) => (
-                                  <div key={index} className="flex items-center gap-2 text-sm">
-                                    <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                                    <span>{amenity}</span>
+                            return (
+                              <div
+                                key={hotelItem.id}
+                                className="border-2 border-amber-100 rounded-xl p-6 bg-amber-50/30"
+                              >
+                                <div className="flex items-center justify-between mb-4">
+                                  <h3 className="font-semibold text-lg flex items-center gap-2">
+                                    <BedDouble className="w-5 h-5 text-amber-600" />
+                                    Room {roomIndex + 1}: {roomDetails.name}
+                                  </h3>
+                                  <Badge variant="secondary" className="bg-amber-200 text-amber-900">
+                                    {hotelItem.nights} Night{hotelItem.nights > 1 ? "s" : ""}
+                                  </Badge>
+                                </div>
+
+                                {/* Booking Summary for this room */}
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+                                  <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                                    <Calendar className="w-4 h-4 text-green-600" />
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Check-in</p>
+                                      <p className="font-semibold text-sm">
+                                        {formatShortDate(hotelItem.check_in_date)}
+                                      </p>
+                                    </div>
                                   </div>
-                                ))}
+                                  <div className="flex items-center gap-3 p-3 bg-red-50 rounded-lg">
+                                    <Calendar className="w-4 h-4 text-red-600" />
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Check-out</p>
+                                      <p className="font-semibold text-sm">
+                                        {formatShortDate(hotelItem.check_out_date)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-lg">
+                                    <CreditCard className="w-4 h-4 text-amber-600" />
+                                    <div>
+                                      <p className="text-xs text-muted-foreground">Room Total</p>
+                                      <p className="font-semibold text-sm">
+                                        {currency === "IDR" ? "Rp" : currency}{" "}
+                                        {(hotelItem.unit_price * hotelItem.nights).toLocaleString("id-ID")}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                {/* Room amenities */}
+                                <div className="grid grid-cols-2 gap-2">
+                                  {roomDetails.amenities.slice(0, 4).map((amenity, index) => (
+                                    <div key={index} className="flex items-center gap-2 text-sm">
+                                      <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
+                                      <span className="text-muted-foreground">{amenity}</span>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                            <div className="bg-white rounded-lg p-4 border">
-                              <h4 className="font-medium mb-3">Hotel Amenities</h4>
-                              <div className="grid grid-cols-2 gap-3">
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Wifi className="w-4 h-4" />
-                                  <span>Free WiFi</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Coffee className="w-4 h-4" />
-                                  <span>Restaurant</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Car className="w-4 h-4" />
-                                  <span>Free Parking</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Users className="w-4 h-4" />
-                                  <span>Concierge</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                            )
+                          })}
                         </div>
 
                         {/* Guest Information */}
@@ -356,23 +343,13 @@ export default async function MyHotelsPage() {
                             </h3>
                             <div className="space-y-3">
                               <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Room Rate</span>
-                                <span className="font-medium">
-                                  {hotelItem.currency === "IDR" ? "Rp" : hotelItem.currency}{" "}
-                                  {hotelItem.unit_price.toLocaleString("id-ID")} / night
-                                </span>
-                              </div>
-                              <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Duration</span>
-                                <span className="font-medium">
-                                  {hotelItem.nights} night{hotelItem.nights > 1 ? "s" : ""}
-                                </span>
+                                <span className="text-muted-foreground">Rooms</span>
+                                <span className="font-medium">{hotelItems.length}</span>
                               </div>
                               <div className="border-t pt-3 flex justify-between items-center">
                                 <span className="font-semibold">Total Paid</span>
                                 <span className="font-bold text-lg text-amber-600">
-                                  {hotelItem.currency === "IDR" ? "Rp" : hotelItem.currency}{" "}
-                                  {(hotelItem.unit_price * hotelItem.nights).toLocaleString("id-ID")}
+                                  {currency === "IDR" ? "Rp" : currency} {totalAmount.toLocaleString("id-ID")}
                                 </span>
                               </div>
                               {payment?.invoice_number && (

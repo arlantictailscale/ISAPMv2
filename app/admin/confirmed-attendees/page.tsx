@@ -7,6 +7,9 @@ import { toast } from "sonner"
 import * as XLSX from "xlsx"
 import { format } from "date-fns"
 import { getWebinarById } from "@/lib/data/webinars"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
+import { Loader2 } from "lucide-react"
 
 const EVENT_OPTIONS = [
   { id: "cpd", label: "CPD (Continuing Professional Development) Courses" },
@@ -106,7 +109,6 @@ export default function ConfirmedAttendeesPage() {
       })
     })
 
-    // Fetch symposium webinar grants
     const { data: webinarGrantsData } = await supabase
       .from("symposium_webinar_grants")
       .select("*")
@@ -267,205 +269,224 @@ export default function ConfirmedAttendeesPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-      </div>
+      <>
+        <Navigation />
+        <main className="pt-24 min-h-screen flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Loading confirmed attendees...</p>
+          </div>
+        </main>
+        <Footer />
+      </>
     )
   }
 
   const totalEventAttendees = Object.values(attendees).reduce((sum, list) => sum + list.length, 0)
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Confirmed Attendees</h1>
-          <p className="text-muted-foreground">View and export verified registrations</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={exportAttendees}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            Export Events (.xlsx)
-          </button>
-          <button
-            onClick={exportHotelBookings}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Export Hotels (.xlsx)
-          </button>
-          <button
-            onClick={exportWebinarRegistrations}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Export Webinars (.xlsx)
-          </button>
-          <button
-            onClick={syncToGoogleSheets}
-            disabled={isSyncing}
-            className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
-          >
-            {isSyncing ? "Syncing..." : "Sync to Google Sheets"}
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Total Event Attendees</p>
-          <p className="text-2xl font-bold">{totalEventAttendees}</p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Hotel Bookings</p>
-          <p className="text-2xl font-bold">{hotelBookings.length}</p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Webinar Registrations</p>
-          <p className="text-2xl font-bold">{webinarRegistrations.length}</p>
-        </div>
-        <div className="bg-card border rounded-lg p-4">
-          <p className="text-sm text-muted-foreground">Events</p>
-          <p className="text-2xl font-bold">{EVENT_OPTIONS.length}</p>
-        </div>
-      </div>
-
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Event Attendees</h2>
-        <div className="grid gap-4">
-          {EVENT_OPTIONS.map((event) => {
-            const list = attendees[event.id] || []
-            return (
-              <div key={event.id} className="bg-card border rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium">{event.label}</h3>
-                  <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                    {list.length} attendees
-                  </span>
-                </div>
-                {list.length > 0 && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left py-2 px-2">Name</th>
-                          <th className="text-left py-2 px-2">Email</th>
-                          <th className="text-left py-2 px-2">Institution</th>
-                          <th className="text-left py-2 px-2">Type</th>
-                          <th className="text-left py-2 px-2">Verified</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {list.slice(0, 5).map((a, i) => (
-                          <tr key={i} className="border-b last:border-0">
-                            <td className="py-2 px-2">{a.full_name || "-"}</td>
-                            <td className="py-2 px-2">{a.email || "-"}</td>
-                            <td className="py-2 px-2">{a.institution || "-"}</td>
-                            <td className="py-2 px-2">{a.participant_type_label || "-"}</td>
-                            <td className="py-2 px-2">
-                              {a.verified_at ? format(new Date(a.verified_at), "MMM dd") : "-"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    {list.length > 5 && (
-                      <p className="text-sm text-muted-foreground mt-2">+ {list.length - 5} more attendees</p>
-                    )}
-                  </div>
-                )}
+    <>
+      <Navigation />
+      <main className="pt-24 pb-20">
+        <section className="py-12 px-4 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="font-display text-4xl sm:text-5xl font-bold mb-2">Confirmed Attendees</h1>
+                <p className="text-lg text-muted-foreground">View and export verified registrations</p>
               </div>
-            )
-          })}
-        </div>
-      </div>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={exportAttendees}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  Export Events (.xlsx)
+                </button>
+                <button
+                  onClick={exportHotelBookings}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Export Hotels (.xlsx)
+                </button>
+                <button
+                  onClick={exportWebinarRegistrations}
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                >
+                  Export Webinars (.xlsx)
+                </button>
+                <button
+                  onClick={syncToGoogleSheets}
+                  disabled={isSyncing}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors disabled:opacity-50"
+                >
+                  {isSyncing ? "Syncing..." : "Sync to Google Sheets"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Hotel Bookings ({hotelBookings.length})</h2>
-        {hotelBookings.length > 0 && (
-          <div className="bg-card border rounded-lg overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left py-3 px-4">Guest Name</th>
-                  <th className="text-left py-3 px-4">Email</th>
-                  <th className="text-left py-3 px-4">Room Type</th>
-                  <th className="text-left py-3 px-4">Check-in</th>
-                  <th className="text-left py-3 px-4">Check-out</th>
-                  <th className="text-left py-3 px-4">Nights</th>
-                </tr>
-              </thead>
-              <tbody>
-                {hotelBookings.slice(0, 10).map((booking, i) => {
-                  const item = booking.order_items[0]
+        <section className="py-12 px-4">
+          <div className="max-w-7xl mx-auto space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-card border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">Total Event Attendees</p>
+                <p className="text-2xl font-bold">{totalEventAttendees}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">Hotel Bookings</p>
+                <p className="text-2xl font-bold">{hotelBookings.length}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">Webinar Registrations</p>
+                <p className="text-2xl font-bold">{webinarRegistrations.length}</p>
+              </div>
+              <div className="bg-card border rounded-lg p-4">
+                <p className="text-sm text-muted-foreground">Events</p>
+                <p className="text-2xl font-bold">{EVENT_OPTIONS.length}</p>
+              </div>
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Event Attendees</h2>
+              <div className="grid gap-4">
+                {EVENT_OPTIONS.map((event) => {
+                  const list = attendees[event.id] || []
                   return (
-                    <tr key={i} className="border-b last:border-0">
-                      <td className="py-3 px-4">{booking.full_name || "-"}</td>
-                      <td className="py-3 px-4">{booking.email || "-"}</td>
-                      <td className="py-3 px-4">{item?.hotel_room_type || "-"}</td>
-                      <td className="py-3 px-4">
-                        {item?.check_in_date ? format(new Date(item.check_in_date), "MMM dd, yyyy") : "-"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {item?.check_out_date ? format(new Date(item.check_out_date), "MMM dd, yyyy") : "-"}
-                      </td>
-                      <td className="py-3 px-4">{item?.nights || "-"}</td>
-                    </tr>
+                    <div key={event.id} className="bg-card border rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <h3 className="font-medium">{event.label}</h3>
+                        <span className="px-2 py-1 bg-primary/10 text-primary rounded-full text-sm">
+                          {list.length} attendees
+                        </span>
+                      </div>
+                      {list.length > 0 && (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="text-left py-2 px-2">Name</th>
+                                <th className="text-left py-2 px-2">Email</th>
+                                <th className="text-left py-2 px-2">Institution</th>
+                                <th className="text-left py-2 px-2">Type</th>
+                                <th className="text-left py-2 px-2">Verified</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {list.slice(0, 5).map((a, i) => (
+                                <tr key={i} className="border-b last:border-0">
+                                  <td className="py-2 px-2">{a.full_name || "-"}</td>
+                                  <td className="py-2 px-2">{a.email || "-"}</td>
+                                  <td className="py-2 px-2">{a.institution || "-"}</td>
+                                  <td className="py-2 px-2">{a.participant_type_label || "-"}</td>
+                                  <td className="py-2 px-2">
+                                    {a.verified_at ? format(new Date(a.verified_at), "MMM dd") : "-"}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {list.length > 5 && (
+                            <p className="text-sm text-muted-foreground mt-2">+ {list.length - 5} more attendees</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
-              </tbody>
-            </table>
-            {hotelBookings.length > 10 && (
-              <p className="text-sm text-muted-foreground p-4">+ {hotelBookings.length - 10} more bookings</p>
-            )}
-          </div>
-        )}
-      </div>
+              </div>
+            </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Webinar Registrations ({webinarRegistrations.length})</h2>
-        {webinarRegistrations.length > 0 && (
-          <div className="bg-card border rounded-lg overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="text-left py-3 px-4">Name</th>
-                  <th className="text-left py-3 px-4">Email</th>
-                  <th className="text-left py-3 px-4">Webinar</th>
-                  <th className="text-left py-3 px-4">Date</th>
-                  <th className="text-left py-3 px-4">Access Type</th>
-                  <th className="text-left py-3 px-4">Amount</th>
-                </tr>
-              </thead>
-              <tbody>
-                {webinarRegistrations.slice(0, 10).map((reg, i) => (
-                  <tr key={i} className="border-b last:border-0">
-                    <td className="py-3 px-4">{reg.full_name || "-"}</td>
-                    <td className="py-3 px-4">{reg.email || "-"}</td>
-                    <td className="py-3 px-4">{reg.webinar_short_title || reg.webinar_title || "-"}</td>
-                    <td className="py-3 px-4">{reg.webinar_date || "TBD"}</td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs ${reg.access_type === "purchased" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}
-                      >
-                        {reg.access_type === "purchased" ? "Purchased" : "Symposium Bonus"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      {reg.unit_price ? `Rp ${reg.unit_price.toLocaleString("id-ID")}` : "Free"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {webinarRegistrations.length > 10 && (
-              <p className="text-sm text-muted-foreground p-4">
-                + {webinarRegistrations.length - 10} more registrations
-              </p>
-            )}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Hotel Bookings ({hotelBookings.length})</h2>
+              {hotelBookings.length > 0 && (
+                <div className="bg-card border rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left py-3 px-4">Guest Name</th>
+                        <th className="text-left py-3 px-4">Email</th>
+                        <th className="text-left py-3 px-4">Room Type</th>
+                        <th className="text-left py-3 px-4">Check-in</th>
+                        <th className="text-left py-3 px-4">Check-out</th>
+                        <th className="text-left py-3 px-4">Nights</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {hotelBookings.slice(0, 10).map((booking, i) => {
+                        const item = booking.order_items[0]
+                        return (
+                          <tr key={i} className="border-b last:border-0">
+                            <td className="py-3 px-4">{booking.full_name || "-"}</td>
+                            <td className="py-3 px-4">{booking.email || "-"}</td>
+                            <td className="py-3 px-4">{item?.hotel_room_type || "-"}</td>
+                            <td className="py-3 px-4">
+                              {item?.check_in_date ? format(new Date(item.check_in_date), "MMM dd, yyyy") : "-"}
+                            </td>
+                            <td className="py-3 px-4">
+                              {item?.check_out_date ? format(new Date(item.check_out_date), "MMM dd, yyyy") : "-"}
+                            </td>
+                            <td className="py-3 px-4">{item?.nights || "-"}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                  {hotelBookings.length > 10 && (
+                    <p className="text-sm text-muted-foreground p-4">+ {hotelBookings.length - 10} more bookings</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Webinar Registrations ({webinarRegistrations.length})</h2>
+              {webinarRegistrations.length > 0 && (
+                <div className="bg-card border rounded-lg overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="text-left py-3 px-4">Name</th>
+                        <th className="text-left py-3 px-4">Email</th>
+                        <th className="text-left py-3 px-4">Webinar</th>
+                        <th className="text-left py-3 px-4">Date</th>
+                        <th className="text-left py-3 px-4">Access Type</th>
+                        <th className="text-left py-3 px-4">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {webinarRegistrations.slice(0, 10).map((reg, i) => (
+                        <tr key={i} className="border-b last:border-0">
+                          <td className="py-3 px-4">{reg.full_name || "-"}</td>
+                          <td className="py-3 px-4">{reg.email || "-"}</td>
+                          <td className="py-3 px-4">{reg.webinar_short_title || reg.webinar_title || "-"}</td>
+                          <td className="py-3 px-4">{reg.webinar_date || "TBD"}</td>
+                          <td className="py-3 px-4">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs ${reg.access_type === "purchased" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}
+                            >
+                              {reg.access_type === "purchased" ? "Purchased" : "Symposium Bonus"}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            {reg.unit_price ? `Rp ${reg.unit_price.toLocaleString("id-ID")}` : "Free"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {webinarRegistrations.length > 10 && (
+                    <p className="text-sm text-muted-foreground p-4">
+                      + {webinarRegistrations.length - 10} more registrations
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
+        </section>
+      </main>
+      <Footer />
+    </>
   )
 }

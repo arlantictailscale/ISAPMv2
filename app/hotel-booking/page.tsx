@@ -223,8 +223,8 @@ export default function HotelBookingPage() {
     setIsSubmitting(true)
 
     try {
-      // Add each room to cart with its own dates
-      for (const room of rooms) {
+      for (let i = 0; i < rooms.length; i++) {
+        const room = rooms[i]
         const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
         if (!roomType) continue
 
@@ -232,10 +232,11 @@ export default function HotelBookingPage() {
 
         const result = await addToCart({
           item_type: "hotel",
-          event_label: `${roomType.name} - ${nights} night(s) - ${room.guestName}`,
+          // Include room number to make each label unique
+          event_label: `Room ${i + 1}: ${roomType.name} - ${nights} night(s) - ${room.guestName}`,
           hotel_room_type: room.roomType,
-          check_in_date: room.checkInDate, // Use room's own date
-          check_out_date: room.checkOutDate, // Use room's own date
+          check_in_date: room.checkInDate,
+          check_out_date: room.checkOutDate,
           nights: nights,
           unit_price: roomType.price,
           currency: "IDR",

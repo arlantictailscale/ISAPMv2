@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/cart/utils"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
-import { Gift, Loader2, Lock, ShoppingBag } from "lucide-react"
+import { Bed, Coffee, Gift, Loader2, Lock, ShoppingBag } from "lucide-react"
 import { CheckoutForm, type CheckoutFormHandle } from "./checkout-form"
 
 interface CheckoutPageClientProps {
@@ -126,6 +126,16 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                             <div className="text-sm text-muted-foreground">
                               {item.nights} night{item.nights !== 1 ? "s" : ""}
                             </div>
+                            {item.extra_beds > 0 && (
+                              <div className="flex items-center gap-2 mt-1 text-amber-600">
+                                <Bed className="w-3 h-3" />
+                                <span className="text-xs font-medium">
+                                  +{item.extra_beds} Extra Bed{item.extra_beds > 1 ? "s" : ""}
+                                </span>
+                                <Coffee className="w-3 h-3 ml-1" />
+                                <span className="text-xs">Breakfast included</span>
+                              </div>
+                            )}
                           </>
                         )}
                         {item.item_type === "webinar" && (

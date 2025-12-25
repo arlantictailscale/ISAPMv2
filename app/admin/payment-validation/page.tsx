@@ -86,6 +86,7 @@ interface Payment {
       check_in_date: string | null
       check_out_date: string | null
       nights: number | null
+      extra_beds: number | null
     }>
   }
 }
@@ -299,7 +300,7 @@ export default function PaymentValidationPage() {
   const calculateOrderTotal = (items: any[]) => {
     return items.reduce((sum, item) => {
       const nights = item.nights || 1
-      return sum + (item.unit_price || 0) * nights
+      return sum + (item.unit_price || 0) * nights + (item.extra_beds || 0) * (item.unit_price || 0)
     }, 0)
   }
 
@@ -544,12 +545,20 @@ export default function PaymentValidationPage() {
                         <span className="break-words">
                           {item.hotel_room_type} ({item.nights} nights)
                         </span>
+                        {item.extra_beds && item.extra_beds > 0 && (
+                          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                            +{item.extra_beds} extra bed{item.extra_beds > 1 ? "s" : ""} (incl. breakfast)
+                          </span>
+                        )}
                       </>
                     )}
                   </div>
                   <span className="font-medium whitespace-nowrap">
                     {item.item_type === "hotel" && item.nights
-                      ? formatCurrency(item.unit_price * item.nights, payment.currency)
+                      ? formatCurrency(
+                          item.unit_price * item.nights + (item.extra_beds || 0) * (item.unit_price || 0),
+                          payment.currency,
+                        )
                       : formatCurrency(item.unit_price, payment.currency)}
                   </span>
                 </div>

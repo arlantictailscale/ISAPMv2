@@ -1,6 +1,6 @@
 "use client"
 
-import { Trash2, Calendar, HotelIcon, Users, Video, Loader2, Check, Gift } from "lucide-react"
+import { Trash2, Calendar, HotelIcon, Users, Video, Loader2, Check, Gift, BedDouble, Coffee } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/cart/utils"
@@ -21,8 +21,13 @@ export function CartItemCard({ item }: CartItemCardProps) {
   const router = useRouter()
   const { refreshCart } = useCart()
 
+  const extraBedCost =
+    item.item_type === "hotel" && item.extra_beds && item.nights ? item.extra_beds * 550000 * item.nights : 0
+
   const itemTotal =
-    item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
+    item.item_type === "hotel" && item.nights
+      ? (item.unit_price || 0) * item.nights + extraBedCost
+      : item.unit_price || 0
 
   const handleRemove = async () => {
     setIsRemoving(true)
@@ -126,6 +131,25 @@ export function CartItemCard({ item }: CartItemCardProps) {
                   {item.nights} {item.nights === 1 ? "night" : "nights"}
                 </p>
                 <p className="text-xs">{formatCurrency(item.unit_price, item.currency)} per night</p>
+
+                {item.extra_beds && item.extra_beds > 0 && (
+                  <div className="mt-2 p-2 bg-amber-50 border border-amber-200 rounded-md">
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <BedDouble className="h-4 w-4" />
+                      <span className="font-medium">
+                        +{item.extra_beds} Extra {item.extra_beds === 1 ? "Bed" : "Beds"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 mt-1 text-xs text-amber-600">
+                      <Coffee className="h-3 w-3" />
+                      <span>Breakfast included</span>
+                    </div>
+                    <p className="text-xs text-amber-600 mt-1">
+                      {item.extra_beds} × {item.nights} {item.nights === 1 ? "night" : "nights"} × Rp 550.000 ={" "}
+                      {formatCurrency(extraBedCost, item.currency)}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 

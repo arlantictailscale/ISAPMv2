@@ -453,6 +453,12 @@ export default async function MyPurchasesPage() {
                                             </>
                                           )}
                                         </p>
+                                        {item.extra_beds > 0 && (
+                                          <p className="text-xs text-amber-600 font-medium mt-1">
+                                            +{item.extra_beds} Extra Bed{item.extra_beds > 1 ? "s" : ""} (incl.
+                                            breakfast)
+                                          </p>
+                                        )}
                                       </>
                                     )}
                                     {item.item_type === "webinar" && (

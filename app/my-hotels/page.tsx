@@ -34,6 +34,7 @@ interface HotelOrder {
     nights: number
     unit_price: number
     currency: string
+    extra_beds: number // Add extra_beds field
   }[]
   order_payments: {
     id: string
@@ -110,7 +111,8 @@ export default async function MyHotelsPage() {
         check_out_date,
         nights,
         unit_price,
-        currency
+        currency,
+        extra_beds
       ),
       order_payments (
         id,
@@ -251,9 +253,16 @@ export default async function MyHotelsPage() {
                                     <BedDouble className="w-5 h-5 text-amber-600" />
                                     Room {roomIndex + 1}: {roomDetails.name}
                                   </h3>
-                                  <Badge variant="secondary" className="bg-amber-200 text-amber-900">
-                                    {hotelItem.nights} Night{hotelItem.nights > 1 ? "s" : ""}
-                                  </Badge>
+                                  <div className="flex items-center gap-2">
+                                    {hotelItem.extra_beds > 0 && (
+                                      <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+                                        +{hotelItem.extra_beds} Extra Bed{hotelItem.extra_beds > 1 ? "s" : ""}
+                                      </Badge>
+                                    )}
+                                    <Badge variant="secondary" className="bg-amber-200 text-amber-900">
+                                      {hotelItem.nights} Night{hotelItem.nights > 1 ? "s" : ""}
+                                    </Badge>
+                                  </div>
                                 </div>
 
                                 {/* Booking Summary for this room */}
@@ -296,6 +305,15 @@ export default async function MyHotelsPage() {
                                       <span className="text-muted-foreground">{amenity}</span>
                                     </div>
                                   ))}
+                                  {hotelItem.extra_beds > 0 && (
+                                    <div className="flex items-center gap-2 text-sm col-span-2 mt-2 p-2 bg-orange-50 rounded-lg border border-orange-200">
+                                      <BedDouble className="w-4 h-4 text-orange-500 shrink-0" />
+                                      <span className="text-orange-700 font-medium">
+                                        {hotelItem.extra_beds} Extra Bed{hotelItem.extra_beds > 1 ? "s" : ""} with
+                                        Breakfast Included
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             )

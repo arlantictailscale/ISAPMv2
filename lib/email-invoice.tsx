@@ -24,6 +24,7 @@ export interface SendInvoiceEmailParams {
     nights?: number
     check_in_date?: string
     check_out_date?: string
+    extra_beds?: number // Add extra_beds to type
   }>
   totalAmount: number
   currency: string
@@ -45,6 +46,8 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
     paymentVerifiedAt,
   } = params
 
+  const EXTRA_BED_PRICE = 550000 // Define extra bed price constant
+
   try {
     // Prepare invoice items
     const items: InvoiceItem[] = orderItems.map((item) => ({
@@ -57,6 +60,7 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
       hotelRoomType: item.hotel_room_type,
       checkInDate: item.check_in_date,
       checkOutDate: item.check_out_date,
+      extraBeds: item.extra_beds || 0, // Pass extra_beds to invoice item
     }))
 
     const invoiceNumber = await generateInvoiceNumber(orderId, paymentVerifiedAt)
@@ -82,10 +86,17 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
     const itemsHtml = orderItems
       .map((item, index) => {
         let itemName = ""
+        const nights = item.nights || 1
+        const extraBeds = item.extra_beds || 0
+        const extraBedCost = extraBeds * EXTRA_BED_PRICE * nights
+
         if (item.item_type === "hotel") {
           itemName = `Hotel: ${item.hotel_room_type || "Room"}`
-          if (item.nights && item.nights > 1) {
-            itemName += ` (${item.nights} malam)`
+          if (nights > 1) {
+            itemName += ` (${nights} malam)`
+          }
+          if (extraBeds > 0) {
+            itemName += `<br/><span style="color: #d97706; font-size: 12px;">+ ${extraBeds} Extra Bed (incl. breakfast)</span>`
           }
         } else {
           itemName = item.event_label || "Event Registration"
@@ -94,14 +105,22 @@ export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
           }
         }
 
-        const itemTotal = item.unit_price * (item.nights || 1)
+        const roomTotal = item.unit_price * nights
+        const itemTotal = roomTotal + extraBedCost // Include extra bed cost
+
+        const priceDisplay = formatRupiah(item.unit_price)
+        let totalDisplay = formatRupiah(itemTotal)
+
+        if (item.item_type === "hotel" && extraBeds > 0) {
+          totalDisplay = `${formatRupiah(roomTotal)}<br/><span style="color: #d97706; font-size: 11px;">+ ${formatRupiah(extraBedCost)}</span><br/><strong>${formatRupiah(itemTotal)}</strong>`
+        }
 
         return `
           <tr>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${index + 1}</td>
             <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${itemName}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">${formatRupiah(item.unit_price)}</td>
-            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${formatRupiah(itemTotal)}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">${priceDisplay}</td>
+            <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${totalDisplay}</td>
           </tr>
         `
       })

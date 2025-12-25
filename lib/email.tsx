@@ -193,18 +193,25 @@ export async function sendOrderConfirmationEmail({
     check_out_date?: string
     nights?: number
     unit_price: number
+    extra_beds?: number // Add extra_beds to type
   }>
   totalAmount: number
   currency: string
 }) {
   try {
+    const EXTRA_BED_PRICE = 550000 // Define extra bed price constant
+
     const itemsHtml = orderItems
       .map((item) => {
         let itemName = ""
         const itemType = item.item_type.replace("_", " ").toUpperCase()
 
         // Calculate correct item price (multiply by nights for hotels)
-        const itemPrice = item.item_type === "hotel" && item.nights ? item.unit_price * item.nights : item.unit_price
+        const nights = item.nights || 1
+        const extraBeds = item.extra_beds || 0
+        const extraBedCost = extraBeds * EXTRA_BED_PRICE * nights
+        const roomPrice = item.item_type === "hotel" ? item.unit_price * nights : item.unit_price
+        const itemPrice = roomPrice + extraBedCost // Include extra bed cost
 
         if (item.item_type === "workshop" || item.item_type === "symposium") {
           const eventName = item.event_label || `${itemType}`
@@ -214,8 +221,10 @@ export async function sendOrderConfirmationEmail({
           const roomType = item.hotel_room_type || "Standard Room"
           const checkIn = item.check_in_date || "TBD"
           const checkOut = item.check_out_date || "TBD"
-          const nights = item.nights || 1
           itemName = `Hotel: ${roomType} (${checkIn} to ${checkOut}, ${nights} night${nights > 1 ? "s" : ""})`
+          if (extraBeds > 0) {
+            itemName += `<br/><span style="color: #d97706; font-size: 12px;">+ ${extraBeds} Extra Bed${extraBeds > 1 ? "s" : ""} (incl. breakfast)</span>`
+          }
         } else if (item.item_type === "cpd_course") {
           itemName = item.event_label || "CPD Course"
         } else {
@@ -226,11 +235,28 @@ export async function sendOrderConfirmationEmail({
           }
         }
 
-        // Show price breakdown for multi-night hotel bookings
-        const priceDisplay =
-          item.item_type === "hotel" && item.nights && item.nights > 1
-            ? `${currency} ${item.unit_price.toLocaleString()} × ${item.nights} nights = ${currency} ${itemPrice.toLocaleString()}`
-            : `${currency} ${itemPrice.toLocaleString()}`
+        let priceDisplay = ""
+        if (item.item_type === "hotel") {
+          const priceLines = []
+          if (nights > 1) {
+            priceLines.push(
+              `${currency} ${item.unit_price.toLocaleString()} × ${nights} nights = ${currency} ${roomPrice.toLocaleString()}`,
+            )
+          } else {
+            priceLines.push(`${currency} ${roomPrice.toLocaleString()}`)
+          }
+          if (extraBeds > 0) {
+            priceLines.push(
+              `<span style="color: #d97706;">+ Extra Bed: ${currency} ${extraBedCost.toLocaleString()}</span>`,
+            )
+          }
+          if (extraBeds > 0 || nights > 1) {
+            priceLines.push(`<strong>Total: ${currency} ${itemPrice.toLocaleString()}</strong>`)
+          }
+          priceDisplay = priceLines.join("<br/>")
+        } else {
+          priceDisplay = `${currency} ${itemPrice.toLocaleString()}`
+        }
 
         return `
           <div style="padding: 15px; margin: 10px 0; background: #f8f9fa; border-left: 3px solid #00A9E0; border-radius: 4px;">
@@ -431,7 +457,7 @@ export async function sendPaymentVerificationEmail({
   totalAmount,
   currency,
   paymentMethod,
-  sponsorName,
+  sponsorName, // Added sponsorName parameter
 }: {
   email: string
   userName: string
@@ -447,7 +473,7 @@ export async function sendPaymentVerificationEmail({
   totalAmount: number
   currency: string
   paymentMethod?: string
-  sponsorName?: string
+  sponsorName?: string // Added sponsorName type
 }) {
   const isVerified = status === "verified"
   const rejectionComment = rejectionReason
@@ -733,6 +759,7 @@ export async function sendPaymentConfirmationWithInvoice({
   paymentVerifiedAt,
   invoiceNumber: providedInvoiceNumber,
   paymentMethod, // Add paymentMethod parameter
+  sponsorName, // Added sponsorName parameter
 }: {
   email: string
   userName: string
@@ -754,6 +781,7 @@ export async function sendPaymentConfirmationWithInvoice({
   paymentVerifiedAt: Date
   invoiceNumber?: string // Optional invoice number parameter
   paymentMethod?: string // Add paymentMethod type
+  sponsorName?: string // Added sponsorName type
 }) {
   try {
     // Prepare invoice items
@@ -883,7 +911,7 @@ export async function sendPaymentConfirmationWithInvoice({
               .total-box { background: linear-gradient(135deg, ${primaryColor} 0%, ${primaryColorDark} 100%); color: white; padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center; }
               .total-amount { font-size: 28px; font-weight: 700; margin: 10px 0; }
               .info-box { background: #f0f9ff; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid ${primaryColor}; }
-              .info-box h3 { font-size: 14px; color: ${isSponsored ? "#6d28d9" : "#0369a1"}; margin-top: 0; }
+              .info-box h3 { font-size: 14px; color: ${isSponsored ? "#6d28d9" : "#0c4a6e"}; margin-top: 0; }
               .info-box ul { margin: 10px 0; padding-left: 20px; color: ${isSponsored ? "#5b21b6" : "#0c4a6e"}; }
               .info-box li { margin: 8px 0; }
               .button { display: inline-block; background: linear-gradient(135deg, ${isSponsored ? "#8B5CF6 0%, #7C3AED" : "#EF3340 0%, #d92532"} 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; margin: 25px 0; font-weight: 600; text-align: center; box-shadow: 0 4px 6px rgba(${isSponsored ? "139, 92, 246" : "239, 51, 64"}, 0.2); }
@@ -908,7 +936,11 @@ export async function sendPaymentConfirmationWithInvoice({
                   <div class="alert-icon">${isSponsored ? "🎁" : "🎉"}</div>
                   <div class="alert-title">${isSponsored ? "Sponsored Registration Confirmed!" : "Payment Successfully Verified!"}</div>
                   <div class="alert-text">
-                    ${isSponsored ? "Your sponsored registration has been verified and confirmed." : "Your payment has been verified by our admin team. Your registration is now complete and confirmed."}
+                    ${
+                      isSponsored
+                        ? `Your sponsored registration has been verified. Your sponsor${sponsorName ? ` (${sponsorName})` : ""} has been acknowledged.`
+                        : "Your payment has been verified by our admin team. Your registration is now complete and confirmed."
+                    }
                   </div>
                 </div>
 
@@ -972,7 +1004,7 @@ export async function sendPaymentConfirmationWithInvoice({
                 </div>
 
                 <div style="text-align: center;">
-                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="color: white;">Go to Dashboard</a>
+                  <a href="${process.env.NEXT_PUBLIC_SITE_URL}/dashboard" class="button" style="background: ${isSponsored ? "linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)" : "linear-gradient(135deg, #00A9E0 0%, #0088B8 100%)"};">Go to Dashboard</a>
                 </div>
 
                 <p style="font-size: 14px; color: #64748b; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">

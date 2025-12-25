@@ -178,6 +178,7 @@ export interface InvoiceItem {
   hotelRoomType?: string
   checkInDate?: string
   checkOutDate?: string
+  extraBeds?: number // Add extraBeds field
 }
 
 export interface InvoiceData {
@@ -195,6 +196,8 @@ export interface InvoiceData {
   paymentMethod?: string
   paymentType?: "regular" | "sponsored"
 }
+
+const EXTRA_BED_PRICE = 550000 // Define extra bed price constant
 
 export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
   const doc = new jsPDF({
@@ -358,10 +361,17 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
 
   data.items.forEach((item, index) => {
     let eventText = ""
+    const nights = item.nights || 1
+    const extraBeds = item.extraBeds || 0
+    const extraBedCost = extraBeds * EXTRA_BED_PRICE * nights
+
     if (item.itemType === "hotel") {
       eventText = `Hotel: ${item.hotelRoomType || "Room"}`
-      if (item.nights && item.nights > 1) {
-        eventText += ` (${item.nights} malam)`
+      if (nights > 1) {
+        eventText += ` (${nights} malam)`
+      }
+      if (extraBeds > 0) {
+        eventText += `\n+ ${extraBeds} Extra Bed (incl. breakfast)`
       }
     } else {
       eventText = item.eventLabel || "Event Registration"
@@ -373,7 +383,8 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
     const maxEventWidth = colWidths.event - 6
     const splitEventText = doc.splitTextToSize(eventText, maxEventWidth)
     const lineHeight = 4
-    const rowHeight = Math.max(10, splitEventText.length * lineHeight + 4)
+    const extraRowHeight = extraBeds > 0 ? 5 : 0
+    const rowHeight = Math.max(10, splitEventText.length * lineHeight + 4 + extraRowHeight)
     const rowY = yPos
 
     // Alternate row background
@@ -396,19 +407,40 @@ export async function generateInvoicePDF(data: InvoiceData): Promise<jsPDF> {
     doc.text(`${index + 1}.`, colX.no + 4, rowY + 6)
 
     let textYOffset = rowY + 5
-    splitEventText.forEach((line: string) => {
+    splitEventText.forEach((line: string, lineIndex: number) => {
+      if (line.includes("Extra Bed")) {
+        doc.setTextColor(217, 119, 6) // Amber color
+        doc.setFontSize(7)
+      }
       doc.text(line, colX.event + 4, textYOffset)
+      if (line.includes("Extra Bed")) {
+        doc.setTextColor(...darkText)
+        doc.setFontSize(8)
+      }
       textYOffset += lineHeight
     })
 
     // Unit price
     doc.text(formatRupiah(item.unitPrice), colX.harga + 4, rowY + 6)
 
-    // Total
+    // Total - Include extra bed cost
     const quantity = item.quantity || 1
-    const nights = item.nights || 1
-    const itemTotal = item.unitPrice * quantity * nights
-    doc.text(formatRupiah(itemTotal), colX.jumlah + 4, rowY + 6)
+    const roomTotal = item.unitPrice * quantity * nights
+    const itemTotal = roomTotal + extraBedCost
+
+    if (extraBeds > 0 && item.itemType === "hotel") {
+      doc.setFontSize(7)
+      doc.text(formatRupiah(roomTotal), colX.jumlah + 4, rowY + 5)
+      doc.setTextColor(217, 119, 6)
+      doc.text(`+ ${formatRupiah(extraBedCost)}`, colX.jumlah + 4, rowY + 9)
+      doc.setTextColor(...darkText)
+      doc.setFontSize(8)
+      doc.setFont("helvetica", "bold")
+      doc.text(formatRupiah(itemTotal), colX.jumlah + 4, rowY + 13)
+      doc.setFont("helvetica", "normal")
+    } else {
+      doc.text(formatRupiah(itemTotal), colX.jumlah + 4, rowY + 6)
+    }
 
     yPos += rowHeight
   })

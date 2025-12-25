@@ -10,7 +10,20 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Hotel, Loader2, Calendar, MapPin, Plus, Trash2, UserCircle, Copy, ChevronDown, ChevronUp } from "lucide-react"
+import {
+  Hotel,
+  Loader2,
+  Calendar,
+  MapPin,
+  Plus,
+  Trash2,
+  UserCircle,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  BedDouble,
+  UtensilsCrossed,
+} from "lucide-react"
 import { toast } from "sonner"
 import { format, differenceInDays, parseISO } from "date-fns"
 import { addToCart } from "@/app/actions/cart"
@@ -28,6 +41,9 @@ const ROOM_TYPES = [
   },
 ]
 
+const EXTRA_BED_PRICE = 550000
+const MAX_EXTRA_BEDS = 2
+
 interface RoomBooking {
   id: string
   roomType: string
@@ -38,6 +54,7 @@ interface RoomBooking {
   guestPhone: string
   specialRequests: string
   isExpanded: boolean
+  extraBeds: number
 }
 
 export default function HotelBookingPage() {
@@ -60,6 +77,7 @@ export default function HotelBookingPage() {
       guestPhone: "",
       specialRequests: "",
       isExpanded: true,
+      extraBeds: 0,
     },
   ])
 
@@ -126,6 +144,7 @@ export default function HotelBookingPage() {
       guestPhone: "",
       specialRequests: "",
       isExpanded: true,
+      extraBeds: 0,
     }
     // Collapse other rooms when adding new one
     setRooms([...rooms.map((r) => ({ ...r, isExpanded: false })), newRoom])
@@ -139,7 +158,7 @@ export default function HotelBookingPage() {
     setRooms(rooms.filter((room) => room.id !== id))
   }
 
-  const updateRoom = (id: string, field: keyof RoomBooking, value: string | boolean) => {
+  const updateRoom = (id: string, field: keyof RoomBooking, value: string | boolean | number) => {
     setRooms(rooms.map((room) => (room.id === id ? { ...room, [field]: value } : room)))
   }
 
@@ -189,6 +208,12 @@ export default function HotelBookingPage() {
         toast.error(`Room ${i + 1}: Please fill in all guest information`)
         return false
       }
+
+      // Add validation for extra beds
+      if (room.extraBeds > MAX_EXTRA_BEDS) {
+        toast.error(`Room ${i + 1}: Maximum ${MAX_EXTRA_BEDS} extra beds allowed per room.`)
+        return false
+      }
     }
 
     // Check availability
@@ -213,8 +238,18 @@ export default function HotelBookingPage() {
     return rooms.reduce((total, room) => {
       const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
       const nights = calculateNights(room.checkInDate, room.checkOutDate)
-      return total + (roomType?.price || 0) * nights
+      const roomCost = (roomType?.price || 0) * nights
+      const extraBedCost = room.extraBeds * EXTRA_BED_PRICE * nights
+      return total + roomCost + extraBedCost
     }, 0)
+  }
+
+  const calculateRoomTotal = (room: RoomBooking) => {
+    const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
+    const nights = calculateNights(room.checkInDate, room.checkOutDate)
+    const roomCost = (roomType?.price || 0) * nights
+    const extraBedCost = room.extraBeds * EXTRA_BED_PRICE * nights
+    return { roomCost, extraBedCost, total: roomCost + extraBedCost, nights }
   }
 
   const handleAddToCart = async () => {
@@ -229,16 +264,19 @@ export default function HotelBookingPage() {
         if (!roomType) continue
 
         const nights = calculateNights(room.checkInDate, room.checkOutDate)
+        const unitPricePerNight = roomType.price + room.extraBeds * EXTRA_BED_PRICE
+
+        const extraBedLabel = room.extraBeds > 0 ? ` + ${room.extraBeds} extra bed(s)` : ""
 
         const result = await addToCart({
           item_type: "hotel",
-          // Include room number to make each label unique
-          event_label: `Room ${i + 1}: ${roomType.name} - ${nights} night(s) - ${room.guestName}`,
+          event_label: `Room ${i + 1}: ${roomType.name}${extraBedLabel} - ${nights} night(s) - ${room.guestName}`,
           hotel_room_type: room.roomType,
           check_in_date: room.checkInDate,
           check_out_date: room.checkOutDate,
           nights: nights,
-          unit_price: roomType.price,
+          extra_beds: room.extraBeds,
+          unit_price: unitPricePerNight,
           currency: "IDR",
         })
 
@@ -267,6 +305,7 @@ export default function HotelBookingPage() {
           guestPhone: profile?.phone || "",
           specialRequests: "",
           isExpanded: true,
+          extraBeds: 0,
         },
       ])
     } catch (error: any) {
@@ -369,6 +408,18 @@ export default function HotelBookingPage() {
                       </div>
                     </div>
                   )}
+
+                  <div className="flex items-start gap-3 border-t pt-4">
+                    <BedDouble className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-foreground">Extra Bed Option</p>
+                      <p className="text-muted-foreground">Rp {EXTRA_BED_PRICE.toLocaleString("id-ID")}/night</p>
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <UtensilsCrossed className="w-3 h-3" />
+                        Includes breakfast for extra guest
+                      </p>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -390,7 +441,7 @@ export default function HotelBookingPage() {
               {rooms.map((room, index) => {
                 const nights = calculateNights(room.checkInDate, room.checkOutDate)
                 const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
-                const roomTotal = roomType ? roomType.price * nights : 0
+                const { roomCost, extraBedCost, total: roomTotal } = calculateRoomTotal(room)
 
                 return (
                   <Card key={room.id} className="border-primary/20 overflow-hidden">
@@ -408,8 +459,10 @@ export default function HotelBookingPage() {
                           <p className="text-sm text-muted-foreground">
                             {roomType ? (
                               <>
-                                {roomType.name} • {nights} night{nights !== 1 ? "s" : ""} •{" "}
-                                {room.guestName || "No guest"}
+                                {roomType.name}
+                                {room.extraBeds > 0 && ` + ${room.extraBeds} extra bed`}
+                                {" • "}
+                                {nights} night{nights !== 1 ? "s" : ""} • {room.guestName || "No guest"}
                               </>
                             ) : (
                               "Configure room details"
@@ -532,6 +585,70 @@ export default function HotelBookingPage() {
                           )}
                         </div>
 
+                        <div className="space-y-4 border-t pt-6">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold flex items-center gap-2">
+                              <BedDouble className="w-4 h-4 text-primary" />
+                              Extra Bed (Optional)
+                            </h4>
+                          </div>
+
+                          <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                              <div className="space-y-1">
+                                <p className="font-medium text-foreground">Add Extra Bed</p>
+                                <p className="text-sm text-muted-foreground">
+                                  Rp {EXTRA_BED_PRICE.toLocaleString("id-ID")}/night per bed
+                                </p>
+                                <div className="flex items-center gap-1 text-sm text-amber-700 dark:text-amber-400">
+                                  <UtensilsCrossed className="w-3 h-3" />
+                                  <span>Includes breakfast for extra guest</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-3">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() => updateRoom(room.id, "extraBeds", Math.max(0, room.extraBeds - 1))}
+                                  disabled={room.extraBeds === 0}
+                                  className="h-10 w-10"
+                                >
+                                  -
+                                </Button>
+                                <span className="w-12 text-center font-semibold text-lg">{room.extraBeds}</span>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  onClick={() =>
+                                    updateRoom(room.id, "extraBeds", Math.min(MAX_EXTRA_BEDS, room.extraBeds + 1))
+                                  }
+                                  disabled={room.extraBeds >= MAX_EXTRA_BEDS}
+                                  className="h-10 w-10"
+                                >
+                                  +
+                                </Button>
+                              </div>
+                            </div>
+
+                            {room.extraBeds > 0 && nights > 0 && (
+                              <div className="mt-3 pt-3 border-t border-amber-200 dark:border-amber-800">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">
+                                    {room.extraBeds} extra bed{room.extraBeds > 1 ? "s" : ""} × {nights} night
+                                    {nights > 1 ? "s" : ""} × Rp {EXTRA_BED_PRICE.toLocaleString("id-ID")}
+                                  </span>
+                                  <span className="font-semibold text-amber-700 dark:text-amber-400">
+                                    + Rp {(room.extraBeds * EXTRA_BED_PRICE * nights).toLocaleString("id-ID")}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                         {/* Guest Information */}
                         <div className="border-t pt-6 space-y-4">
                           <div className="flex items-center justify-between">
@@ -592,13 +709,26 @@ export default function HotelBookingPage() {
                           </div>
                         </div>
 
-                        {/* Room Subtotal */}
                         {roomType && nights > 0 && (
-                          <div className="border-t pt-4">
+                          <div className="border-t pt-4 space-y-2">
                             <div className="flex justify-between items-center text-sm">
                               <span className="text-muted-foreground">
                                 {roomType.name} × {nights} night{nights > 1 ? "s" : ""}
                               </span>
+                              <span className="font-medium">Rp {roomCost.toLocaleString("id-ID")}</span>
+                            </div>
+                            {room.extraBeds > 0 && (
+                              <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">
+                                  Extra bed ({room.extraBeds}) × {nights} night{nights > 1 ? "s" : ""}
+                                </span>
+                                <span className="font-medium text-amber-600">
+                                  + Rp {extraBedCost.toLocaleString("id-ID")}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between items-center pt-2 border-t">
+                              <span className="font-semibold">Room Subtotal</span>
                               <span className="font-semibold text-primary">Rp {roomTotal.toLocaleString("id-ID")}</span>
                             </div>
                           </div>
@@ -616,7 +746,6 @@ export default function HotelBookingPage() {
               </Button>
             </div>
 
-            {/* Booking Summary */}
             {rooms.some((r) => r.roomType && calculateNights(r.checkInDate, r.checkOutDate) > 0) && (
               <Card className="mt-8 bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
                 <CardHeader>
@@ -628,7 +757,7 @@ export default function HotelBookingPage() {
                     const nights = calculateNights(room.checkInDate, room.checkOutDate)
                     if (!roomType || nights <= 0) return null
 
-                    const roomTotal = roomType.price * nights
+                    const { roomCost, extraBedCost, total: roomTotal } = calculateRoomTotal(room)
 
                     return (
                       <div
@@ -638,6 +767,11 @@ export default function HotelBookingPage() {
                         <div className="space-y-1">
                           <p className="font-medium">
                             Room {index + 1}: {roomType.name}
+                            {room.extraBeds > 0 && (
+                              <Badge variant="secondary" className="ml-2">
+                                +{room.extraBeds} extra bed
+                              </Badge>
+                            )}
                           </p>
                           <p className="text-sm text-muted-foreground">{room.guestName || "Guest name not provided"}</p>
                           <p className="text-sm text-muted-foreground">
@@ -647,6 +781,14 @@ export default function HotelBookingPage() {
                           <p className="text-sm text-muted-foreground">
                             {nights} night{nights > 1 ? "s" : ""} × Rp {roomType.price.toLocaleString("id-ID")}
                           </p>
+                          {room.extraBeds > 0 && (
+                            <p className="text-sm text-amber-600 flex items-center gap-1">
+                              <BedDouble className="w-3 h-3" />
+                              {room.extraBeds} extra bed{room.extraBeds > 1 ? "s" : ""} × {nights} night
+                              {nights > 1 ? "s" : ""} × Rp {EXTRA_BED_PRICE.toLocaleString("id-ID")}
+                              <span className="text-muted-foreground ml-1">(incl. breakfast)</span>
+                            </p>
+                          )}
                         </div>
                         <p className="font-semibold">Rp {roomTotal.toLocaleString("id-ID")}</p>
                       </div>
@@ -661,6 +803,13 @@ export default function HotelBookingPage() {
                     <p className="text-sm text-muted-foreground mt-1">
                       {rooms.filter((r) => r.roomType).length} room
                       {rooms.filter((r) => r.roomType).length > 1 ? "s" : ""}
+                      {rooms.some((r) => r.extraBeds > 0) && (
+                        <span className="text-amber-600">
+                          {" "}
+                          + {rooms.reduce((sum, r) => sum + r.extraBeds, 0)} extra bed
+                          {rooms.reduce((sum, r) => sum + r.extraBeds, 0) > 1 ? "s" : ""}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </CardContent>

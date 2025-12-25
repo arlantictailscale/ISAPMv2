@@ -12,6 +12,7 @@ export interface CartItem {
   check_in_date?: string
   check_out_date?: string
   nights?: number
+  extra_beds?: number
   unit_price: number
   currency: string
   created_at: string

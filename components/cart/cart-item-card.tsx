@@ -21,13 +21,8 @@ export function CartItemCard({ item }: CartItemCardProps) {
   const router = useRouter()
   const { refreshCart } = useCart()
 
-  const extraBedCost =
-    item.item_type === "hotel" && item.extra_beds && item.nights ? item.extra_beds * 550000 * item.nights : 0
-
   const itemTotal =
-    item.item_type === "hotel" && item.nights
-      ? (item.unit_price || 0) * item.nights + extraBedCost
-      : item.unit_price || 0
+    item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
 
   const handleRemove = async () => {
     setIsRemoving(true)
@@ -137,17 +132,13 @@ export function CartItemCard({ item }: CartItemCardProps) {
                     <div className="flex items-center gap-2 text-amber-700">
                       <BedDouble className="h-4 w-4" />
                       <span className="font-medium">
-                        +{item.extra_beds} Extra {item.extra_beds === 1 ? "Bed" : "Beds"}
+                        +{item.extra_beds} Extra {item.extra_beds === 1 ? "Bed" : "Beds"} (included in rate)
                       </span>
                     </div>
                     <div className="flex items-center gap-1 mt-1 text-xs text-amber-600">
                       <Coffee className="h-3 w-3" />
-                      <span>Breakfast included</span>
+                      <span>Breakfast included for extra bed guest</span>
                     </div>
-                    <p className="text-xs text-amber-600 mt-1">
-                      {item.extra_beds} × {item.nights} {item.nights === 1 ? "night" : "nights"} × Rp 550.000 ={" "}
-                      {formatCurrency(extraBedCost, item.currency)}
-                    </p>
                   </div>
                 )}
               </div>

@@ -7,12 +7,10 @@ const EXTRA_BED_PRICE_PER_NIGHT = 550000
  */
 export function calculateCartTotal(items: CartItem[]): CartSummary {
   const subtotal = items.reduce((sum, item) => {
-    // For hotel bookings, multiply unit price by number of nights + extra beds cost
+    // For hotel bookings, multiply unit price by number of nights
     // For event registrations and webinars, use unit price as-is
     if (item.item_type === "hotel" && item.nights) {
-      const roomCost = (item.unit_price || 0) * item.nights
-      const extraBedCost = (item.extra_beds || 0) * EXTRA_BED_PRICE_PER_NIGHT * item.nights
-      return sum + roomCost + extraBedCost
+      return sum + (item.unit_price || 0) * item.nights
     }
     return sum + (item.unit_price || 0)
   }, 0)

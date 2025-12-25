@@ -1,16 +1,20 @@
 import type { CartItem, CartSummary } from "./types"
 
+const EXTRA_BED_PRICE_PER_NIGHT = 550000
+
 /**
  * Calculate cart totals
  */
 export function calculateCartTotal(items: CartItem[]): CartSummary {
   const subtotal = items.reduce((sum, item) => {
-    // For hotel bookings, multiply unit price by number of nights
+    // For hotel bookings, multiply unit price by number of nights + extra beds cost
     // For event registrations and webinars, use unit price as-is
-    const itemTotal =
-      item.item_type === "hotel" && item.nights ? (item.unit_price || 0) * item.nights : item.unit_price || 0
-
-    return sum + itemTotal
+    if (item.item_type === "hotel" && item.nights) {
+      const roomCost = (item.unit_price || 0) * item.nights
+      const extraBedCost = (item.extra_beds || 0) * EXTRA_BED_PRICE_PER_NIGHT * item.nights
+      return sum + roomCost + extraBedCost
+    }
+    return sum + (item.unit_price || 0)
   }, 0)
 
   const currency = items.length > 0 ? items[0].currency : "IDR"

@@ -41,23 +41,25 @@ export default function Footer() {
                   className="h-10 md:h-12 w-auto"
                   loading="lazy"
                 />
-                <Image
-                  src="/images/perdatin-logo.png"
-                  alt="PERDATIN - Perhimpunan Dokter Spesialis Anestesiologi dan Terapi Intensif Indonesia"
-                  width={80}
-                  height={80}
-                  className="h-10 md:h-12 w-auto"
-                  loading="lazy"
-                />
-                <Image
-                  src="/images/7.png"
-                  alt="IDI - Ikatan Dokter Indonesia (Indonesian Medical Association)"
-                  width={80}
-                  height={80}
-                  className="h-10 md:h-12 w-auto"
-                  loading="lazy"
-                  unoptimized
-                />
+                <div className="flex items-center gap-3">
+                  <Image
+                    src="/images/perdatin-logo.png"
+                    alt="PERDATIN - Perhimpunan Dokter Spesialis Anestesiologi dan Terapi Intensif Indonesia"
+                    width={80}
+                    height={80}
+                    className="h-10 md:h-12 w-auto"
+                    loading="lazy"
+                  />
+                  <Image
+                    src="/images/7.png"
+                    alt="IDI - Ikatan Dokter Indonesia (Indonesian Medical Association)"
+                    width={80}
+                    height={80}
+                    className="h-10 md:h-12 w-auto"
+                    loading="lazy"
+                    unoptimized
+                  />
+                </div>
               </div>
             </div>
             <p className="text-primary-foreground/80 text-sm leading-relaxed">

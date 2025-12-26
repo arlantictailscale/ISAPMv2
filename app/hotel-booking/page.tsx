@@ -404,15 +404,15 @@ export default function HotelBookingPage() {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-muted/30 py-12">
+      <div className="min-h-screen bg-muted/30 pt-16 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content - Left Column */}
             <div className="lg:col-span-2">
-              <div className="mb-8">
-                <h1 className="text-4xl font-bold mb-2">Hotel Accommodation</h1>
-                <p className="text-muted-foreground">ISAPM 8th National Meeting 2026</p>
-                <p className="text-sm text-muted-foreground mt-2">
+              <div className="mb-12 space-y-3">
+                <h1 className="text-3xl sm:text-4xl font-bold">Hotel Accommodation</h1>
+                <p className="text-base font-medium text-muted-foreground">ISAPM 8th National Meeting 2026</p>
+                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
                   Reserve your accommodation at our exclusive event venue. Book multiple rooms with flexible dates -
                   each room can have its own check-in and check-out dates.
                 </p>

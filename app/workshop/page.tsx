@@ -178,10 +178,55 @@ export default function WorkshopPage() {
     {
       no: 5,
       title: "Developing a Pain Clinic",
+      subtitle: "Hospital Pain Clinic Development and Sustainability: Best Practices and Implementation",
       participant:
-        "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse, Hospital Management (Price based on team of 4 participants)",
+        "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse, Hospital Management (Price based on team of 4 participants: Medical Director, Finance Director, Business/Marketing Office, Anesthesiologist)",
       director: "dr. Henny Widyastuti, Sp.An-TI., Subsp. M.N. (K)., FIP",
       date: "Friday, April 17, 2026",
+      overview:
+        "This intensive workshop equips hospital leadership and clinical teams with evidence-based strategies to develop, optimize, and sustain a pain clinic. Through practical coaching methods and real-world case studies, participants will learn best practices in service standardization, financial management, collaborative marketing, and sustainable operations.",
+      objectives: [
+        "Develop standardized pain management services aligned with international best practices",
+        "Implement financial management strategies that enhance clinic profitability and sustainability",
+        "Design effective collaboration and marketing strategies for hospital pain services",
+        "Establish sustainable pain clinic operations and quality improvement systems",
+      ],
+      facilitators: [
+        {
+          name: "dr. Said Shofwan, Sp.An-TI, FIP, FIPP",
+          role: "Director RSI Sultan Agung (2022-2023)",
+          credentials:
+            "Founder Semarang Pain Center RSI Sultan Agung & Founder Awal Bros Pain Center Sudirman Pekanbaru",
+        },
+        {
+          name: "Rahmi Winandari, SKM., M.Kes",
+          role: "Deputy Director Administration RSUD Ciawi (2019-present)",
+          credentials: "Head of Pain Management Installation RSUD Dr. KH. Idham Chalid Ciawi",
+        },
+        {
+          name: "dr. Ristanti Karina, MARS",
+          role: "Director of Medical Services Mayapada Hospital Bogor (2020-2025)",
+          credentials: "Head Pain Management Center Mayapada Hospital Bogor",
+        },
+        {
+          name: "dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K., C.MSC",
+          role: "Director RSUD Ciawi (2019-2022)",
+          credentials:
+            "Founder Pain Management Installation RSUD Dr. KH. Idham Chalid Ciawi - Winner of Government Innovation Awards 2021",
+        },
+        {
+          name: "dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K",
+          role: "Head Pain Management Installation RSUD Ciawi (2021-2023)",
+          credentials:
+            "Head Pain Management Installation RSUD Dr. KH. Idham Chalid Ciawi - Winner of Government Innovation Awards 2022 & Founder Pain Management Center Mayapada Hospital Bogor",
+        },
+      ],
+      materials: [
+        "Standardized Pain Service Development & Best Practices",
+        "Financial Management & Revenue Optimization for Pain Services",
+        "Collaboration Strategies & Marketing Pain Clinic Services",
+        "Sustainable Service Models & Quality Improvement Systems",
+      ],
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
         { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
@@ -311,8 +356,58 @@ export default function WorkshopPage() {
                   Back to all workshops
                 </Button>
                 <h1 className="text-4xl font-bold text-primary mb-2">{selectedWorkshop.title}</h1>
-                <p className="text-lg text-muted-foreground mb-4">Course Director: {selectedWorkshop.director}</p>
+                {selectedWorkshop.subtitle && (
+                  <p className="text-lg text-muted-foreground mb-4">{selectedWorkshop.subtitle}</p>
+                )}
                 <p className="text-md text-muted-foreground mb-8">Date: {selectedWorkshop.date}</p>
+
+                {selectedWorkshop.overview && (
+                  <div className="mb-8">
+                    <h2 className="font-display text-3xl font-bold text-primary mb-4">Overview</h2>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedWorkshop.overview}</p>
+                  </div>
+                )}
+
+                {selectedWorkshop.objectives && (
+                  <div className="mb-8">
+                    <h2 className="font-display text-3xl font-bold text-primary mb-4">Objectives</h2>
+                    <ul className="list-disc pl-6">
+                      {selectedWorkshop.objectives.map((objective, index) => (
+                        <li key={index} className="text-sm text-muted-foreground">
+                          {objective}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {selectedWorkshop.facilitators && (
+                  <div className="mb-8">
+                    <h2 className="font-display text-3xl font-bold text-primary mb-4">Facilitators</h2>
+                    <div className="space-y-4">
+                      {selectedWorkshop.facilitators.map((facilitator, index) => (
+                        <div key={index} className="bg-card border-border rounded-lg p-4 transition-colors">
+                          <h3 className="font-semibold text-foreground text-lg mb-2">{facilitator.name}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{facilitator.role}</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{facilitator.credentials}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedWorkshop.materials && (
+                  <div className="mb-8">
+                    <h2 className="font-display text-3xl font-bold text-primary mb-4">Materials</h2>
+                    <ul className="list-disc pl-6">
+                      {selectedWorkshop.materials.map((material, index) => (
+                        <li key={index} className="text-sm text-muted-foreground">
+                          {material}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <h2 className="font-display text-3xl font-bold text-primary mb-6">Agenda</h2>
                 <div className="space-y-4">

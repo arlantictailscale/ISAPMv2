@@ -4,14 +4,25 @@ import type React from "react"
 import { useState, useRef, useCallback, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { Upload, X, FileText, AlertCircle, CheckCircle, RefreshCw, Shield, ImageIcon, FileWarning } from "lucide-react"
+import {
+  Upload,
+  X,
+  FileText,
+  AlertCircle,
+  CheckCircle,
+  RefreshCw,
+  Shield,
+  ImageIcon,
+  FileWarning,
+  FileIcon,
+} from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 const UPLOAD_CONFIG = {
   maxFileSize: 5 * 1024 * 1024, // 5MB
-  allowedTypes: ["image/jpeg", "image/jpg", "image/png"],
-  allowedExtensions: [".jpg", ".jpeg", ".png"],
+  allowedTypes: ["image/jpeg", "image/jpg", "image/png", "application/pdf"],
+  allowedExtensions: [".jpg", ".jpeg", ".png", ".pdf"],
   maxRetries: 3,
   retryDelay: 1000, // ms
   chunkSize: 1024 * 1024, // 1MB chunks for large files (future enhancement)
@@ -57,7 +68,7 @@ const validateFile = async (file: File): Promise<ValidationResult> => {
 
   // Check file type by MIME type
   if (!UPLOAD_CONFIG.allowedTypes.includes(file.type)) {
-    errors.push(`Invalid file type: ${file.type}. Only JPG and PNG files are allowed.`)
+    errors.push(`Invalid file type: ${file.type}. Only JPG, PNG, and PDF files are allowed.`)
   }
 
   // Check file extension
@@ -78,14 +89,14 @@ const validateFile = async (file: File): Promise<ValidationResult> => {
     errors.push("File appears to be empty or too small. Please upload a valid payment proof.")
   }
 
-  // Validate image content by reading file header (magic bytes)
+  // Validate file content by reading file header (magic bytes)
   try {
-    const isValidImage = await validateImageHeader(file)
-    if (!isValidImage) {
-      errors.push("File content does not match a valid image format. Please upload a genuine JPG or PNG file.")
+    const isValidFile = await validateFileHeader(file)
+    if (!isValidFile) {
+      errors.push("File content does not match a valid format. Please upload a genuine JPG, PNG, or PDF file.")
     }
   } catch (e) {
-    warnings.push("Could not verify image content. Proceeding with caution.")
+    warnings.push("Could not verify file content. Proceeding with caution.")
   }
 
   // Check for potentially suspicious file names
@@ -111,7 +122,7 @@ const validateFile = async (file: File): Promise<ValidationResult> => {
   }
 }
 
-const validateImageHeader = async (file: File): Promise<boolean> => {
+const validateFileHeader = async (file: File): Promise<boolean> => {
   return new Promise((resolve) => {
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -123,11 +134,18 @@ const validateImageHeader = async (file: File): Promise<boolean> => {
       // Check for PNG magic bytes (89504E47)
       const isPng = arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4e && arr[3] === 0x47
 
-      resolve(isJpeg || isPng)
+      // Check for PDF magic bytes (%PDF = 25504446)
+      const isPdf = arr[0] === 0x25 && arr[1] === 0x50 && arr[2] === 0x44 && arr[3] === 0x46
+
+      resolve(isJpeg || isPng || isPdf)
     }
     reader.onerror = () => resolve(false)
     reader.readAsArrayBuffer(file.slice(0, 8))
   })
+}
+
+const isPdfFile = (file: File): boolean => {
+  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
 }
 
 const sanitizeFileName = (fileName: string): string => {
@@ -389,13 +407,13 @@ export function PaymentProofUploader({
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mb-4">
               <Shield className="w-3 h-3" />
-              <span>Supported formats: JPG, PNG only (Max 5MB)</span>
+              <span>Supported formats: JPG, PNG, PDF (Max 5MB)</span>
             </div>
 
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/jpg,image/png"
+              accept="image/jpeg,image/jpg,image/png,application/pdf"
               onChange={handleInputChange}
               className="hidden"
               id="payment-proof-upload"
@@ -431,6 +449,8 @@ export function PaymentProofUploader({
                 >
                   {status === "error" ? (
                     <FileWarning className="w-5 h-5 text-red-600" />
+                  ) : isPdfFile(selectedFile) ? (
+                    <FileIcon className="w-5 h-5 text-cyan-600" />
                   ) : (
                     <FileText className="w-5 h-5 text-cyan-600" />
                   )}
@@ -522,14 +542,33 @@ export function PaymentProofUploader({
               </div>
             )}
 
-            {/* Image Preview */}
+            {/* File Preview - Image or PDF */}
             {previewUrl && status !== "error" && (
               <div className="border rounded-lg p-4 bg-white">
-                <img
-                  src={previewUrl || "/placeholder.svg"}
-                  alt="Payment proof preview"
-                  className="w-full h-auto max-h-64 object-contain rounded"
-                />
+                {selectedFile && isPdfFile(selectedFile) ? (
+                  <div className="flex flex-col items-center justify-center py-6 space-y-3">
+                    <div className="w-16 h-16 bg-red-50 rounded-lg flex items-center justify-center">
+                      <FileIcon className="w-10 h-10 text-red-500" />
+                    </div>
+                    <p className="text-sm font-medium text-center">{selectedFile.name}</p>
+                    <p className="text-xs text-muted-foreground">PDF Document</p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(previewUrl, "_blank")}
+                      className="mt-2"
+                    >
+                      Open PDF Preview
+                    </Button>
+                  </div>
+                ) : (
+                  <img
+                    src={previewUrl || "/placeholder.svg"}
+                    alt="Payment proof preview"
+                    className="w-full h-auto max-h-64 object-contain rounded"
+                  />
+                )}
               </div>
             )}
 
@@ -549,7 +588,9 @@ export function PaymentProofUploader({
       {/* Security Notice */}
       <div className="flex items-start gap-2 text-xs text-muted-foreground">
         <Shield className="w-3 h-3 flex-shrink-0 mt-0.5" />
-        <p>Files are validated for security and stored securely. Only valid payment proof images are accepted.</p>
+        <p>
+          Files are validated for security and stored securely. Only valid payment proof images and PDFs are accepted.
+        </p>
       </div>
     </div>
   )

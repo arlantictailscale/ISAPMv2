@@ -1,7 +1,7 @@
 export const UPLOAD_CONFIG = {
   maxFileSize: 5 * 1024 * 1024, // 5MB
-  allowedTypes: ["image/jpeg", "image/jpg", "image/png"],
-  allowedExtensions: [".jpg", ".jpeg", ".png"],
+  allowedTypes: ["image/jpeg", "image/jpg", "image/png", "application/pdf"],
+  allowedExtensions: [".jpg", ".jpeg", ".png", ".pdf"],
   maxRetries: 3,
   retryDelay: 1000,
   chunkSize: 1024 * 1024, // 1MB for future chunked uploads
@@ -92,7 +92,10 @@ export async function validateMagicBytes(file: File): Promise<boolean> {
       // PNG: 89504E47
       const isPng = arr[0] === 0x89 && arr[1] === 0x50 && arr[2] === 0x4e && arr[3] === 0x47
 
-      resolve(isJpeg || isPng)
+      // PDF: %PDF (25504446)
+      const isPdf = arr[0] === 0x25 && arr[1] === 0x50 && arr[2] === 0x44 && arr[3] === 0x46
+
+      resolve(isJpeg || isPng || isPdf)
     }
     reader.onerror = () => resolve(false)
     reader.readAsArrayBuffer(file.slice(0, 8))
@@ -141,4 +144,8 @@ export function createUploadId(orderId: string, userId: string): string {
   const timestamp = Date.now()
   const random = Math.random().toString(36).substring(2, 8)
   return `${orderId}-${userId.substring(0, 8)}-${timestamp}-${random}`
+}
+
+export function isPdfFile(file: File): boolean {
+  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
 }

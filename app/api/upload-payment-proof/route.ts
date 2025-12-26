@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         console.error("[v0] Invalid file type:", file.type)
         return NextResponse.json(
           {
-            error: "Invalid file type. Only JPG and PNG files are allowed.",
+            error: "Invalid file type. Only JPG, PNG, and PDF files are allowed.",
             details: { providedType: file.type, allowedTypes: UPLOAD_CONFIG.allowedTypes },
           },
           { status: 400 },
@@ -90,15 +90,16 @@ export async function POST(request: NextRequest) {
         const buffer = await file.arrayBuffer()
         const header = new Uint8Array(buffer.slice(0, 8))
 
-        // Check for JPEG (FFD8FF) or PNG (89504E47)
+        // Check for JPEG (FFD8FF), PNG (89504E47), or PDF (%PDF = 25504446)
         const isJpeg = header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff
         const isPng = header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4e && header[3] === 0x47
+        const isPdf = header[0] === 0x25 && header[1] === 0x50 && header[2] === 0x44 && header[3] === 0x46
 
-        if (!isJpeg && !isPng) {
-          console.error("[v0] File magic bytes do not match image format")
+        if (!isJpeg && !isPng && !isPdf) {
+          console.error("[v0] File magic bytes do not match expected format")
           return NextResponse.json(
             {
-              error: "File content does not match a valid image format. Please upload a genuine JPG or PNG file.",
+              error: "File content does not match a valid format. Please upload a genuine JPG, PNG, or PDF file.",
             },
             { status: 400 },
           )

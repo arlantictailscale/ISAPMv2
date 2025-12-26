@@ -51,12 +51,13 @@ export default function Footer() {
                     loading="lazy"
                   />
                   <Image
-                    src="/images/idi-logo.png"
+                    src="/images/7.png"
                     alt="IDI - Ikatan Dokter Indonesia (Indonesian Medical Association)"
                     width={80}
                     height={80}
                     className="h-10 md:h-12 w-auto"
                     loading="lazy"
+                    unoptimized
                   />
                 </div>
               </div>

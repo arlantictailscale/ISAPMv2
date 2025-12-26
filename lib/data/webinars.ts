@@ -165,7 +165,7 @@ const webinar2: Webinar = {
       organizationShort: "Pain Specialist",
       topic:
         "Optimization of Pharmacological Therapy with an Individualized Approach: Back-to-Basics Patterns in the Modern Era",
-      image: "/images/dr.jpeg",
+      image: "https://blob.v0.app/j8kL2.jpeg",
       color: "bg-teal-600",
     },
   ],

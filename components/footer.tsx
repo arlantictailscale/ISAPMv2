@@ -149,12 +149,12 @@ export default function Footer() {
               <div className="flex items-start gap-3">
                 <Instagram size={18} className="mt-0.5 flex-shrink-0" />
                 <a
-                  href="https://www.instagram.com/isapm_id/"
+                  href="https://www.instagram.com/isapm2026/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
                 >
-                  @isapm_id
+                  @isapm2026
                 </a>
               </div>
               <div className="pt-2">

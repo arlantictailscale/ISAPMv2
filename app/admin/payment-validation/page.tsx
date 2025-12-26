@@ -300,7 +300,7 @@ export default function PaymentValidationPage() {
   const calculateOrderTotal = (items: any[]) => {
     return items.reduce((sum, item) => {
       const nights = item.nights || 1
-      return sum + (item.unit_price || 0) * nights + (item.extra_beds || 0) * (item.unit_price || 0)
+      return sum + (item.unit_price || 0) * nights
     }, 0)
   }
 
@@ -515,58 +515,74 @@ export default function PaymentValidationPage() {
               </div>
             </div>
 
-            {/* Order Items */}
-            <div className="space-y-2 pt-2 border-t">
-              <p className="text-sm font-medium text-muted-foreground">Order Items:</p>
+            {/* Order Items - Improved layout */}
+            <div className="space-y-3 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-muted-foreground" />
+                <p className="font-semibold text-muted-foreground">Order Items Breakdown:</p>
+              </div>
               {items.map((item, idx) => (
-                <div key={idx} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
-                  <div className="flex items-center gap-2 flex-wrap min-w-0">
-                    {item.item_type === "event" ? (
-                      <>
-                        {getEventTypeBadge(item.event_label)}
-                        <span className="break-words">{item.event_label}</span>
-                      </>
-                    ) : item.item_type === "webinar" ? (
-                      <>
-                        <Badge
-                          className={`${BADGE_COLORS.WEBINAR.bg} ${BADGE_COLORS.WEBINAR.text} ${BADGE_COLORS.WEBINAR.border}`}
-                        >
-                          {BADGE_COLORS.WEBINAR.label}
-                        </Badge>
-                        <span className="break-words">{item.event_label}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Badge
-                          className={`${BADGE_COLORS.HOTEL.bg} ${BADGE_COLORS.HOTEL.text} ${BADGE_COLORS.HOTEL.border}`}
-                        >
-                          {BADGE_COLORS.HOTEL.label}
-                        </Badge>
-                        <span className="break-words">
-                          {item.hotel_room_type} ({item.nights} nights)
-                        </span>
-                        {item.extra_beds && item.extra_beds > 0 && (
-                          <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
-                            +{item.extra_beds} extra bed{item.extra_beds > 1 ? "s" : ""} (incl. breakfast)
+                <div key={idx} className="bg-muted/50 rounded-lg p-3 space-y-1.5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                      {item.item_type === "event" ? (
+                        <>
+                          {getEventTypeBadge(item.event_label)}
+                          <span className="break-words text-sm">{item.event_label}</span>
+                        </>
+                      ) : item.item_type === "webinar" ? (
+                        <>
+                          <Badge
+                            className={`${BADGE_COLORS.WEBINAR.bg} ${BADGE_COLORS.WEBINAR.text} ${BADGE_COLORS.WEBINAR.border}`}
+                          >
+                            {BADGE_COLORS.WEBINAR.label}
+                          </Badge>
+                          <span className="break-words text-sm">{item.event_label}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Badge
+                            className={`${BADGE_COLORS.HOTEL.bg} ${BADGE_COLORS.HOTEL.text} ${BADGE_COLORS.HOTEL.border}`}
+                          >
+                            {BADGE_COLORS.HOTEL.label}
+                          </Badge>
+                          <span className="break-words text-sm font-medium">
+                            {item.hotel_room_type} ({item.nights} night{item.nights > 1 ? "s" : ""})
                           </span>
-                        )}
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-semibold text-base">
+                        {item.item_type === "hotel" && item.nights
+                          ? formatCurrency(item.unit_price * item.nights, payment.currency)
+                          : formatCurrency(item.unit_price, payment.currency)}
+                      </div>
+                      {item.item_type === "hotel" && item.nights && (
+                        <div className="text-xs text-muted-foreground">
+                          {formatCurrency(item.unit_price, payment.currency)} × {item.nights}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <span className="font-medium whitespace-nowrap">
-                    {item.item_type === "hotel" && item.nights
-                      ? formatCurrency(
-                          item.unit_price * item.nights + (item.extra_beds || 0) * (item.unit_price || 0),
-                          payment.currency,
-                        )
-                      : formatCurrency(item.unit_price, payment.currency)}
-                  </span>
+
+                  {item.item_type === "hotel" && item.extra_beds && item.extra_beds > 0 && (
+                    <div className="pl-2 border-l-2 border-amber-300">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-amber-700 font-medium flex items-center gap-1">
+                          <span className="inline-block w-1.5 h-1.5 bg-amber-600 rounded-full"></span>+{item.extra_beds}{" "}
+                          extra bed{item.extra_beds > 1 ? "s" : ""} (incl. breakfast)
+                        </span>
+                        <span className="text-xs text-amber-600 font-medium">Included in rate</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
 
             {/* Payment Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t text-sm">
               <div className="min-w-0">
                 <p className="text-muted-foreground">Payment Method</p>
                 <p className="font-medium truncate">
@@ -633,12 +649,19 @@ export default function PaymentValidationPage() {
               </div>
             )}
 
-            {/* Total */}
-            <div className="pt-4 border-t flex justify-between items-center">
-              <span className="font-semibold">Total Amount:</span>
-              <span className="text-xl font-bold text-primary">
-                {formatCurrency(calculatedTotal, payment.currency)}
-              </span>
+            {/* Total - Enhanced styling and separation */}
+            <div className="pt-4 border-t-2 border-primary/20">
+              <div className="bg-gradient-to-r from-primary/5 to-transparent rounded-lg p-4">
+                <div className="flex justify-between items-center">
+                  <span className="font-semibold text-base">Total Amount:</span>
+                  <span className="text-2xl font-bold text-primary">
+                    {formatCurrency(calculatedTotal, payment.currency)}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground mt-2">
+                  {items.length} item{items.length > 1 ? "s" : ""}
+                </div>
+              </div>
             </div>
 
             {/* Payment Proof Thumbnail - only show for non-sponsored payments */}

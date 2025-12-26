@@ -358,13 +358,34 @@ export default async function MyWebinarsPage() {
       user_id,
       email,
       full_name,
-      order_items!inner(id, event_id, event_label, item_type),
-      order_payments!inner(payment_status, verified_at)
+      order_items(id, event_id, event_label, item_type),
+      order_payments(payment_status, verified_at)
     `)
     .eq("user_id", user.id)
-    .eq("order_items.item_type", "webinar")
-    .eq("order_payments.payment_status", "verified")
     .order("created_at", { ascending: false })
+
+  console.log("[v0] Webinar orders query result:", {
+    count: webinarOrders?.length || 0,
+    orders: webinarOrders?.map((o: any) => ({
+      id: o.id,
+      items: o.order_items?.filter((i: any) => i.item_type === "webinar"),
+      payment_status: o.order_payments?.[0]?.payment_status,
+    })),
+  })
+
+  const webinarOrdersFiltered = (webinarOrders || []).filter((order: any) => {
+    const hasWebinarItem = order.order_items?.some((item: any) => item.item_type === "webinar")
+    const isVerified = order.order_payments?.[0]?.payment_status === "verified"
+    return hasWebinarItem && isVerified
+  })
+
+  console.log("[v0] Filtered webinar orders:", {
+    count: webinarOrdersFiltered.length,
+    orders: webinarOrdersFiltered.map((o: any) => ({
+      id: o.id,
+      items: o.order_items?.filter((i: any) => i.item_type === "webinar"),
+    })),
+  })
 
   // Fetch symposium bonus grants
   const { data: bonusGrants } = await supabase
@@ -374,7 +395,7 @@ export default async function MyWebinarsPage() {
     .eq("status", "active")
     .order("created_at", { ascending: false })
 
-  const approvedWebinars = (webinarOrders || []) as WebinarOrder[]
+  const approvedWebinars = (webinarOrdersFiltered || []) as WebinarOrder[]
   const uniqueBonusGrants = (bonusGrants || []).filter(
     (grant, index, self) => index === self.findIndex((g) => g.webinar_id === grant.webinar_id),
   ) as WebinarGrant[]

@@ -129,24 +129,77 @@ const webinar1: Webinar = {
   ],
 }
 
-// Webinar 2 - Coming Soon Placeholder
+// Webinar 2 - Ending Silent Agony (Active)
 const webinar2: Webinar = {
   id: "webinar_2",
-  slug: "webinar-2",
-  title: "Webinar 2 - Coming Soon",
-  shortTitle: "Webinar 2",
+  slug: "ending-silent-agony",
+  title: "Ending Silent Agony: Peran Intervensi Anestesiologi dalam Mengurangi Nyeri Kanker Secara Signifikan",
+  shortTitle: "Ending Silent Agony",
   description:
-    "Details for this webinar will be announced soon. Stay tuned for updates on topics, speakers, and registration.",
-  date: "",
-  time: "",
+    "Webinar ini membahas peran penting intervensi anestesiologi dalam mengurangi nyeri kanker secara signifikan. Dengan tema 'Bridging The Gaps: Equity, Access, and Excellence in Pain Management', para ahli akan menyajikan modalitas intervensi generasi baru dan optimasi terapi farmakologi dengan pendekatan individual.",
+  date: "2026-02-05",
+  time: "13:00",
   timezone: "WIB",
-  duration: "TBD",
-  price: 0,
+  duration: "1 hour 15 minutes",
+  price: 100000,
   currency: "IDR",
-  status: "coming_soon",
-  tags: [],
-  speakers: [],
-  benefits: [],
+  status: "active",
+  tags: ["Cancer Pain", "Intervention", "Pharmacology", "Pain Management", "Anesthesiology"],
+  speakers: [
+    {
+      id: "speaker_yuddi",
+      name: "Dr. dr. Yuddi Gumara, Sp.An-TI, Subs.MN(K)",
+      title: "Speaker",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic:
+        "Modalitas Intervensi Generasi Baru: Radiofrequency Canggih, Cryoablation, Neurolytic Innovations, dan Implantable Drug Delivery Systems",
+      image: "/images/dr.jpeg",
+      color: "bg-blue-600",
+    },
+    {
+      id: "speaker_tasrif",
+      name: "Dr. dr. Tasrif Hamdi, Sp.An-TI, Subsp.M.N(K)",
+      title: "Speaker",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic: "Optimasi Terapi Farmakologi dengan Pendekatan Individual: Pola Back-to-Basic dalam Era Modern",
+      image: "/images/dr.jpeg",
+      color: "bg-teal-600",
+    },
+  ],
+  benefits: [
+    {
+      icon: "Video",
+      title: "Live Webinar Access",
+      description: "Join the live Zoom session with real-time interaction",
+    },
+    {
+      icon: "MessageCircle",
+      title: "Interactive Q&A",
+      description: "10-minute dedicated Q&A session with moderator",
+    },
+    {
+      icon: "Award",
+      title: "Certificate",
+      description: "Receive participation certificate",
+    },
+    {
+      icon: "PlayCircle",
+      title: "Recording Access",
+      description: "30-day access to webinar recording",
+    },
+    {
+      icon: "FileText",
+      title: "Materials",
+      description: "Download presentation slides and materials",
+    },
+    {
+      icon: "Gift",
+      title: "Free for Symposium",
+      description: "Complimentary access for symposium registrants",
+    },
+  ],
 }
 
 // Webinar 3 - Coming Soon Placeholder

@@ -102,7 +102,6 @@ const validateFile = async (file: File): Promise<ValidationResult> => {
   // Check for potentially suspicious file names
   const sanitizedFileName = sanitizeFileName(file.name)
   if (sanitizedFileName !== file.name) {
-    warnings.push("File name has been sanitized for security purposes.")
   }
 
   // Generate file hash for deduplication (optional)

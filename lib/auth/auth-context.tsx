@@ -28,6 +28,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 // Session cache with TTL
 const SESSION_CACHE_KEY = "isapm_auth_session_cache"
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const AUTH_TIMEOUT = 5000 // 5 second timeout for auth operations
 
 interface CachedSession {
   user: User | null
@@ -70,6 +71,11 @@ function clearCachedSession() {
   }
 }
 
+// Helper to add timeout to promises
+function withTimeout<T>(promise: Promise<T>, ms: number, fallback: T): Promise<T> {
+  return Promise.race([promise, new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms))])
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
@@ -98,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("[AuthContext] Failed to fetch profile:", err)
       return null
     }
-  }, []) // No dependencies - uses ref
+  }, [])
 
   const signOut = useCallback(async () => {
     await supabaseRef.current.auth.signOut()
@@ -117,11 +123,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastUserId.current = null
 
     try {
-      const {
-        data: { session: currentSession },
-      } = await supabaseRef.current.auth.getSession()
+      const result = await withTimeout(supabaseRef.current.auth.getSession(), AUTH_TIMEOUT, {
+        data: { session: null },
+        error: null,
+      })
 
       if (!isMounted.current) return
+
+      const currentSession = result.data.session
 
       if (currentSession?.user) {
         setUser(currentSession.user)
@@ -153,6 +162,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const initializeAuth = async () => {
       // Already initialized, skip
       if (isInitialized.current) return
+      isInitialized.current = true // Set early to prevent double init
 
       // Check cache first for instant UI
       const cached = getCachedSession()
@@ -161,24 +171,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(cached.profile)
         lastUserId.current = cached.user.id
         setIsLoading(false)
+        // Still validate in background but don't block UI
       }
 
       try {
-        const {
-          data: { session: currentSession },
-          error: sessionError,
-        } = await supabase.auth.getSession()
+        // Add timeout to prevent hanging
+        const result = await withTimeout(supabase.auth.getSession(), AUTH_TIMEOUT, {
+          data: { session: null },
+          error: null,
+        })
 
         if (!isMounted.current) return
 
+        const sessionError = result.error
+        const currentSession = result.data.session
+
         if (sessionError) {
           console.error("[AuthContext] Session error:", sessionError.message)
-          setUser(null)
-          setSession(null)
-          setProfile(null)
-          clearCachedSession()
+          if (!cached?.user) {
+            setUser(null)
+            setSession(null)
+            setProfile(null)
+            clearCachedSession()
+          }
           setIsLoading(false)
-          isInitialized.current = true
           return
         }
 
@@ -188,14 +204,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           // Only fetch profile if user changed or no cached profile
           if (currentSession.user.id !== lastUserId.current) {
-            const userProfile = await fetchProfile(currentSession.user.id)
+            const userProfile = await withTimeout(fetchProfile(currentSession.user.id), AUTH_TIMEOUT, null)
             if (isMounted.current) {
               setProfile(userProfile)
               setCachedSession(currentSession.user, userProfile)
               lastUserId.current = currentSession.user.id
             }
           }
-        } else {
+        } else if (!cached?.user) {
+          // Only clear if no cache
           setUser(null)
           setSession(null)
           setProfile(null)
@@ -205,13 +222,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (isMounted.current) {
           setIsLoading(false)
-          isInitialized.current = true
         }
       } catch (err) {
         console.error("[AuthContext] Auth initialization error:", err)
         if (isMounted.current) {
           setIsLoading(false)
-          isInitialized.current = true
         }
       }
     }
@@ -255,7 +270,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isMounted.current = false
       subscription?.unsubscribe()
     }
-  }, [fetchProfile]) // Only depends on stable fetchProfile
+  }, [fetchProfile])
 
   const isAdmin = profile?.role === "admin"
 

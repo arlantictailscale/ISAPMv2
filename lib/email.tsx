@@ -206,12 +206,9 @@ export async function sendOrderConfirmationEmail({
         let itemName = ""
         const itemType = item.item_type.replace("_", " ").toUpperCase()
 
-        // Calculate correct item price (multiply by nights for hotels)
         const nights = item.nights || 1
         const extraBeds = item.extra_beds || 0
-        const extraBedCost = extraBeds * EXTRA_BED_PRICE * nights
-        const roomPrice = item.item_type === "hotel" ? item.unit_price * nights : item.unit_price
-        const itemPrice = roomPrice + extraBedCost // Include extra bed cost
+        const itemPrice = item.item_type === "hotel" ? item.unit_price * nights : item.unit_price
 
         if (item.item_type === "workshop" || item.item_type === "symposium") {
           const eventName = item.event_label || `${itemType}`
@@ -240,18 +237,10 @@ export async function sendOrderConfirmationEmail({
           const priceLines = []
           if (nights > 1) {
             priceLines.push(
-              `${currency} ${item.unit_price.toLocaleString()} × ${nights} nights = ${currency} ${roomPrice.toLocaleString()}`,
+              `${currency} ${item.unit_price.toLocaleString()} × ${nights} nights = ${currency} ${itemPrice.toLocaleString()}`,
             )
           } else {
-            priceLines.push(`${currency} ${roomPrice.toLocaleString()}`)
-          }
-          if (extraBeds > 0) {
-            priceLines.push(
-              `<span style="color: #d97706;">+ Extra Bed: ${currency} ${extraBedCost.toLocaleString()}</span>`,
-            )
-          }
-          if (extraBeds > 0 || nights > 1) {
-            priceLines.push(`<strong>Total: ${currency} ${itemPrice.toLocaleString()}</strong>`)
+            priceLines.push(`${currency} ${itemPrice.toLocaleString()}`)
           }
           priceDisplay = priceLines.join("<br/>")
         } else {
@@ -924,8 +913,8 @@ export async function sendPaymentConfirmationWithInvoice({
           <body>
             <div class="container">
               <div class="header">
-                <h1>${isSponsored ? "✓ Registration Confirmed" : "✓ Payment Confirmed"}</h1>
-                <p>${isSponsored ? "Your sponsored registration is complete" : "Your invoice is attached"}</p>
+                <h1>✓ Order Confirmed!</h1>
+                <p>Thank you for your order</p>
               </div>
               <div class="content">
                 <p style="font-size: 16px; color: #1a202c; margin-top: 0;">Dear ${userName},</p>

@@ -579,12 +579,12 @@ export default function HotelBookingPage() {
                             <SelectContent>
                               {ROOM_TYPES.map((rt) => (
                                 <SelectItem key={rt.id} value={rt.id}>
-                                  <div className="flex items-center justify-between w-full">
-                                    <span>{rt.name}</span>
-                                    <span className="ml-4 text-primary font-semibold">
+                                  <span className="flex items-center justify-between w-full gap-4">
+                                    <span className="pointer-events-auto">{rt.name}</span>
+                                    <span className="text-primary font-semibold pointer-events-auto whitespace-nowrap">
                                       Rp {rt.price.toLocaleString("id-ID")}/night
                                     </span>
-                                  </div>
+                                  </span>
                                 </SelectItem>
                               ))}
                             </SelectContent>

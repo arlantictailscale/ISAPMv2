@@ -277,14 +277,20 @@ function PurchasedWebinarCard({ entry }: { entry: WebinarEntry }) {
           </div>
         </div>
 
-        {/* Webinar Content Display */}
-        {webinarDetails.slug && <WebinarContentDisplay webinarSlug={webinarDetails.slug} />}
+        {/* Webinar Access & Materials Section */}
+        <div className="mb-8">
+          <h3 className="font-semibold mb-4 flex items-center gap-2">
+            <Play className="w-5 h-5 text-indigo-600" />
+            Webinar Access & Materials
+          </h3>
+          <WebinarContentDisplay webinarId={webinarDetails.id} />
+        </div>
 
         {/* Access Button */}
         {webinarDetails.slug && (
-          <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t">
+          <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
             <Link href={`/webinar/${webinarDetails.slug}`} className="flex-1">
-              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+              <Button className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
                 <Play className="w-4 h-4 mr-2" />
                 View Webinar Details
               </Button>

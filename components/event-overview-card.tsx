@@ -21,8 +21,9 @@ export function EventOverviewCard() {
           <p className="text-sm font-medium">April 16-19, 2026</p>
           <ul className="text-sm text-muted-foreground space-y-1 mt-2">
             <li>• Day 1-2: CPD Courses (April 16-17)</li>
-            <li>• Day 3: Workshop (April 17)</li>
-            <li>• Day 4: Symposium (April 18)</li>
+            <li>• Day 2: Workshop (April 17)</li>
+            <li>• Day 3: Symposium (April 18)</li>
+            <li>• Day 4: City Tours (April 19)</li>
           </ul>
         </div>
 

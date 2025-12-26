@@ -154,7 +154,7 @@ const webinar2: Webinar = {
       organizationShort: "Pain Specialist",
       topic:
         "Next-Generation Intervention Modalities: Advanced Radiofrequency, Cryoablation, Neurolytic Innovations, and Implantable Drug Delivery Systems",
-      image: "/images/dr.jpeg",
+      image: "/images/dr-yuddi.jpeg",
       color: "bg-blue-600",
     },
     {
@@ -165,7 +165,7 @@ const webinar2: Webinar = {
       organizationShort: "Pain Specialist",
       topic:
         "Optimization of Pharmacological Therapy with an Individualized Approach: Back-to-Basics Patterns in the Modern Era",
-      image: "/images/dr.jpeg",
+      image: "/images/dr-tasrif.jpeg",
       color: "bg-teal-600",
     },
   ],

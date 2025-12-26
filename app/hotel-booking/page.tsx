@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
@@ -81,6 +81,8 @@ export default function HotelBookingPage() {
     },
   ])
 
+  const roomRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+
   useEffect(() => {
     checkAuth()
     loadRoomAvailability()
@@ -148,6 +150,16 @@ export default function HotelBookingPage() {
     }
     // Collapse other rooms when adding new one
     setRooms([...rooms.map((r) => ({ ...r, isExpanded: false })), newRoom])
+
+    setTimeout(() => {
+      const newRoomElement = roomRefs.current[newRoom.id]
+      if (newRoomElement) {
+        newRoomElement.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        })
+      }
+    }, 0)
   }
 
   const removeRoom = (id: string) => {
@@ -444,7 +456,13 @@ export default function HotelBookingPage() {
                 const { roomCost, extraBedCost, total: roomTotal } = calculateRoomTotal(room)
 
                 return (
-                  <Card key={room.id} className="border-primary/20 overflow-hidden">
+                  <Card
+                    key={room.id}
+                    ref={(el) => {
+                      if (el) roomRefs.current[room.id] = el
+                    }}
+                    className="border-primary/20 overflow-hidden"
+                  >
                     {/* Room Header - Always Visible */}
                     <div
                       className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/50 transition-colors"

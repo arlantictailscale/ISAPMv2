@@ -41,7 +41,6 @@ function getCachedSession(): CachedSession | null {
     const cached = sessionStorage.getItem(SESSION_CACHE_KEY)
     if (!cached) return null
     const parsed: CachedSession = JSON.parse(cached)
-    // Check if cache is still valid
     if (Date.now() - parsed.timestamp > CACHE_TTL) {
       sessionStorage.removeItem(SESSION_CACHE_KEY)
       return null
@@ -76,122 +75,150 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+
   const isMounted = useRef(true)
   const isInitialized = useRef(false)
   const lastUserId = useRef<string | null>(null)
-  const supabase = createClient()
+  const supabaseRef = useRef(createClient())
 
-  const fetchProfile = useCallback(
-    async (userId: string): Promise<UserProfile | null> => {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id, full_name, first_name, last_name, role, phone")
-          .eq("id", userId)
-          .maybeSingle()
+  const fetchProfile = useCallback(async (userId: string): Promise<UserProfile | null> => {
+    try {
+      const { data, error } = await supabaseRef.current
+        .from("profiles")
+        .select("id, full_name, first_name, last_name, role, phone")
+        .eq("id", userId)
+        .maybeSingle()
 
-        if (error) {
-          console.error("[v0] AuthContext: Error fetching profile:", error.message)
-          return null
-        }
-        return data as UserProfile | null
-      } catch (err) {
-        console.error("[v0] AuthContext: Failed to fetch profile:", err)
+      if (error) {
+        console.error("[AuthContext] Error fetching profile:", error.message)
         return null
       }
-    },
-    [supabase],
-  )
-
-  const initializeAuth = useCallback(async () => {
-    if (!isMounted.current) return
-
-    // Check cache first for instant UI
-    const cached = getCachedSession()
-    if (cached?.user) {
-      setUser(cached.user)
-      setProfile(cached.profile)
-      lastUserId.current = cached.user.id
-      setIsLoading(false)
-      // Continue to validate in background but don't block UI
-    }
-
-    try {
-      // Use getSession for faster initial load (uses cookies, minimal network overhead)
-      const {
-        data: { session: currentSession },
-        error: sessionError,
-      } = await supabase.auth.getSession()
-
-      if (!isMounted.current) return
-
-      if (sessionError) {
-        console.error("[v0] AuthContext: Session error:", sessionError.message)
-        setUser(null)
-        setSession(null)
-        setProfile(null)
-        clearCachedSession()
-        setIsLoading(false)
-        isInitialized.current = true
-        return
-      }
-
-      if (currentSession?.user) {
-        setUser(currentSession.user)
-        setSession(currentSession)
-
-        // Only fetch profile if user changed or no cached profile
-        if (currentSession.user.id !== lastUserId.current || !profile) {
-          const userProfile = await fetchProfile(currentSession.user.id)
-          if (isMounted.current) {
-            setProfile(userProfile)
-            setCachedSession(currentSession.user, userProfile)
-            lastUserId.current = currentSession.user.id
-          }
-        }
-      } else {
-        setUser(null)
-        setSession(null)
-        setProfile(null)
-        clearCachedSession()
-        lastUserId.current = null
-      }
-
-      setIsLoading(false)
-      isInitialized.current = true
+      return data as UserProfile | null
     } catch (err) {
-      console.error("[v0] AuthContext: Auth initialization error:", err)
-      if (isMounted.current) {
-        setIsLoading(false)
-        isInitialized.current = true
-      }
+      console.error("[AuthContext] Failed to fetch profile:", err)
+      return null
     }
-  }, [supabase, fetchProfile, profile])
-
-  const refreshAuth = useCallback(async () => {
-    if (!isMounted.current) return
-
-    setIsLoading(true)
-    isInitialized.current = false
-    clearCachedSession()
-    lastUserId.current = null
-    await initializeAuth()
-  }, [initializeAuth])
+  }, []) // No dependencies - uses ref
 
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut()
+    await supabaseRef.current.auth.signOut()
     setUser(null)
     setSession(null)
     setProfile(null)
     clearCachedSession()
     lastUserId.current = null
-  }, [supabase])
+  }, [])
+
+  const refreshAuth = useCallback(async () => {
+    if (!isMounted.current) return
+
+    setIsLoading(true)
+    clearCachedSession()
+    lastUserId.current = null
+
+    try {
+      const {
+        data: { session: currentSession },
+      } = await supabaseRef.current.auth.getSession()
+
+      if (!isMounted.current) return
+
+      if (currentSession?.user) {
+        setUser(currentSession.user)
+        setSession(currentSession)
+        const userProfile = await fetchProfile(currentSession.user.id)
+        if (isMounted.current) {
+          setProfile(userProfile)
+          setCachedSession(currentSession.user, userProfile)
+          lastUserId.current = currentSession.user.id
+        }
+      } else {
+        setUser(null)
+        setSession(null)
+        setProfile(null)
+      }
+    } catch (err) {
+      console.error("[AuthContext] Refresh error:", err)
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false)
+      }
+    }
+  }, [fetchProfile])
 
   useEffect(() => {
     isMounted.current = true
+    const supabase = supabaseRef.current
+
+    const initializeAuth = async () => {
+      // Already initialized, skip
+      if (isInitialized.current) return
+
+      // Check cache first for instant UI
+      const cached = getCachedSession()
+      if (cached?.user) {
+        setUser(cached.user)
+        setProfile(cached.profile)
+        lastUserId.current = cached.user.id
+        setIsLoading(false)
+      }
+
+      try {
+        const {
+          data: { session: currentSession },
+          error: sessionError,
+        } = await supabase.auth.getSession()
+
+        if (!isMounted.current) return
+
+        if (sessionError) {
+          console.error("[AuthContext] Session error:", sessionError.message)
+          setUser(null)
+          setSession(null)
+          setProfile(null)
+          clearCachedSession()
+          setIsLoading(false)
+          isInitialized.current = true
+          return
+        }
+
+        if (currentSession?.user) {
+          setUser(currentSession.user)
+          setSession(currentSession)
+
+          // Only fetch profile if user changed or no cached profile
+          if (currentSession.user.id !== lastUserId.current) {
+            const userProfile = await fetchProfile(currentSession.user.id)
+            if (isMounted.current) {
+              setProfile(userProfile)
+              setCachedSession(currentSession.user, userProfile)
+              lastUserId.current = currentSession.user.id
+            }
+          }
+        } else {
+          setUser(null)
+          setSession(null)
+          setProfile(null)
+          clearCachedSession()
+          lastUserId.current = null
+        }
+
+        if (isMounted.current) {
+          setIsLoading(false)
+          isInitialized.current = true
+        }
+      } catch (err) {
+        console.error("[AuthContext] Auth initialization error:", err)
+        if (isMounted.current) {
+          setIsLoading(false)
+          isInitialized.current = true
+        }
+      }
+    }
+
     initializeAuth()
 
-    // Single auth state change listener for the entire app
+    // Single auth state change listener
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, newSession) => {
@@ -220,16 +247,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             lastUserId.current = newSession.user.id
           }
         }
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     })
 
     return () => {
       isMounted.current = false
       subscription?.unsubscribe()
     }
-  }, [supabase, initializeAuth, fetchProfile])
+  }, [fetchProfile]) // Only depends on stable fetchProfile
 
   const isAdmin = profile?.role === "admin"
 

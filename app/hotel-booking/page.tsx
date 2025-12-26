@@ -406,18 +406,25 @@ export default function HotelBookingPage() {
       <Navigation />
       <div className="min-h-screen bg-muted/30 pt-16 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main Title and Description */}
+          <div className="mb-12 space-y-3">
+            <h1 className="text-3xl sm:text-4xl font-bold">Hotel Accommodation</h1>
+            <p className="text-base font-medium text-muted-foreground">ISAPM 8th National Meeting 2026</p>
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+              Reserve your accommodation at our exclusive event venue. Book multiple rooms with flexible dates - each
+              room can have its own check-in and check-out dates.
+            </p>
+          </div>
+
+          {/* Event Overview Card - Below Title and Description */}
+          <div className="mb-12">
+            <EventOverviewCard />
+          </div>
+
+          {/* Rest of Content */}
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
             {/* Main Content - Left Column */}
-            <div className="lg:col-span-2 order-2 lg:order-1">
-              <div className="mb-12 space-y-3">
-                <h1 className="text-3xl sm:text-4xl font-bold">Hotel Accommodation</h1>
-                <p className="text-base font-medium text-muted-foreground">ISAPM 8th National Meeting 2026</p>
-                <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-                  Reserve your accommodation at our exclusive event venue. Book multiple rooms with flexible dates -
-                  each room can have its own check-in and check-out dates.
-                </p>
-              </div>
-
+            <div className="lg:col-span-2">
               <div className="space-y-6">
                 {rooms.map((room, index) => (
                   <Card
@@ -724,9 +731,7 @@ export default function HotelBookingPage() {
             </div>
 
             {/* Sidebar - Right Column - Shows first on mobile, last on desktop */}
-            <div className="lg:col-span-1 order-1 lg:order-2">
-              <EventOverviewCard />
-            </div>
+            <div className="lg:col-span-1">{/* Placeholder for additional sidebar content */}</div>
           </div>
         </div>
       </div>

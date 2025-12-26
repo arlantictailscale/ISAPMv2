@@ -131,8 +131,27 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    if (isSaving) {
+      console.log("[v0] Already saving, ignoring submission")
+      return
+    }
+
     if (!formData.fullName.trim()) {
       toast.error("Full name is required")
+      return
+    }
+    if (!formData.satuSehatName.trim()) {
+      toast.error("Name on Satu Sehat Account is required")
+      return
+    }
+    if (!formData.satuSehatEmail.trim()) {
+      toast.error("Email registered on Satu Sehat Account is required")
+      return
+    }
+    // Validate email format for satuSehatEmail
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.satuSehatEmail)) {
+      toast.error("Please enter a valid Satu Sehat email address")
       return
     }
     if (!formData.nik.trim() || formData.nik.length !== 16) {
@@ -354,7 +373,7 @@ export default function ProfilePage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <form onSubmit={handleSubmit} className="space-y-6">
+                      <form onSubmit={handleSubmit} noValidate className="space-y-6">
                         <div>
                           <label className="block text-sm font-semibold mb-2">
                             Full Name + Titles/Degrees <span className="text-red-500">*</span>

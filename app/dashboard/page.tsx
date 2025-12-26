@@ -51,6 +51,10 @@ export default async function DashboardPage() {
 
   const isAdmin = profile?.role === "admin"
 
+  const displayName = profile?.first_name
+    ? `${profile.first_name}${profile.last_name ? " " + profile.last_name : ""}`
+    : user.email?.split("@")[0] || "User"
+
   const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
   const profileStatus = checkProfileCompleteness(fullProfile)
 
@@ -428,7 +432,7 @@ export default async function DashboardPage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h1 className="font-display text-4xl sm:text-5xl font-bold mb-2 text-balance">
-                  Welcome back, {profile?.first_name || "User"}!
+                  Welcome back, {displayName}!
                 </h1>
                 <p className="text-lg text-muted-foreground">
                   {isAdmin ? "Admin Dashboard - Manage the conference" : "Your ISAPM 2026 conference hub"}

@@ -416,11 +416,6 @@ export default function HotelBookingPage() {
             </p>
           </div>
 
-          {/* Event Overview Card - Below Title and Description */}
-          <div className="mb-12">
-            <EventOverviewCard />
-          </div>
-
           {/* Rest of Content */}
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
             {/* Main Content - Left Column */}
@@ -730,8 +725,12 @@ export default function HotelBookingPage() {
               </div>
             </div>
 
-            {/* Sidebar - Right Column - Shows first on mobile, last on desktop */}
-            <div className="lg:col-span-1">{/* Placeholder for additional sidebar content */}</div>
+            {/* Sidebar - Right Column (Takes 1 col on desktop) */}
+            <div className="lg:col-span-1 order-2 lg:order-none">
+              <div className="sticky top-24 space-y-6">
+                <EventOverviewCard />
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -5,7 +5,6 @@ import { Analytics } from "@vercel/analytics/next"
 import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Toaster } from "sonner"
-import { AuthProvider } from "@/lib/auth/auth-context"
 import { CartProvider } from "@/lib/cart/cart-context"
 import { ScrollProgressBar } from "@/components/scroll-progress-bar"
 import { MobileBottomNav } from "@/components/mobile-bottom-nav"
@@ -199,12 +198,11 @@ export default function RootLayout({
         <OfflineIndicator />
         <ScrollProgressBar />
         <LinkPrefetch />
-        <AuthProvider>
-          <CartProvider>
-            <div className="pb-16 md:pb-0">{children}</div>
-            <MobileBottomNav />
-          </CartProvider>
-        </AuthProvider>
+        <CartProvider>
+          <div className="pb-16 md:pb-0">{children}</div>
+          <MobileBottomNav />
+          {/* <PWAInstallPrompt /> */}
+        </CartProvider>
         <Analytics />
         <SpeedInsights />
         <Toaster

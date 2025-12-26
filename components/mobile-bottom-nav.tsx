@@ -1,10 +1,14 @@
 "use client"
 
+import { useEffect } from "react"
+
+import { useState } from "react"
+
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, CalendarDays, Video, Hotel, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useAuth } from "@/lib/auth/auth-context"
+import { createBrowserClient } from "@supabase/ssr"
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -16,9 +20,40 @@ const navItems = [
 
 export function MobileBottomNav() {
   const pathname = usePathname()
-  const { user, isLoading } = useAuth()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (isLoading || !user) {
+  useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
+
+    // Check initial auth state
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      setIsLoggedIn(!!session?.user)
+      setIsLoading(false)
+    }
+
+    checkAuth()
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsLoggedIn(!!session?.user)
+      setIsLoading(false)
+    })
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  if (isLoading || !isLoggedIn) {
     return null
   }
 

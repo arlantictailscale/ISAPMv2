@@ -22,27 +22,32 @@ import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { User } from "lucide-react"
 import { EARLY_BIRD_DEADLINE } from "@/lib/data/event-pricing"
-import { useAuth } from "@/lib/auth/auth-context"
 
 export default function PricingPage() {
   const earlyBirdDeadline = parseISO(EARLY_BIRD_DEADLINE)
   const isEarlyBirdPeriod = isBefore(new Date(), earlyBirdDeadline)
 
-  const { user, isLoading: authLoading } = useAuth()
+  const [user, setUser] = useState<any>(null)
   const [userProfession, setUserProfession] = useState<string | null>(null)
-  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [openDialogId, setOpenDialogId] = useState<string | null>(null)
   const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
     const loadUserProfile = async () => {
+      setIsLoading(true)
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
       if (!user) {
-        setUserProfession(null)
+        setIsLoading(false)
         return
       }
 
-      setIsLoadingProfile(true)
+      setUser(user)
 
       const { data: profile, error } = await supabase
         .from("profiles")
@@ -57,15 +62,11 @@ export default function PricingPage() {
         setUserProfession(profile.position)
       }
 
-      setIsLoadingProfile(false)
+      setIsLoading(false)
     }
 
-    if (!authLoading) {
-      loadUserProfile()
-    }
-  }, [user, authLoading, supabase])
-
-  const isLoading = authLoading
+    loadUserProfile()
+  }, [supabase])
 
   const professionToParticipantMap: Record<string, string[]> = {
     Anestesiologist: ["span", "span_team"],

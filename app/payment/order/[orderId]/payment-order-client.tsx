@@ -15,10 +15,36 @@ import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
 import { DownloadInvoiceButton } from "@/components/download-invoice-button"
 import { PaymentProofUploader } from "@/components/payment-proof-uploader"
+import Image from "next/image"
+import { FileText, Eye, ExternalLink } from "lucide-react"
+import Dialog from "@/components/ui/dialog"
+import DialogContent from "@/components/ui/dialog-content"
+import DialogHeader from "@/components/ui/dialog-header"
+import DialogTitle from "@/components/ui/dialog-title"
+import DialogDescription from "@/components/ui/dialog-description"
+import DialogFooter from "@/components/ui/dialog-footer"
+
+interface Order {
+  id: string
+  user_id: string
+  order_items: any[]
+}
+
+interface Payment {
+  payment_status: string
+  payment_method: string
+  bank_name: string
+  account_name: string
+  transaction_reference: string
+  notes: string
+  payment_proof_url: string
+  created_at: string
+  rejection_reason?: string
+}
 
 interface PaymentOrderClientProps {
-  initialOrder: any
-  initialPayment: any
+  initialOrder: Order
+  initialPayment: Payment | null
 }
 
 export default function PaymentOrderClient({ initialOrder, initialPayment }: PaymentOrderClientProps) {
@@ -28,6 +54,7 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [showResubmitForm, setShowResubmitForm] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [isProofDialogOpen, setIsProofDialogOpen] = useState(false)
 
   const [paymentMethod, setPaymentMethod] = useState("Bank Transfer")
   const [bankName, setBankName] = useState("")
@@ -362,11 +389,39 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                     <div>
                       <Label className="text-muted-foreground mb-2 block">Payment Proof</Label>
                       <div className="border rounded-lg p-4">
-                        <img
-                          src={initialPayment.payment_proof_url || "/placeholder.svg"}
-                          alt="Payment proof"
-                          className="w-full h-auto max-h-96 object-contain rounded"
-                        />
+                        {initialPayment.payment_proof_url?.toLowerCase().endsWith(".pdf") ? (
+                          <div
+                            className="relative w-full h-40 bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center border"
+                            onClick={() => setIsProofDialogOpen(true)}
+                          >
+                            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                              <FileText className="w-12 h-12" />
+                              <span className="text-sm font-medium">PDF Document</span>
+                              <span className="text-xs">Click to view</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div
+                            className="relative w-full h-auto max-h-96 rounded cursor-pointer hover:opacity-90 transition-opacity group"
+                            onClick={() => setIsProofDialogOpen(true)}
+                          >
+                            <Image
+                              src={initialPayment.payment_proof_url || "/placeholder.svg"}
+                              alt="Payment proof"
+                              width={800}
+                              height={600}
+                              className="w-full h-auto max-h-96 object-contain rounded"
+                              unoptimized
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.src = "/payment-proof-image.jpg"
+                              }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-colors rounded">
+                              <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -408,6 +463,47 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
           </section>
         </main>
         <Footer />
+        {/* Dialog for viewing payment proof */}
+        <Dialog open={isProofDialogOpen} onOpenChange={setIsProofDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle>Payment Proof</DialogTitle>
+              <DialogDescription>Review your submitted payment proof</DialogDescription>
+            </DialogHeader>
+            {initialPayment?.payment_proof_url && (
+              <div className="relative w-full min-h-[300px]">
+                {initialPayment.payment_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-8">
+                    <FileText className="w-16 h-16 text-muted-foreground" />
+                    <p className="text-muted-foreground">PDF Document</p>
+                    <Button onClick={() => window.open(initialPayment.payment_proof_url!, "_blank")} variant="outline">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open PDF in New Tab
+                    </Button>
+                  </div>
+                ) : (
+                  <Image
+                    src={initialPayment.payment_proof_url || "/placeholder.svg"}
+                    alt="Payment proof"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto object-contain rounded-lg"
+                    unoptimized
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = "/payment-proof-image.jpg"
+                    }}
+                  />
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsProofDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </>
     )
   }

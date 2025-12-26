@@ -26,6 +26,7 @@ import {
   Copy,
   Building,
   Hash,
+  ExternalLink,
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
@@ -45,6 +46,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getBadgeColors, BADGE_COLORS } from "@/lib/badge-colors"
+import Image from "next/image" // Added Image component import
 
 interface Payment {
   id: string
@@ -668,22 +670,44 @@ export default function PaymentValidationPage() {
             {payment.payment_proof_url && !isSponsored && (
               <div className="pt-2 border-t">
                 <p className="text-sm font-medium text-muted-foreground mb-2">Payment Proof:</p>
-                <div
-                  className="relative w-full max-w-full h-40 bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => {
-                    setSelectedPayment(payment)
-                    setIsImageDialogOpen(true)
-                  }}
-                >
-                  <img
-                    src={payment.payment_proof_url || "/placeholder.svg"}
-                    alt="Payment proof"
-                    className="w-full h-full object-contain"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors">
-                    <Eye className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity" />
+                {payment.payment_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div
+                    className="relative w-full max-w-full h-40 bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center border"
+                    onClick={() => {
+                      window.open(payment.payment_proof_url!, "_blank")
+                    }}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <FileText className="w-12 h-12" />
+                      <span className="text-sm font-medium">PDF Document</span>
+                      <span className="text-xs">Click to view</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div
+                    className="relative w-full max-w-full h-40 bg-muted rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => {
+                      setSelectedPayment(payment)
+                      setIsImageDialogOpen(true)
+                    }}
+                  >
+                    <Image
+                      src={payment.payment_proof_url || "/placeholder.svg"}
+                      alt="Payment proof"
+                      fill
+                      className="object-contain"
+                      unoptimized
+                      onError={(e) => {
+                        // Fallback to placeholder on error
+                        const target = e.target as HTMLImageElement
+                        target.src = "/payment-proof-image.jpg"
+                      }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors">
+                      <Eye className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity drop-shadow-lg" />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1050,12 +1074,30 @@ export default function PaymentValidationPage() {
               <DialogDescription>Review the submitted payment proof</DialogDescription>
             </DialogHeader>
             {selectedPayment?.payment_proof_url && (
-              <div className="relative w-full">
-                <img
-                  src={selectedPayment.payment_proof_url || "/placeholder.svg"}
-                  alt="Payment proof"
-                  className="w-full h-auto object-contain rounded-lg"
-                />
+              <div className="relative w-full min-h-[300px]">
+                {selectedPayment.payment_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-8">
+                    <FileText className="w-16 h-16 text-muted-foreground" />
+                    <p className="text-muted-foreground">PDF Document</p>
+                    <Button onClick={() => window.open(selectedPayment.payment_proof_url!, "_blank")} variant="outline">
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open PDF in New Tab
+                    </Button>
+                  </div>
+                ) : (
+                  <Image
+                    src={selectedPayment.payment_proof_url || "/placeholder.svg"}
+                    alt="Payment proof"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto object-contain rounded-lg"
+                    unoptimized
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement
+                      target.src = "/payment-proof-image.jpg"
+                    }}
+                  />
+                )}
               </div>
             )}
             <DialogFooter className="flex-col sm:flex-row gap-2">

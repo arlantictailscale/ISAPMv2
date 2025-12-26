@@ -8,7 +8,7 @@ export default function Footer() {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="max-w-6xl mx-auto px-4 py-16">
-        <div className="grid md:grid-cols-2 gap-12 mb-12">
+        <div className="grid md:grid-cols-3 gap-12 mb-12">
           {/* About */}
           <div>
             <div className="mb-4">
@@ -57,15 +57,63 @@ export default function Footer() {
             </p>
           </div>
 
+          <div>
+            <h3 className="font-semibold mb-4 text-base">Quick Links</h3>
+            <nav aria-label="Footer quick links">
+              <ul className="space-y-3 text-sm">
+                <li>
+                  <Link
+                    href="/pricing"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
+                  >
+                    Registration & Pricing
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/webinar"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
+                  >
+                    Webinars
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/hotel-booking"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
+                  >
+                    Hotel Booking
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/events"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
+                  >
+                    Events & Workshops
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/call-for-papers"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
+                  >
+                    Call for Papers
+                  </Link>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
           {/* Contact */}
           <div>
-            <h3 className="font-semibold mb-4">Contact</h3>
+            <h3 className="font-semibold mb-4 text-base">Contact</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3">
                 <Mail size={18} className="mt-0.5 flex-shrink-0" />
                 <a
                   href="mailto:admin@isapm2026.org"
-                  className="text-primary-foreground/80 hover:text-primary-foreground hover:underline"
+                  className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
                 >
                   admin@isapm2026.org
                 </a>
@@ -77,7 +125,7 @@ export default function Footer() {
                     href="https://wa.me/6289602626709"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline block"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors block"
                   >
                     +62 896-0262-6709 (WhatsApp)
                   </a>
@@ -93,7 +141,7 @@ export default function Footer() {
                   href="https://www.instagram.com/isapm_id/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-primary-foreground/80 hover:text-primary-foreground hover:underline"
+                  className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
                 >
                   @isapm_id
                 </a>
@@ -121,11 +169,11 @@ export default function Footer() {
 
         <div className="border-t border-primary-foreground/20 pt-8 text-center text-sm text-primary-foreground/60">
           <p>&copy; {currentYear} Indonesian Society of Anesthesiology for Pain Management. All rights reserved.</p>
-          <div className="mt-4 flex justify-center gap-6">
-            <Link href="/privacy-policy" className="hover:text-primary-foreground hover:underline">
+          <div className="mt-4 flex justify-center gap-6 flex-wrap">
+            <Link href="/privacy-policy" className="hover:text-primary-foreground hover:underline transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/terms-of-service" className="hover:text-primary-foreground hover:underline">
+            <Link href="/terms-of-service" className="hover:text-primary-foreground hover:underline transition-colors">
               Terms of Service
             </Link>
           </div>

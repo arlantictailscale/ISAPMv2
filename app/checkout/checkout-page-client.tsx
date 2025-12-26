@@ -41,6 +41,16 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
     }
   }
 
+  const itemsWithTotals = items.map((item) => {
+    let itemTotal = 0
+    if (item.item_type === "hotel") {
+      itemTotal = item.unit_price * item.nights
+    } else {
+      itemTotal = item.unit_price
+    }
+    return { ...item, itemTotal }
+  })
+
   return (
     <>
       <Navigation />
@@ -94,86 +104,93 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  {items.map((item) => (
-                    <div key={item.id} className="flex justify-between items-start p-3 bg-muted/50 rounded-lg">
-                      <div className="space-y-1">
-                        {item.item_type === "event" && (
-                          <>
-                            <div
-                              className={`text-xs font-semibold px-2 py-0.5 rounded w-fit ${getBadgeColors("event", item.event_label, item.event_id).solid}`}
-                            >
-                              {getCategoryLabel("event", item.event_label, item.event_id)}
-                            </div>
-                            <div className="font-medium">{item.event_label}</div>
-                            <div className="text-sm text-muted-foreground">{item.participant_type_label}</div>
-                            {item.event_id === "symposium" && (
-                              <div className="flex items-center gap-1 mt-1 text-teal-600">
-                                <Gift className="w-3 h-3" />
-                                <span className="text-xs font-medium">+4 Bonus Webinars Included</span>
+                <div className="space-y-3">
+                  {itemsWithTotals.map((item) => (
+                    <div key={item.id} className="p-4 bg-muted/50 rounded-lg space-y-2 border border-muted">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1 flex-1">
+                          {item.item_type === "event" && (
+                            <>
+                              <div
+                                className={`text-xs font-semibold px-2 py-0.5 rounded w-fit ${getBadgeColors("event", item.event_label, item.event_id).solid}`}
+                              >
+                                {getCategoryLabel("event", item.event_label, item.event_id)}
                               </div>
-                            )}
-                          </>
-                        )}
-                        {item.item_type === "hotel" && (
-                          <>
-                            <div
-                              className={`text-xs font-semibold px-2 py-0.5 rounded w-fit ${getBadgeColors("hotel").solid}`}
-                            >
-                              {getBadgeColors("hotel").label}
-                            </div>
-                            <div className="font-medium">{item.hotel_room_type}</div>
-                            <div className="text-sm text-muted-foreground">
-                              {item.nights} night{item.nights !== 1 ? "s" : ""}
-                            </div>
-                            {item.extra_beds > 0 && (
-                              <div className="flex items-center gap-2 mt-1 text-amber-600">
-                                <Bed className="w-3 h-3" />
-                                <span className="text-xs font-medium">
-                                  +{item.extra_beds} Extra Bed{item.extra_beds > 1 ? "s" : ""}
-                                </span>
-                                <Coffee className="w-3 h-3 ml-1" />
-                                <span className="text-xs">Breakfast included</span>
+                              <div className="font-semibold text-base">{item.event_label}</div>
+                              <div className="text-sm text-muted-foreground">{item.participant_type_label}</div>
+                              {item.event_id === "symposium" && (
+                                <div className="flex items-center gap-1 mt-1 text-teal-600">
+                                  <Gift className="w-3 h-3" />
+                                  <span className="text-xs font-medium">+4 Bonus Webinars Included</span>
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {item.item_type === "hotel" && (
+                            <>
+                              <div
+                                className={`text-xs font-semibold px-2 py-0.5 rounded w-fit ${getBadgeColors("hotel").solid}`}
+                              >
+                                {getBadgeColors("hotel").label}
                               </div>
-                            )}
-                          </>
-                        )}
-                        {item.item_type === "webinar" && (
-                          <>
-                            <div
-                              className={`text-xs font-semibold px-2 py-0.5 rounded w-fit ${getBadgeColors("webinar").solid}`}
-                            >
-                              {getBadgeColors("webinar").label}
-                            </div>
-                            <div className="font-medium">{item.event_label}</div>
-                          </>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{formatCurrency(item.unit_price, item.currency)}</div>
+                              <div className="font-semibold text-base">{item.hotel_room_type}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {item.nights} night{item.nights !== 1 ? "s" : ""} ×{" "}
+                                {formatCurrency(item.unit_price, item.currency)}/night
+                              </div>
+                              {item.extra_beds > 0 && (
+                                <div className="flex items-center gap-2 mt-1.5 text-amber-600 bg-amber-50 px-2 py-1 rounded text-xs font-medium">
+                                  <Bed className="w-3 h-3" />+{item.extra_beds} Extra Bed
+                                  {item.extra_beds > 1 ? "s" : ""}
+                                  <Coffee className="w-3 h-3 ml-1" />
+                                  Breakfast included
+                                </div>
+                              )}
+                            </>
+                          )}
+                          {item.item_type === "webinar" && (
+                            <>
+                              <div
+                                className={`text-xs font-semibold px-2 py-0.5 rounded w-fit ${getBadgeColors("webinar").solid}`}
+                              >
+                                {getBadgeColors("webinar").label}
+                              </div>
+                              <div className="font-semibold text-base">{item.event_label}</div>
+                            </>
+                          )}
+                        </div>
+                        <div className="text-right ml-4">
+                          <div className="text-2xl font-bold text-primary">
+                            {formatCurrency(item.itemTotal, item.currency)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                <Separator />
+                <Separator className="my-4" />
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Subtotal</span>
-                    <span className="font-medium">{formatCurrency(cartSummary.subtotal, cartSummary.currency)}</span>
+                <div className="bg-background rounded-lg p-4 space-y-3 border border-border">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
+                    <span className="text-lg font-semibold">
+                      {formatCurrency(cartSummary.subtotal, cartSummary.currency)}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Items</span>
-                    <span className="font-medium">{cartSummary.itemCount}</span>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-muted-foreground">Items ({cartSummary.itemCount})</span>
+                    <span className="text-sm text-muted-foreground">{cartSummary.itemCount}</span>
                   </div>
                 </div>
 
-                <Separator />
-
-                <div className="flex justify-between text-xl font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">{formatCurrency(cartSummary.subtotal, cartSummary.currency)}</span>
+                <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-5 border-2 border-primary/20">
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold">Total Amount:</span>
+                    <span className="text-3xl font-bold text-primary">
+                      {formatCurrency(cartSummary.subtotal, cartSummary.currency)}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

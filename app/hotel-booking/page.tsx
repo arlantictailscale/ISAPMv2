@@ -406,9 +406,9 @@ export default function HotelBookingPage() {
       <Navigation />
       <div className="min-h-screen bg-muted/30 pt-16 pb-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="flex flex-col lg:grid lg:grid-cols-3 gap-8">
             {/* Main Content - Left Column */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 order-2 lg:order-1">
               <div className="mb-12 space-y-3">
                 <h1 className="text-3xl sm:text-4xl font-bold">Hotel Accommodation</h1>
                 <p className="text-base font-medium text-muted-foreground">ISAPM 8th National Meeting 2026</p>
@@ -723,8 +723,8 @@ export default function HotelBookingPage() {
               </div>
             </div>
 
-            {/* Sidebar - Right Column */}
-            <div className="lg:col-span-1">
+            {/* Sidebar - Right Column - Shows first on mobile, last on desktop */}
+            <div className="lg:col-span-1 order-1 lg:order-2">
               <EventOverviewCard />
             </div>
           </div>

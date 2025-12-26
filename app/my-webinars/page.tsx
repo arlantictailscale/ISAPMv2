@@ -37,6 +37,18 @@ interface WebinarOrder {
   }[]
 }
 
+interface WebinarEntry {
+  orderId: string
+  userId: string
+  email: string
+  fullName: string
+  eventId: string
+  eventLabel: string
+  itemType: string
+  paymentStatus: string
+  verifiedAt: string
+}
+
 function BonusWebinarCard({ grant }: { grant: WebinarGrant }) {
   const webinarData = getWebinarById(grant.webinar_id)
 
@@ -184,10 +196,8 @@ function BonusWebinarCard({ grant }: { grant: WebinarGrant }) {
   )
 }
 
-function PurchasedWebinarCard({ order }: { order: WebinarOrder }) {
-  const webinarItem = order.order_items.find((item) => item.item_type === "webinar")
-  const payment = order.order_payments?.[0]
-  const webinarData = webinarItem ? getWebinarById(webinarItem.event_id) : null
+function PurchasedWebinarCard({ entry }: { entry: WebinarEntry }) {
+  const webinarData = getWebinarById(entry.eventId)
 
   const webinarDetails = webinarData
     ? {
@@ -201,8 +211,8 @@ function PurchasedWebinarCard({ order }: { order: WebinarOrder }) {
         slug: webinarData.slug,
       }
     : {
-        id: webinarItem?.event_id || "",
-        title: webinarItem?.event_label || "Webinar",
+        id: entry.eventId || "",
+        title: entry.eventLabel || "Webinar",
         subtitle: "",
         date: "TBD",
         time: "TBD",
@@ -251,15 +261,15 @@ function PurchasedWebinarCard({ order }: { order: WebinarOrder }) {
               <p className="font-semibold text-sm">{webinarDetails.time}</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-4 bg-green-50 rounded-xl">
+          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl">
             <CheckCircle className="w-5 h-5 text-green-600" />
             <div>
               <p className="text-xs text-muted-foreground">Status</p>
-              <p className="font-semibold text-sm text-green-700">Registered</p>
+              <p className="font-semibold text-sm text-green-600">Registered</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl">
-            <Users className="w-5 h-5 text-purple-600" />
+          <div className="flex items-center gap-3 p-4 bg-indigo-50 rounded-xl">
+            <Users className="w-5 h-5 text-indigo-600" />
             <div>
               <p className="text-xs text-muted-foreground">Speakers</p>
               <p className="font-semibold text-sm">{webinarDetails.speakers.length} Experts</p>
@@ -267,73 +277,20 @@ function PurchasedWebinarCard({ order }: { order: WebinarOrder }) {
           </div>
         </div>
 
-        <div className="mb-8">
-          <h3 className="font-semibold mb-4 flex items-center gap-2">
-            <Play className="w-5 h-5 text-indigo-600" />
-            Webinar Access & Materials
-          </h3>
-          <WebinarContentDisplay webinarId={webinarDetails.id} />
-          <p className="text-xs text-muted-foreground mt-3">
-            The webinar link will be sent to your email ({order.email}) before the event.
-          </p>
-        </div>
+        {/* Webinar Content Display */}
+        {webinarDetails.slug && <WebinarContentDisplay webinarSlug={webinarDetails.slug} />}
 
-        {/* Speakers */}
-        {webinarDetails.speakers.length > 0 && (
-          <div className="mb-8">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Users className="w-5 h-5 text-indigo-600" />
-              Session Speakers
-            </h3>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {webinarDetails.speakers.map((speaker, index) => (
-                <div key={index} className="p-4 border rounded-xl bg-card hover:shadow-md transition-shadow">
-                  <Badge variant="secondary" className="mb-2 text-xs">
-                    {speaker.organization}
-                  </Badge>
-                  <p className="font-semibold text-sm mb-1">{speaker.name}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{speaker.topic}</p>
-                </div>
-              ))}
-            </div>
+        {/* Access Button */}
+        {webinarDetails.slug && (
+          <div className="flex flex-col sm:flex-row gap-3 mt-6 pt-6 border-t">
+            <Link href={`/webinar/${webinarDetails.slug}`} className="flex-1">
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                <Play className="w-4 h-4 mr-2" />
+                View Webinar Details
+              </Button>
+            </Link>
           </div>
         )}
-
-        {/* What You'll Get */}
-        {webinarDetails.benefits.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              What You&apos;ll Receive
-            </h3>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {webinarDetails.benefits.map((benefit, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm">
-                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                  <span>{benefit}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Order Info */}
-        <div className="border-t pt-4 mt-6">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
-            <span>Order ID: {order.id.slice(0, 8)}</span>
-            <span>Registered: {order.full_name}</span>
-            <span>
-              Approved:{" "}
-              {payment?.verified_at
-                ? new Date(payment.verified_at).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })
-                : "N/A"}
-            </span>
-          </div>
-        </div>
       </CardContent>
     </Card>
   )
@@ -364,27 +321,34 @@ export default async function MyWebinarsPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  console.log("[v0] Webinar orders query result:", {
-    count: webinarOrders?.length || 0,
-    orders: webinarOrders?.map((o: any) => ({
-      id: o.id,
-      items: o.order_items?.filter((i: any) => i.item_type === "webinar"),
-      payment_status: o.order_payments?.[0]?.payment_status,
-    })),
-  })
+  const webinarEntries: WebinarEntry[] = []
+  const seenEventIds = new Set<string>()
 
-  const webinarOrdersFiltered = (webinarOrders || []).filter((order: any) => {
-    const hasWebinarItem = order.order_items?.some((item: any) => item.item_type === "webinar")
-    const isVerified = order.order_payments?.[0]?.payment_status === "verified"
-    return hasWebinarItem && isVerified
-  })
+  for (const order of webinarOrders || []) {
+    const payment = order.order_payments?.[0]
+    if (payment?.payment_status !== "verified") continue
 
-  console.log("[v0] Filtered webinar orders:", {
-    count: webinarOrdersFiltered.length,
-    orders: webinarOrdersFiltered.map((o: any) => ({
-      id: o.id,
-      items: o.order_items?.filter((i: any) => i.item_type === "webinar"),
-    })),
+    for (const item of order.order_items || []) {
+      if (item.item_type === "webinar" && !seenEventIds.has(item.event_id)) {
+        seenEventIds.add(item.event_id)
+        webinarEntries.push({
+          orderId: order.id,
+          userId: order.user_id,
+          email: order.email,
+          fullName: order.full_name,
+          eventId: item.event_id,
+          eventLabel: item.event_label,
+          itemType: item.item_type,
+          paymentStatus: payment.payment_status,
+          verifiedAt: payment.verified_at,
+        })
+      }
+    }
+  }
+
+  console.log("[v0] Webinar entries:", {
+    count: webinarEntries.length,
+    entries: webinarEntries.map((e) => ({ eventId: e.eventId, eventLabel: e.eventLabel })),
   })
 
   // Fetch symposium bonus grants
@@ -395,12 +359,11 @@ export default async function MyWebinarsPage() {
     .eq("status", "active")
     .order("created_at", { ascending: false })
 
-  const approvedWebinars = (webinarOrdersFiltered || []) as WebinarOrder[]
   const uniqueBonusGrants = (bonusGrants || []).filter(
     (grant, index, self) => index === self.findIndex((g) => g.webinar_id === grant.webinar_id),
   ) as WebinarGrant[]
 
-  const hasAnyWebinars = approvedWebinars.length > 0 || uniqueBonusGrants.length > 0
+  const hasAnyWebinars = webinarEntries.length > 0 || uniqueBonusGrants.length > 0
 
   return (
     <>
@@ -420,16 +383,15 @@ export default async function MyWebinarsPage() {
             </div>
             {hasAnyWebinars && (
               <div className="flex flex-wrap gap-4 mt-6">
-                {approvedWebinars.length > 0 && (
+                {webinarEntries.length > 0 && (
                   <div className="bg-white/10 rounded-lg px-4 py-2">
                     <span className="text-indigo-200 text-sm">Purchased:</span>
-                    <span className="font-bold ml-2">{approvedWebinars.length}</span>
+                    <span className="font-bold ml-2">{webinarEntries.length}</span>
                   </div>
                 )}
                 {uniqueBonusGrants.length > 0 && (
                   <div className="bg-amber-400/20 rounded-lg px-4 py-2">
-                    <Gift className="w-4 h-4 inline mr-1" />
-                    <span className="text-amber-200 text-sm">Symposium Bonus:</span>
+                    <span className="text-amber-200 text-sm">Bonus:</span>
                     <span className="font-bold ml-2">{uniqueBonusGrants.length}</span>
                   </div>
                 )}
@@ -438,70 +400,52 @@ export default async function MyWebinarsPage() {
           </div>
         </section>
 
-        <section className="py-8 px-4">
-          <div className="max-w-6xl mx-auto">
-            {!hasAnyWebinars ? (
-              <Card className="border-dashed">
-                <CardContent className="py-16 text-center">
-                  <div className="w-20 h-20 rounded-full bg-indigo-100 flex items-center justify-center mx-auto mb-6">
-                    <Video className="w-10 h-10 text-indigo-600" />
-                  </div>
-                  <h3 className="text-2xl font-semibold mb-3">No Webinars Yet</h3>
-                  <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                    You haven&apos;t purchased any webinars yet, or your payment is still being processed.
-                  </p>
-                  <div className="flex gap-3 justify-center flex-wrap">
-                    <Link href="/webinar">
-                      <Button className="bg-indigo-600 hover:bg-indigo-700">
-                        <Video className="w-4 h-4 mr-2" />
-                        Browse Webinars
-                      </Button>
-                    </Link>
-                    <Link href="/my-purchases">
-                      <Button variant="outline">Check Payment Status</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                {/* Symposium Bonus Webinars */}
-                {uniqueBonusGrants.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          {!hasAnyWebinars ? (
+            <Card className="p-12 text-center border-dashed">
+              <Video className="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+              <h2 className="text-xl font-semibold text-muted-foreground mb-2">No Webinars Yet</h2>
+              <p className="text-muted-foreground mb-6">
+                You haven&apos;t purchased any webinars or received bonus access yet.
+              </p>
+              <Link href="/webinar">
+                <Button>Browse Available Webinars</Button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="space-y-8">
+              {/* Purchased Webinars Section */}
+              {webinarEntries.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <Video className="w-6 h-6 text-indigo-600" />
+                    Purchased Webinars
+                  </h2>
                   <div className="space-y-6">
-                    <div className="flex items-center gap-2">
-                      <Gift className="w-5 h-5 text-amber-500" />
-                      <h2 className="text-lg font-semibold">Symposium Bonus Webinars</h2>
-                      <Badge className="bg-amber-100 text-amber-700 border-amber-200">
-                        {uniqueBonusGrants.length} included
-                      </Badge>
-                    </div>
+                    {webinarEntries.map((entry) => (
+                      <PurchasedWebinarCard key={`${entry.orderId}-${entry.eventId}`} entry={entry} />
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* Bonus Webinars Section */}
+              {uniqueBonusGrants.length > 0 && (
+                <section>
+                  <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <Gift className="w-6 h-6 text-emerald-600" />
+                    Symposium Bonus Webinars
+                  </h2>
+                  <div className="space-y-6">
                     {uniqueBonusGrants.map((grant) => (
                       <BonusWebinarCard key={grant.id} grant={grant} />
                     ))}
                   </div>
-                )}
-
-                {/* Purchased Webinars */}
-                {approvedWebinars.length > 0 && (
-                  <div className="space-y-6">
-                    {uniqueBonusGrants.length > 0 && (
-                      <div className="flex items-center gap-2 pt-4">
-                        <Video className="w-5 h-5 text-indigo-500" />
-                        <h2 className="text-lg font-semibold">Purchased Webinars</h2>
-                        <Badge className="bg-indigo-100 text-indigo-700 border-indigo-200">
-                          {approvedWebinars.length} purchased
-                        </Badge>
-                      </div>
-                    )}
-                    {approvedWebinars.map((order) => (
-                      <PurchasedWebinarCard key={order.id} order={order} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </section>
+                </section>
+              )}
+            </div>
+          )}
+        </div>
       </main>
       <Footer />
     </>

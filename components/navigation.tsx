@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
@@ -30,9 +30,8 @@ import {
   UserCheck,
   FolderOpen,
   Hotel,
-  RefreshCw,
 } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
+import { useAuth } from "@/lib/auth/auth-context"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -71,162 +70,11 @@ const navItems = [
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [authTimedOut, setAuthTimedOut] = useState(false)
-  const [autoRetryDone, setAutoRetryDone] = useState(false)
-  const [autoReloadDone, setAutoReloadDone] = useState(false)
-  const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
-  const isMounted = useRef(true)
 
-  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
-  const isAdmin = useMemo(() => userRole === "admin", [userRole])
-
-  useEffect(() => {
-    const hasAutoReloaded = sessionStorage.getItem("auth_auto_reloaded")
-    if (hasAutoReloaded === "true") {
-      setAutoReloadDone(true)
-      sessionStorage.removeItem("auth_auto_reloaded")
-    }
-  }, [])
-
-  const fetchUserRole = useCallback(
-    async (userId: string) => {
-      try {
-        const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
-
-        if (error) {
-          console.error("Error fetching user role:", error.message)
-          return "user"
-        }
-        return profile?.role || "user"
-      } catch (profileError) {
-        console.error("Failed to fetch profile:", profileError)
-        return "user"
-      }
-    },
-    [supabase],
-  )
-
-  const checkUser = useCallback(async () => {
-    if (!isMounted.current) return
-
-    setIsLoading(true)
-    setAuthTimedOut(false)
-
-    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
-      return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))])
-    }
-
-    try {
-      const timeout = 2500
-      const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
-
-      if (!isMounted.current) return
-
-      if (sessionResult && sessionResult.data?.session?.user) {
-        const sessionUser = sessionResult.data.session.user
-        setUser(sessionUser)
-        setIsLoading(false)
-        setAuthTimedOut(false)
-        setAutoRetryDone(false)
-
-        fetchUserRole(sessionUser.id).then((role) => {
-          if (isMounted.current) setUserRole(role)
-        })
-
-        withTimeout(supabase.auth.getUser(), timeout).then((result) => {
-          if (!isMounted.current) return
-          if (!result || !result.data?.user) {
-            setUser(null)
-            setUserRole("user")
-          }
-        })
-      } else if (sessionResult === null) {
-        if (isMounted.current) {
-          setAuthTimedOut(true)
-          setIsLoading(false)
-        }
-      } else {
-        setUser(null)
-        setIsLoading(false)
-        setAuthTimedOut(false)
-        setAutoRetryDone(false)
-      }
-    } catch (authError) {
-      console.error("Auth check failed:", authError)
-      if (isMounted.current) {
-        setAuthTimedOut(true)
-        setIsLoading(false)
-      }
-    }
-  }, [supabase, fetchUserRole])
-
-  useEffect(() => {
-    if (!authTimedOut) return
-
-    if (!autoRetryDone) {
-      const retryTimer = setTimeout(() => {
-        if (isMounted.current) {
-          setAutoRetryDone(true)
-          checkUser()
-        }
-      }, 250)
-      return () => clearTimeout(retryTimer)
-    }
-
-    if (autoRetryDone && !autoReloadDone) {
-      const reloadTimer = setTimeout(() => {
-        if (isMounted.current) {
-          sessionStorage.setItem("auth_auto_reloaded", "true")
-          window.location.reload()
-        }
-      }, 250)
-      return () => clearTimeout(reloadTimer)
-    }
-  }, [authTimedOut, autoRetryDone, autoReloadDone, checkUser])
-
-  const handleRetry = useCallback(() => {
-    setAuthTimedOut(false)
-    setAutoRetryDone(false)
-    checkUser()
-  }, [checkUser])
-
-  const handleRefreshPage = useCallback(() => {
-    window.location.reload()
-  }, [])
-
-  useEffect(() => {
-    isMounted.current = true
-    checkUser()
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted.current) return
-
-      const currentUser = session?.user || null
-      setUser(currentUser)
-      setAuthTimedOut(false)
-
-      if (currentUser) {
-        const role = await fetchUserRole(currentUser.id)
-        if (isMounted.current) setUserRole(role)
-      } else {
-        setUserRole("user")
-      }
-
-      setIsLoading(false)
-    })
-
-    return () => {
-      isMounted.current = false
-      subscription?.unsubscribe()
-    }
-  }, [supabase, fetchUserRole, checkUser])
+  const { user, isLoading, isAdmin, signOut } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -238,54 +86,9 @@ export default function Navigation() {
   }, [])
 
   const handleLogout = useCallback(async () => {
-    await supabase.auth.signOut()
-    setUser(null)
+    await signOut()
     router.push("/")
-  }, [supabase, router])
-
-  const renderAuthTimeoutUI = () => {
-    if (!autoRetryDone || !autoReloadDone) {
-      return <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
-    }
-
-    return (
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Retry
-        </Button>
-        <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="text-xs text-muted-foreground">
-          Refresh
-        </Button>
-      </div>
-    )
-  }
-
-  const renderMobileAuthTimeoutUI = () => {
-    if (!autoRetryDone || !autoReloadDone) {
-      return <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
-    }
-
-    return (
-      <div className="flex flex-col gap-2 mt-2">
-        <p className="text-xs text-muted-foreground px-3">Connection slow. Please retry.</p>
-        <div className="flex gap-2 px-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRetry}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-transparent"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Retry
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="flex-1">
-            Refresh Page
-          </Button>
-        </div>
-      </div>
-    )
-  }
+  }, [signOut, router])
 
   return (
     <nav
@@ -329,8 +132,6 @@ export default function Navigation() {
               {user && <CartIcon />}
               {isLoading ? (
                 <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
-              ) : authTimedOut ? (
-                renderAuthTimeoutUI()
               ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -458,8 +259,6 @@ export default function Navigation() {
 
             {isLoading ? (
               <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
-            ) : authTimedOut ? (
-              renderMobileAuthTimeoutUI()
             ) : user ? (
               <div className="border-t pt-4 mt-4 space-y-1">
                 <Link
@@ -557,14 +356,14 @@ export default function Navigation() {
                   </>
                 )}
 
-                <div className="border-t my-2" />
+                <div className="border-t my-3" />
                 <button
                   type="button"
                   onClick={() => {
                     handleLogout()
                     setIsOpen(false)
                   }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 hover:bg-muted rounded-lg transition-colors w-full text-left"
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                 >
                   <LogOut className="w-4 h-4" />
                   Sign Out

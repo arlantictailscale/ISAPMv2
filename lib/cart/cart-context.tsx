@@ -2,12 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
-import type { User } from "@supabase/supabase-js"
+import { useAuth } from "@/lib/auth/auth-context"
 
 interface CartContextType {
   itemCount: number
   refreshCart: () => Promise<void>
-  user: User | null
   isLoading: boolean
 }
 
@@ -15,45 +14,43 @@ const CartContext = createContext<CartContextType | undefined>(undefined)
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [itemCount, setItemCount] = useState(0)
-  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
 
+  const { user, isLoading: authLoading } = useAuth()
+
   const loadCartCount = async () => {
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser()
-
-    setUser(currentUser)
-    setIsLoading(false)
-
-    if (!currentUser) {
+    if (!user) {
       setItemCount(0)
+      setIsLoading(false)
       return
     }
 
-    const { data: cart } = await supabase
-      .from("carts")
-      .select("id, cart_items(count)")
-      .eq("user_id", currentUser.id)
-      .eq("status", "active")
-      .maybeSingle()
+    try {
+      const { data: cart } = await supabase
+        .from("carts")
+        .select("id, cart_items(count)")
+        .eq("user_id", user.id)
+        .eq("status", "active")
+        .maybeSingle()
 
-    const count = cart?.cart_items?.[0]?.count || 0
-    setItemCount(count)
+      const count = cart?.cart_items?.[0]?.count || 0
+      setItemCount(count)
+    } catch (error) {
+      console.error("[v0] CartContext: Error loading cart count:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   useEffect(() => {
-    loadCartCount()
+    if (authLoading) return
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-        loadCartCount()
-      }
-    })
+    loadCartCount()
+  }, [user, authLoading])
+
+  useEffect(() => {
+    if (!user) return
 
     const cartItemsChannel = supabase
       .channel("cart_changes")
@@ -82,13 +79,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .subscribe()
 
     return () => {
-      subscription.unsubscribe()
       supabase.removeChannel(cartItemsChannel)
     }
-  }, [supabase])
+  }, [supabase, user])
 
   return (
-    <CartContext.Provider value={{ itemCount, refreshCart: loadCartCount, user, isLoading }}>
+    <CartContext.Provider value={{ itemCount, refreshCart: loadCartCount, isLoading: isLoading || authLoading }}>
       {children}
     </CartContext.Provider>
   )

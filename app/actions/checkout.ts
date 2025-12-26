@@ -93,6 +93,7 @@ export async function createOrderFromCart(guestInfo: {
     nights: item.nights,
     unit_price: item.unit_price,
     currency: item.currency,
+    extra_beds: item.extra_beds || 0,
   }))
 
   const { error: orderItemsError } = await supabase.from("order_items").insert(orderItemsData)

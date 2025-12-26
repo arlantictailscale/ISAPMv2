@@ -133,10 +133,10 @@ const webinar1: Webinar = {
 const webinar2: Webinar = {
   id: "webinar_2",
   slug: "ending-silent-agony",
-  title: "Ending Silent Agony: Peran Intervensi Anestesiologi dalam Mengurangi Nyeri Kanker Secara Signifikan",
+  title: "Ending Silent Agony: The Role of Anesthesiology Interventions in Significantly Reducing Cancer Pain",
   shortTitle: "Ending Silent Agony",
   description:
-    "Webinar ini membahas peran penting intervensi anestesiologi dalam mengurangi nyeri kanker secara signifikan. Dengan tema 'Bridging The Gaps: Equity, Access, and Excellence in Pain Management', para ahli akan menyajikan modalitas intervensi generasi baru dan optimasi terapi farmakologi dengan pendekatan individual.",
+    "This webinar explores the crucial role of anesthesiology interventions in significantly reducing cancer pain. With the theme 'Bridging The Gaps: Equity, Access, and Excellence in Pain Management', experts will present next-generation intervention modalities and optimization of pharmacological therapy through an individualized approach.",
   date: "2026-02-05",
   time: "13:00",
   timezone: "WIB",
@@ -153,7 +153,7 @@ const webinar2: Webinar = {
       organization: "Pain Management Specialist",
       organizationShort: "Pain Specialist",
       topic:
-        "Modalitas Intervensi Generasi Baru: Radiofrequency Canggih, Cryoablation, Neurolytic Innovations, dan Implantable Drug Delivery Systems",
+        "Next-Generation Intervention Modalities: Advanced Radiofrequency, Cryoablation, Neurolytic Innovations, and Implantable Drug Delivery Systems",
       image: "/images/dr.jpeg",
       color: "bg-blue-600",
     },
@@ -163,7 +163,8 @@ const webinar2: Webinar = {
       title: "Speaker",
       organization: "Pain Management Specialist",
       organizationShort: "Pain Specialist",
-      topic: "Optimasi Terapi Farmakologi dengan Pendekatan Individual: Pola Back-to-Basic dalam Era Modern",
+      topic:
+        "Optimization of Pharmacological Therapy with an Individualized Approach: Back-to-Basics Patterns in the Modern Era",
       image: "/images/dr.jpeg",
       color: "bg-teal-600",
     },

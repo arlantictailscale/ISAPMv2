@@ -20,6 +20,7 @@ export type HotelBooking = {
   guest_name: string
   guest_email: string
   order_status: string
+  extra_beds: number
 }
 
 export type RoomTypeSettings = {
@@ -91,7 +92,8 @@ export async function getHotelBookings(filters?: {
         check_in_date,
         check_out_date,
         nights,
-        unit_price
+        unit_price,
+        extra_beds
       `)
       .in("hotel_room_type", ["deluxe", "premier"])
 
@@ -149,6 +151,7 @@ export async function getHotelBookings(filters?: {
         guest_name: order.full_name || profile?.full_name || "Unknown Guest",
         guest_email: order.email || profile?.email || "",
         order_status: order.status,
+        extra_beds: item.extra_beds || 0,
       })
     }
 

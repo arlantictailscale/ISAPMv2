@@ -634,6 +634,12 @@ export default function HotelManagementPage() {
                     <p className="text-sm text-gray-500">Quantity</p>
                     <p className="font-medium">{selectedBooking.quantity} room(s)</p>
                   </div>
+                  {selectedBooking.extra_beds > 0 && (
+                    <div>
+                      <p className="text-sm text-gray-500">Extra Beds</p>
+                      <p className="font-medium">{selectedBooking.extra_beds}</p>
+                    </div>
+                  )}
                 </div>
                 <div className="pt-4 border-t">
                   <div className="flex justify-between items-center">

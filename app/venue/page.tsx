@@ -450,7 +450,7 @@ export default async function VenuePage() {
                         <span className="font-medium">12:00 PM</span>
                       </div>
                     </div>
-                    <Link href="/my-hotel">
+                    <Link href="/hotel-booking">
                       <Button
                         size="lg"
                         className="w-full bg-white hover:bg-gray-100 shadow-md hover:shadow-lg transition-all font-semibold border-2 border-white"

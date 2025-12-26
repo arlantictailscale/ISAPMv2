@@ -51,8 +51,8 @@ export default function Footer() {
                     loading="lazy"
                   />
                   <Image
-                    src="/images/idi-logo.svg"
-                    alt="IDI - Ikatan Dokter Indonesia"
+                    src="/images/idi-logo.png"
+                    alt="IDI - Ikatan Dokter Indonesia (Indonesian Medical Association)"
                     width={80}
                     height={80}
                     className="h-10 md:h-12 w-auto"

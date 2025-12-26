@@ -309,7 +309,7 @@ export function getMinimumPrice(
 }
 
 // Early bird deadline
-export const EARLY_BIRD_DEADLINE = "2027-01-20T23:59:59"
+export const EARLY_BIRD_DEADLINE = "2026-01-20T23:59:59"
 
 // Helper function to get webinar pricing
 export function getWebinarPricing(): EventPricing | undefined {

@@ -21,9 +21,10 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { User } from "lucide-react"
+import { EARLY_BIRD_DEADLINE } from "@/lib/data/event-pricing"
 
 export default function PricingPage() {
-  const earlyBirdDeadline = parseISO("2027-01-20T23:59:59")
+  const earlyBirdDeadline = parseISO(EARLY_BIRD_DEADLINE)
   const isEarlyBirdPeriod = isBefore(new Date(), earlyBirdDeadline)
 
   const [user, setUser] = useState<any>(null)

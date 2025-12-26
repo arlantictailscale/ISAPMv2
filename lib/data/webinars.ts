@@ -300,3 +300,46 @@ export function getWebinarPricing(id: string): { price: number; currency: string
     currency: webinar.currency,
   }
 }
+
+export function getWebinarColorScheme(webinarId: string): {
+  headerFrom: string
+  headerTo: string
+  infoBg: string
+  infoIcon: string
+} {
+  const colorSchemes: Record<string, { headerFrom: string; headerTo: string; infoBg: string; infoIcon: string }> = {
+    webinar_equity_pain: {
+      headerFrom: "from-indigo-600",
+      headerTo: "to-purple-600",
+      infoBg: "bg-indigo-50",
+      infoIcon: "text-indigo-600",
+    },
+    webinar_2: {
+      headerFrom: "from-emerald-600",
+      headerTo: "to-teal-600",
+      infoBg: "bg-emerald-50",
+      infoIcon: "text-emerald-600",
+    },
+    webinar_3: {
+      headerFrom: "from-orange-600",
+      headerTo: "to-red-600",
+      infoBg: "bg-orange-50",
+      infoIcon: "text-orange-600",
+    },
+    webinar_4: {
+      headerFrom: "from-pink-600",
+      headerTo: "to-rose-600",
+      infoBg: "bg-pink-50",
+      infoIcon: "text-pink-600",
+    },
+  }
+
+  return (
+    colorSchemes[webinarId] || {
+      headerFrom: "from-slate-600",
+      headerTo: "to-gray-600",
+      infoBg: "bg-slate-50",
+      infoIcon: "text-slate-600",
+    }
+  )
+}

@@ -45,7 +45,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("id, role, first_name, last_name")
+    .select("id, role, first_name, last_name, full_name")
     .eq("id", user.id)
     .single()
 
@@ -53,7 +53,13 @@ export default async function DashboardPage() {
 
   const displayName = profile?.first_name
     ? `${profile.first_name}${profile.last_name ? " " + profile.last_name : ""}`
-    : user.email?.split("@")[0] || "User"
+    : profile?.full_name
+      ? profile.full_name
+      : user.email
+          ?.split("@")[0]
+          ?.split(/[._-]/)
+          .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+          .join(" ") || "User"
 
   const { data: fullProfile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
   const profileStatus = checkProfileCompleteness(fullProfile)

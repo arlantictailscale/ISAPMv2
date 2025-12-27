@@ -47,6 +47,7 @@ export const metadata: Metadata = {
   },
   description:
     "Join the 8th Indonesian Society of Anesthesiology for Pain Management (ISAPM) National Meeting 2026. April 16-18 at The Singhasari Resort, Batu Malang. Bridging The Gaps: Equity, Access, and Excellence in Pain Management.",
+  applicationName: "The 8th National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
   keywords: [
     "ISAPM",
     "ISAPM 2026",
@@ -65,8 +66,8 @@ export const metadata: Metadata = {
     "CPD course",
   ],
   authors: [{ name: "Indonesian Society of Anesthesiology for Pain Management" }],
-  creator: "ISAPM",
-  publisher: "ISAPM",
+  creator: "Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
+  publisher: "Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
   generator: "v0.app",
   metadataBase: new URL("https://www.isapm2026.org"),
   alternates: {
@@ -74,12 +75,13 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon.png", type: "image/png" },
-      { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/logo-isapm-2026.png", type: "image/png" },
+      { url: "/logo-isapm-2026.png", sizes: "32x32", type: "image/png" },
+      { url: "/logo-isapm-2026.png", sizes: "120x120", type: "image/png" },
+      { url: "/logo-isapm-2026.png", sizes: "192x192", type: "image/png" },
     ],
-    shortcut: "/favicon.png",
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: "/logo-isapm-2026.png",
+    apple: [{ url: "/logo-isapm-2026.png", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,
@@ -96,7 +98,7 @@ export const metadata: Metadata = {
     description:
       "Join Indonesia's premier pain management conference. ISAPM 8th National Meeting, April 16-18, 2026 at The Singhasari Resort, Batu Malang. Register now!",
     url: "https://www.isapm2026.org",
-    siteName: "ISAPM 8th National Meeting 2026",
+    siteName: "The 8th National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
     images: [
       {
         url: "/images/og-image.jpg",
@@ -114,6 +116,7 @@ export const metadata: Metadata = {
     description:
       "Join the 8th ISAPM National Meeting. April 16-18, 2026, Batu Malang. Bridging The Gaps in Pain Management.",
     images: ["/images/og-image.jpg"],
+    site: "@ISAPM2026",
   },
   robots: {
     index: true,
@@ -125,6 +128,57 @@ export const metadata: Metadata = {
       "max-image-preview": "large",
       "max-snippet": -1,
     },
+  },
+}
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "The 8th National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
+  alternateName: ["ISAPM 2026", "ISAPM 8th National Meeting", "ISAPM National Meeting 2026"],
+  url: "https://www.isapm2026.org",
+  description:
+    "The 8th Indonesian Society of Anesthesiology for Pain Management National Meeting. Bridging The Gaps: Equity, Access, and Excellence in Pain Management.",
+  publisher: {
+    "@type": "Organization",
+    name: "Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://www.isapm2026.org/logo-isapm-2026.png",
+      width: 120,
+      height: 120,
+    },
+  },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: "https://www.isapm2026.org/search?q={search_term_string}",
+    "query-input": "required name=search_term_string",
+  },
+}
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
+  alternateName: "ISAPM",
+  url: "https://www.isapm2026.org",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://www.isapm2026.org/logo-isapm-2026.png",
+    width: 120,
+    height: 120,
+  },
+  image: "https://www.isapm2026.org/logo-isapm-2026.png",
+  description:
+    "The Indonesian Society of Anesthesiology for Pain Management (ISAPM) is a professional organization dedicated to advancing pain management practices in Indonesia.",
+  address: {
+    "@type": "PostalAddress",
+    addressCountry: "ID",
+  },
+  contactPoint: {
+    "@type": "ContactPoint",
+    contactType: "customer service",
+    email: "info@isapm2026.org",
   },
 }
 
@@ -179,12 +233,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="ISAPM 2026" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/logo-isapm-2026.png" />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

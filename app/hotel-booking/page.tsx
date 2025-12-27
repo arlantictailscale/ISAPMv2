@@ -21,6 +21,7 @@ import {
   ChevronUp,
   BedDouble,
   UtensilsCrossed,
+  Plus,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { format, differenceInDays, parseISO } from "date-fns"
@@ -722,6 +723,15 @@ export default function HotelBookingPage() {
                     )}
                   </Card>
                 ))}
+                {/* Add Another Room Button */}
+                <Button
+                  variant="outline"
+                  className="w-full border-dashed border-2 hover:border-primary hover:bg-primary/5 bg-transparent"
+                  onClick={addRoom}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Another Room
+                </Button>
               </div>
             </div>
 

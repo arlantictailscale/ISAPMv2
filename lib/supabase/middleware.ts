@@ -44,7 +44,9 @@ export async function updateSession(request: NextRequest) {
       !request.nextUrl.pathname.startsWith("/hotel-booking") &&
       !request.nextUrl.pathname.startsWith("/events") &&
       !request.nextUrl.pathname.startsWith("/call-for-papers") &&
-      !request.nextUrl.pathname.startsWith("/webinar") && // Add /webinar to public routes so it's accessible without login
+      !request.nextUrl.pathname.startsWith("/webinar") &&
+      !request.nextUrl.pathname.startsWith("/privacy-policy") &&
+      !request.nextUrl.pathname.startsWith("/terms-of-service") &&
       request.nextUrl.pathname !== "/"
     ) {
       const url = request.nextUrl.clone()

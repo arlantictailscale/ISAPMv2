@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
+import { FileText, Shield, Database, Lock, Trash2, Share2 } from "lucide-react"
 
 export const metadata: Metadata = {
   title: "Privacy Policy | ISAPM 2026",
@@ -8,277 +11,452 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Privacy Policy</h1>
-      <div className="prose prose-slate max-w-none">
-        <p className="text-muted-foreground mb-6">
-          Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-        </p>
+    <>
+      <Navigation />
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">1. Introduction</h2>
-          <p>
-            Welcome to the ISAPM 2026 website ("we," "our," or "us"). We are committed to protecting your personal
-            information and your right to privacy. If you have any questions or concerns about this privacy notice or
-            our practices with regard to your personal information, please contact us at admin@isapm2026.org.
-          </p>
-        </section>
+      <section className="relative bg-gradient-to-r from-primary via-primary/90 to-primary pt-24 pb-12">
+        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 bg-white/10 rounded-xl backdrop-blur-sm">
+              <FileText className="h-8 w-8 text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-white">Privacy Policy</h1>
+              <p className="text-white/80 mt-1">ISAPM 8th National Meeting 2026</p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">2. Information We Collect</h2>
-          <p>
-            We collect personal information that you voluntarily provide to us when you register on the website, express
-            an interest in obtaining information about us or our products and services, when you participate in
-            activities on the website, or otherwise when you contact us.
-          </p>
-          <p className="mt-2">
-            The personal information that we collect depends on the context of your interactions with us and the
-            website, the choices you make, and the products and features you use. The personal information we collect
-            may include the following:
-          </p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>Names</li>
-            <li>Phone numbers</li>
-            <li>Email addresses</li>
-            <li>Job titles</li>
-            <li>Professional credentials</li>
-            <li>Billing addresses</li>
-          </ul>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">3. Google User Data</h2>
-          <p className="mb-4">
-            Our application integrates with Google services to enhance your experience. This section describes how we
-            handle Google user data in compliance with Google API Services User Data Policy.
+      <div className="container mx-auto px-4 py-12 max-w-4xl">
+        <div className="prose prose-slate max-w-none">
+          <p className="text-muted-foreground mb-6">
+            Last updated: {new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
           </p>
 
-          <h3 className="text-lg font-medium mt-6 mb-3">3.1 Data Accessed</h3>
-          <p>
-            When you connect your Google account to our application, we may access the following types of Google user
-            data:
-          </p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              <strong>Google Sheets Data:</strong> We access Google Sheets to synchronize attendee registration data for
-              event management purposes.
-            </li>
-            <li>
-              <strong>Basic Profile Information:</strong> Your Google account email address and name for authentication
-              purposes.
-            </li>
-          </ul>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-blue-900">
+              <Shield className="h-5 w-5" />
+              Summary of Our Data Practices
+            </h2>
+            <div className="grid md:grid-cols-2 gap-4 text-sm">
+              <div className="bg-white p-4 rounded-lg border border-blue-100">
+                <h3 className="font-semibold text-blue-800 mb-2">What We Collect</h3>
+                <p className="text-gray-700">
+                  Name, email, phone, professional credentials, and Google account data (with your consent)
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-blue-100">
+                <h3 className="font-semibold text-blue-800 mb-2">How We Use It</h3>
+                <p className="text-gray-700">
+                  Event registration, communication, payment processing, and attendee management
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-blue-100">
+                <h3 className="font-semibold text-blue-800 mb-2">How We Store It</h3>
+                <p className="text-gray-700">
+                  Encrypted databases with SSL/TLS, hosted on secure Vercel/Supabase infrastructure
+                </p>
+              </div>
+              <div className="bg-white p-4 rounded-lg border border-blue-100">
+                <h3 className="font-semibold text-blue-800 mb-2">Your Rights</h3>
+                <p className="text-gray-700">
+                  Access, correct, delete your data anytime by emailing admin@isapm2026.org
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <h3 className="text-lg font-medium mt-6 mb-3">3.2 Data Usage</h3>
-          <p>We use the Google user data we access for the following specific purposes:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              <strong>Event Registration Management:</strong> To sync and manage attendee registrations, payment
-              confirmations, and event access across our systems.
-            </li>
-            <li>
-              <strong>Administrative Functions:</strong> To enable authorized administrators to manage event data
-              efficiently through Google Sheets integration.
-            </li>
-            <li>
-              <strong>Communication:</strong> To send event-related communications and confirmations to registered
-              attendees.
-            </li>
-          </ul>
-          <p className="mt-2">
-            We do not use Google user data for advertising purposes or to create user profiles for marketing. The data
-            is used solely for the operational purposes described above.
-          </p>
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">1. Introduction</h2>
+            <p>
+              Welcome to the ISAPM 2026 website ("we," "our," or "us"). We are committed to protecting your personal
+              information and your right to privacy. If you have any questions or concerns about this privacy notice or
+              our practices with regard to your personal information, please contact us at admin@isapm2026.org.
+            </p>
+          </section>
 
-          <h3 className="text-lg font-medium mt-6 mb-3">3.3 Data Sharing</h3>
-          <p>We are committed to protecting your Google user data and limit sharing as follows:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              <strong>No Third-Party Sales:</strong> We do not sell, rent, or trade your Google user data to any third
-              parties.
-            </li>
-            <li>
-              <strong>Service Providers:</strong> We may share data with trusted service providers (such as Vercel for
-              hosting, Supabase for database services) who assist us in operating our website, conducting our business,
-              or serving our users. These parties are bound by confidentiality agreements and are prohibited from using
-              your data for any other purpose.
-            </li>
-            <li>
-              <strong>Legal Requirements:</strong> We may disclose your data if required by law, court order, or
-              governmental regulation.
-            </li>
-            <li>
-              <strong>Event Organizers:</strong> Relevant registration information may be shared with ISAPM 2026 event
-              organizers solely for event management purposes.
-            </li>
-          </ul>
+          <section className="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Database className="h-5 w-5 text-primary" />
+              2. DATA COLLECTION - What Information We Collect
+            </h2>
+            <p className="mb-4">
+              We collect personal information that you voluntarily provide to us when you register on the website,
+              express an interest in obtaining information about us or our products and services, when you participate
+              in activities on the website, or otherwise when you contact us.
+            </p>
 
-          <h3 className="text-lg font-medium mt-6 mb-3">3.4 Data Storage & Protection</h3>
-          <p>We implement robust security measures to protect your Google user data:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              <strong>Encryption:</strong> All data is transmitted using SSL/TLS encryption (HTTPS) and stored in
-              encrypted databases.
-            </li>
-            <li>
-              <strong>Access Control:</strong> Access to Google user data is restricted to authorized personnel only,
-              using role-based access controls.
-            </li>
-            <li>
-              <strong>Secure Infrastructure:</strong> Our application is hosted on Vercel's secure infrastructure with
-              enterprise-grade security measures.
-            </li>
-            <li>
-              <strong>Database Security:</strong> User data is stored in Supabase with Row Level Security (RLS) policies
-              to ensure data isolation and protection.
-            </li>
-            <li>
-              <strong>Regular Audits:</strong> We conduct regular security reviews to identify and address potential
-              vulnerabilities.
-            </li>
-            <li>
-              <strong>OAuth 2.0:</strong> We use Google's secure OAuth 2.0 protocol for authentication, ensuring we
-              never have access to your Google password.
-            </li>
-          </ul>
+            <h3 className="text-lg font-medium mt-6 mb-3">2.1 Information You Provide Directly</h3>
+            <p>When you register for our event or use our services, we collect:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>
+                <strong>Identity Information:</strong> Full name, professional title, NIK (National ID Number)
+              </li>
+              <li>
+                <strong>Contact Information:</strong> Email address, phone number, mailing address
+              </li>
+              <li>
+                <strong>Professional Information:</strong> Institution/organization, job position, medical credentials
+              </li>
+              <li>
+                <strong>Payment Information:</strong> Billing address, payment confirmation details (we do not store
+                credit card numbers)
+              </li>
+              <li>
+                <strong>Event Preferences:</strong> Workshop selections, dietary requirements, hotel booking preferences
+              </li>
+            </ul>
 
-          <h3 className="text-lg font-medium mt-6 mb-3">3.5 Data Retention & Deletion</h3>
-          <p>We retain Google user data only for as long as necessary:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              <strong>Active Use Period:</strong> Data is retained while you maintain an active account and during the
-              ISAPM 2026 event period.
-            </li>
-            <li>
-              <strong>Post-Event Retention:</strong> Registration and attendance records may be retained for up to 2
-              years after the event for administrative and compliance purposes.
-            </li>
-            <li>
-              <strong>Automatic Deletion:</strong> Cached Google API data is automatically purged after 30 days of
-              inactivity.
-            </li>
-          </ul>
-          <p className="mt-4">
-            <strong>Your Rights - Data Deletion Request:</strong>
-          </p>
-          <p>You have the right to request deletion of your Google user data at any time. To request deletion:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              Email us at{" "}
+            <h3 className="text-lg font-medium mt-6 mb-3">2.2 Information Collected Automatically</h3>
+            <p>When you visit our website, we automatically collect:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>
+                <strong>Device Information:</strong> Browser type, operating system, device identifiers
+              </li>
+              <li>
+                <strong>Usage Data:</strong> Pages visited, time spent on pages, click patterns
+              </li>
+              <li>
+                <strong>Log Data:</strong> IP address, access times, referring URLs
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">2.3 Google Account Data (With Your Consent)</h3>
+            <p>If you choose to connect your Google account, we access:</p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>
+                <strong>Basic Profile:</strong> Your Google account email address and display name for authentication
+              </li>
+              <li>
+                <strong>Google Sheets Data:</strong> For administrators only - event registration data stored in Google
+                Sheets for synchronization purposes
+              </li>
+            </ul>
+            <p className="mt-2 text-sm bg-yellow-50 p-3 rounded border border-yellow-200">
+              <strong>Important:</strong> We only access Google data with your explicit consent. You can revoke access
+              anytime at{" "}
+              <a
+                href="https://myaccount.google.com/permissions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Google Account Permissions
+              </a>
+              .
+            </p>
+          </section>
+
+          <section className="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              3. DATA USAGE - How We Use Your Information
+            </h2>
+            <p className="mb-4">
+              We use your personal information only for legitimate business purposes related to the ISAPM 2026 event.
+              Here is exactly how we use each type of data:
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse border border-gray-300 mt-4">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left">Data Type</th>
+                    <th className="border border-gray-300 p-3 text-left">How We Use It</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Name & Email</td>
+                    <td className="border border-gray-300 p-3">
+                      Account creation, event registration, sending confirmations and event updates
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Phone Number</td>
+                    <td className="border border-gray-300 p-3">
+                      Emergency contact during event, WhatsApp notifications (if opted in)
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Professional Info</td>
+                    <td className="border border-gray-300 p-3">
+                      Verify eligibility for medical professional pricing, generate certificates
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Payment Details</td>
+                    <td className="border border-gray-300 p-3">
+                      Process registrations, issue invoices, verify payments
+                    </td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Google Account Data</td>
+                    <td className="border border-gray-300 p-3">
+                      Authentication only; Sheets access for admin sync purposes
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">We DO NOT use your data for:</h3>
+            <ul className="list-disc pl-6 mt-2 space-y-1 text-red-700">
+              <li>Selling to third-party advertisers</li>
+              <li>Creating marketing profiles</li>
+              <li>Targeted advertising</li>
+              <li>Any purpose unrelated to ISAPM 2026 event management</li>
+            </ul>
+          </section>
+
+          <section className="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              4. DATA STORAGE & SECURITY - How We Protect Your Information
+            </h2>
+            <p className="mb-4">
+              We implement industry-standard security measures to protect your personal information:
+            </p>
+
+            <h3 className="text-lg font-medium mt-4 mb-3">4.1 Where Your Data Is Stored</h3>
+            <ul className="list-disc pl-6 mt-2 space-y-2">
+              <li>
+                <strong>Primary Database:</strong> Supabase (PostgreSQL) hosted on secure cloud infrastructure with data
+                centers in Southeast Asia
+              </li>
+              <li>
+                <strong>File Storage:</strong> Vercel Blob Storage for payment receipts and documents
+              </li>
+              <li>
+                <strong>Backup Systems:</strong> Encrypted backups stored separately from primary systems
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">4.2 Security Measures</h3>
+            <ul className="list-disc pl-6 mt-2 space-y-2">
+              <li>
+                <strong>Encryption in Transit:</strong> All data transmitted using TLS 1.3 encryption (HTTPS)
+              </li>
+              <li>
+                <strong>Encryption at Rest:</strong> Database encrypted using AES-256 encryption
+              </li>
+              <li>
+                <strong>Access Control:</strong> Role-based access control (RBAC) - only authorized staff can access
+                user data
+              </li>
+              <li>
+                <strong>Row Level Security:</strong> Database policies ensure users can only access their own data
+              </li>
+              <li>
+                <strong>OAuth 2.0:</strong> Secure authentication - we never see or store your Google password
+              </li>
+              <li>
+                <strong>Regular Audits:</strong> Periodic security reviews and vulnerability assessments
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">4.3 Password Security</h3>
+            <p>
+              User passwords are hashed using bcrypt with salt, making them unreadable even to our administrators. We
+              never store plain-text passwords.
+            </p>
+          </section>
+
+          <section className="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Share2 className="h-5 w-5 text-primary" />
+              5. DATA SHARING - Who Has Access to Your Information
+            </h2>
+
+            <h3 className="text-lg font-medium mt-4 mb-3">5.1 We Share Data With:</h3>
+            <ul className="list-disc pl-6 mt-2 space-y-2">
+              <li>
+                <strong>ISAPM Event Organizers:</strong> Registration details for event management, badge printing, and
+                attendance tracking
+              </li>
+              <li>
+                <strong>Hotel Partners (The Singhasari Resort):</strong> Only if you book accommodation - name, contact,
+                booking dates
+              </li>
+              <li>
+                <strong>Service Providers:</strong>
+                <ul className="list-circle pl-6 mt-1 space-y-1">
+                  <li>Vercel (hosting) - technical infrastructure only</li>
+                  <li>Supabase (database) - data storage only</li>
+                  <li>Resend (email) - email delivery only</li>
+                </ul>
+              </li>
+            </ul>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">5.2 We DO NOT:</h3>
+            <ul className="list-disc pl-6 mt-2 space-y-1 text-red-700">
+              <li>Sell your personal information to any third party</li>
+              <li>Share your data with advertisers or marketing companies</li>
+              <li>Transfer your data to countries without adequate data protection</li>
+              <li>Use your data for purposes other than event management</li>
+            </ul>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">5.3 Legal Disclosure</h3>
+            <p>
+              We may disclose your information if required by law, court order, or government regulation, or to protect
+              our legal rights.
+            </p>
+          </section>
+
+          <section className="mb-8 bg-gray-50 p-6 rounded-lg border border-gray-200">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-primary" />
+              6. DATA RETENTION & DELETION - How Long We Keep Your Data
+            </h2>
+
+            <h3 className="text-lg font-medium mt-4 mb-3">6.1 Retention Periods</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse border border-gray-300 mt-4">
+                <thead>
+                  <tr className="bg-gray-100">
+                    <th className="border border-gray-300 p-3 text-left">Data Type</th>
+                    <th className="border border-gray-300 p-3 text-left">Retention Period</th>
+                    <th className="border border-gray-300 p-3 text-left">Reason</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Account Information</td>
+                    <td className="border border-gray-300 p-3">Until deletion requested or 2 years after event</td>
+                    <td className="border border-gray-300 p-3">Account management</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Registration Records</td>
+                    <td className="border border-gray-300 p-3">5 years after event</td>
+                    <td className="border border-gray-300 p-3">Tax and audit compliance</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Payment Records</td>
+                    <td className="border border-gray-300 p-3">7 years after transaction</td>
+                    <td className="border border-gray-300 p-3">Financial regulations</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Google API Cache</td>
+                    <td className="border border-gray-300 p-3">30 days</td>
+                    <td className="border border-gray-300 p-3">Performance optimization</td>
+                  </tr>
+                  <tr>
+                    <td className="border border-gray-300 p-3">Usage Logs</td>
+                    <td className="border border-gray-300 p-3">90 days</td>
+                    <td className="border border-gray-300 p-3">Security monitoring</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">6.2 How to Request Data Deletion</h3>
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <p className="mb-3">
+                You have the right to request deletion of your personal data at any time. To do so:
+              </p>
+              <ol className="list-decimal pl-6 space-y-2">
+                <li>
+                  <strong>Email us</strong> at{" "}
+                  <a href="mailto:admin@isapm2026.org" className="text-primary hover:underline font-semibold">
+                    admin@isapm2026.org
+                  </a>{" "}
+                  with the subject line: <em>"Data Deletion Request"</em>
+                </li>
+                <li>
+                  Include your <strong>registered email address</strong> and specify what data you want deleted
+                </li>
+                <li>
+                  We will <strong>verify your identity</strong> and process your request within <strong>30 days</strong>
+                </li>
+                <li>
+                  You will receive <strong>confirmation</strong> once your data has been deleted
+                </li>
+              </ol>
+            </div>
+
+            <h3 className="text-lg font-medium mt-6 mb-3">6.3 Revoking Google Access</h3>
+            <p>
+              To immediately revoke our access to your Google account data, visit your{" "}
+              <a
+                href="https://myaccount.google.com/permissions"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-semibold"
+              >
+                Google Account Permissions
+              </a>{" "}
+              page and remove "ISAPM 2026" from the list of connected apps.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">7. Your Privacy Rights</h2>
+            <p>
+              Depending on your location, you may have certain rights regarding your personal information, including:
+            </p>
+            <ul className="list-disc pl-6 mt-2 space-y-1">
+              <li>
+                <strong>Right to Access:</strong> Request a copy of all personal data we hold about you
+              </li>
+              <li>
+                <strong>Right to Rectification:</strong> Request correction of inaccurate personal data
+              </li>
+              <li>
+                <strong>Right to Deletion:</strong> Request deletion of your personal data
+              </li>
+              <li>
+                <strong>Right to Restriction:</strong> Request we limit processing of your personal data
+              </li>
+              <li>
+                <strong>Right to Portability:</strong> Request your data in a machine-readable format
+              </li>
+              <li>
+                <strong>Right to Object:</strong> Object to certain types of processing
+              </li>
+            </ul>
+            <p className="mt-4">
+              To exercise any of these rights, please contact us at{" "}
+              <a href="mailto:admin@isapm2026.org" className="text-primary hover:underline">
+                admin@isapm2026.org
+              </a>
+              . We will respond within 30 days.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">8. Updates to This Policy</h2>
+            <p>
+              We may update this privacy notice from time to time. The updated version will be indicated by an updated
+              "Last updated" date and the updated version will be effective as soon as it is accessible. We encourage
+              you to review this privacy notice frequently to be informed of how we are protecting your information.
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">9. Contact Us</h2>
+            <p>
+              If you have questions or comments about this policy, you may email us at{" "}
               <a href="mailto:admin@isapm2026.org" className="text-primary hover:underline">
                 admin@isapm2026.org
               </a>{" "}
-              with the subject line "Google Data Deletion Request"
-            </li>
-            <li>Include your registered email address and specify what data you want deleted</li>
-            <li>We will process your request within 30 days and confirm deletion via email</li>
-          </ul>
-          <p className="mt-2">
-            You may also revoke our application's access to your Google account at any time through your{" "}
-            <a
-              href="https://myaccount.google.com/permissions"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              Google Account Permissions
-            </a>{" "}
-            page.
-          </p>
-        </section>
-        {/* End of Google User Data section */}
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">4. How We Use Your Information</h2>
-          <p>
-            We use personal information collected via our website for a variety of business purposes described below. We
-            process your personal information for these purposes in reliance on our legitimate business interests, in
-            order to enter into or perform a contract with you, with your consent, and/or for compliance with our legal
-            obligations.
-          </p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>To facilitate account creation and logon process.</li>
-            <li>To send you administrative information.</li>
-            <li>To fulfill and manage your orders and registrations.</li>
-            <li>To respond to user inquiries/offer support to users.</li>
-          </ul>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">5. Sharing Your Information</h2>
-          <p>
-            We only share information with your consent, to comply with laws, to provide you with services, to protect
-            your rights, or to fulfill business obligations. We may process or share your data that we hold based on the
-            following legal basis:
-          </p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>
-              <strong>Consent:</strong> We may process your data if you have given us specific consent to use your
-              personal information for a specific purpose.
-            </li>
-            <li>
-              <strong>Legitimate Interests:</strong> We may process your data when it is reasonably necessary to achieve
-              our legitimate business interests.
-            </li>
-            <li>
-              <strong>Performance of a Contract:</strong> Where we have entered into a contract with you, we may process
-              your personal information to fulfill the terms of our contract.
-            </li>
-          </ul>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">6. Data Security</h2>
-          <p>
-            We have implemented appropriate technical and organizational security measures designed to protect the
-            security of any personal information we process. However, despite our safeguards and efforts to secure your
-            information, no electronic transmission over the Internet or information storage technology can be
-            guaranteed to be 100% secure.
-          </p>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">7. Your Privacy Rights</h2>
-          <p>Depending on your location, you may have certain rights regarding your personal information, including:</p>
-          <ul className="list-disc pl-6 mt-2 space-y-1">
-            <li>The right to access your personal data</li>
-            <li>The right to rectify inaccurate personal data</li>
-            <li>The right to request deletion of your personal data</li>
-            <li>The right to restrict processing of your personal data</li>
-            <li>The right to data portability</li>
-          </ul>
-          <p className="mt-2">
-            To exercise any of these rights, please contact us at{" "}
-            <a href="mailto:admin@isapm2026.org" className="text-primary hover:underline">
-              admin@isapm2026.org
-            </a>
-            .
-          </p>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">8. Updates to This Policy</h2>
-          <p>
-            We may update this privacy notice from time to time. The updated version will be indicated by an updated
-            "Last updated" date and the updated version will be effective as soon as it is accessible. We encourage you
-            to review this privacy notice frequently to be informed of how we are protecting your information.
-          </p>
-        </section>
-
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">9. Contact Us</h2>
-          <p>
-            If you have questions or comments about this policy, you may email us at admin@isapm2026.org or by post to:
-          </p>
-          <address className="mt-4 not-italic">
-            Indonesian Society of Anesthesiology for Pain Management
-            <br />
-            Batu, Malang
-            <br />
-            East Java, Indonesia
-          </address>
-        </section>
+              or by post to:
+            </p>
+            <address className="mt-4 not-italic bg-gray-50 p-4 rounded-lg">
+              <strong>Indonesian Society of Anesthesiology for Pain Management</strong>
+              <br />
+              The Singhasari Resort & Convention
+              <br />
+              Batu, Malang
+              <br />
+              East Java, Indonesia
+            </address>
+          </section>
+        </div>
       </div>
-    </div>
+
+      <Footer />
+    </>
   )
 }

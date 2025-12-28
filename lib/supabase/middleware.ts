@@ -1,7 +1,35 @@
 import { createServerClient } from "@supabase/ssr"
 import { NextResponse, type NextRequest } from "next/server"
 
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/pricing",
+  "/venue",
+  "/hotel-booking",
+  "/events",
+  "/call-for-papers",
+  "/webinar",
+  "/privacy-policy",
+  "/terms-of-service",
+])
+
+const PUBLIC_PREFIXES = ["/auth", "/api/auth", "/api/public", "/api/contact", "/api/cron", "/events/", "/webinar/"]
+
+function isPublicPath(pathname: string): boolean {
+  // Check exact matches first (faster)
+  if (PUBLIC_PATHS.has(pathname)) return true
+
+  // Check prefixes
+  return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+}
+
 export async function updateSession(request: NextRequest) {
+  const { pathname } = request.nextUrl
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next()
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -34,24 +62,10 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     // Redirect unauthenticated users from protected routes to login
-    if (
-      !user &&
-      !request.nextUrl.pathname.startsWith("/auth") &&
-      !request.nextUrl.pathname.startsWith("/api/auth") &&
-      !request.nextUrl.pathname.startsWith("/api/public") &&
-      !request.nextUrl.pathname.startsWith("/pricing") &&
-      !request.nextUrl.pathname.startsWith("/venue") &&
-      !request.nextUrl.pathname.startsWith("/hotel-booking") &&
-      !request.nextUrl.pathname.startsWith("/events") &&
-      !request.nextUrl.pathname.startsWith("/call-for-papers") &&
-      !request.nextUrl.pathname.startsWith("/webinar") &&
-      !request.nextUrl.pathname.startsWith("/privacy-policy") &&
-      !request.nextUrl.pathname.startsWith("/terms-of-service") &&
-      request.nextUrl.pathname !== "/"
-    ) {
+    if (!user) {
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"
-      url.searchParams.set("redirectTo", request.nextUrl.pathname)
+      url.searchParams.set("redirectTo", pathname)
       return NextResponse.redirect(url)
     }
 
@@ -63,5 +77,7 @@ export async function updateSession(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|logo|manifest|robots|sitemap|sw|workbox|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|map|json)$).*)",
+  ],
 }

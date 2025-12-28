@@ -15,6 +15,8 @@ import {
   FooterSkeleton,
 } from "@/components/skeleton-loaders"
 
+export const revalidate = 300
+
 const FlipBookSection = dynamic(() => import("@/components/flip-book-section"), {
   loading: () => <FlipBookSkeleton />,
   ssr: true,

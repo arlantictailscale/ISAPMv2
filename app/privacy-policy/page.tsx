@@ -3,6 +3,9 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { FileText, Shield, Database, Lock, Trash2, Share2 } from "lucide-react"
 
+export const dynamic = "force-static"
+export const revalidate = 86400 // Revalidate once per day
+
 export const metadata: Metadata = {
   title: "Privacy Policy | ISAPM 2026",
   description:

@@ -43,6 +43,7 @@
     "@react-email/render": "latest",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@upstash/redis": "1.36.0",
     "@vercel/analytics": "latest",
     "@vercel/blob": "latest",
     "@vercel/speed-insights": "latest",

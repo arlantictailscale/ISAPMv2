@@ -3,6 +3,7 @@
 import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
 import { createServerClient } from "@supabase/ssr"
+import { invalidateUserProfile } from "@/lib/auth/require-auth"
 
 export async function updateUserRole(userId: string, newRole: "user" | "admin") {
   console.log("[v0] updateUserRole called", { userId, newRole })
@@ -79,6 +80,8 @@ export async function updateUserRole(userId: string, newRole: "user" | "admin") 
       console.error("[v0] Database error:", error)
       return { success: false, error: error.message }
     }
+
+    await invalidateUserProfile(userId)
 
     console.log("[v0] Role updated successfully:", data)
     return { success: true, data }

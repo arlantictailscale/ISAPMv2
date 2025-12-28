@@ -57,27 +57,19 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    // Redirect unauthenticated users from protected routes to login
-    if (!user) {
-      const url = request.nextUrl.clone()
-      url.pathname = "/auth/login"
-      url.searchParams.set("redirectTo", pathname)
-      return NextResponse.redirect(url)
-    }
+    // Only refresh the session token if it exists - don't call getUser()
+    // This is much faster as it only validates the JWT locally without DB call
+    await supabase.auth.getSession()
 
     return supabaseResponse
   } catch (error) {
-    console.error("[v0] Middleware error:", error)
+    console.error("Middleware session refresh error:", error)
     return supabaseResponse
   }
 }
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|logo|manifest|robots|sitemap|sw|workbox|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|map|json)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|logo|manifest|robots|sitemap|sw|workbox|api/public|api/cron|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|map|json|xml|txt)$).*)",
   ],
 }

@@ -13,6 +13,7 @@ const redis =
 export const DEFAULT_TTL = 60 // 1 minute
 export const SHORT_TTL = 30 // 30 seconds
 export const LONG_TTL = 300 // 5 minutes
+export const AUTH_TTL = 120 // 2 minutes for auth data
 
 export async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl: number = DEFAULT_TTL): Promise<T> {
   if (!redis) {
@@ -31,11 +32,10 @@ export async function getCached<T>(key: string, fetcher: () => Promise<T>, ttl: 
     const data = await fetcher()
 
     // Store in cache (don't await to not block response)
-    redis.set(key, data, { ex: ttl }).catch(console.error)
+    redis.set(key, data, { ex: ttl }).catch(() => {})
 
     return data
-  } catch (error) {
-    console.error("[v0] Cache error:", error)
+  } catch {
     // Fallback to direct fetch on cache error
     return fetcher()
   }
@@ -46,8 +46,8 @@ export async function invalidateCache(key: string): Promise<void> {
 
   try {
     await redis.del(key)
-  } catch (error) {
-    console.error("[v0] Cache invalidation error:", error)
+  } catch {
+    // Silently fail on cache errors - not critical
   }
 }
 
@@ -59,7 +59,7 @@ export async function invalidateCachePattern(pattern: string): Promise<void> {
     if (keys.length > 0) {
       await redis.del(...keys)
     }
-  } catch (error) {
-    console.error("[v0] Cache pattern invalidation error:", error)
+  } catch {
+    // Silently fail on cache errors - not critical
   }
 }

@@ -1,53 +1,53 @@
-import { Redis } from "@upstash/redis"
 import { NextResponse } from "next/server"
+import { checkRedisHealth, getCached, invalidateCache, checkRateLimit, CACHE_TTL } from "@/lib/cache"
 
 export async function GET() {
   const results: {
-    envVarsSet: boolean
-    connectionTest: boolean
-    readWriteTest: boolean
-    error?: string
+    health: Awaited<ReturnType<typeof checkRedisHealth>>
+    cacheTest: boolean
+    rateLimitTest: boolean
     details?: Record<string, unknown>
+    error?: string
   } = {
-    envVarsSet: false,
-    connectionTest: false,
-    readWriteTest: false,
-  }
-
-  // Check env vars
-  results.envVarsSet = !!(process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN)
-
-  if (!results.envVarsSet) {
-    results.error = "Redis environment variables not set"
-    return NextResponse.json(results, { status: 500 })
+    health: { connected: false },
+    cacheTest: false,
+    rateLimitTest: false,
   }
 
   try {
-    const redis = new Redis({
-      url: process.env.KV_REST_API_URL!,
-      token: process.env.KV_REST_API_TOKEN!,
-    })
+    results.health = await checkRedisHealth()
 
-    // Test connection with ping
-    const pingResult = await redis.ping()
-    results.connectionTest = pingResult === "PONG"
+    if (!results.health.connected) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: results.health.error || "Redis not connected",
+          ...results,
+        },
+        { status: 500 },
+      )
+    }
 
-    // Test read/write
+    // Test cache operations
     const testKey = "v0-redis-test"
     const testValue = { timestamp: Date.now(), message: "Redis is working!" }
 
-    await redis.set(testKey, testValue, { ex: 60 })
-    const readBack = await redis.get<typeof testValue>(testKey)
+    // Test getCached
+    const cached = await getCached(testKey, async () => testValue, CACHE_TTL.SHORT)
+    results.cacheTest = cached.message === testValue.message
 
-    results.readWriteTest = readBack?.message === testValue.message
+    // Test rate limiting
+    const rateLimit = await checkRateLimit("test-endpoint", 100, 60)
+    results.rateLimitTest = rateLimit.allowed
+
     results.details = {
-      pingResult,
-      writtenValue: testValue,
-      readValue: readBack,
+      latency: `${results.health.latency}ms`,
+      cachedValue: cached,
+      rateLimit,
     }
 
     // Cleanup
-    await redis.del(testKey)
+    await invalidateCache(testKey)
 
     return NextResponse.json({
       success: true,
@@ -59,7 +59,7 @@ export async function GET() {
     return NextResponse.json(
       {
         success: false,
-        message: "Redis connection failed",
+        message: "Redis test failed",
         ...results,
       },
       { status: 500 },

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { sendPaymentVerificationEmail, sendPaymentConfirmationWithInvoice } from "@/lib/email"
 import { generateSequentialInvoiceNumber } from "@/lib/invoice/invoice-number"
 import { grantSymposiumWebinarAccess, orderContainsSymposium } from "@/app/actions/webinar-access"
+import { invalidateWebinarAccessCache, invalidateUserOrdersCache, invalidateRoomAvailabilityCache } from "@/lib/cache"
 
 export async function approvePayment(paymentId: string, orderId: string, calculatedTotal?: number) {
   try {
@@ -103,6 +104,12 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
       console.error("[v0] Failed to send payment confirmation email:", emailError)
       // Don't fail the approval if email fails
     }
+
+    await Promise.all([
+      invalidateWebinarAccessCache(order.user_id),
+      invalidateUserOrdersCache(order.user_id),
+      invalidateRoomAvailabilityCache(),
+    ])
 
     revalidatePath("/admin/payment-validation")
     revalidatePath("/my-webinars")

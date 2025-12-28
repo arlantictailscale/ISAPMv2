@@ -8,74 +8,79 @@ import {
   type WebinarGrant,
   type WebinarAccessResult,
 } from "@/lib/webinar-access"
+import { getCachedWebinarAccess, invalidateWebinarAccessCache } from "@/lib/cache"
 
 /**
  * Check if a user has access to a specific webinar
  * Checks both direct purchases and bonus grants
+ * Now uses Redis caching
  */
 export async function checkWebinarAccess(userId: string, webinarId: string): Promise<WebinarAccessResult> {
-  const supabase = await createClient()
+  // Use cached version
+  return getCachedWebinarAccess(userId, webinarId, async () => {
+    const supabase = await createClient()
 
-  // Check 1: Direct purchase via order_items
-  const { data: purchasedWebinar } = await supabase
-    .from("order_items")
-    .select(`
-      id,
-      order_id,
-      orders!inner (
+    // Check 1: Direct purchase via order_items
+    const { data: purchasedWebinar } = await supabase
+      .from("order_items")
+      .select(`
         id,
-        user_id,
-        order_payments!inner (
-          payment_status
+        order_id,
+        orders!inner (
+          id,
+          user_id,
+          order_payments!inner (
+            payment_status
+          )
         )
-      )
-    `)
-    .eq("item_type", "webinar")
-    .eq("event_id", webinarId)
-    .eq("orders.user_id", userId)
-    .eq("orders.order_payments.payment_status", "verified")
-    .limit(1)
-    .single()
+      `)
+      .eq("item_type", "webinar")
+      .eq("event_id", webinarId)
+      .eq("orders.user_id", userId)
+      .eq("orders.order_payments.payment_status", "verified")
+      .limit(1)
+      .single()
 
-  if (purchasedWebinar) {
-    return {
-      hasAccess: true,
-      accessType: "purchased",
-      orderId: purchasedWebinar.order_id,
-    }
-  }
-
-  // Check 2: Symposium bonus grant
-  const { data: grant } = await supabase
-    .from("symposium_webinar_grants")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("webinar_id", webinarId)
-    .eq("status", "active")
-    .limit(1)
-    .single()
-
-  if (grant) {
-    // Check if expired
-    if (grant.expires_at && new Date(grant.expires_at) < new Date()) {
+    if (purchasedWebinar) {
       return {
-        hasAccess: false,
-        accessType: null,
+        hasAccess: true,
+        accessType: "purchased",
+        orderId: purchasedWebinar.order_id,
+      }
+    }
+
+    // Check 2: Symposium bonus grant
+    const { data: grant } = await supabase
+      .from("symposium_webinar_grants")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("webinar_id", webinarId)
+      .eq("status", "active")
+      .limit(1)
+      .single()
+
+    if (grant) {
+      // Check if expired
+      if (grant.expires_at && new Date(grant.expires_at) < new Date()) {
+        return {
+          hasAccess: false,
+          accessType: null,
+        }
+      }
+
+      return {
+        hasAccess: true,
+        accessType: grant.grant_type as WebinarAccessResult["accessType"],
+        grant: grant as WebinarGrant,
+        orderId: grant.order_id,
       }
     }
 
     return {
-      hasAccess: true,
-      accessType: grant.grant_type as WebinarAccessResult["accessType"],
-      grant: grant as WebinarGrant,
-      orderId: grant.order_id,
+      hasAccess: false,
+      accessType: null,
     }
-  }
-
-  return {
-    hasAccess: false,
-    accessType: null,
-  }
+  })
 }
 
 /**
@@ -175,6 +180,8 @@ export async function grantSymposiumWebinarAccess(
     )
 
     revalidatePath("/my-webinars")
+    // Invalidate cache for the user
+    await invalidateWebinarAccessCache(userId)
     return { success: true, granted: webinarsToGrant.length }
   } catch (error) {
     console.error("[v0] Error in grantSymposiumWebinarAccess:", error)
@@ -247,6 +254,8 @@ export async function manualGrantWebinarAccess(
 
     revalidatePath("/my-webinars")
     revalidatePath("/admin/symposium-webinar-access")
+    // Invalidate cache for the user
+    await invalidateWebinarAccessCache(userId)
     return { success: true, granted: webinarIds.length }
   } catch (error) {
     console.error("[v0] Error in manualGrantWebinarAccess:", error)

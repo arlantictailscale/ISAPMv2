@@ -4,9 +4,11 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import type { CartItem } from "@/lib/cart/types"
 import { isDuplicateCartItem, validateCartItem } from "@/lib/cart/utils"
+import { getCachedCart, invalidateCartCache } from "@/lib/cache"
 
 /**
  * Get or create active cart for current user
+ * Now uses Redis caching for cart retrieval
  */
 export async function getOrCreateCart() {
   const supabase = await createClient()
@@ -18,39 +20,41 @@ export async function getOrCreateCart() {
     return { error: "Not authenticated" }
   }
 
-  // Try to get existing active cart
-  const { data: existingCart, error: fetchError } = await supabase
-    .from("carts")
-    .select("*, cart_items(*)")
-    .eq("user_id", user.id)
-    .eq("status", "active")
-    .maybeSingle()
+  return getCachedCart(user.id, async () => {
+    // Try to get existing active cart
+    const { data: existingCart, error: fetchError } = await supabase
+      .from("carts")
+      .select("*, cart_items(*)")
+      .eq("user_id", user.id)
+      .eq("status", "active")
+      .maybeSingle()
 
-  if (fetchError) {
-    console.error("[v0] Error fetching cart:", fetchError)
-    return { error: fetchError.message }
-  }
+    if (fetchError) {
+      console.error("[v0] Error fetching cart:", fetchError)
+      return { error: fetchError.message }
+    }
 
-  if (existingCart) {
-    return { data: existingCart }
-  }
+    if (existingCart) {
+      return { data: existingCart }
+    }
 
-  // Create new cart
-  const { data: newCart, error } = await supabase
-    .from("carts")
-    .insert({
-      user_id: user.id,
-      status: "active",
-    })
-    .select("*, cart_items(*)")
-    .single()
+    // Create new cart
+    const { data: newCart, error } = await supabase
+      .from("carts")
+      .insert({
+        user_id: user.id,
+        status: "active",
+      })
+      .select("*, cart_items(*)")
+      .single()
 
-  if (error) {
-    console.error("[v0] Error creating cart:", error)
-    return { error: error.message }
-  }
+    if (error) {
+      console.error("[v0] Error creating cart:", error)
+      return { error: error.message }
+    }
 
-  return { data: newCart }
+    return { data: newCart }
+  })
 }
 
 /**
@@ -71,7 +75,7 @@ export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created
     return { error: "Invalid cart item data" }
   }
 
-  // Get or create cart
+  // Get or create cart (uses cache)
   const cartResult = await getOrCreateCart()
   if (cartResult.error) {
     return { error: cartResult.error }
@@ -102,10 +106,11 @@ export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created
     return { error: error.message }
   }
 
-  // Update cart timestamp
-  await supabase.from("carts").update({ updated_at: new Date().toISOString() }).eq("id", cart.id)
+  await invalidateCartCache(user.id)
 
   revalidatePath("/cart")
+  revalidatePath("/pricing")
+
   return { data }
 }
 
@@ -136,8 +141,7 @@ export async function removeFromCart(itemId: string) {
     return { error: error.message }
   }
 
-  // Update cart timestamp
-  await supabase.from("carts").update({ updated_at: new Date().toISOString() }).eq("id", item.cart_id)
+  await invalidateCartCache(user.id)
 
   revalidatePath("/cart")
   return { success: true }
@@ -170,8 +174,7 @@ export async function updateCartItem(itemId: string, updates: Partial<CartItem>)
     return { error: error.message }
   }
 
-  // Update cart timestamp
-  await supabase.from("carts").update({ updated_at: new Date().toISOString() }).eq("id", item.cart_id)
+  await invalidateCartCache(user.id)
 
   revalidatePath("/cart")
   return { data }
@@ -209,6 +212,8 @@ export async function clearCart() {
     console.error("[v0] Error clearing cart:", error)
     return { error: error.message }
   }
+
+  await invalidateCartCache(user.id)
 
   revalidatePath("/cart")
   return { success: true }

@@ -13,7 +13,6 @@ import {
   ImportantInfoSkeleton,
   CTASkeleton,
   FooterSkeleton,
-  BrochureSkeleton,
 } from "@/components/skeleton-loaders"
 
 export const revalidate = 300
@@ -58,11 +57,6 @@ const Footer = dynamic(() => import("@/components/footer"), {
   ssr: true,
 })
 
-const BrochureSection = dynamic(() => import("@/components/brochure-section"), {
-  loading: () => <BrochureSkeleton />,
-  ssr: true,
-})
-
 export default async function Home() {
   const registeredCount = await getRegisteredCount()
 
@@ -80,10 +74,6 @@ export default async function Home() {
             <RegistrationStats initialCount={registeredCount} />
           </ScrollReveal>
         </ParallaxSection>
-
-        <ScrollReveal direction="up" duration={900}>
-          <BrochureSection />
-        </ScrollReveal>
 
         <ScrollReveal direction="up" duration={900}>
           <WelcomeSection />

@@ -516,7 +516,7 @@ export default function EventsPage() {
   const symposiumSchedule = {
     grandTheme:
       "Practical Pain Management for Doctors and Nurses: From Assessment, Safe Analgesic Use, and Intervention Pain Management",
-    date: "Friday, April 17, 2026",
+    date: "Saturday, April 18, 2026",
     agenda: [
       { time: "07.30 – 08.00", activity: "Re-Registration + Onsite Registration", speaker: "Committee" },
       { time: "08.00 – 08:05", activity: "Opening Ceremony", speaker: "Committee" },
@@ -1334,6 +1334,7 @@ export default function EventsPage() {
 
                 <div>
                   <p className="text-lg text-muted-foreground mb-2">{symposiumSchedule.grandTheme}</p>
+                  {/* CHANGE: Updated date from Friday April 17 to Saturday April 18 */}
                   <p className="text-md text-muted-foreground">Date: {symposiumSchedule.date}</p>
                 </div>
 

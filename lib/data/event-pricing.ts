@@ -262,6 +262,14 @@ export const eventPricingData: EventPricing[] = [
         onSitePrice: 2000000,
         currency: "IDR",
       },
+      {
+        id: "perawat",
+        label: "Nurse",
+        earlyBirdPrice: 500000,
+        normalPrice: 700000,
+        onSitePrice: 1000000,
+        currency: "IDR",
+      },
     ],
   },
 ]

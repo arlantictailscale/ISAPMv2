@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar, MapPin } from "lucide-react"
 import { useState, useEffect, useCallback } from "react"
 import { CursorSpotlight } from "@/components/cursor-spotlight"
 
@@ -121,7 +121,7 @@ export default function LandingHero() {
 
             {/* Description and CTA - Hidden on mobile, shown on desktop */}
             <div className="hidden lg:block">
-              <p className="text-slate-500 text-base max-w-md mb-8">
+              <p className="text-slate-500 text-base max-w-md mb-6">
                 The{" "}
                 <span className="inline-flex items-baseline gap-0.5">
                   <span className="text-lg font-bold text-orange-600">8</span>
@@ -130,6 +130,17 @@ export default function LandingHero() {
                 National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
                 healthcare professionals to advance patient care through knowledge sharing and collaboration.
               </p>
+
+              <div className="flex flex-wrap items-center gap-4 mb-8 text-sm">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-full border border-orange-200/50">
+                  <Calendar className="w-4 h-4 text-orange-500" />
+                  <span className="font-semibold text-slate-700">April 16-19, 2026</span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-full border border-cyan-200/50">
+                  <MapPin className="w-4 h-4 text-cyan-500" />
+                  <span className="font-semibold text-slate-700">The Singhasari Resort, Batu Malang</span>
+                </div>
+              </div>
 
               <div className="flex flex-wrap gap-4">
                 <Link
@@ -227,7 +238,7 @@ export default function LandingHero() {
           </div>
 
           <div className="flex flex-col order-3 lg:hidden">
-            <p className="text-slate-500 text-base max-w-md mb-8">
+            <p className="text-slate-500 text-base max-w-md mb-4">
               The{" "}
               <span className="inline-flex items-baseline gap-0.5">
                 <span className="text-lg font-bold text-orange-600">8</span>
@@ -236,6 +247,17 @@ export default function LandingHero() {
               National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
               healthcare professionals to advance patient care through knowledge sharing and collaboration.
             </p>
+
+            <div className="flex flex-col gap-2 mb-6 text-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-full border border-orange-200/50 w-fit">
+                <Calendar className="w-4 h-4 text-orange-500" />
+                <span className="font-semibold text-slate-700">April 16-19, 2026</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-full border border-cyan-200/50 w-fit">
+                <MapPin className="w-4 h-4 text-cyan-500" />
+                <span className="font-semibold text-slate-700">The Singhasari Resort, Batu Malang</span>
+              </div>
+            </div>
 
             <div className="flex flex-col gap-4">
               <Link

@@ -298,30 +298,32 @@ export default function MyEventsPage() {
 
       setOrders(verifiedOrders)
 
-      const eventIds = new Set<string>()
+      const eventSlugs = new Set<string>()
       verifiedOrders.forEach((order) => {
         order.order_items?.forEach((item: any) => {
           if (isEventItem(item)) {
-            eventIds.add(item.event_id)
+            eventSlugs.add(item.event_id)
           }
         })
       })
 
-      if (eventIds.size > 0) {
-        const { data: eventsData } = await supabase.from("events").select("*").in("slug", Array.from(eventIds))
+      if (eventSlugs.size > 0) {
+        const { data: eventsData } = await supabase.from("events").select("*").in("slug", Array.from(eventSlugs))
 
         setDbEvents(eventsData || [])
-      }
 
-      if (eventIds.size > 0) {
-        const { data: resourcesData } = await supabase
-          .from("event_resources")
-          .select("*")
-          .in("event_id", Array.from(eventIds))
-          .eq("is_active", true)
-          .order("sort_order", { ascending: true })
+        const eventUuids = (eventsData || []).map((e) => e.id)
 
-        setResources(resourcesData || [])
+        if (eventUuids.length > 0) {
+          const { data: resourcesData } = await supabase
+            .from("event_resources")
+            .select("*")
+            .in("event_id", eventUuids) // Query by UUID instead of slug
+            .eq("is_active", true)
+            .order("sort_order", { ascending: true })
+
+          setResources(resourcesData || [])
+        }
       }
     } catch (error) {
       console.error("Error loading events:", error)
@@ -342,10 +344,28 @@ export default function MyEventsPage() {
 
     const details: Record<string, any> = {}
     allEventIds.forEach((eventId) => {
-      details[eventId] = getEventDetails(eventId)
+      const dbEvent = dbEvents.find((e) => e.slug === eventId)
+      if (dbEvent) {
+        // Use database event details
+        details[eventId] = {
+          id: dbEvent.id, // Include UUID for resource lookup
+          title: dbEvent.title,
+          shortTitle: dbEvent.short_title,
+          date: formatEventDate(dbEvent.start_date, dbEvent.end_date),
+          time: formatEventTime(dbEvent.start_time, dbEvent.end_time, dbEvent.timezone),
+          location: dbEvent.location || "Malang, East Java",
+          venue: dbEvent.venue || "Hotel Venue (TBA)",
+          room: dbEvent.room || "",
+          type: dbEvent.event_type as "cpd" | "workshop" | "symposium",
+          description: dbEvent.description || "",
+        }
+      } else {
+        // Fall back to static data
+        details[eventId] = getEventDetails(eventId)
+      }
     })
     return details
-  }, [orders])
+  }, [orders, dbEvents])
 
   const allEventItems = useMemo(() => {
     const items: { order: any; item: any }[] = []
@@ -447,7 +467,10 @@ export default function MyEventsPage() {
                   if (!details) return null
                   const colors = getEventColorScheme(details.type)
                   const EventIcon = getEventIcon(details.type)
-                  const eventResources = resources.filter((r) => r.event_id === item.event_id)
+                  const eventResources = resources.filter((r) => {
+                    const eventUuid = details.id
+                    return eventUuid ? r.event_id === eventUuid : false
+                  })
                   const materials = eventResources.filter((r) => r.resource_type === "document")
                   const links = eventResources.filter((r) => r.resource_type === "link")
                   const videos = eventResources.filter((r) => r.resource_type === "video")
@@ -619,4 +642,25 @@ export default function MyEventsPage() {
       <Footer />
     </>
   )
+}
+
+// Helper functions for formatting dates/times from database
+function formatEventDate(startDate: string | null, endDate: string | null): string {
+  if (!startDate) return "TBA"
+  const start = new Date(startDate)
+  if (!endDate || startDate === endDate) {
+    return start.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+  }
+  const end = new Date(endDate)
+  if (start.getMonth() === end.getMonth()) {
+    return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })}-${end.getDate()}, ${end.getFullYear()}`
+  }
+  return `${start.toLocaleDateString("en-US", { month: "long", day: "numeric" })} - ${end.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`
+}
+
+function formatEventTime(startTime: string | null, endTime: string | null, timezone: string | null): string {
+  if (!startTime) return "TBA"
+  const tz = timezone || "WIB"
+  if (!endTime) return `${startTime} ${tz}`
+  return `${startTime} - ${endTime} ${tz}`
 }

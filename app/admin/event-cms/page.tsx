@@ -479,7 +479,7 @@ export default function EventCMSPage() {
       }
 
       const { error } = await supabase.from("event_resources").insert({
-        event_id: selectedEvent,
+        event_id: eventId, // This is now the UUID from the database
         resource_type: activeTab as ResourceType,
         title: formData.title,
         description: formData.description || null,

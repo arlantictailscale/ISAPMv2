@@ -322,9 +322,21 @@ export default function EventCMSPage() {
           timezone: eventData.timezone || "WIB",
           location: eventData.location || "",
           venue: eventData.venue || "",
-          room: eventData.room || "", // Load room from database
+          room: eventData.room || "",
           description: eventData.description || "",
         })
+
+        const { data: resourcesData, error: resourcesError } = await supabase
+          .from("event_resources")
+          .select("*")
+          .eq("event_id", eventData.id) // Use UUID from eventData
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true })
+
+        if (resourcesError) {
+          console.error("Error loading resources:", resourcesError)
+        }
+        setResources(resourcesData || [])
       } else {
         // Reset form if no event data exists
         const staticEvent = STATIC_EVENTS.find((e) => e.slug === selectedEvent)
@@ -337,30 +349,25 @@ export default function EventCMSPage() {
           timezone: "WIB",
           location: "",
           venue: "",
-          room: "", // Reset room field
+          room: "",
           description: "",
         })
+        setResources([])
       }
 
-      // Load resources
-      const { data: resourcesData, error: resourcesError } = await supabase
-        .from("event_resources")
-        .select("*")
-        .eq("event_id", selectedEvent)
-        .order("sort_order", { ascending: true })
-
-      if (resourcesError) throw resourcesError
-      setResources(resourcesData || [])
-
       // Load history
-      const { data: historyData } = await supabase
-        .from("event_history")
-        .select("*")
-        .eq("event_id", selectedEvent)
-        .order("changed_at", { ascending: false })
-        .limit(50)
+      if (eventData?.id) {
+        const { data: historyData } = await supabase
+          .from("event_history")
+          .select("*")
+          .eq("event_id", eventData.id)
+          .order("changed_at", { ascending: false })
+          .limit(50)
 
-      setHistory(historyData || [])
+        setHistory(historyData || [])
+      } else {
+        setHistory([])
+      }
     } catch (error) {
       console.error("Error loading event data:", error)
     }

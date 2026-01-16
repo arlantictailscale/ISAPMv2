@@ -510,6 +510,7 @@ export default function ProfilePage() {
                             <option value="Resident">Resident</option>
                             <option value="Nurse">Nurse</option>
                             <option value="Nurse Anesthetist">Nurse Anesthetist</option>
+                            <option value="Medical Student">Medical Student</option>
                           </select>
                         </div>
 

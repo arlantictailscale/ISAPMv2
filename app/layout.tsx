@@ -260,7 +260,7 @@ export default function RootLayout({
           {/* <PWAInstallPrompt /> */}
         </CartProvider>
         <Analytics />
-        <SpeedInsights />
+        <SpeedInsights sampleRate={0.3} />
         <Toaster
           position="top-right"
           toastOptions={{

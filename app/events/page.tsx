@@ -59,6 +59,14 @@ const tabHeroImages = {
   },
 }
 
+const eventDates: Record<keyof typeof tabHeroImages, string> = {
+  program: "April 16-17, 2026",
+  workshop: "April 17, 2026",
+  symposium: "April 18, 2026",
+  congress: "April 17, 2026",
+  "city-tour": "April 19, 2026",
+}
+
 export default function EventsPage() {
   const [selectedWorkshop, setSelectedWorkshop] = useState<(typeof workshopDetails)[0] | null>(null)
   const isEarlyBirdPeriod = isBefore(new Date(), parseISO(EARLY_BIRD_DEADLINE))
@@ -672,6 +680,8 @@ export default function EventsPage() {
 
   const [activeTab, setActiveTab] = useState<keyof typeof tabHeroImages>("program")
   const currentHero = tabHeroImages[activeTab]
+  // CHANGE: Get the correct date from eventDates for the current active tab
+  const currentDate = eventDates[activeTab]
 
   const getGradientColors = (color: string) => {
     const colors: Record<string, { from: string; to: string; overlay: string }> = {
@@ -723,7 +733,8 @@ export default function EventsPage() {
             <div className="max-w-3xl space-y-4">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-white/90 text-sm font-medium">
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                April 16-19, 2026 • Malang, Indonesia
+                {/* CHANGE: Dynamically display the date */}
+                {eventDates[activeTab]} • Malang, Indonesia
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white font-display leading-tight">
                 {currentHero.title}

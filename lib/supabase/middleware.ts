@@ -11,15 +11,35 @@ const PUBLIC_PATHS = new Set([
   "/webinar",
   "/privacy-policy",
   "/terms-of-service",
+  "/favicon.ico",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/manifest.json",
 ])
 
-const PUBLIC_PREFIXES = ["/auth", "/api/auth", "/api/public", "/api/contact", "/api/cron", "/events/", "/webinar/"]
+const PUBLIC_PREFIXES = [
+  "/auth",
+  "/api/auth",
+  "/api/public",
+  "/api/contact",
+  "/api/cron",
+  "/events/",
+  "/webinar/",
+  "/_next",
+  "/images",
+  "/fonts",
+]
+
+const STATIC_FILE_REGEX = /\.(svg|png|jpg|jpeg|gif|webp|ico|css|js|woff|woff2|ttf|eot|map|json|xml|txt)$/i
 
 function isPublicPath(pathname: string): boolean {
-  // Check exact matches first (faster)
+  // Static files - check first as most common
+  if (STATIC_FILE_REGEX.test(pathname)) return true
+
+  // Exact matches (O(1) lookup)
   if (PUBLIC_PATHS.has(pathname)) return true
 
-  // Check prefixes
+  // Prefix matches
   return PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))
 }
 
@@ -57,12 +77,14 @@ export async function updateSession(request: NextRequest) {
       },
     })
 
+    // getSession() validates JWT locally without database call
+    // getUser() makes a database call to verify user exists
     const {
-      data: { user },
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
 
     // Redirect unauthenticated users from protected routes to login
-    if (!user) {
+    if (!session) {
       const url = request.nextUrl.clone()
       url.pathname = "/auth/login"
       url.searchParams.set("redirectTo", pathname)

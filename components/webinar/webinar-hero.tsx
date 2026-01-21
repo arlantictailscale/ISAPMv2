@@ -48,7 +48,7 @@ export function WebinarHero() {
           {/* Price Badge */}
           <div className="inline-flex items-center gap-3 bg-card border border-border rounded-2xl px-6 py-4 shadow-lg">
             <div className="text-left">
-              <p className="text-sm text-muted-foreground">Registration Fee</p>
+              <p className="text-sm text-muted-foreground">Bundle Price - All 4 Webinars</p>
               <p className="text-2xl font-bold text-primary">Rp 100.000</p>
             </div>
             <div className="h-10 w-px bg-border" />

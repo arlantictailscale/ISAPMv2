@@ -9,19 +9,21 @@ import { addToCart } from "@/app/actions/cart"
 import { createClient } from "@/lib/supabase/client"
 import { formatPrice } from "@/lib/data/event-pricing"
 
+import { WEBINAR_BUNDLE_PRICE, WEBINAR_BUNDLE_ID, WEBINAR_BUNDLE_LABEL } from "@/lib/data/webinars"
+
 const webinarDetails = {
-  id: "webinar_equity_pain",
-  label: "Webinar: Achieving Equity in Pain Management Services in Indonesia",
-  price: 100000,
+  id: WEBINAR_BUNDLE_ID,
+  label: WEBINAR_BUNDLE_LABEL,
+  price: WEBINAR_BUNDLE_PRICE,
   currency: "IDR",
 }
 
 const benefits = [
-  "Access to live webinar session",
-  "Q&A session with expert speakers",
-  "Digital certificate of attendance",
-  "Recording access for 7 days",
-  "Presentation materials (PDF)",
+  "Access to ALL 4 pre-conference webinars",
+  "Live Q&A sessions with expert speakers",
+  "Digital certificate for each webinar",
+  "Recording access for 30 days",
+  "Presentation materials (PDF) for all sessions",
 ]
 
 export function WebinarRegistration() {
@@ -87,8 +89,8 @@ export function WebinarRegistration() {
 
         <Card className="overflow-hidden border-2 border-primary/20">
           <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 border-b border-border">
-            <CardTitle className="text-xl">Webinar Registration</CardTitle>
-            <CardDescription>Friday, January 30, 2026 | 13:00 WIB</CardDescription>
+            <CardTitle className="text-xl">Webinar Bundle Registration</CardTitle>
+            <CardDescription>Get access to all 4 pre-conference webinars for one low price</CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <div className="grid md:grid-cols-2 gap-8">

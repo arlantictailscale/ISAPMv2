@@ -68,6 +68,7 @@
     "react-hook-form": "^7.60.0",
     "react-intersection-observer": "10.0.0",
     "react-resizable-panels": "^2.1.7",
+    "react-toastify": "11.0.5",
     "recharts": "2.15.4",
     "resend": "latest",
     "sonner": "latest",

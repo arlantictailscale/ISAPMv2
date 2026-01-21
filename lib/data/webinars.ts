@@ -28,7 +28,7 @@ export interface Webinar {
   time: string
   timezone: string
   duration: string
-  price: number
+  price: number // Individual webinar price (0 since bundle pricing)
   currency: string
   status: "active" | "coming_soon" | "sold_out" | "completed"
   speakers: WebinarSpeaker[]
@@ -39,6 +39,11 @@ export interface Webinar {
   heroImage?: string
   tags: string[]
 }
+
+// Bundle pricing: Rp 100,000 for all 4 webinars
+export const WEBINAR_BUNDLE_PRICE = 100000
+export const WEBINAR_BUNDLE_ID = "webinar_bundle_all"
+export const WEBINAR_BUNDLE_LABEL = "Webinar Bundle: All 4 Pre-Conference Webinars"
 
 // Webinar 1 - Equity in Pain Management (Active)
 const webinar1: Webinar = {
@@ -215,7 +220,7 @@ const webinar3: Webinar = {
   time: "",
   timezone: "WIB",
   duration: "TBD",
-  price: 0,
+  price: 100000, // Uniform price for all webinars
   currency: "IDR",
   status: "coming_soon",
   tags: [],
@@ -235,7 +240,7 @@ const webinar4: Webinar = {
   time: "",
   timezone: "WIB",
   duration: "TBD",
-  price: 0,
+  price: 100000, // Uniform price for all webinars
   currency: "IDR",
   status: "coming_soon",
   tags: [],
@@ -268,8 +273,12 @@ export function getAllAvailableWebinars(): Webinar[] {
 }
 
 export function getWebinarPrice(id: string): number {
-  const webinar = getWebinarById(id)
-  return webinar?.price || 0
+  // Bundle pricing - all webinars are Rp 100,000 total for all 4
+  if (id === WEBINAR_BUNDLE_ID) {
+    return WEBINAR_BUNDLE_PRICE
+  }
+  // Individual webinar price is now 0 since we only sell bundles
+  return WEBINAR_BUNDLE_PRICE
 }
 
 export function isWebinarPurchasable(id: string): boolean {
@@ -293,10 +302,18 @@ export function formatWebinarTime(time: string, timezone: string): string {
 }
 
 export function getWebinarPricing(id: string): { price: number; currency: string } | null {
+  // Bundle pricing - Rp 100,000 for all 4 webinars
+  if (id === WEBINAR_BUNDLE_ID) {
+    return {
+      price: WEBINAR_BUNDLE_PRICE,
+      currency: "IDR",
+    }
+  }
+  // For individual webinars, return bundle price since we only sell as bundle
   const webinar = getWebinarById(id)
   if (!webinar || webinar.status !== "active") return null
   return {
-    price: webinar.price,
-    currency: webinar.currency,
+    price: WEBINAR_BUNDLE_PRICE,
+    currency: "IDR",
   }
 }

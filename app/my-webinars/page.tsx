@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { Gift, Video, Calendar, Clock, Users, CheckCircle, Play } from "lucide-react"
-import { getWebinarById, formatWebinarDate } from "@/lib/data/webinars"
+import { getWebinarById, formatWebinarDate, WEBINARS, WEBINAR_BUNDLE_ID } from "@/lib/data/webinars"
 import { WebinarContentDisplay } from "@/components/webinar-content-display"
 
 interface WebinarGrant {
@@ -418,27 +418,44 @@ export default async function MyWebinarsPage() {
     if (payment?.payment_status !== "verified") continue
 
     for (const item of order.order_items || []) {
-      if (item.item_type === "webinar" && !seenEventIds.has(item.event_id)) {
-        seenEventIds.add(item.event_id)
-        webinarEntries.push({
-          orderId: order.id,
-          userId: order.user_id,
-          email: order.email,
-          fullName: order.full_name,
-          eventId: item.event_id,
-          eventLabel: item.event_label,
-          itemType: item.item_type,
-          paymentStatus: payment.payment_status,
-          verifiedAt: payment.verified_at,
-        })
+      if (item.item_type === "webinar") {
+        // Check if this is a bundle purchase - expand into all 4 webinars
+        if (item.event_id === WEBINAR_BUNDLE_ID) {
+          // Add all webinars from the bundle
+          for (const webinar of WEBINARS) {
+            if (!seenEventIds.has(webinar.id)) {
+              seenEventIds.add(webinar.id)
+              webinarEntries.push({
+                orderId: order.id,
+                userId: order.user_id,
+                email: order.email,
+                fullName: order.full_name,
+                eventId: webinar.id,
+                eventLabel: webinar.title,
+                itemType: item.item_type,
+                paymentStatus: payment.payment_status,
+                verifiedAt: payment.verified_at,
+              })
+            }
+          }
+        } else if (!seenEventIds.has(item.event_id)) {
+          // Individual webinar purchase
+          seenEventIds.add(item.event_id)
+          webinarEntries.push({
+            orderId: order.id,
+            userId: order.user_id,
+            email: order.email,
+            fullName: order.full_name,
+            eventId: item.event_id,
+            eventLabel: item.event_label,
+            itemType: item.item_type,
+            paymentStatus: payment.payment_status,
+            verifiedAt: payment.verified_at,
+          })
+        }
       }
     }
   }
-
-  console.log("[v0] Webinar entries:", {
-    count: webinarEntries.length,
-    entries: webinarEntries.map((e) => ({ eventId: e.eventId, eventLabel: e.eventLabel })),
-  })
 
   // Fetch symposium bonus grants
   const { data: bonusGrants } = await supabase

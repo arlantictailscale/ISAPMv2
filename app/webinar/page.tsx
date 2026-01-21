@@ -2,23 +2,88 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, ArrowRight, Sparkles, ArrowLeft, Gift } from "lucide-react"
-import { WEBINARS, type Webinar } from "@/lib/data/webinars"
+import { Video, ArrowRight, Sparkles, ArrowLeft, Gift, ShoppingCart, Loader2, ShoppingBag } from "lucide-react"
+import { WEBINARS, type Webinar, WEBINAR_BUNDLE_PRICE, WEBINAR_BUNDLE_ID, WEBINAR_BUNDLE_LABEL } from "@/lib/data/webinars"
+import { formatPrice } from "@/lib/data/event-pricing"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
 import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
 import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration"
+import { addToCart } from "@/app/actions/cart"
+import { useCart } from "@/lib/cart/cart-context"
+import { createBrowserClient } from "@/lib/supabase/client"
+import { toast } from "sonner"
 
 export default function WebinarsPage() {
   const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null)
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
+  const router = useRouter()
+  const { refreshCart } = useCart()
 
   const activeWebinars = WEBINARS.filter((w) => w.status === "active")
   const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
+
+  const handleAddBundleToCart = async () => {
+    setIsAddingToCart(true)
+    try {
+      const supabase = createBrowserClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        toast.error("Please login first", {
+          description: "You need to be logged in to add items to cart",
+          action: {
+            label: "Login",
+            onClick: () => router.push("/login"),
+          },
+        })
+        setIsAddingToCart(false)
+        return
+      }
+
+      const cartItem = {
+        item_type: "webinar" as const,
+        event_id: WEBINAR_BUNDLE_ID,
+        event_label: WEBINAR_BUNDLE_LABEL,
+        participant_type_id: "general",
+        participant_type_label: "All 4 Webinars Bundle",
+        unit_price: WEBINAR_BUNDLE_PRICE,
+        currency: "IDR",
+      }
+
+      const result = await addToCart(cartItem)
+
+      if (result.error) {
+        if (result.error.toLowerCase().includes("already")) {
+          toast.info("Already in Cart", {
+            description: "Webinar Bundle (All 4 Webinars) is already in your cart.",
+            icon: <ShoppingBag className="w-4 h-4" />,
+            action: {
+              label: "View Cart",
+              onClick: () => router.push("/cart"),
+            },
+          })
+        } else {
+          toast.error(result.error)
+        }
+      } else if (result.data) {
+        await refreshCart()
+        toast.success("Added to cart!", {
+          description: "Webinar Bundle - All 4 Webinars for Rp 100.000",
+        })
+      }
+    } catch (error) {
+      toast.error("Failed to add to cart")
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
 
   if (selectedWebinar) {
     return (
@@ -93,6 +158,29 @@ export default function WebinarsPage() {
                   <div className="text-3xl font-bold text-green-500">{WEBINARS.length}</div>
                   <div className="text-sm text-muted-foreground">Total Series</div>
                 </div>
+              </div>
+
+              {/* Bundle Price & Add to Cart */}
+              <div className="mt-8 inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl px-6 py-4 shadow-lg">
+                <div className="text-left">
+                  <p className="text-sm text-muted-foreground">Bundle Price - All 4 Webinars</p>
+                  <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                    {formatPrice(WEBINAR_BUNDLE_PRICE)}
+                  </p>
+                </div>
+                <div className="h-10 w-px bg-border" />
+                <Button
+                  onClick={handleAddBundleToCart}
+                  disabled={isAddingToCart}
+                  className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6"
+                >
+                  {isAddingToCart ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                  )}
+                  Add to Cart
+                </Button>
               </div>
 
               {/* Symposium Bonus Info Banner */}

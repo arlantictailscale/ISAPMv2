@@ -14,7 +14,8 @@ import { formatPrice } from "@/lib/data/event-pricing"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
 import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
-import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration"
+import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration" // Import the missing component
+
 import { addToCart } from "@/app/actions/cart"
 import { useCart } from "@/lib/cart/cart-context"
 import { createBrowserClient } from "@/lib/supabase/client"
@@ -101,7 +102,6 @@ export default function WebinarsPage() {
           {/* Webinar Detail Content */}
           <WebinarDetailHero webinar={selectedWebinar} />
           <WebinarDetailSpeakers webinar={selectedWebinar} />
-          <WebinarDetailRegistration webinar={selectedWebinar} />
         </main>
         <Footer />
       </div>

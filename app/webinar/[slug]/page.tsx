@@ -5,6 +5,7 @@ import Footer from "@/components/footer"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
 import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
 import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration"
+
 import { WEBINARS, getWebinarBySlug } from "@/lib/data/webinars"
 
 interface WebinarDetailPageProps {
@@ -51,7 +52,6 @@ export default async function WebinarDetailPage({ params }: WebinarDetailPagePro
       <main className="pt-16">
         <WebinarDetailHero webinar={webinar} />
         <WebinarDetailSpeakers webinar={webinar} />
-        <WebinarDetailRegistration webinar={webinar} />
       </main>
       <Footer />
     </div>

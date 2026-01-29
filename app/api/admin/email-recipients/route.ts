@@ -173,8 +173,17 @@ export async function GET(request: NextRequest) {
       }
 
       if (itemFilter) {
-        // Get users who have purchased specific item types
-        const { data: orderItems } = await supabase
+        // Get users who have purchased specific item types with verified payments
+        // First get all orders with verified payments
+        const { data: verifiedPayments } = await supabase
+          .from("order_payments")
+          .select("order_id")
+          .eq("payment_status", "verified")
+        
+        const verifiedOrderIds = new Set(verifiedPayments?.map(p => p.order_id) || [])
+        
+        // Then get order items matching the filter
+        const { data: orderItems, error: itemsError } = await supabase
           .from("order_items")
           .select(`
             order_id,
@@ -183,20 +192,22 @@ export async function GET(request: NextRequest) {
               user_id,
               email,
               full_name
-            ),
-            order_payments:order_payments!order_id (
-              payment_status
             )
           `)
           .ilike("item_type", `%${itemFilter}%`)
+        
+        if (itemsError) {
+          console.error("[v0] Error fetching order items:", itemsError)
+        }
+
+        console.log(`[v0] Found ${orderItems?.length || 0} order items for filter: ${itemFilter}`)
 
         const uniqueUsers = new Map()
         for (const item of orderItems || []) {
           const order = item.orders as any
-          const payments = item.order_payments as any[]
-          const hasVerifiedPayment = payments?.some(p => p.payment_status === "verified")
+          const hasVerifiedPayment = verifiedOrderIds.has(item.order_id)
           
-          if (order?.user_id && hasVerifiedPayment && !uniqueUsers.has(order.user_id)) {
+          if (order?.user_id && order?.email && hasVerifiedPayment && !uniqueUsers.has(order.user_id)) {
             uniqueUsers.set(order.user_id, {
               id: order.user_id,
               email: order.email,
@@ -208,6 +219,7 @@ export async function GET(request: NextRequest) {
           }
         }
         recipients = Array.from(uniqueUsers.values())
+        console.log(`[v0] Found ${recipients.length} unique users with verified payments for ${itemFilter}`)
       }
     }
 

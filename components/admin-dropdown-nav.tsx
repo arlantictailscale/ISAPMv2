@@ -14,6 +14,7 @@ import {
   Mail,
   BedDouble,
   Presentation,
+  Send,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
@@ -30,6 +31,7 @@ const adminNavItems = [
   { title: "Symposium Webinar Access", href: "/admin/symposium-webinar-access", icon: Gift },
   { title: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { title: "Email Test", href: "/admin/email-test", icon: Mail },
+  { title: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
 ]
 
 export function AdminDropdownNav() {

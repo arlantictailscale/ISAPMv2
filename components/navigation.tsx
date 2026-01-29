@@ -31,6 +31,7 @@ import {
   FolderOpen,
   Hotel,
   RefreshCw,
+  Send,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -58,6 +59,7 @@ const adminNavItems = [
   { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel },
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
+  { label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
 ]
 
 const navItems = [

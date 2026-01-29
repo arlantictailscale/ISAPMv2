@@ -51,17 +51,17 @@ This document outlines the comprehensive Redis integration strategy implemented 
 
 ### 3. Rate Limiting
 
-```typescript
+\`\`\`typescript
 const { allowed, remaining, resetIn } = await checkRateLimit(
   'api:user123',
   limit: 100,      // Max requests
   windowSeconds: 60 // Time window
 )
-```
+\`\`\`
 
 ### 4. Distributed Locking
 
-```typescript
+\`\`\`typescript
 const { acquired, lockId } = await acquireLock('checkout:order123', 30)
 if (acquired) {
   try {
@@ -70,7 +70,7 @@ if (acquired) {
     await releaseLock('checkout:order123', lockId)
   }
 }
-```
+\`\`\`
 
 ### 5. Real-Time Analytics
 
@@ -91,10 +91,10 @@ if (acquired) {
 
 ### Pattern-Based Invalidation
 Use `invalidateCachePattern()` sparingly for bulk invalidation:
-```typescript
+\`\`\`typescript
 // Invalidate all webinar access for a user
 await invalidateCachePattern(`webinar:access:${userId}:*`)
-```
+\`\`\`
 
 ## Performance Benefits
 
@@ -128,9 +128,9 @@ await invalidateCachePattern(`webinar:access:${userId}:*`)
 ## Monitoring
 
 ### Health Check Endpoint
-```
+\`\`\`
 GET /api/test-redis
-```
+\`\`\`
 
 Returns:
 - Connection status

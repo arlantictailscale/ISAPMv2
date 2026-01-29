@@ -36,13 +36,13 @@ This comprehensive security audit evaluates the ISAPM 2026 conference web applic
 - Session management via cookies with proper refresh tokens
 
 **Code Evidence:**
-```typescript
+\`\`\`typescript
 // Proper auth pattern in use (app/auth/login/page.tsx)
 const { data, error: signInError } = await supabase.auth.signInWithPassword({
   email,
   password,
 })
-```
+\`\`\`
 
 ### 1.2 Identified Issues ⚠️
 
@@ -55,7 +55,7 @@ const { data, error: signInError } = await supabase.auth.signInWithPassword({
 ### 1.3 Recommendations
 
 1. **Add Password Strength Requirements:**
-```typescript
+\`\`\`typescript
 const validatePassword = (password: string) => {
   const minLength = 8
   const hasUppercase = /[A-Z]/.test(password)
@@ -65,7 +65,7 @@ const validatePassword = (password: string) => {
   
   return password.length >= minLength && hasUppercase && hasLowercase && hasNumber
 }
-```
+\`\`\`
 
 2. **Implement Rate Limiting:** Add rate limiting middleware for auth endpoints (see Section 6)
 
@@ -107,7 +107,7 @@ const validatePassword = (password: string) => {
 ### 2.3 Recommendations
 
 1. **Add Middleware for Route Protection:**
-```typescript
+\`\`\`typescript
 // middleware.ts
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
@@ -162,7 +162,7 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/dashboard/:path*', '/admin/:path*', '/my-:path*', '/checkout/:path*', '/payment/:path*']
 }
-```
+\`\`\`
 
 ---
 
@@ -185,7 +185,7 @@ export const config = {
 ### 3.2 Recommendations
 
 1. **Add Content Security Policy Headers:**
-```typescript
+\`\`\`typescript
 // next.config.mjs
 const securityHeaders = [
   {
@@ -213,7 +213,7 @@ const securityHeaders = [
     value: '1; mode=block'
   }
 ]
-```
+\`\`\`
 
 ---
 
@@ -240,7 +240,7 @@ const securityHeaders = [
    - Ensure all state-changing operations use Server Actions
 
 2. **For API Routes:**
-```typescript
+\`\`\`typescript
 // lib/csrf.ts
 import { cookies } from 'next/headers'
 
@@ -257,7 +257,7 @@ export function validateOrigin(request: Request) {
   
   return allowedOrigins.includes(origin)
 }
-```
+\`\`\`
 
 ---
 
@@ -278,7 +278,7 @@ export function validateOrigin(request: Request) {
 ### 5.2 Recommendations
 
 1. **Implement Zod Validation for All Forms:**
-```typescript
+\`\`\`typescript
 // lib/validations/registration.ts
 import { z } from 'zod'
 
@@ -301,10 +301,10 @@ export const paymentProofSchema = z.object({
   accountName: z.string().min(2).max(100),
   transactionReference: z.string().optional(),
 })
-```
+\`\`\`
 
 2. **Server-Side Validation in Actions:**
-```typescript
+\`\`\`typescript
 // app/actions/upload-payment-proof.ts
 export async function uploadPaymentProof(formData: FormData) {
   const file = formData.get('file') as File
@@ -324,7 +324,7 @@ export async function uploadPaymentProof(formData: FormData) {
   
   // Continue with upload...
 }
-```
+\`\`\`
 
 ---
 
@@ -337,7 +337,7 @@ export async function uploadPaymentProof(formData: FormData) {
 ### 6.2 Recommendations
 
 1. **Add Upstash Rate Limiting:**
-```typescript
+\`\`\`typescript
 // lib/rate-limit.ts
 import { Ratelimit } from '@upstash/ratelimit'
 import { Redis } from '@upstash/redis'
@@ -361,10 +361,10 @@ export const ratelimit = {
     limiter: Ratelimit.slidingWindow(10, '1 h'), // 10 uploads per hour
   }),
 }
-```
+\`\`\`
 
 2. **Apply to Auth Routes:**
-```typescript
+\`\`\`typescript
 // app/api/auth/login/route.ts (if using API route)
 import { ratelimit } from '@/lib/rate-limit'
 import { headers } from 'next/headers'
@@ -386,7 +386,7 @@ export async function POST(request: Request) {
   
   // Process login...
 }
-```
+\`\`\`
 
 ---
 
@@ -403,7 +403,7 @@ export async function POST(request: Request) {
 ### 7.2 Recommendations
 
 1. **Add Session Timeout for Sensitive Operations:**
-```typescript
+\`\`\`typescript
 // For admin actions, verify session is fresh
 const { data: { session } } = await supabase.auth.getSession()
 const sessionAge = Date.now() - new Date(session?.created_at ?? 0).getTime()
@@ -412,7 +412,7 @@ if (sessionAge > 30 * 60 * 1000) { // 30 minutes
   // Require re-authentication for sensitive actions
   return { error: 'Session expired. Please re-authenticate.' }
 }
-```
+\`\`\`
 
 ---
 
@@ -433,7 +433,7 @@ if (sessionAge > 30 * 60 * 1000) { // 30 minutes
 ### 8.2 Recommendations
 
 1. **Standardize API Response Format:**
-```typescript
+\`\`\`typescript
 // lib/api-response.ts
 export function apiSuccess<T>(data: T, status = 200) {
   return Response.json({ success: true, data }, { status })
@@ -451,10 +451,10 @@ export function handleApiError(error: unknown) {
   console.error('API Error:', error)
   return apiError('An unexpected error occurred', 500)
 }
-```
+\`\`\`
 
 2. **Create API Route Wrapper:**
-```typescript
+\`\`\`typescript
 // lib/api-handler.ts
 import { ratelimit } from './rate-limit'
 import { validateOrigin } from './csrf'
@@ -486,7 +486,7 @@ export function withAuth(handler: ApiHandler) {
     return handler(request, { user })
   }
 }
-```
+\`\`\`
 
 ---
 
@@ -509,7 +509,7 @@ export function withAuth(handler: ApiHandler) {
 ### 9.3 Recommendations
 
 1. **Centralize Service Client Creation:**
-```typescript
+\`\`\`typescript
 // lib/supabase/admin.ts
 import { createClient } from '@supabase/supabase-js'
 
@@ -534,7 +534,7 @@ export function getAdminClient() {
   
   return adminClient
 }
-```
+\`\`\`
 
 ---
 
@@ -542,7 +542,7 @@ export function getAdminClient() {
 
 ### 10.1 Recommended next.config.mjs Update
 
-```javascript
+\`\`\`javascript
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async headers() {
@@ -586,7 +586,7 @@ const nextConfig = {
 }
 
 export default nextConfig
-```
+\`\`\`
 
 ---
 

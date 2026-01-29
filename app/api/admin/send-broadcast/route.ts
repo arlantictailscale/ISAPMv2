@@ -82,14 +82,25 @@ function generateEmailHtml(subject: string, content: string, recipientName: stri
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] Email broadcast API called")
+  
+  // Check if RESEND_API_KEY is configured
+  if (!process.env.RESEND_API_KEY) {
+    console.error("[v0] RESEND_API_KEY is not configured")
+    return NextResponse.json({ error: "Email service not configured. Please set RESEND_API_KEY." }, { status: 500 })
+  }
+  
   try {
     const supabase = await createClient()
+    console.log("[v0] Supabase client created")
     
     // Verify admin access
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
+      console.log("[v0] No user found - unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    console.log("[v0] User authenticated:", user.email)
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -98,10 +109,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!profile || profile.role !== "admin") {
+      console.log("[v0] User is not admin")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
+    console.log("[v0] Admin access verified")
 
     const body: BroadcastRequest = await request.json()
+    console.log("[v0] Request body parsed, recipients:", body.recipients?.length)
     const { subject, content, recipients, segment, scheduled } = body
 
     if (!subject || !content || !recipients || recipients.length === 0) {
@@ -125,15 +139,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Send emails in batches to avoid rate limits
-    const BATCH_SIZE = 10
-    const DELAY_BETWEEN_BATCHES = 1000 // 1 second
+    const BATCH_SIZE = 5 // Reduced batch size for better reliability
+    const DELAY_BETWEEN_BATCHES = 500 // 500ms delay
+    const EMAIL_TIMEOUT = 10000 // 10 second timeout per email
     
     let successCount = 0
     let failCount = 0
     const errors: string[] = []
 
+    console.log(`[Email Broadcast] Starting to send ${recipients.length} emails`)
+
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
       const batch = recipients.slice(i, i + BATCH_SIZE)
+      console.log(`[Email Broadcast] Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(recipients.length / BATCH_SIZE)}`)
       
       const batchPromises = batch.map(async (recipient) => {
         try {
@@ -144,18 +162,28 @@ export async function POST(request: NextRequest) {
 
           const htmlContent = generateEmailHtml(subject, content, recipientName)
 
-          await resend.emails.send({
-            from: "ISAPM 2026 <noreply@isapm2026.org>",
-            to: recipient.email,
-            subject: subject,
-            html: htmlContent,
-          })
+          // Add timeout wrapper for each email
+          const sendWithTimeout = Promise.race([
+            resend.emails.send({
+              from: "ISAPM 2026 <noreply@isapm2026.org>",
+              to: recipient.email,
+              subject: subject,
+              html: htmlContent,
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Email send timeout")), EMAIL_TIMEOUT)
+            )
+          ])
+
+          await sendWithTimeout
 
           successCount++
+          console.log(`[Email Broadcast] Sent to ${recipient.email}`)
           return { success: true, email: recipient.email }
         } catch (error) {
           failCount++
           const errorMsg = error instanceof Error ? error.message : "Unknown error"
+          console.error(`[Email Broadcast] Failed for ${recipient.email}: ${errorMsg}`)
           errors.push(`${recipient.email}: ${errorMsg}`)
           return { success: false, email: recipient.email, error: errorMsg }
         }
@@ -169,7 +197,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[Email Broadcast] Completed: ${successCount} sent, ${failCount} failed`)
+    console.log(`[v0] Email Broadcast Completed: ${successCount} sent, ${failCount} failed`)
 
     return NextResponse.json({
       success: true,
@@ -182,9 +210,10 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined, // Only return first 10 errors
     })
   } catch (error) {
-    console.error("Error sending broadcast:", error)
+    console.error("[v0] Error sending broadcast:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to send broadcast" },
+      { error: `Failed to send broadcast: ${errorMessage}` },
       { status: 500 }
     )
   }

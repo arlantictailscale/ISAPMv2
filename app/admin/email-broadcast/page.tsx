@@ -449,6 +449,8 @@ export default function AdminEmailBroadcastPage() {
 
   // Send broadcast
   const sendBroadcast = async () => {
+    console.log("[v0] sendBroadcast called")
+    
     if (!subject.trim() || !content.trim()) {
       toast.error("Please fill in subject and content")
       return
@@ -461,16 +463,29 @@ export default function AdminEmailBroadcastPage() {
 
     setIsSending(true)
     setShowConfirmDialog(false)
+    console.log("[v0] Starting email send process")
 
     try {
       const { data: { session } } = await supabase.auth.getSession()
+      console.log("[v0] Session:", session ? "exists" : "null")
+      
       if (!session) {
         toast.error("Session expired")
+        setIsSending(false)
         return
       }
 
       const recipientList = filteredRecipients.filter((r) => selectedRecipients.has(r.id))
+      console.log("[v0] Recipient count:", recipientList.length)
 
+      // Add timeout to prevent infinite loading
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => {
+        console.log("[v0] Request timeout - aborting")
+        controller.abort()
+      }, 120000) // 2 minute timeout
+
+      console.log("[v0] Sending request to API...")
       const response = await fetch("/api/admin/send-broadcast", {
         method: "POST",
         headers: {
@@ -484,9 +499,14 @@ export default function AdminEmailBroadcastPage() {
           segment: selectedSegment,
           scheduled: isScheduled ? { date: scheduledDate, time: scheduledTime } : null,
         }),
+        signal: controller.signal,
       })
 
+      clearTimeout(timeoutId)
+      console.log("[v0] Response received, status:", response.status)
+
       const result = await response.json()
+      console.log("[v0] Response body:", result)
 
       if (!response.ok) {
         throw new Error(result.error || "Failed to send broadcast")
@@ -506,15 +526,21 @@ export default function AdminEmailBroadcastPage() {
       localStorage.setItem("broadcast_history", JSON.stringify(newHistory))
 
       toast.success(`Broadcast sent to ${recipientList.length} recipients!`)
+      console.log("[v0] Email broadcast successful")
       
       // Reset form
       setSubject("")
       setContent("")
       setSelectedTemplate("")
     } catch (err) {
-      console.error("Error sending broadcast:", err)
-      toast.error(err instanceof Error ? err.message : "Failed to send broadcast")
+      console.error("[v0] Error sending broadcast:", err)
+      if (err instanceof Error && err.name === "AbortError") {
+        toast.error("Request timed out. Please try again.")
+      } else {
+        toast.error(err instanceof Error ? err.message : "Failed to send broadcast")
+      }
     } finally {
+      console.log("[v0] Setting isSending to false")
       setIsSending(false)
     }
   }

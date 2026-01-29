@@ -182,19 +182,41 @@ export async function GET(request: NextRequest) {
         
         const verifiedOrderIds = new Set(verifiedPayments?.map(p => p.order_id) || [])
         
-        // Then get order items matching the filter
-        const { data: orderItems, error: itemsError } = await supabase
+        // Build the query based on segment type
+        // For symposium, workshop, cpd: item_type is "event" and we filter by event_id
+        // For hotel: item_type is "hotel"
+        // For webinar: item_type is "webinar"
+        let query = supabase
           .from("order_items")
           .select(`
             order_id,
             item_type,
+            event_id,
             orders!inner (
               user_id,
               email,
               full_name
             )
           `)
-          .ilike("item_type", `%${itemFilter}%`)
+        
+        if (itemFilter === "symposium") {
+          // Symposium: item_type = 'event' AND event_id = 'symposium'
+          query = query.eq("item_type", "event").eq("event_id", "symposium")
+        } else if (itemFilter === "workshop") {
+          // Workshop: item_type = 'event' AND event_id starts with 'ws'
+          query = query.eq("item_type", "event").ilike("event_id", "ws%")
+        } else if (itemFilter === "cpd") {
+          // CPD: item_type = 'event' AND event_id = 'cpd'
+          query = query.eq("item_type", "event").eq("event_id", "cpd")
+        } else if (itemFilter === "hotel") {
+          // Hotel: item_type = 'hotel'
+          query = query.eq("item_type", "hotel")
+        } else if (itemFilter === "webinar") {
+          // Webinar: item_type = 'webinar'
+          query = query.eq("item_type", "webinar")
+        }
+        
+        const { data: orderItems, error: itemsError } = await query
         
         if (itemsError) {
           console.error("[v0] Error fetching order items:", itemsError)

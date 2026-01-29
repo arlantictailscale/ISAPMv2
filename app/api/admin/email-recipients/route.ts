@@ -32,35 +32,90 @@ export async function GET(request: NextRequest) {
       institution: string | null
     }> = []
 
-    // Create admin client for auth operations
-    const adminSupabase = createAdminClient()
-
     if (segment === "all") {
-      // Get all users from auth.users via profiles
+      // Get all users from profiles table which includes email
       const { data: users, error } = await supabase
         .from("profiles")
-        .select("id, full_name, first_name, last_name, institution")
+        .select("id, email, full_name, first_name, last_name, institution")
+        .not("email", "is", null)
       
-      if (error) throw error
-
-      // Get emails from auth using admin client
-      const { data: { users: authUsers }, error: authError } = await adminSupabase.auth.admin.listUsers()
-      
-      if (authError) {
-        console.error("[v0] Error fetching auth users:", authError)
-        throw authError
+      if (error) {
+        console.error("[v0] Error fetching profiles:", error)
+        throw error
       }
-      
-      const emailMap = new Map(authUsers?.map(u => [u.id, u.email]) || [])
-      
-      recipients = (users || []).map(u => ({
-        id: u.id,
-        email: emailMap.get(u.id) || "",
-        full_name: u.full_name,
-        first_name: u.first_name,
-        last_name: u.last_name,
-        institution: u.institution,
-      })).filter(r => r.email)
+
+      console.log("[v0] Fetched profiles:", users?.length || 0)
+
+      // If profiles don't have emails, try using admin client
+      if (!users || users.length === 0 || !users[0]?.email) {
+        console.log("[v0] Profiles don't have emails, trying admin client...")
+        try {
+          const adminSupabase = createAdminClient()
+          const { data: { users: authUsers }, error: authError } = await adminSupabase.auth.admin.listUsers()
+          
+          if (authError) {
+            console.error("[v0] Error fetching auth users:", authError)
+          } else if (authUsers) {
+            console.log("[v0] Fetched auth users:", authUsers.length)
+            
+            // Get profiles for additional info
+            const { data: profileData } = await supabase
+              .from("profiles")
+              .select("id, full_name, first_name, last_name, institution")
+            
+            const profileMap = new Map(profileData?.map(p => [p.id, p]) || [])
+            
+            recipients = authUsers
+              .filter(u => u.email)
+              .map(u => {
+                const profileInfo = profileMap.get(u.id)
+                return {
+                  id: u.id,
+                  email: u.email || "",
+                  full_name: profileInfo?.full_name || u.user_metadata?.full_name || null,
+                  first_name: profileInfo?.first_name || null,
+                  last_name: profileInfo?.last_name || null,
+                  institution: profileInfo?.institution || null,
+                }
+              })
+          }
+        } catch (adminError) {
+          console.error("[v0] Admin client error:", adminError)
+          // Fallback: try to get emails from orders table
+          const { data: orders } = await supabase
+            .from("orders")
+            .select("user_id, email, full_name")
+            .not("email", "is", null)
+          
+          if (orders && orders.length > 0) {
+            const uniqueUsers = new Map()
+            for (const order of orders) {
+              if (order.user_id && order.email && !uniqueUsers.has(order.user_id)) {
+                uniqueUsers.set(order.user_id, {
+                  id: order.user_id,
+                  email: order.email,
+                  full_name: order.full_name,
+                  first_name: null,
+                  last_name: null,
+                  institution: null,
+                })
+              }
+            }
+            recipients = Array.from(uniqueUsers.values())
+            console.log("[v0] Using orders table fallback, found:", recipients.length)
+          }
+        }
+      } else {
+        // Profiles have emails
+        recipients = users.map(u => ({
+          id: u.id,
+          email: u.email || "",
+          full_name: u.full_name,
+          first_name: u.first_name,
+          last_name: u.last_name,
+          institution: u.institution,
+        })).filter(r => r.email)
+      }
     } else {
       // Get users based on their purchases
       let itemFilter = ""

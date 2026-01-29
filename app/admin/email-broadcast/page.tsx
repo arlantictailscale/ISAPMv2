@@ -466,10 +466,15 @@ export default function AdminEmailBroadcastPage() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
         toast.error("Session expired")
+        setIsSending(false)
         return
       }
 
       const recipientList = filteredRecipients.filter((r) => selectedRecipients.has(r.id))
+
+      // Add timeout to prevent infinite loading
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 120000) // 2 minute timeout
 
       const response = await fetch("/api/admin/send-broadcast", {
         method: "POST",
@@ -484,7 +489,10 @@ export default function AdminEmailBroadcastPage() {
           segment: selectedSegment,
           scheduled: isScheduled ? { date: scheduledDate, time: scheduledTime } : null,
         }),
+        signal: controller.signal,
       })
+
+      clearTimeout(timeoutId)
 
       const result = await response.json()
 
@@ -513,7 +521,11 @@ export default function AdminEmailBroadcastPage() {
       setSelectedTemplate("")
     } catch (err) {
       console.error("Error sending broadcast:", err)
-      toast.error(err instanceof Error ? err.message : "Failed to send broadcast")
+      if (err instanceof Error && err.name === "AbortError") {
+        toast.error("Request timed out. Please try again.")
+      } else {
+        toast.error(err instanceof Error ? err.message : "Failed to send broadcast")
+      }
     } finally {
       setIsSending(false)
     }

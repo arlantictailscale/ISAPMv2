@@ -125,15 +125,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Send emails in batches to avoid rate limits
-    const BATCH_SIZE = 10
-    const DELAY_BETWEEN_BATCHES = 1000 // 1 second
+    const BATCH_SIZE = 5 // Reduced batch size for better reliability
+    const DELAY_BETWEEN_BATCHES = 500 // 500ms delay
+    const EMAIL_TIMEOUT = 10000 // 10 second timeout per email
     
     let successCount = 0
     let failCount = 0
     const errors: string[] = []
 
+    console.log(`[Email Broadcast] Starting to send ${recipients.length} emails`)
+
     for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
       const batch = recipients.slice(i, i + BATCH_SIZE)
+      console.log(`[Email Broadcast] Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(recipients.length / BATCH_SIZE)}`)
       
       const batchPromises = batch.map(async (recipient) => {
         try {
@@ -144,18 +148,28 @@ export async function POST(request: NextRequest) {
 
           const htmlContent = generateEmailHtml(subject, content, recipientName)
 
-          await resend.emails.send({
-            from: "ISAPM 2026 <noreply@isapm2026.org>",
-            to: recipient.email,
-            subject: subject,
-            html: htmlContent,
-          })
+          // Add timeout wrapper for each email
+          const sendWithTimeout = Promise.race([
+            resend.emails.send({
+              from: "ISAPM 2026 <noreply@isapm2026.org>",
+              to: recipient.email,
+              subject: subject,
+              html: htmlContent,
+            }),
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error("Email send timeout")), EMAIL_TIMEOUT)
+            )
+          ])
+
+          await sendWithTimeout
 
           successCount++
+          console.log(`[Email Broadcast] Sent to ${recipient.email}`)
           return { success: true, email: recipient.email }
         } catch (error) {
           failCount++
           const errorMsg = error instanceof Error ? error.message : "Unknown error"
+          console.error(`[Email Broadcast] Failed for ${recipient.email}: ${errorMsg}`)
           errors.push(`${recipient.email}: ${errorMsg}`)
           return { success: false, email: recipient.email, error: errorMsg }
         }

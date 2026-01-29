@@ -82,14 +82,25 @@ function generateEmailHtml(subject: string, content: string, recipientName: stri
 }
 
 export async function POST(request: NextRequest) {
+  console.log("[v0] Email broadcast API called")
+  
+  // Check if RESEND_API_KEY is configured
+  if (!process.env.RESEND_API_KEY) {
+    console.error("[v0] RESEND_API_KEY is not configured")
+    return NextResponse.json({ error: "Email service not configured. Please set RESEND_API_KEY." }, { status: 500 })
+  }
+  
   try {
     const supabase = await createClient()
+    console.log("[v0] Supabase client created")
     
     // Verify admin access
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
+      console.log("[v0] No user found - unauthorized")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+    console.log("[v0] User authenticated:", user.email)
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -98,10 +109,13 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (!profile || profile.role !== "admin") {
+      console.log("[v0] User is not admin")
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
+    console.log("[v0] Admin access verified")
 
     const body: BroadcastRequest = await request.json()
+    console.log("[v0] Request body parsed, recipients:", body.recipients?.length)
     const { subject, content, recipients, segment, scheduled } = body
 
     if (!subject || !content || !recipients || recipients.length === 0) {
@@ -183,7 +197,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[Email Broadcast] Completed: ${successCount} sent, ${failCount} failed`)
+    console.log(`[v0] Email Broadcast Completed: ${successCount} sent, ${failCount} failed`)
 
     return NextResponse.json({
       success: true,
@@ -196,9 +210,10 @@ export async function POST(request: NextRequest) {
       errors: errors.length > 0 ? errors.slice(0, 10) : undefined, // Only return first 10 errors
     })
   } catch (error) {
-    console.error("Error sending broadcast:", error)
+    console.error("[v0] Error sending broadcast:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Failed to send broadcast" },
+      { error: `Failed to send broadcast: ${errorMessage}` },
       { status: 500 }
     )
   }

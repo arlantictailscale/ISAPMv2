@@ -23,16 +23,16 @@ The email confirmation flow works as follows:
 3. Set the following values:
 
    **Site URL:**
-   ```
+   \`\`\`
    https://isapm2026.org
-   ```
+   \`\`\`
 
    **Redirect URLs:** (add all of these)
-   ```
+   \`\`\`
    https://isapm2026.org/api/auth/callback
    https://www.isapm2026.org/api/auth/callback
    http://localhost:3000/api/auth/callback
-   ```
+   \`\`\`
 
 4. Click **Save**
 
@@ -47,7 +47,7 @@ The email confirmation flow works as follows:
 
 Ensure these environment variables are set in your Vercel project:
 
-```bash
+\`\`\`bash
 # Supabase credentials (already configured via integration)
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
@@ -58,7 +58,7 @@ NEXT_PUBLIC_SITE_URL=https://isapm2026.org
 
 # Optional: Development redirect URL (for local testing)
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000/api/auth/callback
-```
+\`\`\`
 
 ### Step 4: Test the Flow
 

@@ -46,28 +46,28 @@ This plan outlines the integration of a comprehensive shopping cart system into 
 No major schema changes needed. The existing cart tables are well-designed. Minor recommendations:
 
 #### Add Index for Performance
-```sql
+\`\`\`sql
 CREATE INDEX idx_carts_user_status ON carts(user_id, status);
 CREATE INDEX idx_cart_items_cart_id ON cart_items(cart_id);
-```
+\`\`\`
 
 #### Add Quantity Field (Optional Enhancement)
-```sql
+\`\`\`sql
 ALTER TABLE cart_items ADD COLUMN quantity INTEGER DEFAULT 1;
 ALTER TABLE cart_items ADD CONSTRAINT cart_items_quantity_positive CHECK (quantity > 0);
-```
+\`\`\`
 
 ---
 
 ## 2. User Flow Architecture
 
 ### 2.1 Current Flow
-```
+\`\`\`
 Browse Events → Select Event → Fill Form → Payment → Complete
-```
+\`\`\`
 
 ### 2.2 New Cart Flow
-```
+\`\`\`
 Browse Events/Hotels 
   ↓
 Add to Cart (multiple items)
@@ -79,7 +79,7 @@ Proceed to Checkout (unified form)
 Payment
   ↓
 Complete
-```
+\`\`\`
 
 ### 2.3 Detailed User Journey
 
@@ -131,7 +131,7 @@ Complete
 ### 3.1 Core Components to Build
 
 #### A. Cart Context Provider (`lib/cart-context.tsx`)
-```typescript
+\`\`\`typescript
 - useCart() hook
 - addToCart(item)
 - removeFromCart(itemId)
@@ -140,7 +140,7 @@ Complete
 - getCartTotal()
 - getCartCount()
 - Real-time sync with Supabase
-```
+\`\`\`
 
 #### B. Cart UI Components
 
@@ -196,7 +196,7 @@ Complete
 ### 4.1 Cart State Architecture
 
 #### Client-Side State (React Context)
-```typescript
+\`\`\`typescript
 interface CartState {
   items: CartItem[]
   totalAmount: number
@@ -217,7 +217,7 @@ interface CartItem {
   unitPrice: number
   currency: string
 }
-```
+\`\`\`
 
 #### Server-Side Sync
 - Auto-save to Supabase on every change
@@ -227,7 +227,7 @@ interface CartItem {
 ### 4.2 Cart Operations Flow
 
 #### Adding Item
-```
+\`\`\`
 1. User clicks "Add to Cart"
 2. Validate item data
 3. Check for active cart (create if none)
@@ -235,10 +235,10 @@ interface CartItem {
 5. Update local state
 6. Show success notification
 7. Update cart badge count
-```
+\`\`\`
 
 #### Checkout Process
-```
+\`\`\`
 1. User clicks "Proceed to Checkout"
 2. Validate cart not empty
 3. Validate user profile complete
@@ -250,7 +250,7 @@ interface CartItem {
    d. Mark cart as 'completed'
    e. Commit transaction
 6. Redirect to payment page
-```
+\`\`\`
 
 ---
 
@@ -266,7 +266,7 @@ Already in place:
 ### 5.2 Additional Security Measures
 
 #### Price Validation
-```typescript
+\`\`\`typescript
 // CRITICAL: Always validate prices server-side
 // Never trust client-submitted prices
 
@@ -279,10 +279,10 @@ const validateCartPrices = async (cartItems) => {
     }
   }
 }
-```
+\`\`\`
 
 #### Duplicate Prevention
-```typescript
+\`\`\`typescript
 // Prevent adding same item multiple times
 // Check before insert:
 const existingItem = await supabase
@@ -296,17 +296,17 @@ const existingItem = await supabase
 if (existingItem) {
   throw new Error('Item already in cart')
 }
-```
+\`\`\`
 
 #### Cart Expiration
-```typescript
+\`\`\`typescript
 // Automatically abandon carts after 7 days
 // Run via cron job:
 UPDATE carts
 SET status = 'abandoned'
 WHERE status = 'active'
 AND updated_at < NOW() - INTERVAL '7 days'
-```
+\`\`\`
 
 ---
 
@@ -316,7 +316,7 @@ AND updated_at < NOW() - INTERVAL '7 days'
 
 Implement Supabase real-time subscriptions:
 
-```typescript
+\`\`\`typescript
 useEffect(() => {
   const channel = supabase
     .channel('cart-changes')
@@ -338,7 +338,7 @@ useEffect(() => {
     supabase.removeChannel(channel)
   }
 }, [cartId])
-```
+\`\`\`
 
 ### 6.2 Price Updates
 
@@ -377,17 +377,17 @@ If event prices change while items are in cart:
 - Animation: Bounce when count increases
 
 #### Cart Item Card
-```
+\`\`\`
 ┌─────────────────────────────────────┐
 │ [Icon] Event Name                  │
 │        Participant Type             │
 │        Date                        │
 │                         Price [×]  │
 └─────────────────────────────────────┘
-```
+\`\`\`
 
 #### Cart Total Section
-```
+\`\`\`
 ┌─────────────────────────────────────┐
 │ Subtotal:              IDR 5,000,000│
 │ ─────────────────────────────────── │
@@ -395,7 +395,7 @@ If event prices change while items are in cart:
 │                                     │
 │ [Proceed to Checkout Button]       │
 └─────────────────────────────────────┘
-```
+\`\`\`
 
 ### 7.3 Interactions & Feedback
 
@@ -489,7 +489,7 @@ If event prices change while items are in cart:
 - Email notifications
 
 ### 10.3 E2E Tests (Playwright)
-```typescript
+\`\`\`typescript
 test('Complete cart checkout flow', async ({ page }) => {
   // 1. Add items to cart
   await page.goto('/register')
@@ -507,7 +507,7 @@ test('Complete cart checkout flow', async ({ page }) => {
   // 4. Verify order created
   await expect(page).toHaveURL(/\/payment\//)
 })
-```
+\`\`\`
 
 ### 10.4 Load Testing
 - Simulate 100 concurrent users
@@ -539,7 +539,7 @@ test('Complete cart checkout flow', async ({ page }) => {
 
 ### 11.2 Implementation
 
-```typescript
+\`\`\`typescript
 // Track cart events
 trackEvent('cart_item_added', {
   item_type: 'event',
@@ -556,7 +556,7 @@ trackEvent('order_completed', {
   order_id: orderId,
   total: totalAmount,
 })
-```
+\`\`\`
 
 ---
 
@@ -565,7 +565,7 @@ trackEvent('order_completed', {
 ### 12.1 Common Error Scenarios
 
 #### 1. Cart Sync Failure
-```typescript
+\`\`\`typescript
 try {
   await addToCart(item)
 } catch (error) {
@@ -575,10 +575,10 @@ try {
   // Retry sync in background
   retrySync()
 }
-```
+\`\`\`
 
 #### 2. Price Mismatch
-```typescript
+\`\`\`typescript
 // Detect during checkout
 if (cartPrice !== actualPrice) {
   showModal({
@@ -587,24 +587,24 @@ if (cartPrice !== actualPrice) {
     actions: ['Update', 'Remove Item'],
   })
 }
-```
+\`\`\`
 
 #### 3. Sold Out Events
-```typescript
+\`\`\`typescript
 // Check availability during checkout
 const availability = await checkEventAvailability(eventId)
 if (!availability.hasSpace) {
   showError('This event is now full')
   removeFromCart(itemId)
 }
-```
+\`\`\`
 
 ---
 
 ## 13. Accessibility
 
 ### 13.1 ARIA Labels
-```tsx
+\`\`\`tsx
 <button 
   aria-label={`Cart with ${itemCount} items`}
   aria-expanded={isCartOpen}
@@ -612,7 +612,7 @@ if (!availability.hasSpace) {
   <ShoppingCart />
   <span aria-live="polite">{itemCount}</span>
 </button>
-```
+\`\`\`
 
 ### 13.2 Keyboard Navigation
 - Tab through cart items

@@ -97,7 +97,7 @@ The ISAPM 2026 web application demonstrates strong foundational design principle
 ### Phase 1: Immediate Visual Upgrades (1-2 days)
 
 #### 1.1 Glassmorphism & Depth
-```css
+\`\`\`css
 /* Add to globals.css */
 .glass-card {
   background: rgba(255, 255, 255, 0.7);
@@ -118,7 +118,7 @@ The ISAPM 2026 web application demonstrates strong foundational design principle
     0 0 20px rgba(0, 169, 224, 0.3),
     0 0 40px rgba(0, 169, 224, 0.15);
 }
-```
+\`\`\`
 
 **Apply to:**
 - Navigation bar (glassmorphism on scroll)
@@ -127,7 +127,7 @@ The ISAPM 2026 web application demonstrates strong foundational design principle
 - Modal dialogs (glass-card backdrop)
 
 #### 1.2 Vibrant Color Infusion
-```tsx
+\`\`\`tsx
 // Update CTA button colors to match logo energy
 const brandColors = {
   orange: 'from-orange-500 via-orange-600 to-red-500',
@@ -136,7 +136,7 @@ const brandColors = {
   cyan: 'from-cyan-500 via-teal-600 to-blue-500',
   multi: 'from-orange-500 via-purple-500 to-cyan-500'
 }
-```
+\`\`\`
 
 **Apply to:**
 - Dashboard CTAs: Use orange, yellow, green, cyan individually
@@ -146,7 +146,7 @@ const brandColors = {
 - Badges: Add subtle gradients instead of solid colors
 
 #### 1.3 Enhanced Button Interactions
-```tsx
+\`\`\`tsx
 // Update button component with advanced hover states
 <Button
   className="
@@ -160,7 +160,7 @@ const brandColors = {
     transition-all duration-200
   "
 />
-```
+\`\`\`
 
 **Features:**
 - Shimmer effect on hover
@@ -169,14 +169,14 @@ const brandColors = {
 - Gradient overlay animation
 
 #### 1.4 Loading Skeleton States
-```tsx
+\`\`\`tsx
 // Add to each data-loading component
 {isLoading ? (
   <SkeletonCard />
 ) : (
   <ActualContent />
 )}
-```
+\`\`\`
 
 **Apply to:**
 - Event cards grid
@@ -189,7 +189,7 @@ const brandColors = {
 ### Phase 2: Advanced Visual Polish (3-4 days)
 
 #### 2.1 Parallax & Depth Effects
-```tsx
+\`\`\`tsx
 // Add parallax scrolling to hero sections
 const [scrollY, setScrollY] = useState(0)
 
@@ -202,7 +202,7 @@ useEffect(() => {
 <div style={{ transform: `translateY(${scrollY * 0.5}px)` }}>
   {/* Background elements */}
 </div>
-```
+\`\`\`
 
 **Apply to:**
 - Landing hero decorative elements
@@ -210,7 +210,7 @@ useEffect(() => {
 - Section separators
 
 #### 2.2 Animated SVG Backgrounds
-```tsx
+\`\`\`tsx
 // Add organic shapes with subtle animations
 <svg className="absolute inset-0 opacity-30">
   <defs>
@@ -222,7 +222,7 @@ useEffect(() => {
   </defs>
   <path className="animate-float-slow" d="..." fill="url(#grad1)" />
 </svg>
-```
+\`\`\`
 
 **Apply to:**
 - Hero section backgrounds
@@ -230,7 +230,7 @@ useEffect(() => {
 - Modal backdrops
 
 #### 2.3 Card Hover Transformations
-```tsx
+\`\`\`tsx
 <Card className="
   group perspective-1000
   hover:shadow-2xl hover:-translate-y-2
@@ -243,7 +243,7 @@ useEffect(() => {
     {/* Card content */}
   </div>
 </Card>
-```
+\`\`\`
 
 **Apply to:**
 - Event cards
@@ -252,7 +252,7 @@ useEffect(() => {
 - Feature highlights
 
 #### 2.4 Gradient Text & Accents
-```tsx
+\`\`\`tsx
 <h2 className="
   text-5xl font-black
   bg-gradient-to-r from-orange-600 via-purple-600 to-cyan-600
@@ -261,7 +261,7 @@ useEffect(() => {
 ">
   Revolutionary Pain Management
 </h2>
-```
+\`\`\`
 
 **Apply to:**
 - Section headings
@@ -274,7 +274,7 @@ useEffect(() => {
 ### Phase 3: Premium Finishing Touches (2-3 days)
 
 #### 3.1 Cursor-Following Spotlight
-```tsx
+\`\`\`tsx
 // Add interactive spotlight effect on hero
 const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
@@ -289,10 +289,10 @@ const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   />
   {/* Content */}
 </div>
-```
+\`\`\`
 
 #### 3.2 Smooth Page Transitions
-```tsx
+\`\`\`tsx
 // Add to layout.tsx
 <motion.div
   initial={{ opacity: 0, y: 20 }}
@@ -302,10 +302,10 @@ const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 >
   {children}
 </motion.div>
-```
+\`\`\`
 
 #### 3.3 Number Counting Animations
-```tsx
+\`\`\`tsx
 // For registration stats
 <AnimatedCounter
   from={0}
@@ -313,10 +313,10 @@ const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
   duration={2000}
   className="text-6xl font-bold"
 />
-```
+\`\`\`
 
 #### 3.4 Confetti on Registration Success
-```tsx
+\`\`\`tsx
 // After successful cart checkout
 import confetti from 'canvas-confetti'
 
@@ -326,14 +326,14 @@ confetti({
   origin: { y: 0.6 },
   colors: ['#f97316', '#a855f7', '#06b6d4', '#22c55e']
 })
-```
+\`\`\`
 
 ---
 
 ## Mobile-Specific Design Enhancements
 
 ### 1. Touch-Optimized Interactions
-```css
+\`\`\`css
 /* Enlarge touch targets */
 @media (pointer: coarse) {
   button, a[role="button"] {
@@ -348,10 +348,10 @@ confetti({
   -webkit-tap-highlight-color: rgba(0, 169, 224, 0.2);
   active:scale-95 active:opacity-80;
 }
-```
+\`\`\`
 
 ### 2. Mobile-First Gradients
-```css
+\`\`\`css
 /* Lighter, more performant gradients for mobile */
 @media (max-width: 768px) {
   .hero-gradient {
@@ -363,17 +363,17 @@ confetti({
     );
   }
 }
-```
+\`\`\`
 
 ### 3. Bottom Sheet Modals
-```tsx
+\`\`\`tsx
 // Replace full-screen modals with slide-up sheets on mobile
 <Sheet>
   <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl">
     {/* Modal content */}
   </SheetContent>
 </Sheet>
-```
+\`\`\`
 
 ---
 
@@ -382,50 +382,50 @@ confetti({
 ### Component Library Enhancements
 
 #### Standardized Card Variants
-```tsx
+\`\`\`tsx
 const cardVariants = {
   default: "border bg-card shadow-sm",
   elevated: "border-0 shadow-lg hover:shadow-xl",
   glass: "border border-white/20 bg-white/70 backdrop-blur-lg",
   gradient: "border-0 bg-gradient-to-br from-white to-primary/5"
 }
-```
+\`\`\`
 
 #### Badge System
-```tsx
+\`\`\`tsx
 const badgeVariants = {
   success: "bg-gradient-to-r from-green-500 to-emerald-600 text-white",
   warning: "bg-gradient-to-r from-yellow-400 to-orange-500 text-white",
   info: "bg-gradient-to-r from-cyan-500 to-blue-600 text-white",
   default: "bg-muted text-muted-foreground"
 }
-```
+\`\`\`
 
 #### Button Styles
-```tsx
+\`\`\`tsx
 const buttonStyles = {
   primary: "bg-gradient-to-r from-orange-500 via-purple-600 to-cyan-600",
   secondary: "bg-gradient-to-r from-cyan-600 to-teal-600",
   success: "bg-gradient-to-r from-green-500 to-emerald-600",
   outline: "border-2 border-primary hover:bg-primary/10"
 }
-```
+\`\`\`
 
 ---
 
 ## Accessibility Considerations
 
 ### 1. Color Contrast
-```css
+\`\`\`css
 /* Ensure WCAG AAA compliance */
 :root {
   --text-on-orange: #1a1a1a; /* Dark text on orange */
   --text-on-cyan: #ffffff;   /* White text on cyan */
 }
-```
+\`\`\`
 
 ### 2. Motion Preferences
-```css
+\`\`\`css
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -434,17 +434,17 @@ const buttonStyles = {
     transition-duration: 0.01ms !important;
   }
 }
-```
+\`\`\`
 
 ### 3. Focus Indicators
-```css
+\`\`\`css
 /* Enhanced focus states */
 *:focus-visible {
   outline: 3px solid var(--ring);
   outline-offset: 2px;
   border-radius: 4px;
 }
-```
+\`\`\`
 
 ---
 

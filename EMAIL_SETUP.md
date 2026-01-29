@@ -21,9 +21,9 @@ The ISAPM 2026 website uses a simple, direct email system powered by Resend.
 
 Add to your Vercel environment variables:
 
-```
+\`\`\`
 RESEND_API_KEY=re_xxxxxxxxxxxxxxxx
-```
+\`\`\`
 
 ### 3. Test the System
 

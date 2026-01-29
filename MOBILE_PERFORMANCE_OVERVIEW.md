@@ -63,7 +63,7 @@ The ISAPM 2026 application is a Next.js 16 full-stack conference management syst
 **Impact:** +1.5s TTI, +300ms TBT
 
 **Problem:**
-```typescript
+\`\`\`typescript
 // Found in 68+ locations across admin and user pages
 useEffect(() => {
   const fetchData = async () => {
@@ -73,7 +73,7 @@ useEffect(() => {
   }
   fetchData()
 }, [])
-```
+\`\`\`
 
 **Issues:**
 - Creates new Supabase client on every render
@@ -88,7 +88,7 @@ useEffect(() => {
 - `/profile`, `/dashboard`, `/pricing`, etc.
 
 **Solution:** Server Components + SWR for dynamic data
-```typescript
+\`\`\`typescript
 // Server Component (preferred)
 export default async function Page() {
   const supabase = await createClient()
@@ -102,7 +102,7 @@ const { data } = useSWR('/api/data', fetcher, {
   revalidateOnFocus: false,
   dedupingInterval: 60000
 })
-```
+\`\`\`
 
 ---
 
@@ -110,13 +110,13 @@ const { data } = useSWR('/api/data', fetcher, {
 **Impact:** +0.9s LCP, +150ms FCP
 
 **Current Configuration:**
-```typescript
+\`\`\`typescript
 // app/layout.tsx - Loading 5 font families
 Geist (9 weights), Geist_Mono (9 weights), Source_Serif_4 (8 weights),
 Inter (default), Playfair_Display (default)
 
 Total: ~342KB fonts, blocking render
-```
+\`\`\`
 
 **Problems:**
 - Only 2 fonts used in CSS (Inter + Playfair Display)
@@ -125,7 +125,7 @@ Total: ~342KB fonts, blocking render
 - No font-display: swap causing FOIT
 
 **Solution:**
-```typescript
+\`\`\`typescript
 // Load only used fonts with subset weights
 const inter = Inter({ 
   subsets: ['latin'],
@@ -140,7 +140,7 @@ const playfair = Playfair_Display({
   display: 'swap',
   variable: '--font-display'
 })
-```
+\`\`\`
 
 **Estimated Savings:** 260KB, -0.7s LCP
 
@@ -159,7 +159,7 @@ const playfair = Playfair_Display({
   - Recharts charting library
 
 **Solution - Route-Based Code Splitting:**
-```typescript
+\`\`\`typescript
 // Lazy load admin routes
 const AdminLayout = dynamic(() => import('@/components/admin-layout'))
 const DataTable = dynamic(() => import('@/components/data-table'))
@@ -167,7 +167,7 @@ const DataTable = dynamic(() => import('@/components/data-table'))
 // Lazy load below-fold components
 const Footer = dynamic(() => import('@/components/footer'))
 const FlipBookSection = dynamic(() => import('@/components/flip-book-section'))
-```
+\`\`\`
 
 **Estimated Savings:** 180KB initial bundle, -0.9s TTI
 
@@ -183,7 +183,7 @@ const FlipBookSection = dynamic(() => import('@/components/flip-book-section'))
 - Role checks happen on every navigation render
 
 **Solution:**
-```typescript
+\`\`\`typescript
 // Memoize Supabase client
 const supabase = useMemo(() => createClient(), [])
 
@@ -193,7 +193,7 @@ const isAdmin = useMemo(() => userRole === 'admin', [userRole])
 // Optimize cart context with useReducer + Context splitting
 const CartStateContext = createContext(state)
 const CartActionsContext = createContext(actions)
-```
+\`\`\`
 
 ---
 
@@ -207,7 +207,7 @@ const CartActionsContext = createContext(actions)
 - Missing blur placeholder for above-fold images
 
 **Solutions:**
-```typescript
+\`\`\`typescript
 // Hero images
 <Image 
   src="/hero.jpg" 
@@ -224,7 +224,7 @@ const CartActionsContext = createContext(actions)
   quality={75}
   sizes="(max-width: 768px) 50vw, 33vw"
 />
-```
+\`\`\`
 
 ---
 
@@ -232,28 +232,28 @@ const CartActionsContext = createContext(actions)
 **Impact:** +0.8s initial load
 
 **Culprits:**
-```
+\`\`\`
 date-fns: 45KB (use date-fns-tz lightweight alternative)
 lucide-react: 120KB (tree-shaking not working)
 recharts: 180KB (only used in admin, should be lazy loaded)
 @radix-ui/*: 85KB (multiple packages)
-```
+\`\`\`
 
 **Solutions:**
 1. Tree-shake lucide-react:
-```typescript
+\`\`\`typescript
 // Don't import from index
 // import { Calendar, User } from 'lucide-react'
 
 // Import directly
 import Calendar from 'lucide-react/dist/esm/icons/calendar'
 import User from 'lucide-react/dist/esm/icons/user'
-```
+\`\`\`
 
 2. Dynamic import heavy libraries:
-```typescript
+\`\`\`typescript
 const Chart = dynamic(() => import('recharts').then(mod => mod.LineChart))
-```
+\`\`\`
 
 3. Replace date-fns with native Intl API where possible
 
@@ -321,7 +321,7 @@ const Chart = dynamic(() => import('recharts').then(mod => mod.LineChart))
 ### Example 1: Convert Admin Page to Server Component
 
 **Before (Client Component with useEffect):**
-```typescript
+\`\`\`typescript
 // app/admin/users/page.tsx
 'use client'
 import { useEffect, useState } from 'react'
@@ -344,10 +344,10 @@ export default function UsersPage() {
   if (loading) return <div>Loading...</div>
   return <UsersTable users={users} />
 }
-```
+\`\`\`
 
 **After (Server Component):**
-```typescript
+\`\`\`typescript
 // app/admin/users/page.tsx
 import { createClient } from '@/lib/supabase/server'
 import { UsersTable } from '@/components/admin/users-table'
@@ -364,7 +364,7 @@ export default async function UsersPage() {
     </Suspense>
   )
 }
-```
+\`\`\`
 
 **Benefits:**
 - No client-side JavaScript for data fetching
@@ -377,7 +377,7 @@ export default async function UsersPage() {
 ### Example 2: Implement SWR for Real-Time Data
 
 **Before:**
-```typescript
+\`\`\`typescript
 // app/dashboard/page.tsx
 useEffect(() => {
   async function fetchStats() {
@@ -389,10 +389,10 @@ useEffect(() => {
   }
   fetchStats()
 }, [user])
-```
+\`\`\`
 
 **After:**
-```typescript
+\`\`\`typescript
 // lib/hooks/use-registrations.ts
 import useSWR from 'swr'
 import { createClient } from '@/lib/supabase/client'
@@ -417,7 +417,7 @@ export function useRegistrations(userId: string) {
 
 // app/dashboard/page.tsx
 const { data: registrations, isLoading } = useRegistrations(user.id)
-```
+\`\`\`
 
 **Benefits:**
 - Automatic caching and deduplication
@@ -431,15 +431,15 @@ const { data: registrations, isLoading } = useRegistrations(user.id)
 ### Example 3: Dynamic Import Heavy Components
 
 **Before:**
-```typescript
+\`\`\`typescript
 // app/page.tsx
 import FlipBookSection from '@/components/flip-book-section'
 import RegistrationStats from '@/components/registration-stats'
 import Footer from '@/components/footer'
-```
+\`\`\`
 
 **After:**
-```typescript
+\`\`\`typescript
 // app/page.tsx
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
@@ -457,7 +457,7 @@ const RegistrationStats = dynamic(() => import('@/components/registration-stats'
 const Footer = dynamic(() => import('@/components/footer'), {
   ssr: true
 })
-```
+\`\`\`
 
 **Benefits:**
 - Splits code into separate chunks
@@ -478,7 +478,7 @@ The app already has:
 
 ### 2. Recommended Monitoring Additions
 
-```typescript
+\`\`\`typescript
 // lib/monitoring/performance-observer.ts
 export function observePerformance() {
   if (typeof window === 'undefined') return
@@ -512,11 +512,11 @@ export function observePerformance() {
     }
   })
 }
-```
+\`\`\`
 
 ### 3. Lighthouse CI Integration
 
-```yaml
+\`\`\`yaml
 # .github/workflows/lighthouse-ci.yml
 name: Lighthouse CI
 on: [pull_request]
@@ -534,7 +534,7 @@ jobs:
             https://preview-url.com/dashboard
           uploadArtifacts: true
           temporaryPublicStorage: true
-```
+\`\`\`
 
 ---
 
@@ -547,7 +547,7 @@ Already implemented in `globals.css`:
 - Safe area insets for notch/home indicator
 
 ### 2. Network-Aware Loading
-```typescript
+\`\`\`typescript
 // hooks/use-network-aware.ts
 export function useNetworkAware() {
   const [connectionType, setConnectionType] = useState('4g')
@@ -571,7 +571,7 @@ export function useNetworkAware() {
 // Usage in components
 const { isSlow } = useNetworkAware()
 const imageQuality = isSlow ? 50 : 90
-```
+\`\`\`
 
 ### 3. Reduce Motion Support
 Already implemented in `globals.css` with `@media (prefers-reduced-motion: reduce)`
@@ -597,7 +597,7 @@ Already implemented in `globals.css` with `@media (prefers-reduced-motion: reduc
 
 Set strict limits to prevent regression:
 
-```json
+\`\`\`json
 // performance-budget.json
 {
   "budgets": [
@@ -619,7 +619,7 @@ Set strict limits to prevent regression:
     }
   ]
 }
-```
+\`\`\`
 
 ---
 

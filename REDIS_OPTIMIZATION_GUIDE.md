@@ -15,7 +15,7 @@ This guide documents the Redis caching strategy implemented for the ISAPM 2026 a
 
 ### TTL Constants
 
-```typescript
+\`\`\`typescript
 CACHE_TTL = {
   SHORT: 30,        // 30 seconds - rapidly changing data
   DEFAULT: 60,      // 1 minute - default
@@ -24,11 +24,11 @@ CACHE_TTL = {
   VERY_LONG: 3600,  // 1 hour - rarely changing data
   DAY: 86400,       // 24 hours - static data
 }
-```
+\`\`\`
 
 ### Cache Key Prefixes
 
-```typescript
+\`\`\`typescript
 CACHE_PREFIX = {
   PROFILE: "profile:",
   ROOM: "room:",
@@ -37,7 +37,7 @@ CACHE_PREFIX = {
   ORDER: "order:",
   CART: "cart:",
 }
-```
+\`\`\`
 
 ## Available Functions
 
@@ -46,41 +46,41 @@ CACHE_PREFIX = {
 #### `getCached<T>(key, fetcher, ttl)`
 Get data from cache or fetch and cache it.
 
-```typescript
+\`\`\`typescript
 const data = await getCached(
   `${CACHE_PREFIX.STATS}registered`,
   async () => await fetchFromDatabase(),
   CACHE_TTL.MEDIUM
 )
-```
+\`\`\`
 
 #### `setCache<T>(key, value, options)`
 Set a cache value directly.
 
-```typescript
+\`\`\`typescript
 await setCache("my-key", { data: "value" }, { ex: 300 })
-```
+\`\`\`
 
 #### `getCache<T>(key)`
 Get a cache value directly.
 
-```typescript
+\`\`\`typescript
 const value = await getCache<MyType>("my-key")
-```
+\`\`\`
 
 #### `invalidateCache(key)`
 Remove a single cache entry.
 
-```typescript
+\`\`\`typescript
 await invalidateCache(`${CACHE_PREFIX.PROFILE}user-123`)
-```
+\`\`\`
 
 ### Batch Operations
 
 #### `getCachedMulti<T>(keys, fetcher, ttl)`
 Get multiple cached values at once using MGET.
 
-```typescript
+\`\`\`typescript
 const results = await getCachedMulti(
   ["key1", "key2", "key3"],
   async (missingKeys) => {
@@ -89,28 +89,28 @@ const results = await getCachedMulti(
   },
   CACHE_TTL.DEFAULT
 )
-```
+\`\`\`
 
 #### `invalidateCacheMulti(keys)`
 Delete multiple keys at once.
 
-```typescript
+\`\`\`typescript
 await invalidateCacheMulti(["key1", "key2", "key3"])
-```
+\`\`\`
 
 #### `invalidateCachePattern(pattern)`
 Delete keys matching a pattern using SCAN.
 
-```typescript
+\`\`\`typescript
 await invalidateCachePattern("profile:*") // Delete all profile caches
-```
+\`\`\`
 
 ### Rate Limiting
 
 #### `checkRateLimit(identifier, limit, windowSeconds)`
 Simple sliding window rate limiter.
 
-```typescript
+\`\`\`typescript
 const { allowed, remaining, resetIn } = await checkRateLimit(
   `api:${userId}`,
   100,  // 100 requests
@@ -120,16 +120,16 @@ const { allowed, remaining, resetIn } = await checkRateLimit(
 if (!allowed) {
   return new Response("Rate limited", { status: 429 })
 }
-```
+\`\`\`
 
 ### Health Check
 
 #### `checkRedisHealth()`
 Check Redis connection status and latency.
 
-```typescript
+\`\`\`typescript
 const { connected, latency, error } = await checkRedisHealth()
-```
+\`\`\`
 
 ## Best Practices
 
@@ -150,10 +150,10 @@ const { connected, latency, error } = await checkRedisHealth()
 - Use pattern invalidation sparingly
 - Prefer explicit key invalidation
 
-```typescript
+\`\`\`typescript
 // When a hotel booking is confirmed:
 await invalidateCache(`${CACHE_PREFIX.ROOM}availability`)
-```
+\`\`\`
 
 ### 3. Avoid Cache Stampede
 
@@ -170,7 +170,7 @@ Use the `/api/test-redis` endpoint to check:
 
 ### Room Availability (with caching)
 
-```typescript
+\`\`\`typescript
 export async function getRoomAvailability() {
   return getCached(
     `${CACHE_PREFIX.ROOM}availability`,
@@ -181,11 +181,11 @@ export async function getRoomAvailability() {
     CACHE_TTL.MEDIUM
   )
 }
-```
+\`\`\`
 
 ### Profile Caching
 
-```typescript
+\`\`\`typescript
 export async function getUserProfile(userId: string) {
   return getCached(
     `${CACHE_PREFIX.PROFILE}${userId}`,
@@ -201,7 +201,7 @@ export async function getUserProfile(userId: string) {
     CACHE_TTL.MEDIUM
   )
 }
-```
+\`\`\`
 
 ## Performance Impact
 

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(request: NextRequest) {
@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
       institution: string | null
     }> = []
 
+    // Create admin client for auth operations
+    const adminSupabase = createAdminClient()
+
     if (segment === "all") {
       // Get all users from auth.users via profiles
       const { data: users, error } = await supabase
@@ -40,8 +43,13 @@ export async function GET(request: NextRequest) {
       
       if (error) throw error
 
-      // Get emails from auth
-      const { data: { users: authUsers } } = await supabase.auth.admin.listUsers()
+      // Get emails from auth using admin client
+      const { data: { users: authUsers }, error: authError } = await adminSupabase.auth.admin.listUsers()
+      
+      if (authError) {
+        console.error("[v0] Error fetching auth users:", authError)
+        throw authError
+      }
       
       const emailMap = new Map(authUsers?.map(u => [u.id, u.email]) || [])
       
@@ -148,11 +156,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    console.log(`[v0] Returning ${recipients.length} recipients for segment: ${segment}`)
     return NextResponse.json({ recipients, segment })
   } catch (error) {
-    console.error("Error fetching email recipients:", error)
+    console.error("[v0] Error fetching email recipients:", error)
     return NextResponse.json(
-      { error: "Failed to fetch recipients" },
+      { error: "Failed to fetch recipients", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     )
   }

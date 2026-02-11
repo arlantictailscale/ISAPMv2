@@ -208,24 +208,89 @@ const webinar2: Webinar = {
   ],
 }
 
-// Webinar 3 - Coming Soon Placeholder
+// Webinar 3 - Minimally Invasive Pain Management Updated Made Easy (Active)
 const webinar3: Webinar = {
   id: "webinar_3",
-  slug: "webinar-3",
-  title: "Webinar 3 - Coming Soon",
-  shortTitle: "Webinar 3",
+  slug: "minimally-invasive-pain-management",
+  title:
+    'Minimally Invasive Pain Management Updated Made Easy #less_is_more',
+  shortTitle: "Minimally Invasive Pain Management",
   description:
-    "Details for this webinar will be announced soon. Stay tuned for updates on topics, speakers, and registration.",
-  date: "",
-  time: "",
+    "This webinar focuses on the latest updates in minimally invasive pain management techniques. Featuring expert facilitators discussing Disc Fix Procedures and Precision Techniques for comprehensive spinal pain treatment, this session embraces the #less_is_more philosophy for modern pain intervention.",
+  date: "2026-02-13",
+  time: "13:30",
   timezone: "WIB",
-  duration: "TBD",
-  price: 100000, // Uniform price for all webinars
+  duration: "1 hour 30 minutes",
+  price: 100000,
   currency: "IDR",
-  status: "coming_soon",
-  tags: [],
-  speakers: [],
-  benefits: [],
+  status: "active",
+  tags: ["Minimally Invasive", "Spinal Pain", "Disc Fix", "Pain Management", "Precision Technique"],
+  thumbnailImage: "/images/webinar-3-poster.jpeg",
+  speakers: [
+    {
+      id: "speaker_farlyzhar",
+      name: "dr. Muhammad Farlyzhar Yusuf, Sp.An-TI, FIP",
+      title: "Moderator",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic: "Moderator",
+      image: "/images/speakers/dr-farlyzhar.jpeg",
+      color: "bg-blue-600",
+    },
+    {
+      id: "speaker_agus",
+      name: "dr. Agus Setiyana, Sp. An-TI., Subsp.An. Kv (K)., FIPM, FIPP",
+      title: "Facilitator",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic: "Disc Fix Procedure",
+      image: "/images/speakers/dr-agus.jpeg",
+      color: "bg-teal-600",
+    },
+    {
+      id: "speaker_mirza",
+      name: "dr. Mirza Koeshardiandi, Sp.An-TI, F IPM, FIPP",
+      title: "Facilitator",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic:
+        "Precision Technique Start with Precision Diagnosis & Comprehensive Spinal Pain Treatment",
+      image: "/images/speakers/dr-mirza.jpeg",
+      color: "bg-emerald-600",
+    },
+  ],
+  benefits: [
+    {
+      icon: "Video",
+      title: "Live Webinar Access",
+      description: "Join the live Zoom session with real-time interaction",
+    },
+    {
+      icon: "MessageCircle",
+      title: "Interactive Q&A",
+      description: "Dedicated Q&A session with facilitators",
+    },
+    {
+      icon: "Award",
+      title: "SKP Certificate",
+      description: "Validated SKP certificate from Kemenkes",
+    },
+    {
+      icon: "PlayCircle",
+      title: "Recording Access",
+      description: "30-day access to webinar recording",
+    },
+    {
+      icon: "FileText",
+      title: "Materials",
+      description: "Download presentation slides and materials",
+    },
+    {
+      icon: "Gift",
+      title: "Free for Symposium",
+      description: "Complimentary access for symposium registrants",
+    },
+  ],
 }
 
 // Webinar 4 - Coming Soon Placeholder

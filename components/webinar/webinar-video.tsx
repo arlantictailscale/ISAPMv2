@@ -26,18 +26,19 @@ export function WebinarVideo({ youtubeUrl, title }: WebinarVideoProps) {
           </div>
         </div>
 
-        {/* Video Container */}
+        {/* Video Container with Proper Responsive Aspect Ratio */}
         <div className="relative w-full bg-black rounded-2xl overflow-hidden shadow-2xl">
-          {/* Video Frame */}
-          <div className="relative w-full pb-[56.25%]">
+          {/* 16:9 Aspect Ratio Wrapper */}
+          <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
             <iframe
               src={youtubeUrl}
-              title={title}
-              className="absolute inset-0 w-full h-full"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              title={`${title} - Webinar Recording`}
+              className="absolute top-0 left-0 w-full h-full border-0"
+              allow="accelerometer autoplay clipboard-write encrypted-media gyroscope picture-in-picture web-share"
               referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
+              loading="lazy"
+              data-testid="webinar-video-iframe"
             />
           </div>
         </div>

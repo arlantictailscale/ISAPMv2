@@ -37,6 +37,7 @@ export interface Webinar {
   currentParticipants?: number
   thumbnailImage?: string
   heroImage?: string
+  youtubeUrl?: string // YouTube embed URL
   tags: string[]
 }
 
@@ -61,6 +62,7 @@ const webinar1: Webinar = {
   price: 100000,
   currency: "IDR",
   status: "active",
+  youtubeUrl: "https://www.youtube.com/embed/HPCteK3E6Fk?si=YgcMdeq-dRObSGBv",
   tags: ["Pain Management", "Healthcare Policy", "BPJS", "Clinical Guidelines"],
   speakers: [
     {
@@ -293,24 +295,87 @@ const webinar3: Webinar = {
   ],
 }
 
-// Webinar 4 - Coming Soon Placeholder
+// Webinar 4 - Unlocking Natural Healing: Regenerative Therapies for Chronic Pain (Active)
 const webinar4: Webinar = {
   id: "webinar_4",
-  slug: "webinar-4",
-  title: "Webinar 4 - Coming Soon",
-  shortTitle: "Webinar 4",
+  slug: "unlocking-natural-healing",
+  title: "Unlocking Natural Healing: Regenerative Therapies for Chronic Pain",
+  shortTitle: "Unlocking Natural Healing",
   description:
-    "Details for this webinar will be announced soon. Stay tuned for updates on topics, speakers, and registration.",
-  date: "",
-  time: "",
+    "This webinar explores regenerative therapies for chronic pain management. Leading experts will discuss the role of regenerative medicine in pain practice and present evidence-based clinical applications, offering insights into cutting-edge natural healing approaches.",
+  date: "2026-02-20",
+  time: "13:30",
   timezone: "WIB",
-  duration: "TBD",
-  price: 100000, // Uniform price for all webinars
+  duration: "1 hour 30 minutes",
+  price: 100000,
   currency: "IDR",
-  status: "coming_soon",
-  tags: [],
-  speakers: [],
-  benefits: [],
+  status: "active",
+  tags: ["Regenerative Medicine", "Chronic Pain", "Natural Healing", "Pain Management", "Clinical Evidence"],
+  thumbnailImage: "/images/webinar-4-poster.jpg",
+  speakers: [
+    {
+      id: "speaker_buyung",
+      name: "dr. Buyung Hartiyo Laksono, Sp.An-TI., Subsp.N.An.(K)., FIP",
+      title: "Moderator",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic: "Moderator",
+      image: "/images/speakers/dr-buyung-hartiyo.jpg",
+      color: "bg-indigo-600",
+    },
+    {
+      id: "speaker_halim",
+      name: "dr. Halim Sudono, Sp.An-TI, FIP, FIPP, CIPS",
+      title: "Speaker",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic: "The Role of Regenerative Medicine in Pain Practice",
+      image: "/images/speakers/dr-halim-sudono.jpg",
+      color: "bg-blue-600",
+    },
+    {
+      id: "speaker_puja",
+      name: "dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
+      title: "Speaker",
+      organization: "Pain Management Specialist",
+      organizationShort: "Pain Specialist",
+      topic: "Regenerative Medicine: Evidence & Clinical Uses",
+      image: "/images/speakers/dr-puja-laksana.jpg",
+      color: "bg-teal-600",
+    },
+  ],
+  benefits: [
+    {
+      icon: "Video",
+      title: "Live Webinar Access",
+      description: "Join the live Zoom session with real-time interaction",
+    },
+    {
+      icon: "MessageCircle",
+      title: "Interactive Q&A",
+      description: "Dedicated Q&A session with speakers",
+    },
+    {
+      icon: "Award",
+      title: "SKP Certificate",
+      description: "Validated SKP certificate from Kemenkes",
+    },
+    {
+      icon: "PlayCircle",
+      title: "Recording Access",
+      description: "30-day access to webinar recording",
+    },
+    {
+      icon: "FileText",
+      title: "Materials",
+      description: "Download presentation slides and materials",
+    },
+    {
+      icon: "Gift",
+      title: "Free for Symposium",
+      description: "Complimentary access for symposium registrants",
+    },
+  ],
 }
 
 // All webinars collection

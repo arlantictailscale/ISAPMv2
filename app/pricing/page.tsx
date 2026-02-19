@@ -211,6 +211,14 @@ export default function PricingPage() {
       date: "Friday, April 17, 2026",
       participantTypes: [
         {
+          id: "span",
+          label: "Anesthesiologist",
+          earlyBirdPrice: 1500000,
+          normalPrice: 1750000,
+          onSitePrice: 2000000,
+          currency: "IDR",
+        },
+        {
           id: "resident",
           label: "Resident",
           earlyBirdPrice: 1500000,

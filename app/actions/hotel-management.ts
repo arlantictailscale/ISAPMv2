@@ -1,0 +1,394 @@
+"use server"
+
+import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
+
+export type HotelBooking = {
+  id: string
+  order_id: string
+  user_id: string
+  room_type: string
+  check_in_date: string
+  check_out_date: string
+  nights: number
+  quantity: number
+  unit_price: number
+  total_price: number
+  status: string
+  payment_status: string
+  created_at: string
+  guest_name: string
+  guest_email: string
+  order_status: string
+  extra_beds: number
+}
+
+export type RoomTypeSettings = {
+  id: string
+  room_type: string
+  total_rooms: number
+  price_per_night: number
+  features: string[]
+  description: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type BookingStats = {
+  totalBookings: number
+  confirmedBookings: number
+  pendingBookings: number
+  cancelledBookings: number
+  totalRevenue: number
+  occupancyRate: {
+    deluxe: { booked: number; total: number; percentage: number }
+    premier: { booked: number; total: number; percentage: number }
+  }
+}
+
+// Get all hotel bookings with guest details
+export async function getHotelBookings(filters?: {
+  roomType?: string
+  status?: string
+  searchQuery?: string
+  dateFrom?: string
+  dateTo?: string
+}): Promise<{ bookings: HotelBooking[]; error: string | null }> {
+  const supabase = await createClient()
+
+  try {
+    // First get all non-cancelled orders with their payment status
+    const { data: allOrders, error: ordersError } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        user_id,
+        status,
+        created_at,
+        full_name,
+        email,
+        order_payments (
+          payment_status
+        )
+      `)
+      .neq("status", "cancelled")
+
+    if (ordersError) {
+      console.error("[v0] Error fetching orders:", ordersError)
+      throw ordersError
+    }
+
+    console.log("[v0] All non-cancelled orders:", allOrders?.length)
+
+    const { data: allHotelItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select(`
+        id,
+        order_id,
+        item_type,
+        event_id,
+        hotel_room_type,
+        check_in_date,
+        check_out_date,
+        nights,
+        unit_price,
+        extra_beds
+      `)
+      .in("hotel_room_type", ["deluxe", "premier"])
+
+    if (itemsError) {
+      console.error("[v0] Error fetching hotel items:", itemsError)
+      throw itemsError
+    }
+
+    console.log("[v0] All hotel items in DB:", allHotelItems?.length, allHotelItems)
+
+    // Create maps for efficient lookup
+    const orderMap = new Map(allOrders?.map((o) => [o.id, o]) || [])
+
+    // Get user profiles for guest details
+    const userIds = [...new Set(allOrders?.map((o) => o.user_id).filter(Boolean) || [])]
+    const { data: profiles } =
+      userIds.length > 0
+        ? await supabase.from("profiles").select("id, full_name, email").in("id", userIds)
+        : { data: [] }
+
+    const profileMap = new Map(profiles?.map((p) => [p.id, p]) || [])
+
+    // Transform to bookings
+    let bookings: HotelBooking[] = []
+
+    for (const item of allHotelItems || []) {
+      const order = orderMap.get(item.order_id)
+
+      console.log("[v0] Processing item:", item.id, "order_id:", item.order_id, "found order:", !!order)
+
+      if (!order) {
+        console.log("[v0] Order not found for item, skipping")
+        continue
+      }
+
+      const profile = profileMap.get(order.user_id)
+      const paymentStatus = order.order_payments?.[0]?.payment_status || "pending"
+
+      console.log("[v0] Payment status for order:", order.id, "is:", paymentStatus)
+
+      bookings.push({
+        id: item.id,
+        order_id: order.id,
+        user_id: order.user_id,
+        room_type: item.hotel_room_type,
+        check_in_date: item.check_in_date || "",
+        check_out_date: item.check_out_date || "",
+        nights: item.nights || 1,
+        quantity: 1,
+        unit_price: item.unit_price || 0,
+        total_price: (item.unit_price || 0) * (item.nights || 1),
+        status: paymentStatus === "verified" ? "confirmed" : "pending",
+        payment_status: paymentStatus,
+        created_at: order.created_at,
+        guest_name: order.full_name || profile?.full_name || "Unknown Guest",
+        guest_email: order.email || profile?.email || "",
+        order_status: order.status,
+        extra_beds: item.extra_beds || 0,
+      })
+    }
+
+    console.log("[v0] Total bookings transformed:", bookings.length)
+
+    // Apply filters
+    if (filters?.roomType && filters.roomType !== "all") {
+      bookings = bookings.filter((b) => b.room_type === filters.roomType)
+    }
+
+    if (filters?.status && filters.status !== "all") {
+      bookings = bookings.filter((b) => b.status === filters.status)
+    }
+
+    if (filters?.searchQuery) {
+      const query = filters.searchQuery.toLowerCase()
+      bookings = bookings.filter(
+        (b) =>
+          b.guest_name.toLowerCase().includes(query) ||
+          b.guest_email.toLowerCase().includes(query) ||
+          b.order_id.toLowerCase().includes(query),
+      )
+    }
+
+    // Sort by created_at descending
+    bookings.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    return { bookings, error: null }
+  } catch (error) {
+    console.error("[v0] Error fetching hotel bookings:", error)
+    return { bookings: [], error: "Failed to fetch bookings" }
+  }
+}
+
+// Get booking statistics
+export async function getBookingStats(): Promise<{
+  stats: BookingStats
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  try {
+    // Get room availability settings
+    const { data: settings } = await supabase
+      .from("room_availability_settings")
+      .select("room_type, default_capacity")
+      .in("room_type", ["deluxe", "premier"])
+
+    const deluxeTotal = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
+    const premierTotal = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+
+    const { data: allOrders, error: ordersError } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        status,
+        order_payments (
+          payment_status
+        )
+      `)
+      .neq("status", "cancelled")
+
+    if (ordersError) throw ordersError
+
+    const orderMap = new Map(allOrders?.map((o) => [o.id, o]) || [])
+
+    const { data: hotelItems, error: itemsError } = await supabase
+      .from("order_items")
+      .select(`
+        order_id,
+        hotel_room_type,
+        unit_price,
+        nights
+      `)
+      .in("hotel_room_type", ["deluxe", "premier"])
+
+    if (itemsError) throw itemsError
+
+    console.log("[v0] Stats - Hotel items found:", hotelItems?.length)
+
+    let totalBookings = 0
+    let confirmedBookings = 0
+    let pendingBookings = 0
+    let cancelledBookings = 0
+    let totalRevenue = 0
+    let deluxeBooked = 0
+    let premierBooked = 0
+
+    for (const item of hotelItems || []) {
+      const order = orderMap.get(item.order_id)
+      if (!order) continue
+
+      const paymentStatus = order.order_payments?.[0]?.payment_status || "pending"
+      totalBookings++
+
+      if (paymentStatus === "verified") {
+        confirmedBookings++
+        totalRevenue += (item.unit_price || 0) * (item.nights || 1)
+
+        if (item.hotel_room_type === "deluxe") {
+          deluxeBooked += 1
+        } else if (item.hotel_room_type === "premier") {
+          premierBooked += 1
+        }
+      } else if (paymentStatus === "pending") {
+        pendingBookings++
+      } else if (paymentStatus === "rejected") {
+        cancelledBookings++
+      }
+    }
+
+    console.log(
+      "[v0] Stats - Total:",
+      totalBookings,
+      "Confirmed:",
+      confirmedBookings,
+      "Deluxe:",
+      deluxeBooked,
+      "Premier:",
+      premierBooked,
+    )
+
+    return {
+      stats: {
+        totalBookings,
+        confirmedBookings,
+        pendingBookings,
+        cancelledBookings,
+        totalRevenue,
+        occupancyRate: {
+          deluxe: {
+            booked: deluxeBooked,
+            total: deluxeTotal,
+            percentage: deluxeTotal > 0 ? Math.round((deluxeBooked / deluxeTotal) * 100) : 0,
+          },
+          premier: {
+            booked: premierBooked,
+            total: premierTotal,
+            percentage: premierTotal > 0 ? Math.round((premierBooked / premierTotal) * 100) : 0,
+          },
+        },
+      },
+      error: null,
+    }
+  } catch (error) {
+    console.error("[v0] Error fetching booking stats:", error)
+    return {
+      stats: {
+        totalBookings: 0,
+        confirmedBookings: 0,
+        pendingBookings: 0,
+        cancelledBookings: 0,
+        totalRevenue: 0,
+        occupancyRate: {
+          deluxe: { booked: 0, total: 120, percentage: 0 },
+          premier: { booked: 0, total: 56, percentage: 0 },
+        },
+      },
+      error: "Failed to fetch stats",
+    }
+  }
+}
+
+// Update room availability settings
+export async function updateRoomSettings(settings: {
+  deluxe_rooms: number
+  premier_rooms: number
+  deluxe_price?: number
+  premier_price?: number
+}): Promise<{ success: boolean; error: string | null }> {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase
+      .from("room_availability_settings")
+      .update({
+        deluxe_rooms: settings.deluxe_rooms,
+        premier_rooms: settings.premier_rooms,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", 1)
+
+    if (error) throw error
+
+    revalidatePath("/admin/hotel-management")
+    revalidatePath("/venue")
+    return { success: true, error: null }
+  } catch (error) {
+    console.error("Error updating room settings:", error)
+    return { success: false, error: "Failed to update settings" }
+  }
+}
+
+// Get room availability settings
+export async function getRoomSettings(): Promise<{
+  settings: {
+    deluxe_rooms: number
+    premier_rooms: number
+  } | null
+  error: string | null
+}> {
+  const supabase = await createClient()
+
+  try {
+    const { data, error } = await supabase.from("room_availability_settings").select("*").single()
+
+    if (error) throw error
+
+    return {
+      settings: {
+        deluxe_rooms: data?.deluxe_rooms || 50,
+        premier_rooms: data?.premier_rooms || 20,
+      },
+      error: null,
+    }
+  } catch (error) {
+    console.error("Error fetching room settings:", error)
+    return { settings: null, error: "Failed to fetch settings" }
+  }
+}
+
+// Cancel a booking (mark order as cancelled)
+export async function cancelBooking(orderId: string): Promise<{ success: boolean; error: string | null }> {
+  const supabase = await createClient()
+
+  try {
+    const { error } = await supabase.from("orders").update({ status: "cancelled" }).eq("id", orderId)
+
+    if (error) throw error
+
+    revalidatePath("/admin/hotel-management")
+    revalidatePath("/venue")
+    return { success: true, error: null }
+  } catch (error) {
+    console.error("Error cancelling booking:", error)
+    return { success: false, error: "Failed to cancel booking" }
+  }
+}
+
+export { getBookingStats as getHotelStats }

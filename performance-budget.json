@@ -1,0 +1,54 @@
+{
+  "budgets": [
+    {
+      "resourceType": "script",
+      "budget": 350,
+      "description": "JavaScript bundle size limit"
+    },
+    {
+      "resourceType": "stylesheet",
+      "budget": 75,
+      "description": "CSS bundle size limit"
+    },
+    {
+      "resourceType": "font",
+      "budget": 150,
+      "description": "Font file size limit"
+    },
+    {
+      "resourceType": "image",
+      "budget": 500,
+      "description": "Image size limit per page"
+    },
+    {
+      "resourceType": "total",
+      "budget": 1000,
+      "description": "Total page weight limit"
+    },
+    {
+      "metric": "first-contentful-paint",
+      "budget": 1800,
+      "description": "FCP should be under 1.8s"
+    },
+    {
+      "metric": "largest-contentful-paint",
+      "budget": 2500,
+      "description": "LCP should be under 2.5s"
+    },
+    {
+      "metric": "interactive",
+      "budget": 3500,
+      "description": "TTI should be under 3.5s"
+    },
+    {
+      "metric": "total-blocking-time",
+      "budget": 200,
+      "description": "TBT should be under 200ms"
+    },
+    {
+      "metric": "cumulative-layout-shift",
+      "budget": 0.1,
+      "description": "CLS should be under 0.1"
+    }
+  ]
+}

@@ -1,0 +1,297 @@
+"use client"
+
+import Link from "next/link"
+import Image from "next/image"
+import { ArrowRight, ChevronLeft, ChevronRight, Calendar, MapPin } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { CursorSpotlight } from "@/components/cursor-spotlight"
+
+const carouselImages = [
+  {
+    src: "/images/8bf2d59c-4dcf-416b-87bc-8f7db7292309.jpg",
+    alt: "Medical staff in protective vests performing fluoroscopy-guided procedure",
+  },
+  {
+    src: "/images/ef470f04-429e-4b61-82b3-35d27ae9d9a6.jpg",
+    alt: "Doctor performing fluoroscopy-guided pain intervention procedure",
+  },
+  {
+    src: "/images/1f37ffa6-b328-43d2-8d17-bc0ccb42dba2.jpg",
+    alt: "Medical team performing fluoroscopy-guided intervention together",
+  },
+  {
+    src: "/images/dsc07187.jpg",
+    alt: "Healthcare professional operating ultrasound machine during training workshop",
+  },
+  {
+    src: "/images/dsc07185.jpg",
+    alt: "Medical workshop participants practicing with catheter equipment",
+  },
+  {
+    src: "/images/dsc07258.jpg",
+    alt: "Hands-on ultrasound training session with healthcare professionals",
+  },
+]
+
+export default function LandingHero() {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [scrollY, setScrollY] = useState(0)
+
+  const nextSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % carouselImages.length)
+  }, [])
+
+  const prevSlide = useCallback(() => {
+    setCurrentIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length)
+  }, [])
+
+  const goToSlide = useCallback((index: number) => {
+    setCurrentIndex(index)
+    setIsAutoPlaying(false)
+    setTimeout(() => setIsAutoPlaying(true), 5000)
+  }, [])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY)
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  useEffect(() => {
+    if (!isAutoPlaying) return
+    const interval = setInterval(nextSlide, 4000)
+    return () => clearInterval(interval)
+  }, [isAutoPlaying, nextSlide])
+
+  return (
+    <section className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-white via-slate-50 to-purple-50/30">
+      <CursorSpotlight />
+
+      <div
+        className="absolute inset-0 overflow-hidden pointer-events-none"
+        style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+      >
+        {/* Top right curve */}
+        <svg
+          className="absolute -top-20 -right-20 w-[600px] h-[600px] text-purple-100/60 animate-float-slow"
+          viewBox="0 0 600 600"
+          fill="none"
+        >
+          <circle cx="300" cy="300" r="280" stroke="currentColor" strokeWidth="40" />
+        </svg>
+
+        {/* Bottom left curve */}
+        <svg
+          className="absolute -bottom-40 -left-40 w-[800px] h-[800px] text-blue-100/50 animate-float-delayed"
+          viewBox="0 0 800 800"
+          fill="none"
+        >
+          <circle cx="400" cy="400" r="350" stroke="currentColor" strokeWidth="50" />
+        </svg>
+
+        {/* Middle decorative curve */}
+        <svg
+          className="absolute top-1/2 right-1/4 w-[400px] h-[400px] text-cyan-100/40 -translate-y-1/2 animate-float-slow"
+          viewBox="0 0 400 400"
+          fill="none"
+        >
+          <path d="M50,200 Q200,50 350,200 Q200,350 50,200" stroke="currentColor" strokeWidth="30" fill="none" />
+        </svg>
+
+        {/* Small accent circles with floating animation */}
+        <div className="absolute top-32 left-1/4 w-4 h-4 rounded-full bg-purple-300/40 animate-float-slow" />
+        <div className="absolute bottom-40 right-1/3 w-6 h-6 rounded-full bg-cyan-300/30 animate-float-delayed" />
+        <div className="absolute top-1/2 left-16 w-3 h-3 rounded-full bg-blue-300/50 animate-float-slow" />
+      </div>
+
+      {/* Main content */}
+      <div className="relative z-10 container mx-auto px-6 md:px-12 lg:px-16 pt-28 md:pt-36 pb-20 min-h-screen">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-8 lg:gap-8 items-center min-h-[calc(100vh-12rem)]">
+          {/* Title Section - First on mobile, stays in left column on desktop */}
+          <div className="flex flex-col justify-center order-1 lg:order-1">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-0 lg:mb-8">
+              <span className="gradient-text animate-gradient-x">
+                The Biggest Pain Management & Intervention Event in Indonesia
+              </span>
+            </h1>
+
+            {/* Description and CTA - Hidden on mobile, shown on desktop */}
+            <div className="hidden lg:block">
+              <p className="text-slate-500 text-base max-w-md mb-6">
+                The{" "}
+                <span className="inline-flex items-baseline gap-0.5">
+                  <span className="text-lg font-bold text-orange-600">8</span>
+                  <span className="text-xs font-semibold text-orange-500 uppercase">th</span>
+                </span>{" "}
+                National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
+                healthcare professionals to advance patient care through knowledge sharing and collaboration.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-4 mb-8 text-sm">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-full border border-orange-200/50">
+                  <Calendar className="w-4 h-4 text-orange-500" />
+                  <span className="font-semibold text-slate-700">April 16-19, 2026</span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-full border border-cyan-200/50">
+                  <MapPin className="w-4 h-4 text-cyan-500" />
+                  <span className="font-semibold text-slate-700">The Singhasari Resort, Batu Malang</span>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/events"
+                  className="inline-flex items-center gap-3 px-8 py-4 gradient-multi text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-2xl hover:scale-105 group shimmer-effect"
+                >
+                  Register Main Event
+                  <span className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </Link>
+                <Link
+                  href="/webinar"
+                  className="inline-flex items-center gap-3 px-8 py-4 gradient-cyan text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-2xl hover:scale-105 hover:glow-accent-cyan group shimmer-effect"
+                >
+                  Register Webinar
+                  <span className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                    <ArrowRight className="w-5 h-5" />
+                  </span>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Carousel - Second on mobile, right column on desktop */}
+          <div className="flex items-center justify-center order-2 lg:order-2 relative w-full">
+            {/* Floating image container */}
+            <div className="relative w-full max-w-lg lg:max-w-xl">
+              {/* Glow effect behind image */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/20 via-blue-400/20 to-cyan-400/20 rounded-3xl blur-3xl scale-110" />
+
+              <div
+                className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
+                onMouseEnter={() => setIsAutoPlaying(false)}
+                onMouseLeave={() => setIsAutoPlaying(true)}
+              >
+                {/* Images */}
+                {carouselImages.map((image, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                      index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+                    }`}
+                  >
+                    <Image
+                      src={image.src || "/placeholder.svg"}
+                      alt={image.alt}
+                      fill
+                      className="object-cover"
+                      priority={index === 0}
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      quality={index === 0 ? 90 : 75}
+                    />
+                  </div>
+                ))}
+
+                {/* Navigation arrows */}
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110 backdrop-blur-sm"
+                  aria-label="Previous image"
+                >
+                  <ChevronLeft className="w-5 h-5 text-slate-700" />
+                </button>
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-white/80 hover:bg-white rounded-full shadow-lg transition-all hover:scale-110 backdrop-blur-sm"
+                  aria-label="Next image"
+                >
+                  <ChevronRight className="w-5 h-5 text-slate-700" />
+                </button>
+
+                {/* Gradient overlay at bottom for dots visibility */}
+                <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/30 to-transparent z-10 pointer-events-none" />
+
+                {/* Dots navigation */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+                  {carouselImages.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => goToSlide(index)}
+                      className={`transition-all duration-300 rounded-full ${
+                        index === currentIndex ? "w-8 h-2.5 bg-white" : "w-2.5 h-2.5 bg-white/50 hover:bg-white/80"
+                      }`}
+                      aria-label={`Go to slide ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Floating accent elements */}
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl opacity-80 blur-sm" />
+              <div className="absolute -bottom-6 -left-6 w-16 h-16 bg-gradient-to-br from-cyan-400 to-teal-400 rounded-xl opacity-70 blur-sm" />
+            </div>
+          </div>
+
+          <div className="flex flex-col order-3 lg:hidden">
+            <p className="text-slate-500 text-base max-w-md mb-4">
+              The{" "}
+              <span className="inline-flex items-baseline gap-0.5">
+                <span className="text-lg font-bold text-orange-600">8</span>
+                <span className="text-xs font-semibold text-orange-500 uppercase">th</span>
+              </span>{" "}
+              National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM) brings together
+              healthcare professionals to advance patient care through knowledge sharing and collaboration.
+            </p>
+
+            <div className="flex flex-col gap-2 mb-6 text-sm">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-orange-50 to-amber-50 rounded-full border border-orange-200/50 w-fit">
+                <Calendar className="w-4 h-4 text-orange-500" />
+                <span className="font-semibold text-slate-700">April 16-19, 2026</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-full border border-cyan-200/50 w-fit">
+                <MapPin className="w-4 h-4 text-cyan-500" />
+                <span className="font-semibold text-slate-700">The Singhasari Resort, Batu Malang</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <Link
+                href="/events"
+                className="inline-flex items-center justify-center gap-3 px-6 py-4 gradient-multi text-white rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 group"
+              >
+                <span className="text-base font-semibold">Register Main Event</span>
+                <span className="flex items-center justify-center w-9 h-9 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Link>
+              <Link
+                href="/webinar"
+                className="inline-flex items-center justify-center gap-3 px-6 py-4 gradient-cyan text-white rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 hover:glow-accent-cyan group"
+              >
+                <span className="text-base font-semibold">Register Webinar</span>
+                <span className="flex items-center justify-center w-9 h-9 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
+                  <ArrowRight className="w-4 h-4" />
+                </span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom wave transition */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-16 text-white">
+          <path
+            d="M0,40L120,45C240,50,480,60,720,55C960,50,1200,30,1320,20L1440,10L1440,80L1320,80C1200,80,960,80,720,80C480,80,240,80,120,80L0,80Z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+    </section>
+  )
+}

@@ -37,7 +37,6 @@ export interface Webinar {
   currentParticipants?: number
   thumbnailImage?: string
   heroImage?: string
-  youtubeUrl?: string // YouTube embed URL
   tags: string[]
 }
 
@@ -62,7 +61,6 @@ const webinar1: Webinar = {
   price: 100000,
   currency: "IDR",
   status: "active",
-  youtubeUrl: "https://www.youtube.com/embed/HPCteK3E6Fk?si=YgcMdeq-dRObSGBv",
   tags: ["Pain Management", "Healthcare Policy", "BPJS", "Clinical Guidelines"],
   speakers: [
     {

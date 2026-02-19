@@ -15,11 +15,13 @@ import {
   Mail,
   BedDouble,
   Presentation,
+  Calendar,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 
 const adminNavItems = [
+  { title: "Events Dashboard", href: "/admin/events", icon: Calendar },
   { title: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
   { title: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
   { title: "Invoice Management", href: "/admin/invoices", icon: Receipt },

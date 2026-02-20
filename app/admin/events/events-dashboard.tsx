@@ -608,9 +608,15 @@ export function EventsDashboard() {
                   </div>
 
                   {/* Description */}
-                  {event.description && (
+                  {event.description ? (
                     <div className="mb-6 p-4 bg-slate-50 rounded-xl">
                       <p className="text-sm text-muted-foreground">{event.description}</p>
+                    </div>
+                  ) : (
+                    <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                      <p className="text-sm text-amber-700 italic">
+                        No description yet. Edit in CMS to add event details.
+                      </p>
                     </div>
                   )}
 

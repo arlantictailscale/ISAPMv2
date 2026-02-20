@@ -192,7 +192,7 @@ export function EventsDashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Events Dashboard</h1>

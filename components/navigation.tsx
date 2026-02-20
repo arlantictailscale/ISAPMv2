@@ -341,7 +341,7 @@ export default function Navigation() {
                       {user.email}
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64">
+                  <DropdownMenuContent align="end" className="w-64 max-h-[80vh] overflow-y-auto">
                     <Link href="/dashboard">
                       <DropdownMenuItem>
                         <LayoutDashboard className="w-4 h-4 mr-2" />

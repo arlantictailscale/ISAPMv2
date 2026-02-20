@@ -33,9 +33,13 @@ import {
   Download,
   GraduationCap,
   Wrench,
+  Presentation,
+  Mic,
+  Image,
 } from "lucide-react"
 import Link from "next/link"
 import { eventPricingData } from "@/lib/data/event-pricing"
+import { WEBINARS, formatWebinarDate } from "@/lib/data/webinars"
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -72,6 +76,26 @@ interface DBEvent {
   description: string | null
 }
 
+interface WebinarContentItem {
+  id: string
+  webinar_id: string
+  content_type: "link" | "material" | "recording" | "resource"
+  title: string
+  description: string | null
+  url: string
+  file_type: string | null
+  file_size: number | null
+  sort_order: number
+  is_public: boolean
+  is_active: boolean
+}
+
+interface WebinarSpeakerInfo {
+  name: string
+  topic: string
+  organization: string
+}
+
 interface MergedEvent {
   id: string
   slug: string
@@ -88,6 +112,8 @@ interface MergedEvent {
   participantCount: number
   dbUuid: string | null
   resources: EventResource[]
+  webinarContent: WebinarContentItem[]
+  speakers: WebinarSpeakerInfo[]
 }
 
 // ── Static events from CMS (same as event-cms-client.tsx) ────────────
@@ -180,6 +206,7 @@ export function EventsDashboard() {
   const [sortBy, setSortBy] = useState("name")
   const [dbEvents, setDbEvents] = useState<DBEvent[]>([])
   const [resources, setResources] = useState<EventResource[]>([])
+  const [webinarContent, setWebinarContent] = useState<WebinarContentItem[]>([])
 
   const loadData = useCallback(async () => {
     try {
@@ -202,6 +229,14 @@ export function EventsDashboard() {
       } else {
         setResources([])
       }
+
+      // Fetch webinar content from webinar_content table
+      const { data: webinarContentData } = await supabase
+        .from("webinar_content")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true })
+      setWebinarContent(webinarContentData || [])
     } catch (error) {
       console.error("Error loading events:", error)
     } finally {
@@ -219,6 +254,9 @@ export function EventsDashboard() {
         loadData()
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "event_resources" }, () => {
+        loadData()
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "webinar_content" }, () => {
         loadData()
       })
       .subscribe()
@@ -245,22 +283,59 @@ export function EventsDashboard() {
       const dbUuid = dbEvent?.id || null
       const eventResources = dbUuid ? resources.filter((r) => r.event_id === dbUuid) : []
 
+      // Enrich webinar events with WEBINARS static config data
+      const webinarData = WEBINARS.find((w) => w.id === eventId)
+      const webinarItems = webinarData ? webinarContent.filter((wc) => wc.webinar_id === webinarData.id) : []
+      const speakers: WebinarSpeakerInfo[] = webinarData
+        ? webinarData.speakers.map((s) => ({ name: s.name, topic: s.topic, organization: s.organization }))
+        : []
+
+      // For webinars: use DB data > webinar static config > pricing data > fallback
+      let date = pricing.date
+      let time = "TBA"
+      let description = ""
+      let location = "TBA"
+      let venue = "TBA"
+
+      if (dbEvent) {
+        date = formatEventDate(dbEvent.start_date, dbEvent.end_date)
+        time = formatEventTime(dbEvent.start_time, dbEvent.end_time, dbEvent.timezone)
+        description = dbEvent.description || ""
+        location = dbEvent.location || "TBA"
+        venue = dbEvent.venue || "TBA"
+      } else if (webinarData) {
+        date = formatWebinarDate(webinarData.date)
+        time = `${webinarData.time} ${webinarData.timezone}`
+        description = webinarData.description
+        location = "Online"
+        venue = "Zoom Webinar"
+      }
+
+      // If DB has empty fields but webinar static has values, fill from webinar
+      if (dbEvent && webinarData) {
+        if (!dbEvent.description && webinarData.description) description = webinarData.description
+        if (date === "TBA" && webinarData.date) date = formatWebinarDate(webinarData.date)
+        if (time === "TBA" && webinarData.time) time = `${webinarData.time} ${webinarData.timezone}`
+      }
+
       result.push({
         id: eventId,
         slug: eventId,
         label: dbEvent?.title || staticMeta?.title || pricing.label,
         shortLabel: dbEvent?.short_title || staticMeta?.short_title || pricing.shortLabel || pricing.label,
-        date: dbEvent ? formatEventDate(dbEvent.start_date, dbEvent.end_date) : pricing.date,
-        time: dbEvent ? formatEventTime(dbEvent.start_time, dbEvent.end_time, dbEvent.timezone) : "TBA",
-        location: dbEvent?.location || "TBA",
-        venue: dbEvent?.venue || "TBA",
+        date,
+        time,
+        location,
+        venue,
         room: dbEvent?.room || "",
-        description: dbEvent?.description || "",
+        description,
         type: eventType,
         source: dbEvent ? "db" : "static",
         participantCount: pricing.participantTypes?.length || 0,
         dbUuid,
         resources: eventResources,
+        webinarContent: webinarItems,
+        speakers,
       })
     }
 
@@ -289,11 +364,13 @@ export function EventsDashboard() {
         participantCount: 0,
         dbUuid,
         resources: eventResources,
+        webinarContent: [],
+        speakers: [],
       })
     }
 
     return result
-  }, [dbEvents, resources])
+  }, [dbEvents, resources, webinarContent])
 
   // Filter and sort events
   const filteredEvents = useMemo(() => {
@@ -620,6 +697,117 @@ export function EventsDashboard() {
                     </div>
                   )}
 
+                  {/* Speakers section — webinar only */}
+                  {event.type === "webinar" && event.speakers.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                        <Mic className="w-4 h-4" /> Speakers
+                      </h3>
+                      <div className="space-y-2">
+                        {event.speakers.map((speaker, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-3 p-3 border rounded-lg bg-slate-50"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                              <Mic className="w-4 h-4 text-green-600" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-sm font-medium">{speaker.name}</p>
+                              <p className="text-xs text-muted-foreground truncate">{speaker.organization}</p>
+                              <p className="text-xs text-green-700 mt-0.5 line-clamp-2">{speaker.topic}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Webinar Content section — links, materials, recordings from webinar_content table */}
+                  {event.type === "webinar" && event.webinarContent.length > 0 && (
+                    <div className="space-y-4 mb-6">
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        <Presentation className="w-4 h-4" /> Webinar Content
+                      </h3>
+
+                      {(() => {
+                        const wcLinks = event.webinarContent.filter((c) => c.content_type === "link")
+                        const wcMaterials = event.webinarContent.filter((c) => c.content_type === "material")
+                        const wcRecordings = event.webinarContent.filter((c) => c.content_type === "recording")
+                        const wcResources = event.webinarContent.filter((c) => c.content_type === "resource")
+                        return (
+                          <>
+                            {wcLinks.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <LinkIcon className="w-4 h-4" /> Links ({wcLinks.length})
+                                </h4>
+                                <div className="space-y-2">
+                                  {wcLinks.map((item) => (
+                                    <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 border rounded-lg hover:bg-green-50 transition-colors">
+                                      <ExternalLink className="w-4 h-4 text-green-600" />
+                                      <div className="flex-1 min-w-0">
+                                        <span className="text-sm font-medium block truncate">{item.title}</span>
+                                        {item.description && <span className="text-xs text-muted-foreground block truncate">{item.description}</span>}
+                                      </div>
+                                      {item.is_public && <Badge variant="outline" className="text-xs shrink-0 text-green-600 border-green-200">Public</Badge>}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {wcMaterials.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <FileText className="w-4 h-4" /> Materials ({wcMaterials.length})
+                                </h4>
+                                <div className="space-y-2">
+                                  {wcMaterials.map((item) => (
+                                    <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 border rounded-lg hover:bg-green-50 transition-colors">
+                                      <Download className="w-4 h-4 text-green-600" />
+                                      <span className="flex-1 text-sm font-medium truncate">{item.title}</span>
+                                      {item.file_type && <Badge variant="outline" className="text-xs shrink-0">{item.file_type.toUpperCase()}</Badge>}
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {wcRecordings.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <Video className="w-4 h-4" /> Recordings ({wcRecordings.length})
+                                </h4>
+                                <div className="space-y-2">
+                                  {wcRecordings.map((item) => (
+                                    <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 border rounded-lg hover:bg-green-50 transition-colors">
+                                      <Video className="w-4 h-4 text-green-600" />
+                                      <span className="flex-1 text-sm font-medium truncate">{item.title}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {wcResources.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2 flex items-center gap-2">
+                                  <FileText className="w-4 h-4" /> Resources ({wcResources.length})
+                                </h4>
+                                <div className="space-y-2">
+                                  {wcResources.map((item) => (
+                                    <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 border rounded-lg hover:bg-green-50 transition-colors">
+                                      <ExternalLink className="w-4 h-4 text-green-600" />
+                                      <span className="flex-1 text-sm font-medium truncate">{item.title}</span>
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        )
+                      })()}
+                    </div>
+                  )}
+
                   {/* Resources section — same as my-events */}
                   {event.resources.length > 0 && (
                     <div className="space-y-4 mb-6">
@@ -696,20 +884,30 @@ export function EventsDashboard() {
                     </div>
                   )}
 
-                  {event.resources.length === 0 && (
+                  {event.resources.length === 0 && event.webinarContent.length === 0 && (
                     <div className="text-center py-4 text-muted-foreground mb-4">
                       <FileText className="w-6 h-6 mx-auto mb-1 opacity-50" />
                       <p className="text-xs">No resources available yet.</p>
                     </div>
                   )}
 
-                  {/* Admin action */}
-                  <Button asChild className="w-full">
-                    <Link href={getEventCMSLink(event.id)}>
-                      <Edit2 className="w-4 h-4 mr-2" />
-                      Edit in CMS
-                    </Link>
-                  </Button>
+                  {/* Admin actions */}
+                  <div className={`flex gap-3 ${event.type === "webinar" ? "flex-col sm:flex-row" : ""}`}>
+                    <Button asChild className={event.type === "webinar" ? "flex-1" : "w-full"}>
+                      <Link href={getEventCMSLink(event.id)}>
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        Edit in CMS
+                      </Link>
+                    </Button>
+                    {event.type === "webinar" && (
+                      <Button asChild variant="outline" className="flex-1 border-green-300 text-green-700 hover:bg-green-50 hover:text-green-800">
+                        <Link href={`/admin/webinar-cms?webinar=${event.id}`}>
+                          <Presentation className="w-4 h-4 mr-2" />
+                          Manage Webinar Content
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )

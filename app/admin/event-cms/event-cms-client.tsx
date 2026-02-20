@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,6 +39,9 @@ import {
   Save,
   Building,
   DoorOpen,
+  Upload,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -1022,7 +1024,7 @@ export default function EventCMSPage() {
             </DialogTitle>
             <DialogDescription>Add a new resource to this event.</DialogDescription>
           </DialogHeader>
-          <ResourceForm formData={formData} setFormData={setFormData} resourceType={activeTab as ResourceType} />
+          <ResourceForm formData={formData} setFormData={setFormData} resourceType={activeTab as ResourceType} eventSlug={selectedEvent} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Cancel
@@ -1046,6 +1048,7 @@ export default function EventCMSPage() {
             formData={formData}
             setFormData={setFormData}
             resourceType={selectedResource?.resource_type || "document"}
+            eventSlug={selectedEvent}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
@@ -1088,6 +1091,7 @@ function ResourceForm({
   formData,
   setFormData,
   resourceType,
+  eventSlug,
 }: {
   formData: {
     title: string
@@ -1100,7 +1104,88 @@ function ResourceForm({
   }
   setFormData: React.Dispatch<React.SetStateAction<typeof formData>>
   resourceType: ResourceType
+  eventSlug?: string
 }) {
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState<"idle" | "uploading" | "success" | "error">("idle")
+  const [uploadError, setUploadError] = useState("")
+  const [uploadedFileName, setUploadedFileName] = useState("")
+  const [isDragOver, setIsDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const showFileUpload = resourceType === "document" || resourceType === "image"
+
+  async function handleFileUpload(file: File) {
+    setIsUploading(true)
+    setUploadProgress("uploading")
+    setUploadError("")
+
+    try {
+      const body = new FormData()
+      body.append("file", file)
+      if (eventSlug) body.append("eventSlug", eventSlug)
+
+      const res = await fetch("/api/upload-event-resource", {
+        method: "POST",
+        body,
+      })
+
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.error || "Upload failed")
+      }
+
+      const data = await res.json()
+
+      setFormData((prev) => ({
+        ...prev,
+        url: data.url,
+        file_type: data.fileType || prev.file_type,
+        file_size: data.size || prev.file_size,
+      }))
+
+      if (!formData.title) {
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ")
+        const titleCase = nameWithoutExt
+          .split(" ")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ")
+        setFormData((prev) => ({ ...prev, title: titleCase }))
+      }
+
+      setUploadedFileName(file.name)
+      setUploadProgress("success")
+    } catch (error) {
+      console.error("Upload error:", error)
+      setUploadError(error instanceof Error ? error.message : "Upload failed")
+      setUploadProgress("error")
+    } finally {
+      setIsUploading(false)
+    }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) handleFileUpload(file)
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) handleFileUpload(file)
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -1124,8 +1209,73 @@ function ResourceForm({
         />
       </div>
 
+      {/* File Upload Section */}
+      {showFileUpload && (
+        <div>
+          <Label className="mb-2 block">Upload File</Label>
+          <div
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onClick={() => fileInputRef.current?.click()}
+            className={`
+              relative cursor-pointer rounded-lg border-2 border-dashed p-6 text-center transition-colors
+              ${isDragOver ? "border-teal-500 bg-teal-50" : "border-muted-foreground/25 hover:border-teal-400 hover:bg-muted/50"}
+              ${uploadProgress === "success" ? "border-green-500 bg-green-50" : ""}
+              ${uploadProgress === "error" ? "border-red-500 bg-red-50" : ""}
+            `}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept={
+                resourceType === "image"
+                  ? "image/jpeg,image/png,image/gif,image/webp"
+                  : ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip"
+              }
+              onChange={handleFileChange}
+            />
+
+            {isUploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                <p className="text-sm font-medium text-teal-700">Uploading...</p>
+              </div>
+            ) : uploadProgress === "success" ? (
+              <div className="flex flex-col items-center gap-2">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+                <p className="text-sm font-medium text-green-700">Uploaded successfully</p>
+                <p className="text-xs text-muted-foreground">{uploadedFileName}</p>
+                <p className="text-xs text-teal-600 underline mt-1">Click to replace</p>
+              </div>
+            ) : uploadProgress === "error" ? (
+              <div className="flex flex-col items-center gap-2">
+                <AlertCircle className="h-8 w-8 text-red-600" />
+                <p className="text-sm font-medium text-red-700">{uploadError}</p>
+                <p className="text-xs text-muted-foreground">Click to try again</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm font-medium">
+                  Drag and drop a file here, or click to browse
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {resourceType === "image"
+                    ? "JPG, PNG, GIF, WebP (max 50 MB)"
+                    : "PDF, Word, PowerPoint, Excel, ZIP (max 50 MB)"}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div>
-        <Label htmlFor="url">URL *</Label>
+        <Label htmlFor="url">
+          URL {showFileUpload ? "(auto-filled on upload)" : "*"}
+        </Label>
         <Input
           id="url"
           value={formData.url}
@@ -1138,6 +1288,11 @@ function ResourceForm({
                 : "https://storage.example.com/file.pdf"
           }
         />
+        {showFileUpload && (
+          <p className="text-xs text-muted-foreground mt-1">
+            Upload a file above or paste a URL manually.
+          </p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">

@@ -110,21 +110,32 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Fetch emails from auth.users for each profile
-    const recipients = await Promise.all(
-      (profiles || []).map(async (profile: any) => {
-        const { data: { user: authUser } } = await supabase.auth.admin.getUserById(profile.id)
-        
-        return {
-          id: profile.id,
-          email: authUser?.email || "",
-          full_name: profile.full_name,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          institution: profile.institution,
-        }
-      })
-    )
+    // Fetch emails from auth.users table in bulk
+    const profileIds = (profiles || []).map((p: any) => p.id)
+    
+    let emailMap: Record<string, string> = {}
+    if (profileIds.length > 0) {
+      const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+      
+      if (!authError && authUsers?.users) {
+        // Create a map of user IDs to emails
+        emailMap = Object.fromEntries(
+          authUsers.users
+            .filter(u => profileIds.includes(u.id) && u.email)
+            .map(u => [u.id, u.email!])
+        )
+      }
+    }
+
+    // Map profiles to recipients with emails
+    const recipients = (profiles || []).map((profile: any) => ({
+      id: profile.id,
+      email: emailMap[profile.id] || "",
+      full_name: profile.full_name,
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+      institution: profile.institution,
+    }))
 
     // Filter out users without email
     const validRecipients = recipients.filter((r) => r.email)

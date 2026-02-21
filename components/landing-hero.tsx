@@ -192,7 +192,8 @@ export default function LandingHero() {
                       className="object-cover"
                       priority={index === 0}
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      quality={index === 0 ? 90 : 75}
+                      quality={75}
+                      loading={index === 0 ? "eager" : "lazy"}
                     />
                   </div>
                 ))}

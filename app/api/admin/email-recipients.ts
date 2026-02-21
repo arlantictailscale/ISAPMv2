@@ -12,27 +12,22 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if user is admin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single()
 
-    if (!profile || profile.role !== "admin") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    if (profileError || !profile || profile.role !== "admin") {
+      console.error("[v0] Admin check failed:", profileError)
+      return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 })
     }
 
     const segment = request.nextUrl.searchParams.get("segment") || "all"
 
     // Fetch all users and their order/registration data
     let query = supabase.from("profiles").select(
-      `
-      id,
-      full_name,
-      first_name,
-      last_name,
-      institution
-    `
+      "id,full_name,first_name,last_name,institution"
     )
 
     // Apply segment filters

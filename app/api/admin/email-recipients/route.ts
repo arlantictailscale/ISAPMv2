@@ -45,27 +45,52 @@ export async function GET(request: NextRequest) {
 
       console.log("[v0] Fetched profiles:", users?.length || 0)
 
-      // Profiles don't have emails - fetch from auth.users
+      // Profiles don't have emails - fetch from auth.users via REST API with pagination
       try {
         const adminSupabase = createAdminClient()
-        const { data: { users: authUsers }, error: authError } = await adminSupabase.auth.admin.listUsers()
-        
-        if (authError) {
-          console.error("[v0] Error fetching auth users:", authError)
-          throw authError
-        }
-        
-        if (!authUsers) {
-          return NextResponse.json({ recipients: [], segment: "all" })
+        const pageSize = 1000 // Fetch 1000 users per request
+        let allAuthUsers: any[] = []
+        let pageIndex = 0
+        let hasMore = true
+
+        // Fetch all users using pagination
+        while (hasMore) {
+          const { data: { users: pageUsers }, error: authError } = await adminSupabase.auth.admin.listUsers({
+            perPage: pageSize,
+            page: pageIndex,
+          })
+          
+          if (authError) {
+            console.error("[v0] Error fetching auth users page:", authError)
+            throw authError
+          }
+          
+          if (!pageUsers || pageUsers.length === 0) {
+            hasMore = false
+            break
+          }
+          
+          allAuthUsers = allAuthUsers.concat(pageUsers)
+          console.log(`[v0] Fetched auth users page ${pageIndex + 1}: ${pageUsers.length} users (total: ${allAuthUsers.length})`)
+          
+          if (pageUsers.length < pageSize) {
+            hasMore = false
+          } else {
+            pageIndex++
+          }
         }
 
-        console.log("[v0] Fetched auth users:", authUsers.length)
+        if (allAuthUsers.length === 0) {
+          return NextResponse.json({ recipients: [], segment: "all", total: 0 })
+        }
+
+        console.log("[v0] Fetched all auth users:", allAuthUsers.length)
         
         // Create profile map for quick lookup
         const profileMap = new Map(users?.map(p => [p.id, p]) || [])
         
         // Map auth users to recipients with profile info
-        recipients = authUsers
+        recipients = allAuthUsers
           .filter(u => u.email)
           .map(u => {
             const profileInfo = profileMap.get(u.id)
@@ -157,7 +182,7 @@ export async function GET(request: NextRequest) {
             }
           }
           recipients = Array.from(uniqueUsers.values())
-          return NextResponse.json({ recipients, segment })
+          return NextResponse.json({ recipients, segment, total: recipients.length })
         default:
           itemFilter = ""
       }
@@ -236,7 +261,7 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`[v0] Returning ${recipients.length} recipients for segment: ${segment}`)
-    return NextResponse.json({ recipients, segment })
+    return NextResponse.json({ recipients, segment, total: recipients.length })
   } catch (error) {
     console.error("[v0] Error fetching email recipients:", error)
     return NextResponse.json(

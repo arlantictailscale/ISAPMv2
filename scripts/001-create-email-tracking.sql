@@ -1,7 +1,18 @@
 -- Migration: Create email tracking tables for broadcast rate limiting
 -- Purpose: Track daily email sends and broadcast status for Resend free plan compliance
 
--- Table 1: Track daily email send counts per admin
+-- Table 1: Store email templates for reuse (MUST be created first)
+CREATE TABLE IF NOT EXISTS email_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_by UUID NOT NULL REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 2: Track daily email send counts per admin
 CREATE TABLE IF NOT EXISTS email_send_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   admin_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -12,7 +23,7 @@ CREATE TABLE IF NOT EXISTS email_send_logs (
   UNIQUE(admin_id, send_date)
 );
 
--- Table 2: Track broadcast campaigns and their status
+-- Table 3: Track broadcast campaigns and their status
 CREATE TABLE IF NOT EXISTS email_broadcasts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   admin_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -48,7 +59,7 @@ CREATE TABLE IF NOT EXISTS email_broadcasts (
   CONSTRAINT valid_counts CHECK (sent_count >= 0 AND failed_count >= 0)
 );
 
--- Table 3: Track individual recipient sends for retry/recovery
+-- Table 4: Track individual recipient sends for retry/recovery
 CREATE TABLE IF NOT EXISTS broadcast_recipients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   broadcast_id UUID NOT NULL REFERENCES email_broadcasts(id) ON DELETE CASCADE,
@@ -70,17 +81,6 @@ CREATE TABLE IF NOT EXISTS broadcast_recipients (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   
   CONSTRAINT valid_recipient_status CHECK (status IN ('pending', 'sent', 'failed', 'bounced'))
-);
-
--- Table 4: Store email templates for reuse
-CREATE TABLE IF NOT EXISTS email_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  subject TEXT NOT NULL,
-  content TEXT NOT NULL,
-  created_by UUID NOT NULL REFERENCES auth.users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create indexes for better query performance

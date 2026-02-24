@@ -138,7 +138,7 @@ export default function LandingHero() {
                 </div>
                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-full border border-cyan-200/50">
                   <MapPin className="w-4 h-4 text-cyan-500" />
-                  <span className="font-semibold text-slate-700">The Singhasari Resort, Batu Malang</span>
+                  <span className="font-semibold text-slate-700">The Singhasari Hotel, Batu Malang</span>
                 </div>
               </div>
 
@@ -256,7 +256,7 @@ export default function LandingHero() {
               </div>
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-50 to-teal-50 rounded-full border border-cyan-200/50 w-fit">
                 <MapPin className="w-4 h-4 text-cyan-500" />
-                <span className="font-semibold text-slate-700">The Singhasari Resort, Batu Malang</span>
+                <span className="font-semibold text-slate-700">The Singhasari Hotel, Batu Malang</span>
               </div>
             </div>
 

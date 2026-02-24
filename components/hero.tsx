@@ -39,7 +39,7 @@ export default function Hero() {
           <div className="pt-4 space-y-2 text-white/90">
             <p className="text-lg font-semibold drop-shadow-md text-lime-300">April 16-18, 2026</p>
             <p className="text-base drop-shadow-md text-sky-100">
-              The Singhasari Resort & Convention Batu, Malang, Jawa Timur, Indonesia
+              The Singhasari Hotel & Convention Batu, Malang, Jawa Timur, Indonesia
             </p>
           </div>
 

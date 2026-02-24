@@ -33,7 +33,7 @@ export function EventOverviewCard() {
             <MapPin className="w-4 h-4 text-primary" />
             Location
           </h3>
-          <p className="text-sm font-medium">The Singhasari Resort & Convention</p>
+          <p className="text-sm font-medium">The Singhasari Hotel & Convention</p>
           <p className="text-sm text-muted-foreground">Batu, Malang, Jawa Timur, Indonesia</p>
         </div>
 

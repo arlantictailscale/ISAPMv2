@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     template: "%s | ISAPM 8th National Meeting 2026",
   },
   description:
-    "Join the 8th Indonesian Society of Anesthesiology for Pain Management (ISAPM) National Meeting 2026. April 16-18 at The Singhasari Resort, Batu Malang. Bridging The Gaps: Equity, Access, and Excellence in Pain Management.",
+    "Join the 8th Indonesian Society of Anesthesiology for Pain Management (ISAPM) National Meeting 2026. April 16-18 at The Singhasari Hotel, Batu Malang. Bridging The Gaps: Equity, Access, and Excellence in Pain Management.",
   applicationName: "The 8th National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
   keywords: [
     "ISAPM",
@@ -96,7 +96,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ISAPM 8th National Meeting 2026 | Pain Management Conference Indonesia",
     description:
-      "Join Indonesia's premier pain management conference. ISAPM 8th National Meeting, April 16-18, 2026 at The Singhasari Resort, Batu Malang. Register now!",
+      "Join Indonesia's premier pain management conference. ISAPM 8th National Meeting, April 16-18, 2026 at The Singhasari Hotel, Batu Malang. Register now!",
     url: "https://www.isapm2026.org",
     siteName: "The 8th National Meeting of the Indonesian Society of Anesthesiology for Pain Management (ISAPM)",
     images: [
@@ -194,7 +194,7 @@ const jsonLd = {
   eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
   location: {
     "@type": "Place",
-    name: "The Singhasari Resort & Convention",
+    name: "The Singhasari Hotel & Convention",
     address: {
       "@type": "PostalAddress",
       streetAddress: "Jl. Ir. Soekarno No.120",

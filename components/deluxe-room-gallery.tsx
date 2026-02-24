@@ -43,7 +43,7 @@ const deluxeRoomImages = [
   },
   {
     src: "/images/dsc03758edt.jpg",
-    alt: "Deluxe Room - Premium Singhasari Resort bathroom amenities",
+    alt: "Deluxe Room - Premium Singhasari Hotel bathroom amenities",
     title: "Premium Amenities",
   },
 ]

@@ -121,7 +121,7 @@ export default function Contact() {
                 <div>
                   <h3 className="font-semibold mb-1">Address</h3>
                   <p className="text-muted-foreground text-sm">
-                    The Singhasari Resort & Convention Batu
+                    The Singhasari Hotel & Convention Batu
                     <br />
                     Batu, Malang, East Java
                     <br />

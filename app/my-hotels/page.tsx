@@ -220,7 +220,7 @@ export default async function MyHotelsPage() {
                               <CheckCircle className="w-3 h-3 mr-1" />
                               Reservation Confirmed
                             </Badge>
-                            <h2 className="text-xl sm:text-2xl font-bold mb-2">The Singhasari Resort</h2>
+                            <h2 className="text-xl sm:text-2xl font-bold mb-2">The Singhasari Hotel</h2>
                             <p className="text-amber-100 text-sm sm:text-base flex items-center gap-2">
                               <MapPin className="w-4 h-4" />
                               Batu, Malang, East Java, Indonesia

@@ -264,7 +264,7 @@ export default function MyHotelBookingsPage() {
                                 <Hotel className="w-6 h-6 text-primary" />
                               </div>
                               <div className="flex-1">
-                                <h3 className="text-xl font-bold mb-1">The Singhasari Resort & Convention</h3>
+                                <h3 className="text-xl font-bold mb-1">The Singhasari Hotel & Convention</h3>
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                   <MapPin className="w-4 h-4" />
                                   <span>Batu, Malang, Jawa Timur</span>
@@ -386,7 +386,7 @@ export default function MyHotelBookingsPage() {
                             <Link href="/venue" className="flex-1 min-w-[200px]">
                               <Button variant="outline" className="w-full gap-2 bg-transparent" size="lg">
                                 <MapPin className="w-4 h-4" />
-                                View Resort Information
+                                View Hotel Information
                               </Button>
                             </Link>
                           </div>

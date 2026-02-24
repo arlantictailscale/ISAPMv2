@@ -72,7 +72,7 @@ function generateEmailHtml(subject: string, content: string, recipientName: stri
               <div class="footer-brand">ISAPM 8th National Meeting 2026</div>
               <p><strong>The Indonesian Society of Anesthesiology for Pain Management</strong></p>
               <p style="margin-top: 12px;">
-                April 16-19, 2026 | The Singhasari Resort, Batu, Malang, Indonesia
+                April 16-19, 2026 | The Singhasari Hotel, Batu, Malang, Indonesia
               </p>
               <p style="margin-top: 12px;">
                 Email: <a href="mailto:admin@isapm2026.org">admin@isapm2026.org</a> | 

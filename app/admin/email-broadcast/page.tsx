@@ -504,7 +504,9 @@ export default function AdminEmailBroadcastPage() {
         return
       }
 
-      const recipientList = filteredRecipients.filter((r) => selectedRecipients.has(r.id))
+      // Use unfiltered recipients list to ensure all selected recipients are included
+      // (filteredRecipients may be filtered by search, which would exclude selected users)
+      const recipientList = recipients.filter((r) => selectedRecipients.has(r.id))
       console.log("[v0] Recipient count:", recipientList.length)
 
       // Add timeout to prevent infinite loading

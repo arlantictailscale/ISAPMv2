@@ -248,6 +248,17 @@ export default function AdminEmailBroadcastPage() {
   // History
   const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistory[]>([])
 
+  // Quota tracking (Resend Free Plan)
+  const [quotaStatus, setQuotaStatus] = useState<{
+    sent_today: number
+    remaining_today: number
+    daily_limit: number
+    reset_time: string
+    can_send: boolean
+    is_over_quota: boolean
+  } | null>(null)
+  const [quotaError, setQuotaError] = useState<string | null>(null)
+
   // Check admin access
   useEffect(() => {
     checkAdminAccess()
@@ -277,11 +288,29 @@ export default function AdminEmailBroadcastPage() {
 
       await loadRecipients("all")
       await loadBroadcastHistory()
+      await getQuotaStatus()
     } catch (err) {
       console.error("Error checking admin status:", err)
       toast.error("Failed to load admin panel")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const getQuotaStatus = async () => {
+    try {
+      const response = await fetch("/api/admin/quota-status")
+      if (!response.ok) {
+        console.error("[v0] Failed to fetch quota status:", response.statusText)
+        setQuotaError("Could not load email quota")
+        return
+      }
+      const data = await response.json()
+      setQuotaStatus(data.quota)
+      setQuotaError(null)
+    } catch (error) {
+      console.error("[v0] Error fetching quota status:", error)
+      setQuotaError("Failed to load quota information")
     }
   }
 
@@ -508,10 +537,29 @@ export default function AdminEmailBroadcastPage() {
       const result = await response.json()
       console.log("[v0] Response body:", result)
 
+      // Handle queued broadcasts (202 Accepted)
+      if (response.status === 202) {
+        console.log("[v0] Broadcast queued due to rate limits")
+        toast.info(result.message || "Broadcast queued due to rate limits. Will resume tomorrow.")
+        await getQuotaStatus() // Refresh quota
+        return
+      }
+
       if (!response.ok) {
+        // Enhanced error messages for rate limits and quotas
+        if (response.status === 429 && result.quota_status) {
+          const quota = result.quota_status
+          const msg = `Daily email limit reached (${quota.used_today}/${quota.limit}). Remaining emails will be queued for tomorrow.`
+          toast.error(msg)
+          await getQuotaStatus() // Refresh quota
+          return
+        }
         throw new Error(result.error || "Failed to send broadcast")
       }
 
+      // Success - broadcast was sent
+      console.log(`[v0] Broadcast completed: ${result.stats?.sent} sent, ${result.stats?.failed} failed, ${result.stats?.queued} queued`)
+      
       // Add to history
       const historyEntry: BroadcastHistory = {
         id: `broadcast_${Date.now()}`,
@@ -525,8 +573,16 @@ export default function AdminEmailBroadcastPage() {
       setBroadcastHistory(newHistory)
       localStorage.setItem("broadcast_history", JSON.stringify(newHistory))
 
-      toast.success(`Broadcast sent to ${recipientList.length} recipients!`)
+      // Show success with queuing info if applicable
+      let successMsg = `Broadcast sent to ${result.stats?.sent || recipientList.length} recipients!`
+      if (result.stats?.queued > 0) {
+        successMsg += ` ${result.stats.queued} emails queued for tomorrow.`
+      }
+      toast.success(successMsg)
       console.log("[v0] Email broadcast successful")
+      
+      // Refresh quota status
+      await getQuotaStatus()
       
       // Reset form
       setSubject("")
@@ -617,6 +673,57 @@ export default function AdminEmailBroadcastPage() {
                         Recipients
                       </CardTitle>
                       <CardDescription>Select target audience for your email</CardDescription>
+                      
+                      {/* Daily Quota Warning */}
+                      {quotaStatus && (
+                        <div className={`mt-4 p-3 rounded-md border ${
+                          quotaStatus.is_over_quota 
+                            ? 'bg-red-50 border-red-200' 
+                            : quotaStatus.remaining_today < 50
+                            ? 'bg-yellow-50 border-yellow-200'
+                            : 'bg-blue-50 border-blue-200'
+                        }`}>
+                          <div className="flex items-start gap-2">
+                            {quotaStatus.is_over_quota ? (
+                              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                            ) : quotaStatus.remaining_today < 50 ? (
+                              <AlertCircle className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+                            ) : (
+                              <Mail className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                            )}
+                            <div className="flex-1">
+                              <p className={`text-sm font-medium ${
+                                quotaStatus.is_over_quota 
+                                  ? 'text-red-900' 
+                                  : quotaStatus.remaining_today < 50
+                                  ? 'text-yellow-900'
+                                  : 'text-blue-900'
+                              }`}>
+                                Daily Email Quota: {quotaStatus.sent_today} / {quotaStatus.daily_limit}
+                              </p>
+                              <p className={`text-xs mt-1 ${
+                                quotaStatus.is_over_quota 
+                                  ? 'text-red-800' 
+                                  : quotaStatus.remaining_today < 50
+                                  ? 'text-yellow-800'
+                                  : 'text-blue-800'
+                              }`}>
+                                {quotaStatus.is_over_quota 
+                                  ? `Daily limit reached. Remaining broadcasts will be queued for tomorrow at ${new Date(quotaStatus.reset_time).toLocaleTimeString()}`
+                                  : quotaStatus.remaining_today < 50
+                                  ? `Only ${quotaStatus.remaining_today} emails remaining today. Large broadcasts will be queued.`
+                                  : `${quotaStatus.remaining_today} emails available today`
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {quotaError && (
+                        <div className="mt-4 p-3 rounded-md bg-gray-50 border border-gray-200">
+                          <p className="text-xs text-gray-600">{quotaError}</p>
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {/* Segment Selection */}

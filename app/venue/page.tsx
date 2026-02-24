@@ -19,7 +19,7 @@ export default async function VenuePage() {
         <section className="relative h-[60vh] min-h-[500px] overflow-hidden">
           <Image
             src="/images/edt.jpg"
-            alt="The Singhasari Resort Pool and Mountain View"
+            alt="The Singhasari Hotel Pool and Mountain View"
             fill
             className="object-cover"
             priority
@@ -47,7 +47,7 @@ export default async function VenuePage() {
                 className="border-white text-white hover:bg-white/10 backdrop-blur-sm bg-transparent"
               >
                 <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
-                  Visit Resort Website
+                  Visit Hotel Website
                   <ExternalLink className="w-4 h-4 ml-2" />
                 </a>
               </Button>
@@ -55,11 +55,11 @@ export default async function VenuePage() {
           </div>
         </section>
 
-        {/* Photo Gallery Section Showing Resort Amenities */}
+        {/* Photo Gallery Section Showing Hotel Amenities */}
         <section className="py-20 px-4 bg-gradient-to-br from-slate-50 to-slate-100">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Resort Facilities & Amenities</h2>
+              <h2 className="font-display text-3xl sm:text-4xl font-bold mb-4">Hotel Facilities & Amenities</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Discover our premium facilities designed to enhance your conference experience
               </p>
@@ -190,7 +190,7 @@ export default async function VenuePage() {
                   <div>
                     <h3 className="font-semibold mb-1">Address</h3>
                     <p className="text-muted-foreground">
-                      The Singhasari Resort & Convention Batu
+The Singhasari Hotel & Convention Batu
                       <br />
                       Jl. Ir. Soekarno No. 120
                       <br />
@@ -207,7 +207,7 @@ export default async function VenuePage() {
                     <h3 className="font-semibold mb-1">Phone</h3>
                     <div className="space-y-1">
                       <p className="text-muted-foreground">
-                        <strong>Resort:</strong>{" "}
+                        <strong>Hotel:</strong>{" "}
                         <a href="tel:+62341513333" className="text-cyan-600 hover:underline">
                           (62-341) 513333
                         </a>
@@ -262,7 +262,7 @@ export default async function VenuePage() {
                       <strong className="text-foreground block mb-1">By Air (Regional):</strong>
                       Abdul Rachman Saleh Airport (MLG), Malang. Closer option for select domestic flights.
                       <br />
-                      <span className="italic">Travel time: approx. 45-60 minutes to the resort.</span>
+                      <span className="italic">Travel time: approx. 45-60 minutes to the hotel.</span>
                     </li>
                     <li>
                       <strong className="text-foreground block mb-1">By Train:</strong>
@@ -290,7 +290,7 @@ export default async function VenuePage() {
                     style={{ border: 0 }}
                     allowFullScreen={true}
                     loading="lazy"
-                    title="The Singhasari Resort & Convention Batu Map"
+                    title="The Singhasari Hotel & Convention Batu Map"
                   ></iframe>
                 </div>
 
@@ -305,7 +305,7 @@ export default async function VenuePage() {
                     <Button asChild variant="outline" className="w-full justify-start bg-transparent">
                       <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
                         <Hotel className="w-4 h-4 mr-2" />
-                        Visit Resort Website
+                        Visit Hotel Website
                       </a>
                     </Button>
                     <Button asChild variant="outline" className="w-full justify-start bg-transparent">
@@ -409,7 +409,7 @@ export default async function VenuePage() {
                 </Card>
               </div>
 
-              {/* Resort Facilities & Booking CTA */}
+              {/* Hotel Facilities & Booking CTA */}
               <div className="space-y-6">
                 <Card className="bg-gradient-to-br from-cyan-600 to-teal-600 text-white border-0 shadow-xl">
                   <CardHeader>
@@ -419,7 +419,7 @@ export default async function VenuePage() {
                   <CardContent className="space-y-4">
                     <p className="text-sm text-white/90">
                       Stay at the conference venue for maximum convenience. Book your room now and enjoy easy access to
-                      all sessions, networking opportunities, and resort amenities.
+                      all sessions, networking opportunities, and hotel amenities.
                     </p>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
@@ -450,7 +450,7 @@ export default async function VenuePage() {
 
                 <Card className="shadow-md">
                   <CardHeader>
-                    <CardTitle>Resort Facilities</CardTitle>
+                    <CardTitle>Hotel Facilities</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2 text-muted-foreground text-sm">
@@ -458,7 +458,7 @@ export default async function VenuePage() {
                         <span className="text-cyan-600 font-bold">•</span> Modern convention center & conference rooms
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> High-speed WiFi throughout the resort
+                        <span className="text-cyan-600 font-bold">•</span> High-speed WiFi throughout the hotel
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold">•</span> Multiple on-site restaurants & cafes
@@ -470,7 +470,7 @@ export default async function VenuePage() {
                         <span className="text-cyan-600 font-bold">•</span> Swimming pool, fitness center & spa
                       </li>
                       <li className="flex gap-2">
-                        <span className="text-cyan-600 font-bold">•</span> Beautiful mountain views and resort grounds
+                        <span className="text-cyan-600 font-bold">•</span> Beautiful mountain views and hotel grounds
                       </li>
                       <li className="flex gap-2">
                         <span className="text-cyan-600 font-bold">•</span> 24-hour room service & concierge
@@ -482,7 +482,7 @@ export default async function VenuePage() {
                       className="w-full mt-6 border-cyan-600 text-cyan-600 hover:bg-cyan-50 bg-transparent"
                     >
                       <a href="https://www.thesinghasari.com/" target="_blank" rel="noopener noreferrer">
-                        Visit Resort Website
+                        Visit Hotel Website
                         <ExternalLink className="w-4 h-4 ml-2" />
                       </a>
                     </Button>

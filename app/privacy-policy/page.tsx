@@ -280,7 +280,7 @@ export default function PrivacyPolicyPage() {
                 attendance tracking
               </li>
               <li>
-                <strong>Hotel Partners (The Singhasari Resort):</strong> Only if you book accommodation - name, contact,
+                <strong>Hotel Partners (The Singhasari Hotel):</strong> Only if you book accommodation - name, contact,
                 booking dates
               </li>
               <li>
@@ -449,7 +449,7 @@ export default function PrivacyPolicyPage() {
             <address className="mt-4 not-italic bg-gray-50 p-4 rounded-lg">
               <strong>Indonesian Society of Anesthesiology for Pain Management</strong>
               <br />
-              The Singhasari Resort & Convention
+              The Singhasari Hotel & Convention
               <br />
               Batu, Malang
               <br />

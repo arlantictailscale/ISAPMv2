@@ -5,7 +5,7 @@ const infoItems = [
   },
   {
     label: "Venue",
-    value: "The Singhasari Resort & Convention Batu",
+    value: "The Singhasari Hotel & Convention Batu",
   },
   {
     label: "City",

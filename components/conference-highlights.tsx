@@ -18,7 +18,7 @@ const highlights = [
   {
     icon: MapPin,
     title: "Prime Location",
-    description: "The Singhasari Resort & Convention Batu in the heart of East Java",
+    description: "The Singhasari Hotel & Convention Batu in the heart of East Java",
   },
   {
     icon: Sparkles,

@@ -53,8 +53,8 @@ const premierRoomImages = [
   },
   {
     src: "/images/img-20210424-104008.jpg",
-    alt: "Resort pool and grounds with panoramic mountain backdrop",
-    title: "Resort Pool & Gardens",
+    alt: "Hotel pool and grounds with panoramic mountain backdrop",
+    title: "Hotel Pool & Gardens",
   },
 ]
 

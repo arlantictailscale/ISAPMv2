@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { NextRequest, NextResponse } from "next/server"
 
 interface QueueBroadcastRequest {
@@ -51,8 +52,11 @@ export async function POST(request: NextRequest) {
       `[v0] Queueing broadcast: ${recipients.length} recipients for segment "${segment}"`
     )
 
+    // Use admin client for database writes to bypass RLS
+    const adminSupabase = createAdminClient()
+
     // Create broadcast record in database
-    const { data: broadcast, error: broadcastError } = await supabase
+    const { data: broadcast, error: broadcastError } = await adminSupabase
       .from("email_broadcasts")
       .insert({
         admin_id: user.id,
@@ -78,19 +82,17 @@ export async function POST(request: NextRequest) {
 
     console.log(`[v0] Created broadcast record: ${broadcast.id}`)
 
-    // Store recipient list
+    // Store recipient list using actual column names from broadcast_recipients table
     const recipientRecords = recipients.map((r) => ({
       broadcast_id: broadcast.id,
       user_id: r.id,
-      email: r.email,
-      full_name: r.full_name,
-      first_name: r.first_name,
-      last_name: r.last_name,
+      recipient_email: r.email,
+      recipient_name: r.full_name || (r.first_name && r.last_name ? `${r.first_name} ${r.last_name}` : r.email.split("@")[0]),
       status: "pending",
       created_at: new Date().toISOString(),
     }))
 
-    const { error: recipientError } = await supabase
+    const { error: recipientError } = await adminSupabase
       .from("broadcast_recipients")
       .insert(recipientRecords)
 

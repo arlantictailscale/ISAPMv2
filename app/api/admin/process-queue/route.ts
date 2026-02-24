@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
       // Get recipients for this broadcast
       const { data: recipients, error: recipientError } = await supabase
         .from("broadcast_recipients")
-        .select("user_id, email, full_name, first_name, last_name")
+        .select("id, user_id, recipient_email, recipient_name")
         .eq("broadcast_id", broadcast.id)
         .eq("status", "pending")
 
@@ -102,10 +102,7 @@ export async function GET(request: NextRequest) {
 
         try {
           const recipientName =
-            recipient.full_name ||
-            (recipient.first_name && recipient.last_name
-              ? `${recipient.first_name} ${recipient.last_name}`
-              : recipient.email.split("@")[0])
+            recipient.recipient_name || recipient.recipient_email.split("@")[0]
 
           const htmlContent = generateEmailHtml(
             broadcast.subject,
@@ -116,7 +113,7 @@ export async function GET(request: NextRequest) {
           // Send email via Resend
           const result = await resend.emails.send({
             from: "ISAPM 2026 <noreply@isapm2026.org>",
-            to: recipient.email,
+            to: recipient.recipient_email,
             subject: broadcast.subject,
             html: htmlContent,
           })
@@ -125,18 +122,17 @@ export async function GET(request: NextRequest) {
           await supabase
             .from("broadcast_recipients")
             .update({ status: "sent", sent_at: new Date().toISOString() })
-            .eq("broadcast_id", broadcast.id)
-            .eq("user_id", recipient.user_id)
+            .eq("id", recipient.id)
 
           batchSentCount++
-          console.log(`[v0] Sent to ${recipient.email}`)
+          console.log(`[v0] Sent to ${recipient.recipient_email}`)
 
           // Rate limiting: 2 seconds between emails (30/min, safe for 50/hour limit)
           if (i < recipients.length - 1) {
             await new Promise((resolve) => setTimeout(resolve, 2000))
           }
         } catch (error) {
-          console.error(`[v0] Failed to send to ${recipient.email}:`, error)
+          console.error(`[v0] Failed to send to ${recipient.recipient_email}:`, error)
           totalFailed++
 
           // Mark as failed but continue
@@ -147,8 +143,7 @@ export async function GET(request: NextRequest) {
               error_message:
                 error instanceof Error ? error.message : "Unknown error",
             })
-            .eq("broadcast_id", broadcast.id)
-            .eq("user_id", recipient.user_id)
+            .eq("id", recipient.id)
         }
       }
 

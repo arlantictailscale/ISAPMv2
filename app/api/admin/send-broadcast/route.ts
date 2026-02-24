@@ -324,7 +324,6 @@ export async function POST(request: NextRequest) {
     console.log(`[v0] Broadcast completed: ${successCount} sent, ${failCount} failed, ${rateLimitHits} rate limit hits`)
 
     // Check if we need to queue remaining emails
-    const remainingEmails = recipients.length - emailsToSend
     const needsQueuing = remainingEmails > 0
 
     return NextResponse.json({

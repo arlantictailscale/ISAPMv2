@@ -1,4 +1,3 @@
-import { createClient } from "@/lib/supabase/client"
 import { createAdminClient } from "@/lib/supabase/admin"
 
 // Resend Free Plan Limits
@@ -27,13 +26,14 @@ export interface QuotaStatus {
 }
 
 /**
- * Get today's email quota status for an admin user
+ * Get today's email quota status for an admin user.
+ * Uses the admin client to bypass RLS since send logs may not have user-specific policies.
  */
 export async function getTodayQuotaStatus(
   admin_id: string
 ): Promise<QuotaStatus> {
   try {
-    const supabase = createClient()
+    const supabase = createAdminClient()
     
     // Get today's date in UTC
     const today = new Date().toISOString().split("T")[0]
@@ -41,17 +41,15 @@ export async function getTodayQuotaStatus(
     // Query email_send_logs for today
     const { data, error } = await supabase
       .from("email_send_logs")
-      .select("sent_count, last_reset")
+      .select("sent_count, last_updated_at")
       .eq("admin_id", admin_id)
-      .eq("date", today)
+      .eq("send_date", today)
       .single()
     
     let sent_count = 0
-    let last_reset = new Date().toISOString()
     
     if (!error && data) {
       sent_count = data.sent_count || 0
-      last_reset = data.last_reset || new Date().toISOString()
     }
     
     const remaining = Math.max(0, RESEND_FREE_LIMITS.DAILY_LIMIT - sent_count)
@@ -71,31 +69,41 @@ export async function getTodayQuotaStatus(
     }
   } catch (error) {
     console.error("[v0] Error getting quota status:", error)
-    throw error
+    // Return safe defaults so the system doesn't break
+    return {
+      sent_today: 0,
+      remaining_today: RESEND_FREE_LIMITS.DAILY_LIMIT,
+      daily_limit: RESEND_FREE_LIMITS.DAILY_LIMIT,
+      reset_time: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      can_send: true,
+      is_over_quota: false,
+    }
   }
 }
 
 /**
- * Record emails sent to track daily quota
+ * Record emails sent to track daily quota.
+ * Uses admin client to bypass RLS for insert/update operations.
  */
 export async function recordEmailsSent(
   admin_id: string,
   count: number
 ): Promise<void> {
   try {
-    const supabase = createClient()
+    const supabase = createAdminClient()
     const today = new Date().toISOString().split("T")[0]
     
     // Get or create today's record
     const { data: existing, error: fetchError } = await supabase
       .from("email_send_logs")
-      .select("*")
+      .select("id, sent_count")
       .eq("admin_id", admin_id)
-      .eq("date", today)
+      .eq("send_date", today)
       .single()
     
     if (fetchError && fetchError.code !== "PGRST116") {
-      throw fetchError
+      console.error("[v0] Error fetching send log:", fetchError)
+      return // Don't throw - quota tracking failure shouldn't block sending
     }
     
     if (existing) {
@@ -104,30 +112,31 @@ export async function recordEmailsSent(
         .from("email_send_logs")
         .update({
           sent_count: (existing.sent_count || 0) + count,
-          last_reset: new Date().toISOString(),
+          last_updated_at: new Date().toISOString(),
         })
-        .eq("admin_id", admin_id)
-        .eq("date", today)
+        .eq("id", existing.id)
       
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error("[v0] Error updating send log:", updateError)
+      }
     } else {
       // Create new record
       const { error: insertError } = await supabase
         .from("email_send_logs")
         .insert({
           admin_id,
-          date: today,
+          send_date: today,
           sent_count: count,
-          last_reset: new Date().toISOString(),
+          last_updated_at: new Date().toISOString(),
         })
       
-      if (insertError) throw insertError
+      if (insertError) {
+        console.error("[v0] Error inserting send log:", insertError)
+      }
     }
-    
-    console.log(`[v0] Recorded ${count} emails sent for admin ${admin_id}`)
   } catch (error) {
     console.error("[v0] Error recording sent emails:", error)
-    throw error
+    // Don't throw - quota tracking failure shouldn't block sending
   }
 }
 

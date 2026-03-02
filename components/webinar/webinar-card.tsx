@@ -24,6 +24,7 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
   const isActive = webinar.status === "active"
   const isComingSoon = webinar.status === "coming_soon"
   const isSoldOut = webinar.status === "sold_out"
+  const isCompleted = webinar.status === "completed"
 
   return (
     <Card
@@ -43,6 +44,12 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">
             <Bell className="w-4 h-4 mr-1" />
             Coming Soon
+          </Badge>
+        )}
+        {isCompleted && (
+          <Badge variant="secondary" className="bg-slate-200 text-slate-700 border-slate-300">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Finished
           </Badge>
         )}
         {isSoldOut && <Badge variant="destructive">Sold Out</Badge>}

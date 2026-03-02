@@ -29,6 +29,7 @@ export default function WebinarsPage() {
 
   const activeWebinars = WEBINARS.filter((w) => w.status === "active")
   const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
+  const completedWebinars = WEBINARS.filter((w) => w.status === "completed")
 
   const handleAddBundleToCart = async () => {
     setIsAddingToCart(true)

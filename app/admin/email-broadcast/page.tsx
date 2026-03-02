@@ -504,7 +504,9 @@ export default function AdminEmailBroadcastPage() {
         return
       }
 
-      const recipientList = filteredRecipients.filter((r) => selectedRecipients.has(r.id))
+      // Use unfiltered recipients list to ensure all selected recipients are included
+      // (filteredRecipients may be filtered by search, which would exclude selected users)
+      const recipientList = recipients.filter((r) => selectedRecipients.has(r.id))
       console.log("[v0] Recipient count:", recipientList.length)
 
       // Add timeout to prevent infinite loading
@@ -590,8 +592,16 @@ export default function AdminEmailBroadcastPage() {
       setSelectedTemplate("")
     } catch (err) {
       console.error("[v0] Error sending broadcast:", err)
+      if (err instanceof Error) {
+        console.error("[v0] Error name:", err.name)
+        console.error("[v0] Error message:", err.message)
+        console.error("[v0] Error stack:", err.stack)
+      }
       if (err instanceof Error && err.name === "AbortError") {
-        toast.error("Request timed out. Please try again.")
+        toast.error("Request timed out after 2 minutes. Please try again or contact support if the issue persists.")
+      } else if (err instanceof SyntaxError) {
+        toast.error("Invalid response from server. Please check that the server is running and try again.")
+        console.error("[v0] Response parsing error - server may be down or returned invalid JSON")
       } else {
         toast.error(err instanceof Error ? err.message : "Failed to send broadcast")
       }

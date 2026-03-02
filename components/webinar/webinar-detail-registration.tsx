@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -119,6 +120,39 @@ export function WebinarDetailRegistration({ webinar }: WebinarDetailRegistration
 
   const goToCart = () => {
     router.push("/cart")
+  }
+
+  // Check if webinar is completed
+  if (webinar.status === "completed") {
+    return (
+      <section id="register" className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <Card className="overflow-hidden border-2 border-amber-500/20 bg-amber-50/50">
+              <CardHeader className="bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                <div className="flex items-center gap-3">
+                  <Badge className="bg-white/20 text-white border-0">Registration Closed</Badge>
+                  <div>
+                    <CardTitle className="text-xl">Webinar Registration Closed</CardTitle>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6 text-center">
+                <div className="text-lg text-muted-foreground mb-4">
+                  Thank you for your interest! This webinar has already taken place.
+                </div>
+                <p className="text-sm text-muted-foreground mb-6">
+                  If you registered, you should have received access to the recording via email. Please check your inbox or contact support for recording links.
+                </p>
+                <Button variant="outline" asChild>
+                  <Link href="/webinar">Back to All Webinars</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+    )
   }
 
   return (

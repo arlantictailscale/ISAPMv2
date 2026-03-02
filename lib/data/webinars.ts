@@ -60,7 +60,7 @@ const webinar1: Webinar = {
   duration: "3 hours",
   price: 100000,
   currency: "IDR",
-  status: "active",
+  status: "completed",
   tags: ["Pain Management", "Healthcare Policy", "BPJS", "Clinical Guidelines"],
   speakers: [
     {
@@ -148,7 +148,7 @@ const webinar2: Webinar = {
   duration: "1 hour 15 minutes",
   price: 100000,
   currency: "IDR",
-  status: "active",
+  status: "completed",
   tags: ["Cancer Pain", "Intervention", "Pharmacology", "Pain Management", "Anesthesiology"],
   speakers: [
     {
@@ -223,7 +223,7 @@ const webinar3: Webinar = {
   duration: "1 hour 30 minutes",
   price: 100000,
   currency: "IDR",
-  status: "active",
+  status: "completed",
   tags: ["Minimally Invasive", "Spinal Pain", "Disc Fix", "Pain Management", "Precision Technique"],
   thumbnailImage: "/images/webinar-3-poster.jpeg",
   speakers: [
@@ -307,7 +307,7 @@ const webinar4: Webinar = {
   duration: "1 hour 30 minutes",
   price: 100000,
   currency: "IDR",
-  status: "active",
+  status: "completed",
   tags: ["Regenerative Medicine", "Chronic Pain", "Natural Healing", "Pain Management", "Clinical Evidence"],
   thumbnailImage: "/images/webinar-4-poster.jpg",
   speakers: [

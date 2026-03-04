@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import {
   Hotel,
   RefreshCw,
@@ -102,12 +103,21 @@ export default function HotelManagementPage() {
       console.log("[v0] Save result:", result)
       if (result.success) {
         console.log("[v0] Settings saved successfully, reloading data")
+        toast.success("Settings saved successfully!", {
+          description: `Deluxe: ${roomSettings.deluxe_rooms} rooms, Premier: ${roomSettings.premier_rooms} rooms`,
+        })
         await loadData()
       } else {
         console.error("[v0] Failed to save settings:", result.error)
+        toast.error("Failed to save settings", {
+          description: result.error || "Unknown error occurred",
+        })
       }
     } catch (error) {
       console.error("[v0] Error saving settings:", error)
+      toast.error("Error saving settings", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
     } finally {
       setSaving(false)
     }

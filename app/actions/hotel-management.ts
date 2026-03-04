@@ -327,42 +327,47 @@ export async function updateRoomSettings(settings: {
   try {
     console.log("[v0] Updating room settings with:", settings)
 
-    // Update deluxe rooms
+    // Use upsert to handle both insert and update
     const { error: deluxeError } = await supabase
       .from("room_availability_settings")
-      .update({
-        default_capacity: settings.deluxe_rooms,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("room_type", "deluxe")
+      .upsert(
+        {
+          room_type: "deluxe",
+          default_capacity: settings.deluxe_rooms,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "room_type" }
+      )
 
     if (deluxeError) {
-      console.error("[v0] Error updating deluxe rooms:", deluxeError)
+      console.error("[v0] Error upserting deluxe rooms:", deluxeError)
       throw deluxeError
     }
 
-    // Update premier rooms
     const { error: premierError } = await supabase
       .from("room_availability_settings")
-      .update({
-        default_capacity: settings.premier_rooms,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("room_type", "premier")
+      .upsert(
+        {
+          room_type: "premier",
+          default_capacity: settings.premier_rooms,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "room_type" }
+      )
 
     if (premierError) {
-      console.error("[v0] Error updating premier rooms:", premierError)
+      console.error("[v0] Error upserting premier rooms:", premierError)
       throw premierError
     }
 
-    console.log("[v0] Room settings updated successfully")
+    console.log("[v0] Room settings saved successfully")
 
     revalidatePath("/admin/hotel-management")
     revalidatePath("/venue")
     return { success: true, error: null }
   } catch (error) {
-    console.error("[v0] Error updating room settings:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Failed to update settings" }
+    console.error("[v0] Error saving room settings:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to save settings" }
   }
 }
 

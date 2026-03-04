@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,7 @@ import {
   ArrowRight,
   Bell,
   CheckCircle2,
+  Youtube,
 } from "lucide-react"
 import { type Webinar, formatWebinarDate } from "@/lib/data/webinars"
 
@@ -24,11 +26,16 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
   const isActive = webinar.status === "active"
   const isComingSoon = webinar.status === "coming_soon"
   const isSoldOut = webinar.status === "sold_out"
+  const isCompleted = webinar.status === "completed"
 
   return (
     <Card
       className={`group relative overflow-hidden transition-all duration-300 card-lift perspective-1000 ${
-        isActive ? "border-primary/20 hover:border-primary/40 elevated-card" : "border-muted bg-muted/30"
+        isActive 
+          ? "border-primary/20 hover:border-primary/40 elevated-card" 
+          : isCompleted
+          ? "border-violet-200/50 bg-gradient-to-br from-violet-50 via-pink-50 to-cyan-50 hover:shadow-lg hover:shadow-violet-200/50 hover:border-violet-300"
+          : "border-muted bg-muted/30"
       }`}
     >
       {/* Status Badge */}
@@ -45,6 +52,12 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
             Coming Soon
           </Badge>
         )}
+        {isCompleted && (
+          <Badge className="bg-slate-600 text-white border-0 group-hover:scale-110 transition-transform">
+            <CheckCircle2 className="w-3 h-3 mr-1" />
+            Completed
+          </Badge>
+        )}
         {isSoldOut && <Badge variant="destructive">Sold Out</Badge>}
       </div>
 
@@ -54,6 +67,8 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all group-hover:scale-110 ${
             isActive
               ? "bg-primary text-primary-foreground glow-accent-cyan"
+              : isCompleted
+              ? "bg-gradient-to-br from-violet-400 to-pink-400 text-white shadow-md shadow-violet-300/50"
               : "bg-muted-foreground/20 text-muted-foreground"
           }`}
         >
@@ -129,13 +144,21 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           </div>
         )}
 
-        {/* CTA - Only View Details button, no individual pricing */}
+        {/* CTA - View Details button for active/completed, Coming Soon disabled for others */}
         <div className="flex items-center justify-end pt-4 border-t">
           {isActive ? (
             <Button size="sm" className="group/btn" onClick={onViewDetails}>
               View Details
               <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
             </Button>
+          ) : isCompleted ? (
+            <a href={`https://youtube.com/watch?v=${webinar.videoId || ""}`} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="group/btn bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white border-0">
+                <Youtube className="w-4 h-4 mr-2" />
+                Watch on Youtube
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
+              </Button>
+            </a>
           ) : (
             <Button variant="outline" disabled className="bg-transparent">
               <Bell className="w-4 h-4 mr-1" />

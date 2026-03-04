@@ -38,6 +38,7 @@ export interface Webinar {
   thumbnailImage?: string
   heroImage?: string
   tags: string[]
+  videoId?: string // YouTube video ID for completed webinars
 }
 
 // Bundle pricing: Rp 100,000 for all 4 webinars
@@ -132,9 +133,9 @@ const webinar1: Webinar = {
       description: "Download presentation slides",
     },
   ],
+  videoId: "HPCteK3E6Fk",
 }
 
-// Webinar 2 - Ending Silent Agony (Active)
 const webinar2: Webinar = {
   id: "webinar_2",
   slug: "ending-silent-agony",
@@ -206,9 +207,9 @@ const webinar2: Webinar = {
       description: "Complimentary access for symposium registrants",
     },
   ],
+  videoId: "bgdF-zgMuNc",
 }
 
-// Webinar 3 - Minimally Invasive Pain Management Updated Made Easy (Active)
 const webinar3: Webinar = {
   id: "webinar_3",
   slug: "minimally-invasive-pain-management",
@@ -291,9 +292,9 @@ const webinar3: Webinar = {
       description: "Complimentary access for symposium registrants",
     },
   ],
+  videoId: "6t6KELEiNHU",
 }
 
-// Webinar 4 - Unlocking Natural Healing: Regenerative Therapies for Chronic Pain (Active)
 const webinar4: Webinar = {
   id: "webinar_4",
   slug: "unlocking-natural-healing",
@@ -374,9 +375,9 @@ const webinar4: Webinar = {
       description: "Complimentary access for symposium registrants",
     },
   ],
+  videoId: "Tm3R2a2GVnk",
 }
 
-// All webinars collection
 export const WEBINARS: Webinar[] = [webinar1, webinar2, webinar3, webinar4]
 
 // Helper functions for webinar management

@@ -8,84 +8,19 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, ArrowRight, Sparkles, ArrowLeft, Gift, ShoppingCart, Loader2, ShoppingBag } from "lucide-react"
-import { WEBINARS, type Webinar, WEBINAR_BUNDLE_PRICE, WEBINAR_BUNDLE_ID, WEBINAR_BUNDLE_LABEL } from "@/lib/data/webinars"
-import { formatPrice } from "@/lib/data/event-pricing"
+import { Video, ArrowRight, Sparkles, ArrowLeft } from "lucide-react"
+import { WEBINARS, type Webinar } from "@/lib/data/webinars"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
 import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
-import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration" // Import the missing component
-
-import { addToCart } from "@/app/actions/cart"
-import { useCart } from "@/lib/cart/cart-context"
-import { createBrowserClient } from "@/lib/supabase/client"
-import { toast } from "sonner"
+import { WebinarDetailRegistration } from "@/components/webinar/webinar-detail-registration"
 
 export default function WebinarsPage() {
   const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null)
-  const [isAddingToCart, setIsAddingToCart] = useState(false)
   const router = useRouter()
-  const { refreshCart } = useCart()
 
-  const activeWebinars = WEBINARS.filter((w) => w.status === "active")
-  const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
   const completedWebinars = WEBINARS.filter((w) => w.status === "completed")
-
-  const handleAddBundleToCart = async () => {
-    setIsAddingToCart(true)
-    try {
-      const supabase = createBrowserClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        toast.error("Please login first", {
-          description: "You need to be logged in to add items to cart",
-          action: {
-            label: "Login",
-            onClick: () => router.push("/login"),
-          },
-        })
-        setIsAddingToCart(false)
-        return
-      }
-
-      const cartItem = {
-        item_type: "webinar" as const,
-        event_id: WEBINAR_BUNDLE_ID,
-        event_label: WEBINAR_BUNDLE_LABEL,
-        participant_type_id: "general",
-        participant_type_label: "All 4 Webinars Bundle",
-        unit_price: WEBINAR_BUNDLE_PRICE,
-        currency: "IDR",
-      }
-
-      const result = await addToCart(cartItem)
-
-      if (result.error) {
-        if (result.error.toLowerCase().includes("already")) {
-          toast.info("Already in Cart", {
-            description: "Webinar Bundle (All 4 Webinars) is already in your cart.",
-            icon: <ShoppingBag className="w-4 h-4" />,
-            action: {
-              label: "View Cart",
-              onClick: () => router.push("/cart"),
-            },
-          })
-        } else {
-          toast.error(result.error)
-        }
-      } else if (result.data) {
-        await refreshCart()
-        toast.success("Added to cart!", {
-          description: "Webinar Bundle - All 4 Webinars for Rp 100.000",
-        })
-      }
-    } catch (error) {
-      toast.error("Failed to add to cart")
-    } finally {
-      setIsAddingToCart(false)
-    }
-  }
+  const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
 
   if (selectedWebinar) {
     return (
@@ -148,8 +83,8 @@ export default function WebinarsPage() {
               {/* Stats */}
               <div className="flex flex-wrap justify-center gap-8">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">{activeWebinars.length}</div>
-                  <div className="text-sm text-muted-foreground">Active Now</div>
+                  <div className="text-3xl font-bold text-slate-500">{completedWebinars.length}</div>
+                  <div className="text-sm text-muted-foreground">Completed</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-amber-500">{upcomingWebinars.length}</div>
@@ -161,52 +96,7 @@ export default function WebinarsPage() {
                 </div>
               </div>
 
-              {/* Bundle Price & Add to Cart */}
-              <div className="mt-8 inline-flex items-center gap-4 bg-white/80 backdrop-blur-sm border border-purple-200 rounded-2xl px-6 py-4 shadow-lg">
-                <div className="text-left">
-                  <p className="text-sm text-muted-foreground">Bundle Price - All 4 Webinars</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    {formatPrice(WEBINAR_BUNDLE_PRICE)}
-                  </p>
-                </div>
-                <div className="h-10 w-px bg-border" />
-                <Button
-                  onClick={handleAddBundleToCart}
-                  disabled={isAddingToCart}
-                  className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white px-6"
-                >
-                  {isAddingToCart ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                  )}
-                  Add to Cart
-                </Button>
-              </div>
 
-              {/* Symposium Bonus Info Banner */}
-              <div className="mt-8 max-w-xl mx-auto">
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl border border-teal-200 shadow-sm">
-                  <div className="p-2 rounded-lg bg-teal-100">
-                    <Gift className="w-5 h-5 text-teal-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-teal-800">Symposium Registrants Get 4 Free Webinars</p>
-                    <p className="text-xs text-teal-600">
-                      Register for the symposium to receive complimentary access to all pre-conference webinars.
-                    </p>
-                  </div>
-                  <Link href="/events?tab=symposium">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-teal-300 text-teal-700 hover:bg-teal-50 bg-transparent"
-                    >
-                      Learn More
-                    </Button>
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
         </section>

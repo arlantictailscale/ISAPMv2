@@ -325,23 +325,44 @@ export async function updateRoomSettings(settings: {
   const supabase = await createClient()
 
   try {
-    const { error } = await supabase
+    console.log("[v0] Updating room settings with:", settings)
+
+    // Update deluxe rooms
+    const { error: deluxeError } = await supabase
       .from("room_availability_settings")
       .update({
-        deluxe_rooms: settings.deluxe_rooms,
-        premier_rooms: settings.premier_rooms,
+        default_capacity: settings.deluxe_rooms,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", 1)
+      .eq("room_type", "deluxe")
 
-    if (error) throw error
+    if (deluxeError) {
+      console.error("[v0] Error updating deluxe rooms:", deluxeError)
+      throw deluxeError
+    }
+
+    // Update premier rooms
+    const { error: premierError } = await supabase
+      .from("room_availability_settings")
+      .update({
+        default_capacity: settings.premier_rooms,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("room_type", "premier")
+
+    if (premierError) {
+      console.error("[v0] Error updating premier rooms:", premierError)
+      throw premierError
+    }
+
+    console.log("[v0] Room settings updated successfully")
 
     revalidatePath("/admin/hotel-management")
     revalidatePath("/venue")
     return { success: true, error: null }
   } catch (error) {
-    console.error("Error updating room settings:", error)
-    return { success: false, error: "Failed to update settings" }
+    console.error("[v0] Error updating room settings:", error)
+    return { success: false, error: error instanceof Error ? error.message : "Failed to update settings" }
   }
 }
 
@@ -356,19 +377,32 @@ export async function getRoomSettings(): Promise<{
   const supabase = await createClient()
 
   try {
-    const { data, error } = await supabase.from("room_availability_settings").select("*").single()
+    console.log("[v0] Fetching room settings from database")
 
-    if (error) throw error
+    const { data, error } = await supabase
+      .from("room_availability_settings")
+      .select("room_type, default_capacity")
+      .in("room_type", ["deluxe", "premier"])
+
+    if (error) {
+      console.error("[v0] Error fetching room settings:", error)
+      throw error
+    }
+
+    console.log("[v0] Room settings fetched:", data)
+
+    const deluxeRoom = data?.find((r) => r.room_type === "deluxe")
+    const premierRoom = data?.find((r) => r.room_type === "premier")
 
     return {
       settings: {
-        deluxe_rooms: data?.deluxe_rooms || 50,
-        premier_rooms: data?.premier_rooms || 20,
+        deluxe_rooms: deluxeRoom?.default_capacity || 50,
+        premier_rooms: premierRoom?.default_capacity || 20,
       },
       error: null,
     }
   } catch (error) {
-    console.error("Error fetching room settings:", error)
+    console.error("[v0] Error fetching room settings:", error)
     return { settings: null, error: "Failed to fetch settings" }
   }
 }

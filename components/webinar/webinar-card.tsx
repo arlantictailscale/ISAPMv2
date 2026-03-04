@@ -1,6 +1,7 @@
 "use client"
 
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -136,13 +137,20 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           </div>
         )}
 
-        {/* CTA - Only View Details button, no individual pricing */}
+        {/* CTA - View Details button for active/completed, Coming Soon disabled for others */}
         <div className="flex items-center justify-end pt-4 border-t">
           {isActive ? (
             <Button size="sm" className="group/btn" onClick={onViewDetails}>
               View Details
               <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
             </Button>
+          ) : isCompleted ? (
+            <Link href={`/webinar/${webinar.slug}`}>
+              <Button size="sm" variant="outline" className="group/btn">
+                Event Details
+                <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
+              </Button>
+            </Link>
           ) : (
             <Button variant="outline" disabled className="bg-transparent">
               <Bell className="w-4 h-4 mr-1" />

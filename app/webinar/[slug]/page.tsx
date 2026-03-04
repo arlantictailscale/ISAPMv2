@@ -13,7 +13,7 @@ interface WebinarDetailPageProps {
 }
 
 export async function generateStaticParams() {
-  return WEBINARS.filter((w) => w.status === "active").map((webinar) => ({
+  return WEBINARS.filter((w) => w.status === "active" || w.status === "completed").map((webinar) => ({
     slug: webinar.slug,
   }))
 }

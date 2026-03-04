@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Bell,
   CheckCircle2,
+  Youtube,
 } from "lucide-react"
 import { type Webinar, formatWebinarDate } from "@/lib/data/webinars"
 
@@ -30,7 +31,11 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
   return (
     <Card
       className={`group relative overflow-hidden transition-all duration-300 card-lift perspective-1000 ${
-        isActive ? "border-primary/20 hover:border-primary/40 elevated-card" : "border-muted bg-muted/30"
+        isActive 
+          ? "border-primary/20 hover:border-primary/40 elevated-card" 
+          : isCompleted
+          ? "border-violet-200/50 bg-gradient-to-br from-violet-50 via-pink-50 to-cyan-50 hover:shadow-lg hover:shadow-violet-200/50 hover:border-violet-300"
+          : "border-muted bg-muted/30"
       }`}
     >
       {/* Status Badge */}
@@ -62,6 +67,8 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all group-hover:scale-110 ${
             isActive
               ? "bg-primary text-primary-foreground glow-accent-cyan"
+              : isCompleted
+              ? "bg-gradient-to-br from-violet-400 to-pink-400 text-white shadow-md shadow-violet-300/50"
               : "bg-muted-foreground/20 text-muted-foreground"
           }`}
         >
@@ -145,12 +152,13 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
               <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
             </Button>
           ) : isCompleted ? (
-            <Link href={`/webinar/${webinar.slug}`}>
-              <Button size="sm" variant="outline" className="group/btn">
-                Event Details
+            <a href={`https://youtube.com/watch?v=${webinar.videoId || ""}`} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="group/btn bg-gradient-to-r from-violet-500 to-pink-500 hover:from-violet-600 hover:to-pink-600 text-white border-0">
+                <Youtube className="w-4 h-4 mr-2" />
+                Watch on Youtube
                 <ArrowRight className="w-4 h-4 ml-1 transition-transform group-hover/btn:translate-x-1" />
               </Button>
-            </Link>
+            </a>
           ) : (
             <Button variant="outline" disabled className="bg-transparent">
               <Bell className="w-4 h-4 mr-1" />

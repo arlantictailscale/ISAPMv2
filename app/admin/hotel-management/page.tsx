@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { toast } from "sonner"
 import {
   Hotel,
   RefreshCw,
@@ -34,7 +35,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { getHotelBookings, getHotelStats, updateRoomSettings, cancelBooking } from "@/app/actions/hotel-management"
+import { getHotelBookings, getHotelStats, updateRoomSettings, getRoomSettings, cancelBooking } from "@/app/actions/hotel-management"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 
@@ -70,16 +71,21 @@ export default function HotelManagementPage() {
           status: statusFilter,
         }),
         getHotelStats(),
-        updateRoomSettings(),
+        getRoomSettings(),
       ])
+
+      console.log("[v0] Loaded bookings:", bookingsRes.bookings.length)
+      console.log("[v0] Loaded stats:", statsRes.stats)
+      console.log("[v0] Loaded settings:", settingsRes.settings)
 
       setBookings(bookingsRes.bookings)
       setStats(statsRes.stats)
       if (settingsRes.settings) {
+        console.log("[v0] Setting room settings to:", settingsRes.settings)
         setRoomSettings(settingsRes.settings)
       }
     } catch (error) {
-      console.error("Error loading data:", error)
+      console.error("[v0] Error loading data:", error)
     } finally {
       setLoading(false)
     }
@@ -92,10 +98,26 @@ export default function HotelManagementPage() {
   const handleSaveSettings = async () => {
     setSaving(true)
     try {
+      console.log("[v0] Saving room settings:", roomSettings)
       const result = await updateRoomSettings(roomSettings)
+      console.log("[v0] Save result:", result)
       if (result.success) {
+        console.log("[v0] Settings saved successfully, reloading data")
+        toast.success("Settings saved successfully!", {
+          description: `Deluxe: ${roomSettings.deluxe_rooms} rooms, Premier: ${roomSettings.premier_rooms} rooms`,
+        })
         await loadData()
+      } else {
+        console.error("[v0] Failed to save settings:", result.error)
+        toast.error("Failed to save settings", {
+          description: result.error || "Unknown error occurred",
+        })
       }
+    } catch (error) {
+      console.error("[v0] Error saving settings:", error)
+      toast.error("Error saving settings", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      })
     } finally {
       setSaving(false)
     }

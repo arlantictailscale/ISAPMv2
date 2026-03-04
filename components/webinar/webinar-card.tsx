@@ -47,9 +47,9 @@ export function WebinarCard({ webinar, index, onViewDetails }: WebinarCardProps)
           </Badge>
         )}
         {isCompleted && (
-          <Badge variant="secondary" className="bg-slate-200 text-slate-700 border-slate-300">
+          <Badge className="bg-slate-600 text-white border-0 group-hover:scale-110 transition-transform">
             <CheckCircle2 className="w-3 h-3 mr-1" />
-            Finished
+            Completed
           </Badge>
         )}
         {isSoldOut && <Badge variant="destructive">Sold Out</Badge>}

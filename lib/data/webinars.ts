@@ -207,7 +207,7 @@ const webinar2: Webinar = {
       description: "Complimentary access for symposium registrants",
     },
   ],
-  videoId: "9bZkp7q19f0",
+  videoId: "bgdF-zgMuNc",
 }
 
 const webinar3: Webinar = {
@@ -292,7 +292,7 @@ const webinar3: Webinar = {
       description: "Complimentary access for symposium registrants",
     },
   ],
-  videoId: "2xjJAWoGN0s",
+  videoId: "6t6KELEiNHU",
 }
 
 const webinar4: Webinar = {
@@ -375,7 +375,7 @@ const webinar4: Webinar = {
       description: "Complimentary access for symposium registrants",
     },
   ],
-  videoId: "WdDJPKUxkP4",
+  videoId: "Tm3R2a2GVnk",
 }
 
 export const WEBINARS: Webinar[] = [webinar1, webinar2, webinar3, webinar4]

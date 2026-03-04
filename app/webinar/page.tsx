@@ -20,7 +20,7 @@ export default function WebinarsPage() {
   const [selectedWebinar, setSelectedWebinar] = useState<Webinar | null>(null)
   const router = useRouter()
 
-  const activeWebinars = WEBINARS.filter((w) => w.status === "active")
+  const completedWebinars = WEBINARS.filter((w) => w.status === "completed")
   const upcomingWebinars = WEBINARS.filter((w) => w.status === "coming_soon")
 
   if (selectedWebinar) {
@@ -84,8 +84,8 @@ export default function WebinarsPage() {
               {/* Stats */}
               <div className="flex flex-wrap justify-center gap-8">
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-primary">{activeWebinars.length}</div>
-                  <div className="text-sm text-muted-foreground">Active Now</div>
+                  <div className="text-3xl font-bold text-slate-500">{completedWebinars.length}</div>
+                  <div className="text-sm text-muted-foreground">Completed</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-bold text-amber-500">{upcomingWebinars.length}</div>

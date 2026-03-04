@@ -8,9 +8,8 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Video, ArrowRight, Sparkles, ArrowLeft, Gift } from "lucide-react"
-import { WEBINARS, type Webinar, WEBINAR_BUNDLE_PRICE } from "@/lib/data/webinars"
-import { formatPrice } from "@/lib/data/event-pricing"
+import { Video, ArrowRight, Sparkles, ArrowLeft } from "lucide-react"
+import { WEBINARS, type Webinar } from "@/lib/data/webinars"
 import { WebinarCard } from "@/components/webinar/webinar-card"
 import { WebinarDetailHero } from "@/components/webinar/webinar-detail-hero"
 import { WebinarDetailSpeakers } from "@/components/webinar/webinar-detail-speakers"
@@ -97,40 +96,7 @@ export default function WebinarsPage() {
                 </div>
               </div>
 
-              {/* Bundle Info - Registration Closed */}
-              <div className="mt-8 inline-flex items-center justify-center bg-white/80 backdrop-blur-sm border border-slate-300 rounded-2xl px-6 py-4 shadow-lg">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Bundle Price - All 4 Webinars</p>
-                  <p className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    {formatPrice(WEBINAR_BUNDLE_PRICE)}
-                  </p>
-                  <p className="text-sm text-slate-600 mt-2">Registration has closed</p>
-                </div>
-              </div>
 
-              {/* Symposium Bonus Info Banner */}
-              <div className="mt-8 max-w-xl mx-auto">
-                <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl border border-teal-200 shadow-sm">
-                  <div className="p-2 rounded-lg bg-teal-100">
-                    <Gift className="w-5 h-5 text-teal-600" />
-                  </div>
-                  <div className="flex-1 text-left">
-                    <p className="text-sm font-semibold text-teal-800">Symposium Registrants Get 4 Free Webinars</p>
-                    <p className="text-xs text-teal-600">
-                      Register for the symposium to receive complimentary access to all pre-conference webinars.
-                    </p>
-                  </div>
-                  <Link href="/events?tab=symposium">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="border-teal-300 text-teal-700 hover:bg-teal-50 bg-transparent"
-                    >
-                      Learn More
-                    </Button>
-                  </Link>
-                </div>
-              </div>
             </div>
           </div>
         </section>

@@ -325,10 +325,11 @@ export async function updateRoomSettings(settings: {
   const supabase = await createClient()
 
   try {
-    console.log("[v0] Updating room settings with:", settings)
+    console.log("[v0] [updateRoomSettings] Starting update with:", JSON.stringify(settings))
 
     // Use upsert to handle both insert and update
-    const { error: deluxeError } = await supabase
+    console.log("[v0] [updateRoomSettings] Upserting deluxe rooms: " + settings.deluxe_rooms)
+    const { data: deluxeData, error: deluxeError } = await supabase
       .from("room_availability_settings")
       .upsert(
         {
@@ -338,13 +339,16 @@ export async function updateRoomSettings(settings: {
         },
         { onConflict: "room_type" }
       )
+      .select()
 
     if (deluxeError) {
-      console.error("[v0] Error upserting deluxe rooms:", deluxeError)
+      console.error("[v0] [updateRoomSettings] Deluxe upsert error:", JSON.stringify(deluxeError))
       throw deluxeError
     }
+    console.log("[v0] [updateRoomSettings] Deluxe upsert success:", JSON.stringify(deluxeData))
 
-    const { error: premierError } = await supabase
+    console.log("[v0] [updateRoomSettings] Upserting premier rooms: " + settings.premier_rooms)
+    const { data: premierData, error: premierError } = await supabase
       .from("room_availability_settings")
       .upsert(
         {
@@ -354,16 +358,20 @@ export async function updateRoomSettings(settings: {
         },
         { onConflict: "room_type" }
       )
+      .select()
 
     if (premierError) {
-      console.error("[v0] Error upserting premier rooms:", premierError)
+      console.error("[v0] [updateRoomSettings] Premier upsert error:", JSON.stringify(premierError))
       throw premierError
     }
+    console.log("[v0] [updateRoomSettings] Premier upsert success:", JSON.stringify(premierData))
 
-    console.log("[v0] Room settings saved successfully")
+    console.log("[v0] [updateRoomSettings] Room settings saved successfully, revalidating paths...")
 
     revalidatePath("/admin/hotel-management")
     revalidatePath("/venue")
+    
+    console.log("[v0] [updateRoomSettings] Paths revalidated, returning success")
     return { success: true, error: null }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Failed to save settings"
@@ -398,7 +406,7 @@ export async function getRoomSettings(): Promise<{
   const supabase = await createClient()
 
   try {
-    console.log("[v0] Fetching room settings from database")
+    console.log("[v0] [getRoomSettings] Starting fetch from database...")
 
     const { data, error } = await supabase
       .from("room_availability_settings")
@@ -406,25 +414,29 @@ export async function getRoomSettings(): Promise<{
       .in("room_type", ["deluxe", "premier"])
 
     if (error) {
-      console.error("[v0] Error fetching room settings:", error)
+      console.error("[v0] [getRoomSettings] Database error:", error)
       throw error
     }
 
-    console.log("[v0] Room settings fetched:", data)
+    console.log("[v0] [getRoomSettings] Raw data from DB:", JSON.stringify(data))
 
     const deluxeRoom = data?.find((r) => r.room_type === "deluxe")
     const premierRoom = data?.find((r) => r.room_type === "premier")
 
+    const settings = {
+      deluxe_rooms: deluxeRoom?.default_capacity || 50,
+      premier_rooms: premierRoom?.default_capacity || 20,
+    }
+    
+    console.log("[v0] [getRoomSettings] Returning settings:", JSON.stringify(settings))
+
     return {
-      settings: {
-        deluxe_rooms: deluxeRoom?.default_capacity || 50,
-        premier_rooms: premierRoom?.default_capacity || 20,
-      },
+      settings,
       error: null,
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Failed to fetch settings"
-    console.error("[v0] Error fetching room settings:", {
+    console.error("[v0] [getRoomSettings] Exception:", {
       message: errorMessage,
       fullError: error,
     })

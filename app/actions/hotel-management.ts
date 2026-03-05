@@ -327,44 +327,20 @@ export async function updateRoomSettings(settings: {
   try {
     console.log("[v0] [updateRoomSettings] Starting update with:", JSON.stringify(settings))
 
-    // Use upsert to handle both insert and update
-    console.log("[v0] [updateRoomSettings] Upserting deluxe rooms: " + settings.deluxe_rooms)
-    const { data: deluxeData, error: deluxeError } = await supabase
-      .from("room_availability_settings")
-      .upsert(
-        {
-          room_type: "deluxe",
-          default_capacity: settings.deluxe_rooms,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "room_type" }
-      )
-      .select()
+    // Call database function with elevated privileges (SECURITY DEFINER)
+    console.log("[v0] [updateRoomSettings] Calling RPC function with deluxe=" + settings.deluxe_rooms + " premier=" + settings.premier_rooms)
+    
+    const { data, error } = await supabase.rpc("update_room_availability_settings", {
+      p_deluxe_rooms: settings.deluxe_rooms,
+      p_premier_rooms: settings.premier_rooms,
+    })
 
-    if (deluxeError) {
-      console.error("[v0] [updateRoomSettings] Deluxe upsert error:", JSON.stringify(deluxeError))
-      throw deluxeError
+    if (error) {
+      console.error("[v0] [updateRoomSettings] RPC function error:", JSON.stringify(error))
+      throw error
     }
-    console.log("[v0] [updateRoomSettings] Deluxe upsert success:", JSON.stringify(deluxeData))
-
-    console.log("[v0] [updateRoomSettings] Upserting premier rooms: " + settings.premier_rooms)
-    const { data: premierData, error: premierError } = await supabase
-      .from("room_availability_settings")
-      .upsert(
-        {
-          room_type: "premier",
-          default_capacity: settings.premier_rooms,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "room_type" }
-      )
-      .select()
-
-    if (premierError) {
-      console.error("[v0] [updateRoomSettings] Premier upsert error:", JSON.stringify(premierError))
-      throw premierError
-    }
-    console.log("[v0] [updateRoomSettings] Premier upsert success:", JSON.stringify(premierData))
+    
+    console.log("[v0] [updateRoomSettings] RPC function success, response:", JSON.stringify(data))
 
     console.log("[v0] [updateRoomSettings] Room settings saved successfully, revalidating paths...")
 
@@ -376,7 +352,8 @@ export async function updateRoomSettings(settings: {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Failed to save settings"
     const isRLSError = errorMessage.toLowerCase().includes("permission denied") || 
-                       errorMessage.toLowerCase().includes("policy")
+                       errorMessage.toLowerCase().includes("policy") ||
+                       errorMessage.toLowerCase().includes("42501")
     
     console.error("[v0] Error saving room settings:", {
       message: errorMessage,
@@ -387,7 +364,7 @@ export async function updateRoomSettings(settings: {
     if (isRLSError) {
       return { 
         success: false, 
-        error: "Permission denied: Unable to save room settings. Please contact the administrator." 
+        error: "Permission denied: Unable to save room settings. Database function may not have proper permissions." 
       }
     }
     

@@ -96,6 +96,20 @@ export default function HotelManagementPage() {
   }, [loadData])
 
   const handleSaveSettings = async () => {
+    // Validate input
+    if (!roomSettings.deluxe_rooms || roomSettings.deluxe_rooms < 1) {
+      toast.error("Invalid input", {
+        description: "Deluxe rooms must be at least 1",
+      })
+      return
+    }
+    if (!roomSettings.premier_rooms || roomSettings.premier_rooms < 1) {
+      toast.error("Invalid input", {
+        description: "Premier rooms must be at least 1",
+      })
+      return
+    }
+
     setSaving(true)
     try {
       console.log("[v0] Saving room settings:", roomSettings)

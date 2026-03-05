@@ -366,8 +366,24 @@ export async function updateRoomSettings(settings: {
     revalidatePath("/venue")
     return { success: true, error: null }
   } catch (error) {
-    console.error("[v0] Error saving room settings:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Failed to save settings" }
+    const errorMessage = error instanceof Error ? error.message : "Failed to save settings"
+    const isRLSError = errorMessage.toLowerCase().includes("permission denied") || 
+                       errorMessage.toLowerCase().includes("policy")
+    
+    console.error("[v0] Error saving room settings:", {
+      message: errorMessage,
+      isRLSError,
+      fullError: error,
+    })
+    
+    if (isRLSError) {
+      return { 
+        success: false, 
+        error: "Permission denied: Unable to save room settings. Please contact the administrator." 
+      }
+    }
+    
+    return { success: false, error: errorMessage }
   }
 }
 
@@ -407,8 +423,20 @@ export async function getRoomSettings(): Promise<{
       error: null,
     }
   } catch (error) {
-    console.error("[v0] Error fetching room settings:", error)
-    return { settings: null, error: "Failed to fetch settings" }
+    const errorMessage = error instanceof Error ? error.message : "Failed to fetch settings"
+    console.error("[v0] Error fetching room settings:", {
+      message: errorMessage,
+      fullError: error,
+    })
+    
+    // Return default values if fetch fails
+    return { 
+      settings: {
+        deluxe_rooms: 50,
+        premier_rooms: 20,
+      },
+      error: errorMessage 
+    }
   }
 }
 

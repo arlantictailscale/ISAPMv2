@@ -21,20 +21,19 @@ export class PerformanceMonitor {
   }
 
   private initializeObservers() {
-    // Monitor long tasks (>100ms in development, >50ms in production)
-    const longTaskThreshold = process.env.NODE_ENV === "production" ? 50 : 100
+    // Monitor long tasks with higher threshold in development to reduce noise
+    // Long tasks >800ms in dev indicate real performance issues (excessive main thread blocking)
+    // Production uses stricter 100ms threshold for user experience
+    const longTaskThreshold = process.env.NODE_ENV === "production" ? 100 : 800
     try {
       const longTaskObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
           if (entry.duration > longTaskThreshold) {
-            // Only log severe long tasks (>200ms) or in production
-            if (entry.duration > 200 || process.env.NODE_ENV === "production") {
-              console.warn("[v0] Long Task Detected:", {
-                name: entry.name,
-                duration: `${entry.duration.toFixed(2)}ms`,
-                startTime: `${entry.startTime.toFixed(2)}ms`,
-              })
-            }
+            console.warn("[v0] Long Task Detected:", {
+              name: entry.name,
+              duration: `${entry.duration.toFixed(2)}ms`,
+              startTime: `${entry.startTime.toFixed(2)}ms`,
+            })
           }
         }
       })

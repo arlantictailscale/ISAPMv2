@@ -156,7 +156,7 @@ export default function LandingHero() {
                   href="/webinar"
                   className="inline-flex items-center gap-3 px-8 py-4 gradient-cyan text-white text-lg font-semibold rounded-full transition-all shadow-lg hover:shadow-2xl hover:scale-105 hover:glow-accent-cyan group shimmer-effect"
                 >
-                  Register Webinar
+                  View Webinar
                   <span className="flex items-center justify-center w-10 h-10 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
                     <ArrowRight className="w-5 h-5" />
                   </span>
@@ -274,7 +274,7 @@ export default function LandingHero() {
                 href="/webinar"
                 className="inline-flex items-center justify-center gap-3 px-6 py-4 gradient-cyan text-white rounded-full transition-all shadow-lg hover:shadow-xl hover:scale-105 hover:glow-accent-cyan group"
               >
-                <span className="text-base font-semibold">Register Webinar</span>
+                <span className="text-base font-semibold">View Webinar</span>
                 <span className="flex items-center justify-center w-9 h-9 bg-white/20 rounded-full group-hover:bg-white/30 transition-colors">
                   <ArrowRight className="w-4 h-4" />
                 </span>

@@ -787,7 +787,7 @@ export default function HotelBookingPage() {
             {/* Sidebar - Right Column (Takes 1 col on desktop) */}
             <div className="lg:col-span-1 order-2 lg:order-none">
               <div className="sticky top-24 space-y-6">
-                <EventOverviewCard />
+                <EventOverviewCard availability={availability} />
               </div>
             </div>
           </div>

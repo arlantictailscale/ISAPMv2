@@ -2,7 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Calendar, MapPin, Hotel, Users } from "lucide-react"
 
-export function EventOverviewCard() {
+interface RoomAvailability {
+  deluxe: { available: number; total: number }
+  premier: { available: number; total: number }
+}
+
+interface EventOverviewCardProps {
+  availability?: RoomAvailability | null
+}
+
+export function EventOverviewCard({ availability }: EventOverviewCardProps) {
   return (
     <Card className="sticky top-24 h-fit">
       <CardHeader className="pb-4">
@@ -46,15 +55,23 @@ export function EventOverviewCard() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm">Deluxe Room</span>
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
-                118 available
-              </Badge>
+              {availability?.deluxe.available === 0 ? (
+                <Badge variant="destructive">Sold Out</Badge>
+              ) : (
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  {availability?.deluxe.available ?? "..."} available
+                </Badge>
+              )}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Premier Room</span>
-              <Badge variant="secondary" className="bg-primary/10 text-primary">
-                55 available
-              </Badge>
+              {availability?.premier.available === 0 ? (
+                <Badge variant="destructive">Sold Out</Badge>
+              ) : (
+                <Badge variant="secondary" className="bg-primary/10 text-primary">
+                  {availability?.premier.available ?? "..."} available
+                </Badge>
+              )}
             </div>
           </div>
         </div>

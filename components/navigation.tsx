@@ -248,7 +248,11 @@ export default function Navigation() {
 
   const renderAuthTimeoutUI = () => {
     if (!autoRetryDone || !autoReloadDone) {
-      return <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
+      return (
+        <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
+          <span className="text-xs text-muted-foreground">Loading account...</span>
+        </div>
+      )
     }
 
     return (
@@ -266,7 +270,11 @@ export default function Navigation() {
 
   const renderMobileAuthTimeoutUI = () => {
     if (!autoRetryDone || !autoReloadDone) {
-      return <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
+      return (
+        <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
+          <span className="text-xs text-muted-foreground">Loading account...</span>
+        </div>
+      )
     }
 
     return (
@@ -331,7 +339,9 @@ export default function Navigation() {
             <div className="flex gap-3 items-center overflow-visible">
               {user && <CartIcon />}
               {isLoading ? (
-                <div className="w-24 h-8 bg-muted animate-pulse rounded-md" />
+                <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
+                  <span className="text-xs text-muted-foreground">Loading account...</span>
+                </div>
               ) : authTimedOut ? (
                 renderAuthTimeoutUI()
               ) : user ? (
@@ -460,7 +470,9 @@ export default function Navigation() {
             </Link>
 
             {isLoading ? (
-              <div className="w-full h-10 bg-muted animate-pulse rounded-md mt-2" />
+              <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
+                <span className="text-xs text-muted-foreground">Loading account...</span>
+              </div>
             ) : authTimedOut ? (
               renderMobileAuthTimeoutUI()
             ) : user ? (

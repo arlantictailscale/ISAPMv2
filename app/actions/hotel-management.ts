@@ -325,49 +325,50 @@ export async function updateRoomSettings(settings: {
   const supabase = await createClient()
 
   try {
-    console.log("[v0] Updating room settings with:", settings)
+    console.log("[v0] [updateRoomSettings] Starting update with:", JSON.stringify(settings))
 
-    // Use upsert to handle both insert and update
-    const { error: deluxeError } = await supabase
-      .from("room_availability_settings")
-      .upsert(
-        {
-          room_type: "deluxe",
-          default_capacity: settings.deluxe_rooms,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "room_type" }
-      )
+    // Call database function with elevated privileges (SECURITY DEFINER)
+    console.log("[v0] [updateRoomSettings] Calling RPC function with deluxe=" + settings.deluxe_rooms + " premier=" + settings.premier_rooms)
+    
+    const { data, error } = await supabase.rpc("update_room_availability_settings", {
+      p_deluxe_rooms: settings.deluxe_rooms,
+      p_premier_rooms: settings.premier_rooms,
+    })
 
-    if (deluxeError) {
-      console.error("[v0] Error upserting deluxe rooms:", deluxeError)
-      throw deluxeError
+    if (error) {
+      console.error("[v0] [updateRoomSettings] RPC function error:", JSON.stringify(error))
+      throw error
     }
+    
+    console.log("[v0] [updateRoomSettings] RPC function success, response:", JSON.stringify(data))
 
-    const { error: premierError } = await supabase
-      .from("room_availability_settings")
-      .upsert(
-        {
-          room_type: "premier",
-          default_capacity: settings.premier_rooms,
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "room_type" }
-      )
-
-    if (premierError) {
-      console.error("[v0] Error upserting premier rooms:", premierError)
-      throw premierError
-    }
-
-    console.log("[v0] Room settings saved successfully")
+    console.log("[v0] [updateRoomSettings] Room settings saved successfully, revalidating paths...")
 
     revalidatePath("/admin/hotel-management")
     revalidatePath("/venue")
+    
+    console.log("[v0] [updateRoomSettings] Paths revalidated, returning success")
     return { success: true, error: null }
   } catch (error) {
-    console.error("[v0] Error saving room settings:", error)
-    return { success: false, error: error instanceof Error ? error.message : "Failed to save settings" }
+    const errorMessage = error instanceof Error ? error.message : "Failed to save settings"
+    const isRLSError = errorMessage.toLowerCase().includes("permission denied") || 
+                       errorMessage.toLowerCase().includes("policy") ||
+                       errorMessage.toLowerCase().includes("42501")
+    
+    console.error("[v0] Error saving room settings:", {
+      message: errorMessage,
+      isRLSError,
+      fullError: error,
+    })
+    
+    if (isRLSError) {
+      return { 
+        success: false, 
+        error: "Permission denied: Unable to save room settings. Database function may not have proper permissions." 
+      }
+    }
+    
+    return { success: false, error: errorMessage }
   }
 }
 
@@ -382,7 +383,7 @@ export async function getRoomSettings(): Promise<{
   const supabase = await createClient()
 
   try {
-    console.log("[v0] Fetching room settings from database")
+    console.log("[v0] [getRoomSettings] Starting fetch from database...")
 
     const { data, error } = await supabase
       .from("room_availability_settings")
@@ -390,25 +391,41 @@ export async function getRoomSettings(): Promise<{
       .in("room_type", ["deluxe", "premier"])
 
     if (error) {
-      console.error("[v0] Error fetching room settings:", error)
+      console.error("[v0] [getRoomSettings] Database error:", error)
       throw error
     }
 
-    console.log("[v0] Room settings fetched:", data)
+    console.log("[v0] [getRoomSettings] Raw data from DB:", JSON.stringify(data))
 
     const deluxeRoom = data?.find((r) => r.room_type === "deluxe")
     const premierRoom = data?.find((r) => r.room_type === "premier")
 
+    const settings = {
+      deluxe_rooms: deluxeRoom?.default_capacity || 50,
+      premier_rooms: premierRoom?.default_capacity || 20,
+    }
+    
+    console.log("[v0] [getRoomSettings] Returning settings:", JSON.stringify(settings))
+
     return {
-      settings: {
-        deluxe_rooms: deluxeRoom?.default_capacity || 50,
-        premier_rooms: premierRoom?.default_capacity || 20,
-      },
+      settings,
       error: null,
     }
   } catch (error) {
-    console.error("[v0] Error fetching room settings:", error)
-    return { settings: null, error: "Failed to fetch settings" }
+    const errorMessage = error instanceof Error ? error.message : "Failed to fetch settings"
+    console.error("[v0] [getRoomSettings] Exception:", {
+      message: errorMessage,
+      fullError: error,
+    })
+    
+    // Return default values if fetch fails
+    return { 
+      settings: {
+        deluxe_rooms: 50,
+        premier_rooms: 20,
+      },
+      error: errorMessage 
+    }
   }
 }
 

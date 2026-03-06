@@ -96,30 +96,51 @@ export default function HotelManagementPage() {
   }, [loadData])
 
   const handleSaveSettings = async () => {
+    // Validate input
+    if (!roomSettings.deluxe_rooms || roomSettings.deluxe_rooms < 1) {
+      toast.error("Invalid input", {
+        description: "Deluxe rooms must be at least 1",
+      })
+      return
+    }
+    if (!roomSettings.premier_rooms || roomSettings.premier_rooms < 1) {
+      toast.error("Invalid input", {
+        description: "Premier rooms must be at least 1",
+      })
+      return
+    }
+
     setSaving(true)
     try {
-      console.log("[v0] Saving room settings:", roomSettings)
+      console.log("[v0] ========== SAVE INITIATED ==========")
+      console.log("[v0] Current roomSettings state:", JSON.stringify(roomSettings))
       const result = await updateRoomSettings(roomSettings)
-      console.log("[v0] Save result:", result)
+      console.log("[v0] updateRoomSettings returned:", JSON.stringify(result))
+      
       if (result.success) {
-        console.log("[v0] Settings saved successfully, reloading data")
+        console.log("[v0] Settings saved successfully, waiting 1s before reload...")
         toast.success("Settings saved successfully!", {
           description: `Deluxe: ${roomSettings.deluxe_rooms} rooms, Premier: ${roomSettings.premier_rooms} rooms`,
         })
+        // Wait a moment to ensure database has synced
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        console.log("[v0] Reloading data...")
         await loadData()
+        console.log("[v0] Data reloaded")
       } else {
-        console.error("[v0] Failed to save settings:", result.error)
+        console.error("[v0] Save failed with error:", result.error)
         toast.error("Failed to save settings", {
           description: result.error || "Unknown error occurred",
         })
       }
     } catch (error) {
-      console.error("[v0] Error saving settings:", error)
+      console.error("[v0] Exception during save:", error)
       toast.error("Error saving settings", {
         description: error instanceof Error ? error.message : "An unexpected error occurred",
       })
     } finally {
       setSaving(false)
+      console.log("[v0] ========== SAVE COMPLETED ==========")
     }
   }
 

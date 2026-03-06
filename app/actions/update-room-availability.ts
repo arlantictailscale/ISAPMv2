@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { invalidateRoomAvailabilityCache } from "./get-room-availability"
 
 export async function updateRoomAvailability({ deluxe, premier }: { deluxe: number; premier: number }) {
   const supabase = await createClient()
@@ -32,6 +33,9 @@ export async function updateRoomAvailability({ deluxe, premier }: { deluxe: numb
       console.error("[v0] Error calling update_room_availability_settings RPC:", rpcError)
       return { success: false, error: rpcError.message || "Failed to update room availability" }
     }
+
+    // Invalidate the room availability cache so fresh data is fetched
+    await invalidateRoomAvailabilityCache()
 
     // Revalidate all pages that show room availability
     revalidatePath("/venue")

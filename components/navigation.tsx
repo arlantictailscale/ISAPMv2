@@ -125,7 +125,8 @@ export default function Navigation() {
     }
 
     try {
-      const timeout = 2500
+      // Use a longer timeout to account for slow connections
+      const timeout = 5000
       const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
 
       if (!isMounted.current) return
@@ -172,33 +173,42 @@ export default function Navigation() {
     if (!authTimedOut) return
 
     if (!autoRetryDone) {
+      // Wait 1 second before auto-retrying
       const retryTimer = setTimeout(() => {
         if (isMounted.current) {
           setAutoRetryDone(true)
           checkUser()
         }
-      }, 250)
+      }, 1000)
       return () => clearTimeout(retryTimer)
     }
 
     if (autoRetryDone && !autoReloadDone) {
+      // Wait 2 seconds before auto-reloading (gives more time for slow connections)
       const reloadTimer = setTimeout(() => {
         if (isMounted.current) {
           sessionStorage.setItem("auth_auto_reloaded", "true")
           window.location.reload()
         }
-      }, 250)
+      }, 2000)
       return () => clearTimeout(reloadTimer)
     }
   }, [authTimedOut, autoRetryDone, autoReloadDone, checkUser])
 
   const handleRetry = useCallback(() => {
+    // Reset all auth state for a fresh attempt
     setAuthTimedOut(false)
     setAutoRetryDone(false)
+    setAutoReloadDone(false)
+    setIsLoading(true)
+    // Clear any cached session data
+    sessionStorage.removeItem("auth_auto_reloaded")
     checkUser()
   }, [checkUser])
 
   const handleRefreshPage = useCallback(() => {
+    // Clear auth reload flag before refresh
+    sessionStorage.removeItem("auth_auto_reloaded")
     window.location.reload()
   }, [])
 

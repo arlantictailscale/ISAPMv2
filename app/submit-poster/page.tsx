@@ -178,14 +178,17 @@ export default function SubmitPosterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log("[v0] handleSubmit started")
     setIsLoading(true)
     setError(null)
 
     try {
       if (!user) {
+        console.log("[v0] No user, redirecting to login")
         router.push("/auth/login")
         return
       }
+      console.log("[v0] User found:", user.id)
 
       if (!selectedFile && !uploadedFileUrl) {
         setError("Poster file is required. Please upload a PDF file before submitting.")
@@ -201,24 +204,40 @@ export default function SubmitPosterPage() {
         return
       }
 
+      console.log("[v0] File validation passed, checking uploads...")
+      console.log("[v0] uploadedFileUrl:", uploadedFileUrl)
+      console.log("[v0] uploadedAbstractUrl:", uploadedAbstractUrl)
+      
       let fileUrl = uploadedFileUrl
       if (selectedFile && !uploadedFileUrl) {
+        console.log("[v0] Uploading poster file...")
         fileUrl = await handleFileUpload()
         if (!fileUrl) {
+          console.log("[v0] Poster upload failed")
           setError("Failed to upload poster file. Please try again.")
+          setIsLoading(false)
           return
         }
+        console.log("[v0] Poster uploaded:", fileUrl)
       }
 
       let abstractUrl = uploadedAbstractUrl
       if (selectedAbstractFile && !uploadedAbstractUrl) {
+        console.log("[v0] Uploading abstract file...")
         abstractUrl = await handleAbstractUpload()
         if (!abstractUrl) {
+          console.log("[v0] Abstract upload failed")
           setError("Failed to upload abstract file. Please try again.")
+          setIsLoading(false)
           return
         }
+        console.log("[v0] Abstract uploaded:", abstractUrl)
       }
 
+      console.log("[v0] Both files ready, inserting into database...")
+      console.log("[v0] fileUrl:", fileUrl)
+      console.log("[v0] abstractUrl:", abstractUrl)
+      
       const { error: insertError } = await supabase.from("abstracts").insert([
         {
           user_id: user.id,
@@ -242,7 +261,8 @@ export default function SubmitPosterPage() {
         return
       }
 
-      console.log("[v0] Abstract inserted successfully, attempting to send confirmation email...")
+      console.log("[v0] Database insert successful!")
+      console.log("[v0] Attempting to send confirmation email...")
 
       try {
         const userName = user.email?.split("@")[0] || "Participant"
@@ -265,11 +285,13 @@ export default function SubmitPosterPage() {
         console.warn("[v0] Error sending email, but submission was successful:", emailError)
       }
 
+      console.log("[v0] Submission complete! Showing toast and redirecting...")
       toast.success("E-poster submitted successfully!")
       setIsLoading(false)
       
       // Small delay to allow toast to show before redirect
       setTimeout(() => {
+        console.log("[v0] Redirecting to /my-posters")
         router.push("/my-posters")
       }, 500)
     } catch (err) {

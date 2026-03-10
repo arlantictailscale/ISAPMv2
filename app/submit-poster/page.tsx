@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, Send, AlertCircle, Upload, X, FileText } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { submitPoster } from "@/app/actions/submit-poster"
 
 export default function SubmitPosterPage() {
   const [formData, setFormData] = useState({
@@ -178,17 +179,14 @@ export default function SubmitPosterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] handleSubmit started")
     setIsLoading(true)
     setError(null)
 
     try {
       if (!user) {
-        console.log("[v0] No user, redirecting to login")
         router.push("/auth/login")
         return
       }
-      console.log("[v0] User found:", user.id)
 
       if (!selectedFile && !uploadedFileUrl) {
         setError("Poster file is required. Please upload a PDF file before submitting.")
@@ -204,94 +202,49 @@ export default function SubmitPosterPage() {
         return
       }
 
-      console.log("[v0] File validation passed, checking uploads...")
-      console.log("[v0] uploadedFileUrl:", uploadedFileUrl)
-      console.log("[v0] uploadedAbstractUrl:", uploadedAbstractUrl)
-      
       let fileUrl = uploadedFileUrl
       if (selectedFile && !uploadedFileUrl) {
-        console.log("[v0] Uploading poster file...")
         fileUrl = await handleFileUpload()
         if (!fileUrl) {
-          console.log("[v0] Poster upload failed")
           setError("Failed to upload poster file. Please try again.")
           setIsLoading(false)
           return
         }
-        console.log("[v0] Poster uploaded:", fileUrl)
       }
 
       let abstractUrl = uploadedAbstractUrl
       if (selectedAbstractFile && !uploadedAbstractUrl) {
-        console.log("[v0] Uploading abstract file...")
         abstractUrl = await handleAbstractUpload()
         if (!abstractUrl) {
-          console.log("[v0] Abstract upload failed")
           setError("Failed to upload abstract file. Please try again.")
           setIsLoading(false)
           return
         }
-        console.log("[v0] Abstract uploaded:", abstractUrl)
       }
-
-      console.log("[v0] Both files ready, inserting into database...")
-      console.log("[v0] fileUrl:", fileUrl)
-      console.log("[v0] abstractUrl:", abstractUrl)
       
-      const { error: insertError } = await supabase.from("abstracts").insert([
-        {
-          user_id: user.id,
-          email: user.email,
-          title: formData.title,
-          authors: formData.authors,
-          keywords: formData.topic, // Store topic in keywords field
-          content: abstractUrl, // Store abstract PDF URL in content field
-          category: formData.category, // Store category (Case Report/Research) in category field
-          submission_status: "pending",
-          file_url: fileUrl, // Store poster PDF URL in file_url field
-          university: formData.university, // Use university from form input
-        },
-      ])
+      // Call server action to submit poster (bypasses RLS issues)
+      const result = await submitPoster({
+        title: formData.title,
+        authors: formData.authors,
+        university: formData.university,
+        category: formData.category,
+        topic: formData.topic,
+        fileUrl: fileUrl!,
+        abstractUrl: abstractUrl!,
+      })
 
-      if (insertError) {
-        console.error("[v0] Error inserting abstract:", insertError)
-        setError("Failed to submit e-poster. Please try again.")
-        toast.error("Failed to submit e-poster: " + insertError.message)
+      if (!result.success) {
+        setError(result.error || "Failed to submit e-poster. Please try again.")
+        toast.error(result.error || "Failed to submit e-poster")
         setIsLoading(false)
         return
       }
 
-      console.log("[v0] Database insert successful!")
-      console.log("[v0] Attempting to send confirmation email...")
-
-      try {
-        const userName = user.email?.split("@")[0] || "Participant"
-
-        const response = await fetch("/api/send-poster-submission-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: user.email,
-            userName,
-            posterTitle: formData.title,
-            topic: formData.topic,
-          }),
-        })
-
-        if (!response.ok) {
-          console.warn("[v0] Failed to send confirmation email, but submission was successful")
-        }
-      } catch (emailError) {
-        console.warn("[v0] Error sending email, but submission was successful:", emailError)
-      }
-
-      console.log("[v0] Submission complete! Showing toast and redirecting...")
       toast.success("E-poster submitted successfully!")
       setIsLoading(false)
       
       // Small delay to allow toast to show before redirect
       setTimeout(() => {
-        console.log("[v0] Redirecting to /my-posters")
         router.push("/my-posters")
       }, 500)
     } catch (err) {

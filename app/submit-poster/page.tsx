@@ -282,11 +282,23 @@ export default function SubmitPosterPage() {
         }
       }
 
-      // Upload full text file if selected (optional)
+      // Validate full text file is provided
+      if (!selectedFullTextFile && !uploadedFullTextUrl) {
+        setError("Full text file is required")
+        toast.error("Full text file is required")
+        setIsLoading(false)
+        return
+      }
+
+      // Upload full text file if not yet uploaded
       let fullTextUrl = uploadedFullTextUrl
       if (selectedFullTextFile && !uploadedFullTextUrl) {
         fullTextUrl = await handleFullTextUpload()
-        // Full text is optional, so we don't return on failure
+        if (!fullTextUrl) {
+          setError("Failed to upload full text file. Please try again.")
+          setIsLoading(false)
+          return
+        }
       }
       
       // Call server action to submit poster (bypasses RLS issues)
@@ -298,7 +310,7 @@ export default function SubmitPosterPage() {
         topic: formData.topic,
         fileUrl: fileUrl!,
         abstractUrl: abstractUrl!,
-        fullTextUrl: fullTextUrl || undefined,
+        fullTextUrl: fullTextUrl!,
       })
 
       if (!result.success) {
@@ -651,7 +663,7 @@ export default function SubmitPosterPage() {
                   </div>
 
                   <div className="min-w-0 w-full">
-                    <label className="block text-sm font-semibold mb-2">Full Text (PDF) - Optional</label>
+                    <label className="block text-sm font-semibold mb-2">Full Text (PDF) *</label>
 
                     {!selectedFullTextFile && !uploadedFullTextUrl && (
                       <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:border-primary/50 transition-colors min-w-0 w-full max-w-full">
@@ -723,7 +735,7 @@ export default function SubmitPosterPage() {
                     )}
 
                     <p className="text-xs text-muted-foreground mt-2 break-words">
-                      Optional: Upload the full text of your research paper (PDF, max 10MB)
+                      Full text file is required. Accepted format: PDF (max 10MB)
                     </p>
                   </div>
 

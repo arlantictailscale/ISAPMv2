@@ -11,7 +11,7 @@ interface SubmitPosterInput {
   topic: string
   fileUrl: string
   abstractUrl: string
-  fullTextUrl?: string
+  fullTextUrl: string
 }
 
 export async function submitPoster(input: SubmitPosterInput): Promise<{ success: boolean; error?: string }> {
@@ -45,7 +45,7 @@ export async function submitPoster(input: SubmitPosterInput): Promise<{ success:
         submission_status: "pending",
         file_url: input.fileUrl,
         university: input.university,
-        full_text_url: input.fullTextUrl || null,
+        full_text_url: input.fullTextUrl,
       },
     ])
 

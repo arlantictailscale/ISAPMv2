@@ -238,8 +238,11 @@ export default function SubmitPosterPage() {
         console.error("[v0] Error inserting abstract:", insertError)
         setError("Failed to submit e-poster. Please try again.")
         toast.error("Failed to submit e-poster: " + insertError.message)
+        setIsLoading(false)
         return
       }
+
+      console.log("[v0] Abstract inserted successfully, attempting to send confirmation email...")
 
       try {
         const userName = user.email?.split("@")[0] || "Participant"
@@ -256,19 +259,23 @@ export default function SubmitPosterPage() {
         })
 
         if (!response.ok) {
-          console.error("[v0] Failed to send confirmation email")
+          console.warn("[v0] Failed to send confirmation email, but submission was successful")
         }
       } catch (emailError) {
-        console.error("[v0] Error sending email:", emailError)
+        console.warn("[v0] Error sending email, but submission was successful:", emailError)
       }
 
       toast.success("E-poster submitted successfully!")
-      router.push("/my-posters")
+      setIsLoading(false)
+      
+      // Small delay to allow toast to show before redirect
+      setTimeout(() => {
+        router.push("/my-posters")
+      }, 500)
     } catch (err) {
       console.error("[v0] Error in handleSubmit:", err)
       setError("An unexpected error occurred. Please try again.")
       toast.error("An unexpected error occurred. Please try again.")
-    } finally {
       setIsLoading(false)
     }
   }

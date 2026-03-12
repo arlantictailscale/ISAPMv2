@@ -4,12 +4,16 @@ import { useState, useEffect } from "react"
 import { getAllEventQuotasWithStatus, updateEventQuota, type QuotaStatus } from "@/app/actions/get-event-quotas"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { toast } from "sonner"
-import { Loader2, BarChart3, RefreshCw, Users, TrendingUp, AlertCircle, CheckCircle2, Edit2, X, Save } from "lucide-react"
+import { Loader2, BarChart3, RefreshCw, Users, TrendingUp, AlertCircle, CheckCircle2, Edit2, X, Save, FileSpreadsheet, Upload } from "lucide-react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { AdminDropdownNav } from "@/components/admin-dropdown-nav"
+import { createClient } from "@/lib/supabase/client"
+import * as XLSX from "xlsx"
+import { format } from "date-fns"
 
 export default function AdminEventQuotasPage() {
   const [quotas, setQuotas] = useState<QuotaStatus[]>([])
@@ -17,6 +21,8 @@ export default function AdminEventQuotasPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingValue, setEditingValue] = useState<number | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const supabase = createClient()
 
   useEffect(() => {
     loadQuotas()
@@ -58,7 +64,6 @@ export default function AdminEventQuotasPage() {
         toast.success("Quota updated successfully")
         setEditingId(null)
         setEditingValue(null)
-        // Reload quotas to reflect changes
         await loadQuotas()
       } else {
         toast.error("Failed to update quota")
@@ -71,10 +76,82 @@ export default function AdminEventQuotasPage() {
     }
   }
 
-  const getStatusColor = (quota: QuotaStatus) => {
-    if (quota.is_sold_out) return "text-red-600"
-    if (quota.is_low_stock) return "text-amber-600"
-    return "text-green-600"
+  const handleExportExcel = () => {
+    if (quotas.length === 0) {
+      toast.error("No data to export")
+      return
+    }
+
+    const exportData = quotas.map((q) => ({
+      "Event Name": q.event_name,
+      "Event ID": q.event_id,
+      "Max Capacity": q.max_capacity,
+      "Registered": q.registered_count,
+      "Available": q.available_seats,
+      "Utilization %": q.percentage_filled,
+      "Status": q.is_sold_out ? "SOLD OUT" : q.is_low_stock ? "LOW STOCK" : "AVAILABLE",
+    }))
+
+    // Add summary row
+    const totalCapacity = quotas.reduce((sum, q) => sum + q.max_capacity, 0)
+    const totalRegistered = quotas.reduce((sum, q) => sum + q.registered_count, 0)
+    exportData.push({
+      "Event Name": "TOTAL",
+      "Event ID": "",
+      "Max Capacity": totalCapacity,
+      "Registered": totalRegistered,
+      "Available": totalCapacity - totalRegistered,
+      "Utilization %": totalCapacity > 0 ? Math.round((totalRegistered / totalCapacity) * 100) : 0,
+      "Status": "",
+    })
+
+    const ws = XLSX.utils.json_to_sheet(exportData)
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Event Quotas")
+    XLSX.writeFile(wb, `event-quotas-${format(new Date(), "yyyy-MM-dd-HHmm")}.xlsx`)
+    toast.success("Excel file exported successfully")
+  }
+
+  const handleSyncGoogleSheets = async () => {
+    setIsSyncing(true)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        toast.error("Please log in to sync data")
+        return
+      }
+
+      const response = await fetch("/api/admin/sync-event-quotas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ quotas }),
+      })
+
+      const result = await response.json()
+      if (!response.ok) {
+        throw new Error(result.error || "Sync failed")
+      }
+
+      toast.success("Event quotas synced to Google Sheets!")
+    } catch (err: any) {
+      console.error("[v0] Sync error:", err)
+      toast.error(err.message || "Failed to sync to Google Sheets")
+    } finally {
+      setIsSyncing(false)
+    }
+  }
+
+  const getStatusBadge = (quota: QuotaStatus) => {
+    if (quota.is_sold_out) {
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700"><AlertCircle className="w-3 h-3" />Sold Out</span>
+    }
+    if (quota.is_low_stock) {
+      return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-700"><AlertCircle className="w-3 h-3" />Low</span>
+    }
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700"><CheckCircle2 className="w-3 h-3" />OK</span>
   }
 
   const getProgressColor = (quota: QuotaStatus) => {
@@ -106,183 +183,151 @@ export default function AdminEventQuotasPage() {
     <>
       <Navigation />
       <main className="pt-24 pb-20">
-        {/* Page Header */}
-        <section className="py-8 px-4 bg-gradient-to-br from-violet-500/10 via-primary/5 to-cyan-500/10">
+        {/* Compact Header */}
+        <section className="py-6 px-4 bg-gradient-to-br from-violet-500/10 via-primary/5 to-cyan-500/10">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-violet-500 to-primary text-white shrink-0">
-                  <BarChart3 className="w-8 h-8" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-primary text-white shrink-0">
+                  <BarChart3 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h1 className="font-display text-3xl sm:text-4xl font-bold">Event Quota Management</h1>
-                  <p className="text-muted-foreground">Monitor registrations and manage capacity for each event</p>
+                  <h1 className="font-display text-2xl sm:text-3xl font-bold">Event Quota Management</h1>
+                  <p className="text-sm text-muted-foreground">Monitor registrations and manage capacity</p>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={loadQuotas} className="bg-transparent shrink-0 self-start sm:self-auto">
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={handleExportExcel} className="bg-transparent">
+                  <FileSpreadsheet className="w-4 h-4 mr-1.5" />
+                  Export
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleSyncGoogleSheets} disabled={isSyncing} className="bg-transparent">
+                  {isSyncing ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Upload className="w-4 h-4 mr-1.5" />}
+                  Sync Sheet
+                </Button>
+                <Button variant="outline" size="sm" onClick={loadQuotas} className="bg-transparent">
+                  <RefreshCw className="w-4 h-4 mr-1.5" />
+                  Refresh
+                </Button>
+              </div>
             </div>
           </div>
         </section>
 
-        <section className="py-8 px-4">
-          <div className="max-w-7xl mx-auto space-y-8">
-            {/* Admin Nav */}
+        <section className="py-6 px-4">
+          <div className="max-w-7xl mx-auto space-y-6">
             <AdminDropdownNav />
 
-            {/* Summary Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-primary/10">
-                      <BarChart3 className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Events</p>
-                      <p className="text-2xl font-bold">{quotas.length}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Active events tracked</p>
-                </CardContent>
+            {/* Compact Stats Row */}
+            <div className="grid grid-cols-3 gap-3">
+              <Card className="p-4">
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-primary" />
+                  <span className="text-sm text-muted-foreground">Events</span>
+                  <span className="ml-auto text-xl font-bold">{quotas.length}</span>
+                </div>
               </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-cyan-500/10">
-                      <TrendingUp className="w-5 h-5 text-cyan-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Capacity</p>
-                      <p className="text-2xl font-bold">{totalCapacity.toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">Across all events</p>
-                </CardContent>
+              <Card className="p-4">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-cyan-600" />
+                  <span className="text-sm text-muted-foreground">Capacity</span>
+                  <span className="ml-auto text-xl font-bold">{totalCapacity}</span>
+                </div>
               </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-green-500/10">
-                      <Users className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Registered</p>
-                      <p className="text-2xl font-bold">{totalRegistered.toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">{overallUtilization}% utilization</p>
-                </CardContent>
+              <Card className="p-4">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4 text-green-600" />
+                  <span className="text-sm text-muted-foreground">Registered</span>
+                  <span className="ml-auto text-xl font-bold">{totalRegistered} <span className="text-sm font-normal text-muted-foreground">({overallUtilization}%)</span></span>
+                </div>
               </Card>
             </div>
 
-            {/* Quota Cards */}
+            {/* Compact Table View */}
             {quotas.length === 0 ? (
               <Card>
-                <CardContent className="py-12 flex items-center justify-center">
+                <CardContent className="py-8 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2">
-                    <AlertCircle className="w-8 h-8 text-muted-foreground" />
+                    <AlertCircle className="w-6 h-6 text-muted-foreground" />
                     <p className="text-muted-foreground">No event quotas found</p>
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {quotas.map((quota) => (
-                  <Card key={quota.event_id} className="overflow-hidden">
-                    <CardContent className="pt-6">
-                      <div className="flex flex-col gap-4">
-                        {/* Title Row */}
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-lg leading-tight">{quota.event_name}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5">Event ID: {quota.event_id}</p>
-                          </div>
-                          <div className={`flex items-center gap-1.5 text-sm font-bold shrink-0 ${getStatusColor(quota)}`}>
-                            {quota.is_sold_out ? (
-                              <AlertCircle className="w-4 h-4" />
-                            ) : (
-                              <CheckCircle2 className="w-4 h-4" />
-                            )}
-                            {quota.is_sold_out ? "SOLD OUT" : quota.is_low_stock ? "LOW STOCK" : "AVAILABLE"}
-                          </div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Registration Progress</span>
-                            <span className="font-semibold tabular-nums">
-                              {quota.registered_count} / {quota.max_capacity}
-                            </span>
-                          </div>
-                          <div className="w-full bg-muted rounded-full h-2.5">
-                            <div
-                              className={`h-2.5 rounded-full transition-all duration-500 ${getProgressColor(quota)}`}
-                              style={{ width: `${Math.min((quota.registered_count / quota.max_capacity) * 100, 100)}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {quota.percentage_filled}% filled &bull; {quota.available_seats} seats available
-                          </p>
-                        </div>
-
-                        {/* Edit Section */}
-                        <div className="flex items-center gap-2 pt-1 flex-wrap">
-                          {editingId === quota.event_id ? (
-                            <>
+              <Card>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="min-w-[200px]">Event</TableHead>
+                        <TableHead className="text-center w-20">Status</TableHead>
+                        <TableHead className="text-center w-28">Progress</TableHead>
+                        <TableHead className="text-right w-24">Registered</TableHead>
+                        <TableHead className="text-right w-20">Capacity</TableHead>
+                        <TableHead className="text-right w-20">Available</TableHead>
+                        <TableHead className="w-32">Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {quotas.map((quota) => (
+                        <TableRow key={quota.event_id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium text-sm">{quota.event_name}</p>
+                              <p className="text-xs text-muted-foreground">{quota.event_id}</p>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">{getStatusBadge(quota)}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full ${getProgressColor(quota)}`}
+                                  style={{ width: `${Math.min(quota.percentage_filled, 100)}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-muted-foreground w-8">{quota.percentage_filled}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold tabular-nums">{quota.registered_count}</TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {editingId === quota.event_id ? (
                               <Input
                                 type="number"
                                 min="0"
                                 value={editingValue ?? ""}
                                 onChange={(e) => setEditingValue(parseInt(e.target.value) || 0)}
-                                className="w-32"
+                                className="w-20 h-7 text-right text-sm"
                                 autoFocus
                               />
-                              <Button
-                                size="sm"
-                                onClick={() => handleSaveQuota(quota.event_id)}
-                                disabled={isSaving}
-                              >
-                                {isSaving ? (
-                                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                                ) : (
-                                  <Save className="w-3.5 h-3.5 mr-1.5" />
-                                )}
-                                Save
+                            ) : (
+                              quota.max_capacity
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">{quota.available_seats}</TableCell>
+                          <TableCell>
+                            {editingId === quota.event_id ? (
+                              <div className="flex gap-1">
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => handleSaveQuota(quota.event_id)} disabled={isSaving}>
+                                  {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-green-600" />}
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={handleEditCancel} disabled={isSaving}>
+                                  <X className="w-3.5 h-3.5 text-red-600" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => handleEditStart(quota)}>
+                                <Edit2 className="w-3.5 h-3.5 mr-1" />
+                                Edit
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={handleEditCancel}
-                                disabled={isSaving}
-                                className="bg-transparent"
-                              >
-                                <X className="w-3.5 h-3.5 mr-1.5" />
-                                Cancel
-                              </Button>
-                            </>
-                          ) : (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditStart(quota)}
-                              className="bg-transparent"
-                            >
-                              <Edit2 className="w-3.5 h-3.5 mr-1.5" />
-                              Edit Capacity
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </Card>
             )}
           </div>
         </section>

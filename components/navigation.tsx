@@ -80,7 +80,6 @@ export default function Navigation() {
   const [isLoading, setIsLoading] = useState(true)
   const [authTimedOut, setAuthTimedOut] = useState(false)
   const [autoRetryDone, setAutoRetryDone] = useState(false)
-  const [autoReloadDone, setAutoReloadDone] = useState(false)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
   const isMounted = useRef(true)
@@ -90,13 +89,7 @@ export default function Navigation() {
 
   const isAdmin = useMemo(() => userRole === "admin", [userRole])
 
-  useEffect(() => {
-    const hasAutoReloaded = sessionStorage.getItem("auth_auto_reloaded")
-    if (hasAutoReloaded === "true") {
-      setAutoReloadDone(true)
-      sessionStorage.removeItem("auth_auto_reloaded")
-    }
-  }, [])
+
 
   const fetchUserRole = useCallback(
     async (userId: string) => {
@@ -122,14 +115,14 @@ export default function Navigation() {
     setIsLoading(true)
     setAuthTimedOut(false)
 
-    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
-      return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))])
-    }
-
     try {
-      // Use a longer timeout to account for slow connections
-      const timeout = 5000
-      const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
+      // Reduced timeout - most auth operations complete in <1s
+      // getSession() reads from cookies/localStorage, no network call needed
+      const timeout = 2000
+      const sessionPromise = supabase.auth.getSession()
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeout))
+      
+      const sessionResult = await Promise.race([sessionPromise, timeoutPromise])
 
       if (!isMounted.current) return
 
@@ -140,17 +133,24 @@ export default function Navigation() {
         setAuthTimedOut(false)
         setAutoRetryDone(false)
 
-        fetchUserRole(sessionUser.id).then((role) => {
-          if (isMounted.current) setUserRole(role)
-        })
+        // Check sessionStorage cache for role first (avoids DB call)
+        const cachedRole = sessionStorage.getItem(`user_role_${sessionUser.id}`)
+        const cacheTime = sessionStorage.getItem(`user_role_time_${sessionUser.id}`)
+        const isCacheValid = cacheTime && Date.now() - parseInt(cacheTime) < 5 * 60 * 1000 // 5 min cache
 
-        withTimeout(supabase.auth.getUser(), timeout).then((result) => {
-          if (!isMounted.current) return
-          if (!result || !result.data?.user) {
-            setUser(null)
-            setUserRole("user")
-          }
-        })
+        if (cachedRole && isCacheValid) {
+          setUserRole(cachedRole)
+        } else {
+          // Fetch and cache role
+          fetchUserRole(sessionUser.id).then((role) => {
+            if (isMounted.current) {
+              setUserRole(role)
+              sessionStorage.setItem(`user_role_${sessionUser.id}`, role)
+              sessionStorage.setItem(`user_role_time_${sessionUser.id}`, Date.now().toString())
+            }
+          })
+        }
+        // Removed redundant getUser() call - middleware already validates sessions
       } else if (sessionResult === null) {
         if (isMounted.current) {
           setAuthTimedOut(true)
@@ -172,39 +172,23 @@ export default function Navigation() {
   }, [supabase, fetchUserRole])
 
   useEffect(() => {
-    if (!authTimedOut) return
+    if (!authTimedOut || autoRetryDone) return
 
-    if (!autoRetryDone) {
-      // Wait 1 second before auto-retrying
-      const retryTimer = setTimeout(() => {
-        if (isMounted.current) {
-          setAutoRetryDone(true)
-          checkUser()
-        }
-      }, 1000)
-      return () => clearTimeout(retryTimer)
-    }
-
-    if (autoRetryDone && !autoReloadDone) {
-      // Wait 2 seconds before auto-reloading (gives more time for slow connections)
-      const reloadTimer = setTimeout(() => {
-        if (isMounted.current) {
-          sessionStorage.setItem("auth_auto_reloaded", "true")
-          window.location.reload()
-        }
-      }, 2000)
-      return () => clearTimeout(reloadTimer)
-    }
-  }, [authTimedOut, autoRetryDone, autoReloadDone, checkUser])
+    // Single auto-retry after 500ms - no page reload
+    const retryTimer = setTimeout(() => {
+      if (isMounted.current) {
+        setAutoRetryDone(true)
+        checkUser()
+      }
+    }, 500)
+    return () => clearTimeout(retryTimer)
+  }, [authTimedOut, autoRetryDone, checkUser])
 
   const handleRetry = useCallback(() => {
-    // Reset all auth state for a fresh attempt
+    // Reset auth state for a fresh attempt
     setAuthTimedOut(false)
     setAutoRetryDone(false)
-    setAutoReloadDone(false)
     setIsLoading(true)
-    // Clear any cached session data
-    sessionStorage.removeItem("auth_auto_reloaded")
     checkUser()
   }, [checkUser])
 
@@ -259,14 +243,15 @@ export default function Navigation() {
   }, [supabase, router])
 
   const renderAuthTimeoutUI = () => {
-    if (!autoRetryDone || !autoReloadDone) {
+    if (!autoRetryDone) {
       return (
         <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
-          <span className="text-xs text-muted-foreground">Loading account...</span>
+          <span className="text-xs text-muted-foreground">Loading...</span>
         </div>
       )
     }
 
+    // After auto-retry failed, show manual retry button
     return (
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">

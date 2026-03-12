@@ -33,21 +33,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid quotas data" }, { status: 400 })
     }
 
-    // Initialize Google Sheets API
+    // Initialize Google Sheets API (use same env vars as sync-google-sheets)
     const auth = new google.auth.GoogleAuth({
       credentials: {
-        client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
         private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
       },
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     })
 
     const sheets = google.sheets({ version: "v4", auth })
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
 
     if (!spreadsheetId) {
-      return NextResponse.json({ error: "Google Spreadsheet ID not configured" }, { status: 500 })
+      return NextResponse.json({ error: "Google Sheets Spreadsheet ID not configured" }, { status: 500 })
     }
+
+    console.log("[v0] Syncing event quotas to spreadsheet:", spreadsheetId)
 
     const sheetName = "Event Quotas"
 

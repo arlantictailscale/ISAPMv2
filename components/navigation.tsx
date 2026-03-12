@@ -79,7 +79,6 @@ export default function Navigation() {
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authTimedOut, setAuthTimedOut] = useState(false)
-  const [autoRetryDone, setAutoRetryDone] = useState(false)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
   const isMounted = useRef(true)
@@ -172,31 +171,17 @@ export default function Navigation() {
   }, [supabase, fetchUserRole])
 
   useEffect(() => {
-    if (!authTimedOut || autoRetryDone) return
+    if (!authTimedOut) return
 
-    // Single auto-retry after 500ms - no page reload
-    const retryTimer = setTimeout(() => {
+    // Auto-refresh page immediately when auth times out
+    // This is more reliable than retrying the auth check
+    const refreshTimer = setTimeout(() => {
       if (isMounted.current) {
-        setAutoRetryDone(true)
-        checkUser()
+        window.location.reload()
       }
-    }, 500)
-    return () => clearTimeout(retryTimer)
-  }, [authTimedOut, autoRetryDone, checkUser])
-
-  const handleRetry = useCallback(() => {
-    // Reset auth state for a fresh attempt
-    setAuthTimedOut(false)
-    setAutoRetryDone(false)
-    setIsLoading(true)
-    checkUser()
-  }, [checkUser])
-
-  const handleRefreshPage = useCallback(() => {
-    // Clear auth reload flag before refresh
-    sessionStorage.removeItem("auth_auto_reloaded")
-    window.location.reload()
-  }, [])
+    }, 300) // Quick refresh after 300ms
+    return () => clearTimeout(refreshTimer)
+  }, [authTimedOut])
 
   useEffect(() => {
     isMounted.current = true
@@ -243,54 +228,19 @@ export default function Navigation() {
   }, [supabase, router])
 
   const renderAuthTimeoutUI = () => {
-    if (!autoRetryDone) {
-      return (
-        <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
-          <span className="text-xs text-muted-foreground">Loading...</span>
-        </div>
-      )
-    }
-
-    // After auto-retry failed, show manual retry button
+    // Show loading state while auto-refresh is triggered
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Retry
-        </Button>
-        <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="text-xs text-muted-foreground">
-          Refresh
-        </Button>
+      <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
+        <span className="text-xs text-muted-foreground">Loading...</span>
       </div>
     )
   }
 
   const renderMobileAuthTimeoutUI = () => {
-    if (!autoRetryDone || !autoReloadDone) {
-      return (
-        <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
-          <span className="text-xs text-muted-foreground">Loading account...</span>
-        </div>
-      )
-    }
-
+    // Show loading state while auto-refresh is triggered
     return (
-      <div className="flex flex-col gap-2 mt-2">
-        <p className="text-xs text-muted-foreground px-3">Connection slow. Please retry.</p>
-        <div className="flex gap-2 px-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRetry}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-transparent"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Retry
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="flex-1">
-            Refresh Page
-          </Button>
-        </div>
+      <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
+        <span className="text-xs text-muted-foreground">Loading...</span>
       </div>
     )
   }

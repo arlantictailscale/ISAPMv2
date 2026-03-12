@@ -546,21 +546,9 @@ export default function PricingPage() {
                             >
                               {colorScheme.categoryLabel}
                             </span>
-                            {quotaStatuses[event.id] && (
-                              <span
-                                className={`text-xs font-semibold px-2 py-1 rounded-full ${
-                                  quotaStatuses[event.id].is_sold_out
-                                    ? "bg-red-100 text-red-700"
-                                    : quotaStatuses[event.id].is_low_stock
-                                      ? "bg-amber-100 text-amber-700"
-                                      : "bg-green-100 text-green-700"
-                                }`}
-                              >
-                                {quotaStatuses[event.id].is_sold_out
-                                  ? "Sold Out"
-                                  : quotaStatuses[event.id].is_low_stock
-                                    ? `Only ${quotaStatuses[event.id].available_seats} left`
-                                    : `${quotaStatuses[event.id].available_seats}/${quotaStatuses[event.id].max_capacity} seats`}
+                            {quotaStatuses[event.id]?.is_sold_out && (
+                              <span className="text-xs font-semibold px-2 py-1 rounded-full bg-red-100 text-red-700">
+                                Sold Out
                               </span>
                             )}
                           </div>

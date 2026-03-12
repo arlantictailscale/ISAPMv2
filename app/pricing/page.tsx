@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { ChevronRight, AlertCircle, Gift } from "lucide-react"
+import { ChevronRight, AlertCircle, Gift, Zap } from "lucide-react"
 import { AddToCartButton } from "@/components/add-to-cart-button"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
@@ -22,6 +22,7 @@ import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { User } from "lucide-react"
 import { EARLY_BIRD_DEADLINE } from "@/lib/data/event-pricing"
+import { getAllEventQuotasWithStatus, type QuotaStatus } from "@/app/actions/get-event-quotas"
 
 export default function PricingPage() {
   const earlyBirdDeadline = parseISO(EARLY_BIRD_DEADLINE)
@@ -31,8 +32,34 @@ export default function PricingPage() {
   const [userProfession, setUserProfession] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [openDialogId, setOpenDialogId] = useState<string | null>(null)
+  const [quotaStatuses, setQuotaStatuses] = useState<Record<string, QuotaStatus>>({})
+  const [quotasLoading, setQuotasLoading] = useState(true)
   const supabase = createClient()
   const router = useRouter()
+
+  // Load quotas on mount
+  useEffect(() => {
+    const loadQuotas = async () => {
+      try {
+        const quotas = await getAllEventQuotasWithStatus()
+        const quotaMap: Record<string, QuotaStatus> = {}
+        quotas.forEach((quota) => {
+          quotaMap[quota.event_id] = quota
+        })
+        setQuotaStatuses(quotaMap)
+      } catch (err) {
+        console.error("[v0] Error loading quotas:", err)
+      } finally {
+        setQuotasLoading(false)
+      }
+    }
+
+    loadQuotas()
+
+    // Refresh quotas every 10 seconds for real-time updates
+    const interval = setInterval(loadQuotas, 10000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     const loadUserProfile = async () => {
@@ -500,8 +527,18 @@ export default function PricingPage() {
                   >
                     <DialogTrigger asChild>
                       <button
-                        className={`w-full bg-gradient-to-br ${colorScheme.bgGradient} border-2 ${colorScheme.borderColor} ${colorScheme.hoverBorder} rounded-xl p-4 transition-all duration-200 text-left flex items-center justify-between group shadow-sm hover:shadow-md`}
+                        className={`w-full bg-gradient-to-br ${colorScheme.bgGradient} border-2 ${colorScheme.borderColor} ${colorScheme.hoverBorder} rounded-xl p-4 transition-all duration-200 text-left flex items-center justify-between group shadow-sm hover:shadow-md relative overflow-hidden ${
+                          quotaStatuses[event.id]?.is_sold_out ? "opacity-60 cursor-not-allowed" : ""
+                        }`}
+                        disabled={quotaStatuses[event.id]?.is_sold_out}
                       >
+                        {/* Sold Out Overlay */}
+                        {quotaStatuses[event.id]?.is_sold_out && (
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
+                            <div className="text-white font-bold text-lg text-center">SOLD OUT</div>
+                          </div>
+                        )}
+
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <span
@@ -509,6 +546,23 @@ export default function PricingPage() {
                             >
                               {colorScheme.categoryLabel}
                             </span>
+                            {quotaStatuses[event.id] && (
+                              <span
+                                className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                                  quotaStatuses[event.id].is_sold_out
+                                    ? "bg-red-100 text-red-700"
+                                    : quotaStatuses[event.id].is_low_stock
+                                      ? "bg-amber-100 text-amber-700"
+                                      : "bg-green-100 text-green-700"
+                                }`}
+                              >
+                                {quotaStatuses[event.id].is_sold_out
+                                  ? "Sold Out"
+                                  : quotaStatuses[event.id].is_low_stock
+                                    ? `Only ${quotaStatuses[event.id].available_seats} left`
+                                    : `${quotaStatuses[event.id].available_seats}/${quotaStatuses[event.id].max_capacity} seats`}
+                              </span>
+                            )}
                           </div>
                           <h3 className={`font-display text-lg font-bold ${colorScheme.textColor} mb-1 truncate`}>
                             {event.label}
@@ -537,6 +591,45 @@ export default function PricingPage() {
                         </div>
                         <DialogTitle className="text-xl pr-8 break-words">{event.label}</DialogTitle>
                         <DialogDescription className="break-words">{event.date}</DialogDescription>
+                        
+                        {/* Quota Status Warning */}
+                        {quotaStatuses[event.id] && (
+                          <div
+                            className={`mt-3 p-3 rounded-lg border flex items-start gap-2 ${
+                              quotaStatuses[event.id].is_sold_out
+                                ? "bg-red-50 border-red-200"
+                                : quotaStatuses[event.id].is_low_stock
+                                  ? "bg-amber-50 border-amber-200"
+                                  : "bg-green-50 border-green-200"
+                            }`}
+                          >
+                            <Zap
+                              className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
+                                quotaStatuses[event.id].is_sold_out
+                                  ? "text-red-600"
+                                  : quotaStatuses[event.id].is_low_stock
+                                    ? "text-amber-600"
+                                    : "text-green-600"
+                              }`}
+                            />
+                            <span
+                              className={`text-sm font-medium ${
+                                quotaStatuses[event.id].is_sold_out
+                                  ? "text-red-700"
+                                  : quotaStatuses[event.id].is_low_stock
+                                    ? "text-amber-700"
+                                    : "text-green-700"
+                              }`}
+                            >
+                              {quotaStatuses[event.id].is_sold_out
+                                ? "This session is currently sold out"
+                                : quotaStatuses[event.id].is_low_stock
+                                  ? `Only ${quotaStatuses[event.id].available_seats} seats remaining!`
+                                  : `${quotaStatuses[event.id].available_seats} out of ${quotaStatuses[event.id].max_capacity} seats available`}
+                            </span>
+                          </div>
+                        )}
+
                         {event.id === "symposium" && (
                           <div className="flex items-center gap-2 mt-2 px-3 py-2 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg border border-teal-200">
                             <Gift className="w-4 h-4 text-teal-600 flex-shrink-0" />
@@ -592,6 +685,7 @@ export default function PricingPage() {
                                   size="default"
                                   className="w-full"
                                   onSuccess={() => setOpenDialogId(null)}
+                                  isSoldOut={quotaStatuses[event.id]?.is_sold_out || false}
                                 />
                               </div>
                             </div>

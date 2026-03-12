@@ -425,6 +425,14 @@ export default async function DashboardPage() {
       color: "bg-rose-500",
       stats: null,
     },
+    {
+      title: "Event Quotas",
+      description: "Manage event capacity limits",
+      icon: BarChart3,
+      href: "/admin/event-quotas",
+      color: "bg-violet-500",
+      stats: null,
+    },
   ]
 
   const cards = isAdmin ? adminCards : userCards

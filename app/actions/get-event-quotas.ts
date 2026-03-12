@@ -24,15 +24,17 @@ export interface QuotaStatus {
 
 /**
  * Get all event quotas with real-time registration counts
+ * Counts registrations from confirmed/verified orders only
  */
 export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
   try {
     const adminClient = createAdminClient()
 
-    // Fetch all quotas
+    // Fetch all active quotas
     const { data: quotas, error: quotasError } = await adminClient
       .from("event_quotas")
       .select("*")
+      .eq("is_active", true)
       .order("created_at", { ascending: true })
 
     if (quotasError) {
@@ -44,24 +46,46 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
       return []
     }
 
-    // Fetch registration counts for each event
+    // Fetch registration counts for each event from confirmed orders
     const quotaStatuses = await Promise.all(
       quotas.map(async (quota) => {
-        const { data: orderItems, error: countError } = await adminClient
+        // Count order items that match this event_id, from orders with verified payments
+        const { count, error: countError } = await adminClient
           .from("order_items")
-          .select("id", { count: "exact", head: true })
-          .eq("item_type", "workshops")
-          .eq("item_id", quota.event_id)
+          .select("id, order_id!inner(id)", { count: "exact", head: true })
+          .eq("item_type", "event")
+          .eq("event_id", quota.event_id)
 
         if (countError) {
           console.error(`[v0] Error counting registrations for ${quota.event_id}:`, countError)
         }
 
-        const registered_count = orderItems ? orderItems.length : 0
+        // Also count items from orders with verified payments
+        const { count: verifiedCount, error: verifiedError } = await adminClient
+          .from("order_items")
+          .select(`
+            id,
+            order_id!inner(
+              id,
+              order_payments!inner(payment_status)
+            )
+          `, { count: "exact", head: true })
+          .eq("item_type", "event")
+          .eq("event_id", quota.event_id)
+          .eq("order_id.order_payments.payment_status", "verified")
+
+        if (verifiedError) {
+          console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
+        }
+
+        // Use verified count if available, otherwise fall back to all orders
+        const registered_count = verifiedCount ?? count ?? 0
         const available_seats = Math.max(0, quota.max_capacity - registered_count)
         const is_sold_out = available_seats === 0
         const is_low_stock = available_seats > 0 && available_seats <= 5
-        const percentage_filled = Math.round((registered_count / quota.max_capacity) * 100)
+        const percentage_filled = quota.max_capacity > 0 
+          ? Math.round((registered_count / quota.max_capacity) * 100) 
+          : 0
 
         return {
           event_id: quota.event_id,
@@ -95,9 +119,14 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
       .from("event_quotas")
       .select("*")
       .eq("event_id", eventId)
+      .eq("is_active", true)
       .single()
 
     if (quotaError) {
+      // Not found is not an error - event may not have quota
+      if (quotaError.code === "PGRST116") {
+        return null
+      }
       console.error(`[v0] Error fetching quota for ${eventId}:`, quotaError)
       return null
     }
@@ -106,22 +135,31 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
       return null
     }
 
-    // Fetch registration count
-    const { data: orderItems, error: countError } = await adminClient
+    // Count verified registrations from orders with verified payments
+    const { count: verifiedCount, error: verifiedError } = await adminClient
       .from("order_items")
-      .select("id", { count: "exact", head: true })
-      .eq("item_type", "workshops")
-      .eq("item_id", eventId)
+      .select(`
+        id,
+        order_id!inner(
+          id,
+          order_payments!inner(payment_status)
+        )
+      `, { count: "exact", head: true })
+      .eq("item_type", "event")
+      .eq("event_id", eventId)
+      .eq("order_id.order_payments.payment_status", "verified")
 
-    if (countError) {
-      console.error(`[v0] Error counting registrations for ${eventId}:`, countError)
+    if (verifiedError) {
+      console.error(`[v0] Error counting verified registrations for ${eventId}:`, verifiedError)
     }
 
-    const registered_count = orderItems ? orderItems.length : 0
+    const registered_count = verifiedCount ?? 0
     const available_seats = Math.max(0, quota.max_capacity - registered_count)
     const is_sold_out = available_seats === 0
     const is_low_stock = available_seats > 0 && available_seats <= 5
-    const percentage_filled = Math.round((registered_count / quota.max_capacity) * 100)
+    const percentage_filled = quota.max_capacity > 0 
+      ? Math.round((registered_count / quota.max_capacity) * 100) 
+      : 0
 
     return {
       event_id: quota.event_id,

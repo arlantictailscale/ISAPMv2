@@ -2,6 +2,7 @@
 
 import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { sendPosterSubmissionConfirmation } from "@/lib/email"
 
 interface SubmitPosterInput {
   title: string
@@ -56,7 +57,7 @@ export async function submitPoster(input: SubmitPosterInput): Promise<{ success:
 
     console.log("[v0] submitPoster: Insert successful! ID:", insertedData?.id)
 
-    // Send confirmation email
+    // Send confirmation email directly (not via fetch to avoid server action to API issues)
     try {
       // Get user's full name from profile
       const { data: profile } = await adminClient
@@ -70,28 +71,22 @@ export async function submitPoster(input: SubmitPosterInput): Promise<{ success:
           ? `${profile.first_name} ${profile.last_name}` 
           : user.email?.split("@")[0] || "Participant")
       
-      console.log("[v0] submitPoster: Sending email to", user.email, "for poster:", input.title)
+      console.log("[v0] submitPoster: Sending email directly to", user.email, "for poster:", input.title)
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://isapm2026.org'}/api/send-poster-submission-email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          userName,
-          posterTitle: input.title,
-          posterId: insertedData?.id || "N/A",
-          category: input.category,
-          topic: input.topic,
-        }),
+      // Call the email function directly instead of using fetch to internal API
+      const emailResult = await sendPosterSubmissionConfirmation({
+        email: user.email!,
+        userName,
+        posterTitle: input.title,
+        posterId: insertedData?.id || "N/A",
+        category: input.category,
+        topic: input.topic,
       })
 
-      const responseText = await response.text()
-      console.log("[v0] submitPoster: Email API response:", response.status, responseText)
-
-      if (!response.ok) {
-        console.warn("[v0] submitPoster: Email send failed but submission succeeded")
-      } else {
+      if (emailResult.success) {
         console.log("[v0] submitPoster: Confirmation email sent successfully!")
+      } else {
+        console.warn("[v0] submitPoster: Email send failed but submission succeeded:", emailResult.error)
       }
     } catch (emailError) {
       console.warn("[v0] submitPoster: Email error (submission still successful):", emailError)

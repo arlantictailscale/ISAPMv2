@@ -486,7 +486,9 @@ export default function HotelBookingPage() {
   const hasSoldOutRoom = rooms.some((r) => r.roomType && !isRoomTypeAvailable(r.roomType))
   const isFormValid = !hasSoldOutRoom && rooms.every((r) => {
     const nights = calculateNights(r.checkInDate, r.checkOutDate)
-    return r.roomType && r.guestName && r.guestEmail && r.guestPhone && nights > 0
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const isValidEmail = r.guestEmail && emailRegex.test(r.guestEmail)
+    return r.roomType && r.guestName && isValidEmail && r.guestPhone && nights > 0
   })
 
   // Updated UI to match the new structure

@@ -43,12 +43,31 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized - Admin access required" }, { status: 403 })
     }
 
-    // Fetch all auth users using admin API
-    const { data: authUsers, error: usersError } = await supabase.auth.admin.listUsers()
+    // Fetch ALL auth users using pagination (default limit is 50)
+    const allAuthUsers: any[] = []
+    let page = 1
+    const perPage = 1000 // Max per page
+    let hasMore = true
 
-    if (usersError) {
-      console.error("Error fetching auth users:", usersError)
-      throw usersError
+    while (hasMore) {
+      const { data: authUsers, error: usersError } = await supabase.auth.admin.listUsers({
+        page,
+        perPage,
+      })
+
+      if (usersError) {
+        console.error("Error fetching auth users:", usersError)
+        throw usersError
+      }
+
+      if (authUsers.users.length > 0) {
+        allAuthUsers.push(...authUsers.users)
+        page++
+        // If we got less than perPage, we've reached the end
+        hasMore = authUsers.users.length === perPage
+      } else {
+        hasMore = false
+      }
     }
 
     // Fetch profiles data
@@ -61,7 +80,7 @@ export async function GET(request: NextRequest) {
     const { data: abstracts } = await supabase.from("abstracts").select("user_id")
 
     // Combine all data
-    const usersWithData = authUsers.users.map((authUser) => {
+    const usersWithData = allAuthUsers.map((authUser) => {
       const profile = profiles?.find((p) => p.id === authUser.id)
       const regCount = registrations?.filter((r) => r.user_id === authUser.id).length || 0
       const postCount = abstracts?.filter((a) => a.user_id === authUser.id).length || 0

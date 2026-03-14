@@ -1242,15 +1242,37 @@ export async function sendPosterReviewNotification({
                     <p><strong>Status:</strong> Accepted</p>
                   </div>
                   
+                  <div style="background: #fff7ed; border: 2px solid #fb923c; border-radius: 8px; padding: 20px; margin: 25px 0;">
+                    <h3 style="color: #9a3412; margin-top: 0; display: flex; align-items: center; gap: 8px;">
+                      <span>⚠️</span> Important: Event Registration Required
+                    </h3>
+                    <p style="color: #78350f; margin-bottom: 15px;">
+                      To present your e-poster at ISAPM 2026, you must register for <strong>at least one</strong> of the following events:
+                    </p>
+                    <ul style="margin: 0; padding-left: 20px; color: #78350f;">
+                      <li style="margin: 8px 0;"><strong>CPD Course</strong> - April 16-17, 2026</li>
+                      <li style="margin: 8px 0;"><strong>Workshop</strong> - April 17, 2026</li>
+                      <li style="margin: 8px 0;"><strong>Symposium</strong> - April 18, 2026</li>
+                    </ul>
+                    <p style="color: #9a3412; font-weight: 600; margin-top: 15px; margin-bottom: 0;">
+                      Please complete your registration as soon as possible to secure your spot.
+                    </p>
+                  </div>
+
                   <p><strong>Next Steps:</strong></p>
-                  <ul>
-                    <li>Your poster will be included in the conference program</li>
-                    <li>You will receive presentation guidelines closer to the event</li>
-                    <li>Make sure to complete your conference registration</li>
-                  </ul>
+                  <ol style="padding-left: 20px;">
+                    <li style="margin: 10px 0;"><strong>Register for an Event:</strong> Choose at least one event (CPD, Workshop, or Symposium) and complete your registration</li>
+                    <li style="margin: 10px 0;"><strong>Complete Payment:</strong> Submit your payment to confirm your registration</li>
+                    <li style="margin: 10px 0;"><strong>Prepare Your Poster:</strong> Follow the presentation guidelines that will be sent separately</li>
+                    <li style="margin: 10px 0;"><strong>Present at ISAPM 2026:</strong> Your poster will be featured in the e-poster exhibition</li>
+                  </ol>
+
+                  <p style="text-align: center; margin: 30px 0;">
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/events" class="button" style="margin-right: 10px;">Register for Events</a>
+                  </p>
 
                   <p style="text-align: center;">
-                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-posters" class="button">View My Posters</a>
+                    <a href="${process.env.NEXT_PUBLIC_SITE_URL}/my-posters" style="color: #00A9E0; text-decoration: underline;">View My Posters</a>
                   </p>
 
                   <p>We look forward to your presentation at ISAPM 2026!</p>

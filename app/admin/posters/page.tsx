@@ -198,7 +198,8 @@ export default function AdminPostersPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              to: originalSubmission.user_email,
+              email: originalSubmission.user_email,
+              userName: originalSubmission.user_name || originalSubmission.user_email.split("@")[0],
               posterTitle: originalSubmission.title,
               status: "accepted",
             }),
@@ -296,7 +297,8 @@ export default function AdminPostersPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              to: originalSubmission.user_email,
+              email: originalSubmission.user_email,
+              userName: originalSubmission.user_name || originalSubmission.user_email.split("@")[0],
               posterTitle: originalSubmission.title,
               status: "rejected",
               rejectionComment: currentRejectionComment,

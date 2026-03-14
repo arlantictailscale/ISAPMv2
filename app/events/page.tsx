@@ -522,113 +522,194 @@ export default function EventsPage() {
     grandTheme:
       "Practical Pain Management for Doctors and Nurses: From Assessment, Safe Analgesic Use, and Intervention Pain Management",
     date: "Saturday, April 18, 2026",
-    agenda: [
-      { time: "07.30 – 08.00", activity: "Re-Registration + Onsite Registration", speaker: "Committee" },
-      { time: "08.00 – 08:05", activity: "Opening Ceremony", speaker: "Committee" },
-      { time: "08:05 – 08:25", activity: "Ethics and Patient Safety in Pain Management", speaker: "TBD" },
+    sections: [
       {
-        time: "08:25 – 08:45",
-        activity: "Realizing Integrated Pain Services: Regulatory Challenges and Implementation in Health Facilities",
-        speaker: "TBD",
+        title: "Opening Session",
+        items: [
+          { time: "07:30 - 08:00", activity: "Re-Registration + Registrasi Onsite", speaker: "Committee" },
+          { time: "08:00 - 08:05", activity: "Opening Ceremony", speaker: "Committee" },
+          {
+            time: "08:05 - 08:25",
+            activity: "Ethics and Patient Safety in Pain Management",
+            speaker: "Prof. Dr. dr. Nancy Margarita Rehatta, Sp.An-TI, Subsp.N.An.(K), Subsp.M.N.(K)",
+          },
+          {
+            time: "08:25 - 08:45",
+            activity:
+              "Mewujudkan Layanan Nyeri Terintegrasi: Tantangan Regulasi dan Implementasi di Fasilitas Kesehatan",
+            speaker: "Kemenkes - Prof. dr. Dante Saksono Harbuwono, Sp.PD, KEMD, Ph.D",
+          },
+          {
+            time: "08:45 - 09:05",
+            activity:
+              "Peran BPJS Kesehatan dalam Menjamin Akses, Mutu, dan Efisiensi Layanan Nyeri di Indonesia",
+            speaker: "BPJS Pusat - Mayjen TNI (Purn) Dr. Prihati Pujowaskito, Sp.JP(K), FIHFAA, MMRS",
+          },
+          {
+            time: "09:05 - 09:25",
+            activity:
+              "Bridging Policy and Practice: Sinergi Profesi Anestesi dengan Kemenkes dan BPJS dalam Pengakuan Layanan Nyeri",
+            speaker: "Ketua ISAPM - Dr. dr. A. M. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
+          },
+          {
+            time: "09:25 - 09:55",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Doso Sutiyono, SpAn-TI, Subsp. An.R (K)., Subsp.M.N.(K)., MARS",
+          },
+        ],
       },
       {
-        time: "08:45 – 09:05",
-        activity:
-          "The Role of BPJS Kesehatan in Ensuring Access, Quality, and Efficiency of Pain Services in Indonesia",
-        speaker: "TBD",
+        title: "Drug Symposium",
+        items: [
+          {
+            time: "09:55 - 10:15",
+            activity: "Industrial Symposium",
+            speaker: "Dr. dr. A. M. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
+          },
+          {
+            time: "10:15 - 10:35",
+            activity: "Multimodal Analgesia for Acute Postoperative Pain: Current Evidence and Future Directions",
+            speaker: "Prof. dr. Andi Husni Tanra, PhD, SpAn-TI., Subsp.T.I.(K)., Subsp.M.N.(K)",
+          },
+          {
+            time: "10:35 - 10:55",
+            activity:
+              "Preventing Transition from Acute to Chronic Post-Surgical Pain: Early Recognition and Intervention",
+            speaker: "Prof. Dr. Suwarman, dr., Sp.An-., Subsp.T.I.(K)., Subsp.M.N.(K)., M.Kes",
+          },
+          {
+            time: "10:55 - 11:15",
+            activity: "Integrasi Layanan Acute Pain Service (APS) dalam Perawatan Perioperatif di Rumah Sakit",
+            speaker: "Prof. Dr. dr. Tjokorda Gde Agung Senapathi, SpAn-TI., Subsp.An.R(K)",
+          },
+          {
+            time: "11:15 - 11:25",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Heri Dwi Purnomo, Sp.An-TI., M.Kes., Subsp. M.N (K)., FIP., Subsp. An.R (K)",
+          },
+        ],
       },
       {
-        time: "09:05– 09:25",
-        activity:
-          "Bridging Policy and Practice: Synergy of the Anesthesia Profession with the Ministry of Health and BPJS in Recognition of Pain Services",
-        speaker: "TBD",
-      },
-      { time: "09:25– 09:55", activity: "DISCUSSION", speaker: "-" },
-      { time: "09:55– 10:15", activity: "Industrial Symposium", speaker: "TBD" },
-      {
-        time: "10:15 – 10:35",
-        activity: "Multimodal Analgesia for Acute Postoperative Pain: Current Evidence and Future Directions",
-        speaker: "TBD",
-      },
-      {
-        time: "10:35 - 10:55",
-        activity: "Preventing Transition from Acute to Chronic Post-Surgical Pain: Early Recognition and Intervention",
-        speaker: "TBD",
-      },
-      {
-        time: "10:55 – 11:15",
-        activity: "Integration of Acute Pain Service (APS) in Perioperative Care in Hospitals",
-        speaker: "TBD",
-      },
-      { time: "11:15 – 11:25", activity: "DISCUSSION", speaker: "-" },
-      {
-        time: "11:25 -11:45",
-        activity:
-          "Ultrasound-Guided Pain Interventions: Evidence-Based Updates, Clinical Pearls, and Future Directions",
-        speaker: "TBD",
-      },
-      {
-        time: "11:45-12:05",
-        activity: "Steroid Injections in Pain Medicine: Still Relevant or Outdated?",
-        speaker: "TBD",
+        title: "Multimodal Symposium",
+        items: [
+          {
+            time: "11:25 - 11:40",
+            activity: "Industrial Symposium",
+            speaker: "dr. Taufiq Agus Siswagama, Sp.An-TI., Subsp. M.N. (K)",
+          },
+          {
+            time: "11:40 - 12:00",
+            activity:
+              "Ultrasound-Guided Pain Interventions: Evidence-Based Updates, Clinical Pearls, and Future Directions",
+            speaker: "Dr. John Frans Sitepu, M.Ked (An), Sp.An-TI, Subsp. MN (K), FIPM",
+          },
+          {
+            time: "12:00 - 12:20",
+            activity: "Steroid Injections in Pain Medicine: Still Relevant or Outdated?",
+            speaker: "dr. Mahmud, M.Sc., SpAn-TI. Subsp. MN(K), FIPM",
+          },
+          {
+            time: "12:20 - 12:40",
+            activity:
+              "Sugar Heals: Understanding the Science Behind Dextrose Prolotherapy in Chronic Pain Management",
+            speaker: "dr. Y.R. Yosi Asmara SpAn-TI, Subsp.An.R (K), FIP, FIPP, CIPS",
+          },
+          {
+            time: "12:40 - 12:50",
+            activity: "DISCUSSION",
+            speaker: "Moderator: Dr. dr. Aswoco Andyk Asmoro, Sp.An-TI., FIP",
+          },
+        ],
       },
       {
-        time: "12:05-12:25",
-        activity: "Sugar Heals: Understanding the Science Behind Dextrose Prolotherapy in Chronic Pain Management",
-        speaker: "TBD",
-      },
-      { time: "12:25-12:35", activity: "DISCUSSION", speaker: "-" },
-      { time: "12:35 – 13:15", activity: "Break and Lunch Symposium", speaker: "TBD" },
-      {
-        time: "13:15-13:35",
-        activity: "Regenerative Pain Medicine: From Biologic Science to Ultrasound-Guided Clinical Application",
-        speaker: "TBD",
+        title: "Break",
+        items: [{ time: "12:50 - 13:15", activity: "ISHOMA (Lunch Break)", speaker: "-" }],
       },
       {
-        time: "13:35– 13:55",
-        activity:
-          "Secretome and Exosome-Based Therapy: Evidence, Mechanism, and Clinical Potential in Pain and Tissue Repair",
-        speaker: "TBD",
+        title: "Regenerative Pain Symposium",
+        items: [
+          {
+            time: "13:00 - 13:15",
+            activity: "Industrial Symposium",
+            speaker: "dr. Puja Laksana Maqbul, Sp.An-TI, FIPM, FIPP",
+          },
+          {
+            time: "13:15 - 13:35",
+            activity:
+              "Regenerative Pain Medicine: From Biologic Science to Ultrasound-Guided Clinical Application",
+            speaker: "dr. Said Sofwan, SpAn-TI., FIPP., FIP",
+          },
+          {
+            time: "13:35 - 13:55",
+            activity:
+              "Secretome and Exosome-Based Therapy: Evidence, Mechanism, and Clinical Potential in Pain and Tissue Repair",
+            speaker: "dr. Nur Surya Wirawan., Sp.An-TI., Subsp.MN(K)., MARS., AIFO(K)",
+          },
+          {
+            time: "13:55 - 14:15",
+            activity:
+              "Comparative Effectiveness of Regenerative Pain Interventions: PRP, Stem Cell, and Biologic Derivatives in Chronic Pain Management",
+            speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM",
+          },
+          {
+            time: "14:15 - 14:25",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)",
+          },
+        ],
       },
       {
-        time: "13:55– 14:15",
-        activity:
-          "Comparative Effectiveness of Regenerative Pain Interventions: PRP, Stem Cell, and Biologic Derivatives in Chronic Pain Management",
-        speaker: "TBD",
-      },
-      { time: "14:15 – 14:25", activity: "DISCUSSION", speaker: "-" },
-      { time: "14:25– 14:45", activity: "Industrial Symposium 2", speaker: "TBD" },
-      {
-        time: "14:45 – 15:05",
-        activity:
-          "Radiofrequency Interventions for Chronic Pain: Current Evidence, Expanding Indications, and Long-Term Outcomes",
-        speaker: "TBD",
-      },
-      {
-        time: "15:05 – 15:25",
-        activity: "From Needles to Neuromodulation: Advances in Minimally Invasive Pain Procedures",
-        speaker: "TBD",
-      },
-      {
-        time: "15:25-15:45",
-        activity:
-          "Hybrid Regenerative-Radiofrequency Techniques: Combining Biologic and Thermal Modulation for Enhanced Pain Relief",
-        speaker: "TBD",
-      },
-      { time: "15:45-15:55", activity: "DISCUSSION", speaker: "-" },
-      {
-        time: "15:55-16:15",
-        activity: "Interventional Pain Procedures in Palliative Care: Balancing Efficacy, Safety, and Quality of Life",
-        speaker: "TBD",
+        title: "High Technology Pain Management Symposium",
+        items: [
+          { time: "14:25 - 14:45", activity: "Industrial Symposium", speaker: "-" },
+          {
+            time: "14:45 - 15:05",
+            activity:
+              "Radiofrequency Interventions for Chronic Pain: Current Evidence, Expanding Indications, and Long-Term Outcomes",
+            speaker: "Dr. dr. Ristiawan Muji Laksono, Sp. An-TI., Subsp. M. N. (K)., FIPP",
+          },
+          {
+            time: "15:05 - 15:25",
+            activity: "From Needles to Neuromodulation: Advances in Minimally Invasive Pain Procedures",
+            speaker: "dr. Mirza Koeshardiandi, SpAn-TI., FIP., FIPP",
+          },
+          {
+            time: "15:25 - 15:45",
+            activity:
+              "Hybrid Regenerative-Radiofrequency Techniques: Combining Biologic and Thermal Modulation for Enhanced Pain Relief",
+            speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
+          },
+          {
+            time: "15:45 - 15:55",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Buyung Hartiyo Laksono, Sp. An-TI., Subsp.N.An.(K)., FIP",
+          },
+        ],
       },
       {
-        time: "16:15-16:35",
-        activity:
-          "Integrated Palliative Pain Management: Bridging Pharmacologic, Interventional, and Psychosocial Strategies",
-        speaker: "TBD",
+        title: "Drug and Equipment in Cancer Pain Management",
+        items: [
+          { time: "15:55 - 16:10", activity: "Industrial Symposium", speaker: "-" },
+          {
+            time: "15:55 - 16:15",
+            activity:
+              "Interventional Pain Procedures in Palliative Care: Balancing Efficacy, Safety, and Quality of Life",
+            speaker: "Dr. dr. R. Dwi Pantja Wibowo, Sp.An-TI, Subsp. T.I. (K), Subsp. M.N. (K)",
+          },
+          {
+            time: "16:15 - 16:35",
+            activity:
+              "Integrated Palliative Pain Management: Bridging Pharmacologic, Interventional, and Psychosocial Strategies",
+            speaker: "Dr. dr. Tasrif Hamdi M. Ked (An)., Sp.An-TI, Subsp. MN(K)",
+          },
+          {
+            time: "16:35 - 16:45",
+            activity: "DISCUSSION",
+            speaker: "Moderator: Dr. dr. Hari Bagianto, Sp. An-TI, Subsp. An.O (K), Subsp. MN(K)",
+          },
+          { time: "16:45 - 17:00", activity: "Closing & Pengumuman Juara E-Poster", speaker: "Committee" },
+        ],
       },
-      { time: "16:35-16:45", activity: "DISCUSSION", speaker: "-" },
-      { time: "16:45-17:00", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
     ],
   }
 
@@ -1353,22 +1434,31 @@ export default function EventsPage() {
 
                 <div>
                   <h3 className="font-display text-3xl font-bold text-cyan-600 mb-6">Agenda</h3>
-                  <div className="space-y-4">
-                    {symposiumSchedule.agenda.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${getAgendaItemClasses(item.activity)} transition-colors`}
-                      >
-                        <div className="md:col-span-2">
-                          <p className="text-sm font-bold text-cyan-600">{item.time}</p>
-                        </div>
-                        <div className="md:col-span-7">
-                          <p className="font-semibold text-foreground">{item.activity}</p>
-                        </div>
-                        <div className="md:col-span-3">
-                          <p className="text-sm text-muted-foreground">
-                            {item.speaker === "-" ? "-" : `Speaker: ${item.speaker}`}
-                          </p>
+                  <div className="space-y-8">
+                    {symposiumSchedule.sections.map((section, sectionIndex) => (
+                      <div key={sectionIndex} className="space-y-4">
+                        <h4 className="font-display text-xl font-bold text-cyan-700 border-b border-cyan-200 pb-2">
+                          {section.title}
+                        </h4>
+                        <div className="space-y-3">
+                          {section.items.map((item, index) => (
+                            <div
+                              key={index}
+                              className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${getAgendaItemClasses(item.activity)} transition-colors`}
+                            >
+                              <div className="md:col-span-2">
+                                <p className="text-sm font-bold text-cyan-600">{item.time}</p>
+                              </div>
+                              <div className="md:col-span-6">
+                                <p className="font-semibold text-foreground">{item.activity}</p>
+                              </div>
+                              <div className="md:col-span-4">
+                                <p className="text-sm text-muted-foreground">
+                                  {item.speaker === "-" ? "-" : item.speaker}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}

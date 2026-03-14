@@ -177,6 +177,27 @@ export default function HotelBookingPage() {
     setAvailability(data)
   }
 
+  // Refresh room availability periodically and when page becomes visible
+  useEffect(() => {
+    // Refresh every 30 seconds to ensure fresh availability data
+    const interval = setInterval(() => {
+      loadRoomAvailability()
+    }, 30000)
+
+    // Also refresh when the tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadRoomAvailability()
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [])
+
   const calculateNights = (checkInDate: string, checkOutDate: string) => {
     if (!checkInDate || !checkOutDate) return 0
     const nights = differenceInDays(parseISO(checkOutDate), parseISO(checkInDate))
@@ -352,6 +373,45 @@ export default function HotelBookingPage() {
     setIsSubmitting(true)
 
     try {
+      // Fetch fresh availability data before submitting to prevent race conditions
+      const freshAvailability = await getRoomAvailability()
+      setAvailability(freshAvailability)
+
+      // Re-validate with fresh data
+      const deluxeCount = rooms.filter((r) => r.roomType === "deluxe").length
+      const premierCount = rooms.filter((r) => r.roomType === "premier").length
+
+      if (freshAvailability) {
+        if (freshAvailability.deluxe.available <= 0 && deluxeCount > 0) {
+          toast.error("Deluxe rooms are now fully booked", {
+            description: "Please select a different room type or try again later.",
+          })
+          setIsSubmitting(false)
+          return
+        }
+        if (freshAvailability.premier.available <= 0 && premierCount > 0) {
+          toast.error("Premier rooms are now fully booked", {
+            description: "Please select a different room type or try again later.",
+          })
+          setIsSubmitting(false)
+          return
+        }
+        if (deluxeCount > freshAvailability.deluxe.available) {
+          toast.error(`Only ${freshAvailability.deluxe.available} Deluxe room(s) available`, {
+            description: "Please reduce the number of Deluxe rooms in your booking.",
+          })
+          setIsSubmitting(false)
+          return
+        }
+        if (premierCount > freshAvailability.premier.available) {
+          toast.error(`Only ${freshAvailability.premier.available} Premier room(s) available`, {
+            description: "Please reduce the number of Premier rooms in your booking.",
+          })
+          setIsSubmitting(false)
+          return
+        }
+      }
+
       for (let i = 0; i < rooms.length; i++) {
         const room = rooms[i]
         const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
@@ -426,7 +486,9 @@ export default function HotelBookingPage() {
   const hasSoldOutRoom = rooms.some((r) => r.roomType && !isRoomTypeAvailable(r.roomType))
   const isFormValid = !hasSoldOutRoom && rooms.every((r) => {
     const nights = calculateNights(r.checkInDate, r.checkOutDate)
-    return r.roomType && r.guestName && r.guestEmail && r.guestPhone && nights > 0
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const isValidEmail = r.guestEmail && emailRegex.test(r.guestEmail)
+    return r.roomType && r.guestName && isValidEmail && r.guestPhone && nights > 0
   })
 
   // Updated UI to match the new structure

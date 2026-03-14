@@ -8,7 +8,9 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, ShieldCheck, User, UserCog, RefreshCw } from "lucide-react"
+import { Loader2, ShieldCheck, User, UserCog, RefreshCw, Search, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { updateUserRole } from "@/app/actions/update-user-role"
 import {
@@ -46,6 +48,12 @@ export default function AdminUsersPage() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [showRoleDialog, setShowRoleDialog] = useState(false)
   const [newRole, setNewRole] = useState<"admin" | "user">("user")
+  
+  // Search and pagination state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(25)
+  const [roleFilter, setRoleFilter] = useState<"all" | "admin" | "user">("all")
 
   useEffect(() => {
     checkAdminAndFetchUsers()
@@ -147,6 +155,36 @@ export default function AdminUsersPage() {
     }
   }
 
+  // Filter and paginate users
+  const filteredUsers = users.filter((user) => {
+    const searchLower = searchQuery.toLowerCase()
+    const matchesSearch = 
+      (user.full_name?.toLowerCase().includes(searchLower) ?? false) ||
+      (user.first_name?.toLowerCase().includes(searchLower) ?? false) ||
+      (user.last_name?.toLowerCase().includes(searchLower) ?? false) ||
+      user.email.toLowerCase().includes(searchLower) ||
+      (user.institution?.toLowerCase().includes(searchLower) ?? false)
+    
+    const matchesRole = roleFilter === "all" || user.role === roleFilter
+    
+    return matchesSearch && matchesRole
+  })
+
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedUsers = filteredUsers.slice(startIndex, startIndex + itemsPerPage)
+
+  // Reset to page 1 when search or filter changes
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value)
+    setCurrentPage(1)
+  }
+
+  const handleRoleFilterChange = (value: "all" | "admin" | "user") => {
+    setRoleFilter(value)
+    setCurrentPage(1)
+  }
+
   const getRoleBadge = (role: string) => {
     if (role === "admin") {
       return (
@@ -201,59 +239,161 @@ export default function AdminUsersPage() {
         <section className="py-12 px-4">
           <div className="max-w-7xl mx-auto space-y-6">
             <Card>
-              <CardHeader>
-                <CardTitle>All Users ({users.length})</CardTitle>
-                <CardDescription>Manage user roles and permissions</CardDescription>
+              <CardHeader className="pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>All Users ({users.length})</CardTitle>
+                    <CardDescription>
+                      {filteredUsers.length !== users.length 
+                        ? `Showing ${filteredUsers.length} of ${users.length} users`
+                        : "Manage user roles and permissions"}
+                    </CardDescription>
+                  </div>
+                </div>
+                {/* Search and Filter Bar */}
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search by name, email, or institution..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchChange(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Select value={roleFilter} onValueChange={(v) => handleRoleFilterChange(v as "all" | "admin" | "user")}>
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <SelectValue placeholder="Filter by role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Roles</SelectItem>
+                      <SelectItem value="admin">Admin</SelectItem>
+                      <SelectItem value="user">User</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={itemsPerPage.toString()} onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1); }}>
+                    <SelectTrigger className="w-full sm:w-[100px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="w-[200px]">Name</TableHead>
+                      <TableHead className="w-[220px]">Email</TableHead>
+                      <TableHead className="hidden lg:table-cell">Institution</TableHead>
+                      <TableHead className="w-[80px] text-center">Role</TableHead>
+                      <TableHead className="w-[50px] text-center hidden sm:table-cell" title="Registrations">Reg</TableHead>
+                      <TableHead className="w-[50px] text-center hidden sm:table-cell" title="Posters">Post</TableHead>
+                      <TableHead className="w-[90px] text-center">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedUsers.length === 0 ? (
                       <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Institution</TableHead>
-                        <TableHead>Position</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="text-center">Registrations</TableHead>
-                        <TableHead className="text-center">Posters</TableHead>
-                        <TableHead className="text-center">Actions</TableHead>
+                        <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                          {searchQuery || roleFilter !== "all" ? "No users match your search criteria" : "No users found"}
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {users.map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell className="font-medium">
-                            {user.full_name
-                              ? user.full_name
-                              : user.first_name && user.last_name
-                                ? `${user.first_name} ${user.last_name}`
-                                : user.first_name || user.last_name || "-"}
+                    ) : (
+                      paginatedUsers.map((user) => (
+                        <TableRow key={user.id} className="text-sm">
+                          <TableCell className="py-2">
+                            <div className="font-medium truncate max-w-[180px]" title={user.full_name || `${user.first_name || ""} ${user.last_name || ""}`.trim() || "-"}>
+                              {user.full_name
+                                ? user.full_name
+                                : user.first_name && user.last_name
+                                  ? `${user.first_name} ${user.last_name}`
+                                  : user.first_name || user.last_name || "-"}
+                            </div>
+                            {/* Show institution on mobile below name */}
+                            <div className="lg:hidden text-xs text-muted-foreground truncate max-w-[180px]" title={user.institution || ""}>
+                              {user.institution || ""}
+                            </div>
                           </TableCell>
-                          <TableCell className="text-sm">{user.email}</TableCell>
-                          <TableCell className="text-sm">{user.institution || "-"}</TableCell>
-                          <TableCell className="text-sm">{user.position || "-"}</TableCell>
-                          <TableCell>{getRoleBadge(user.role)}</TableCell>
-                          <TableCell className="text-center">{user.registrationCount}</TableCell>
-                          <TableCell className="text-center">{user.posterCount}</TableCell>
-                          <TableCell className="text-center">
+                          <TableCell className="py-2">
+                            <span className="truncate block max-w-[200px]" title={user.email}>{user.email}</span>
+                          </TableCell>
+                          <TableCell className="py-2 hidden lg:table-cell">
+                            <span className="truncate block max-w-[250px]" title={user.institution || "-"}>{user.institution || "-"}</span>
+                          </TableCell>
+                          <TableCell className="py-2 text-center">{getRoleBadge(user.role)}</TableCell>
+                          <TableCell className="py-2 text-center hidden sm:table-cell">{user.registrationCount}</TableCell>
+                          <TableCell className="py-2 text-center hidden sm:table-cell">{user.posterCount}</TableCell>
+                          <TableCell className="py-2 text-center">
                             {user.role === "admin" ? (
-                              <Button size="sm" variant="outline" onClick={() => handleRoleChange(user, "user")}>
-                                <User className="w-3 h-3 mr-1" />
+                              <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => handleRoleChange(user, "user")}>
                                 Demote
                               </Button>
                             ) : (
-                              <Button size="sm" variant="default" onClick={() => handleRoleChange(user, "admin")}>
-                                <ShieldCheck className="w-3 h-3 mr-1" />
+                              <Button size="sm" variant="default" className="h-7 text-xs px-2" onClick={() => handleRoleChange(user, "admin")}>
                                 Promote
                               </Button>
                             )}
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {startIndex + 1}-{Math.min(startIndex + itemsPerPage, filteredUsers.length)} of {filteredUsers.length} users
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(1)}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronsLeft className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="px-3 text-sm">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(totalPages)}
+                        disabled={currentPage === totalPages}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronsRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

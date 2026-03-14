@@ -27,7 +27,7 @@ export async function getRoomAvailability() {
           console.error("Error fetching room settings:", settingsError)
           return {
             deluxe: { total: 120, booked: 0, available: 120 },
-            premier: { total: 56, booked: 0, available: 56 },
+            premier: { total: 23, booked: 0, available: 23 },
           }
         }
 
@@ -44,7 +44,7 @@ export async function getRoomAvailability() {
 
         if (!hotelItems || hotelItems.length === 0) {
           const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
-          const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+          const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 23
           return {
             deluxe: { total: deluxeCapacity, booked: 0, available: deluxeCapacity },
             premier: { total: premierCapacity, booked: 0, available: premierCapacity },
@@ -68,51 +68,46 @@ export async function getRoomAvailability() {
 
         const validOrderIds = orders?.map((o) => o.id) || []
 
-        // Step 4: Get verified payments for these orders
-        const { data: payments, error: paymentsError } = await supabase
-          .from("order_payments")
-          .select("order_id, payment_status")
-          .in("order_id", validOrderIds)
-          .eq("payment_status", "verified")
+        // Step 4: Count ALL bookings for these non-cancelled orders (including pending)
+        // This matches the admin dashboard logic which counts all bookings
+        const deluxeBookings = hotelItems.filter((item) => validOrderIds.includes(item.order_id) && item.hotel_room_type === "deluxe").length
+        const premierBookings = hotelItems.filter((item) => validOrderIds.includes(item.order_id) && item.hotel_room_type === "premier").length
 
-        if (paymentsError) {
-          console.error("Error fetching payments:", paymentsError)
-          throw paymentsError
-        }
-
-        // Get order IDs with verified payments
-        const verifiedOrderIds = new Set(payments?.map((p) => p.order_id) || [])
-
-        // Step 5: Count bookings by room type for verified orders only
-        const verifiedBookings = hotelItems.filter((item) => verifiedOrderIds.has(item.order_id))
-
-        const deluxeBookings = verifiedBookings.filter((b) => b.hotel_room_type === "deluxe").length
-        const premierBookings = verifiedBookings.filter((b) => b.hotel_room_type === "premier").length
-
-        // Get default capacities
+        // Get default capacities (Premier has 23 rooms, not 56)
         const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
-        const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+        const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 23
+
+        const deluxeAvailable = deluxeCapacity - deluxeBookings
+        const premierAvailable = premierCapacity - premierBookings
+
+        // Log if rooms are overbooked for monitoring
+        if (deluxeAvailable < 0) {
+          console.warn(`[Room Availability] Deluxe rooms overbooked: ${deluxeBookings}/${deluxeCapacity}`)
+        }
+        if (premierAvailable < 0) {
+          console.warn(`[Room Availability] Premier rooms overbooked: ${premierBookings}/${premierCapacity}`)
+        }
 
         return {
           deluxe: {
             total: deluxeCapacity,
             booked: deluxeBookings,
-            available: Math.max(0, deluxeCapacity - deluxeBookings),
+            available: Math.max(0, deluxeAvailable),
           },
           premier: {
             total: premierCapacity,
             booked: premierBookings,
-            available: Math.max(0, premierCapacity - premierBookings),
+            available: Math.max(0, premierAvailable),
           },
         }
       } catch (error) {
         console.error("Error in getRoomAvailability:", error)
         return {
           deluxe: { total: 120, booked: 0, available: 120 },
-          premier: { total: 56, booked: 0, available: 56 },
+          premier: { total: 23, booked: 0, available: 23 },
         }
       }
     },
-    CACHE_TTL.MEDIUM, // 5 minutes cache
+    CACHE_TTL.SHORT, // 30 seconds cache - room availability is critical data
   )
 }

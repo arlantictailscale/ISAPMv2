@@ -81,7 +81,9 @@ export default function Navigation() {
   const [authTimedOut, setAuthTimedOut] = useState(false)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
   const isMounted = useRef(true)
+  const maxRetries = 2 // Limit retries to prevent infinite loop
 
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -115,9 +117,12 @@ export default function Navigation() {
     setAuthTimedOut(false)
 
     try {
-      // Reduced timeout - most auth operations complete in <1s
-      // getSession() reads from cookies/localStorage, no network call needed
-      const timeout = 2000
+      // Detect mobile for longer timeout (mobile browsers are slower)
+      const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
+        typeof navigator !== "undefined" ? navigator.userAgent : ""
+      )
+      // Mobile needs longer timeout due to slower JS execution
+      const timeout = isMobile ? 5000 : 2000
       const sessionPromise = supabase.auth.getSession()
       const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeout))
       
@@ -173,15 +178,20 @@ export default function Navigation() {
   useEffect(() => {
     if (!authTimedOut) return
 
-    // Auto-refresh page immediately when auth times out
-    // This is more reliable than retrying the auth check
-    const refreshTimer = setTimeout(() => {
-      if (isMounted.current) {
-        window.location.reload()
-      }
-    }, 300) // Quick refresh after 300ms
-    return () => clearTimeout(refreshTimer)
-  }, [authTimedOut])
+    // Only auto-retry if we haven't exceeded max retries
+    // This prevents infinite refresh loops on mobile Chrome
+    if (retryCount < maxRetries) {
+      const retryTimer = setTimeout(() => {
+        if (isMounted.current) {
+          setRetryCount((prev) => prev + 1)
+          setAuthTimedOut(false)
+          checkUser()
+        }
+      }, 1000) // Wait 1 second before retry
+      return () => clearTimeout(retryTimer)
+    }
+    // After max retries, don't auto-refresh - let user manually retry or continue
+  }, [authTimedOut, retryCount, checkUser])
 
   useEffect(() => {
     isMounted.current = true
@@ -227,21 +237,48 @@ export default function Navigation() {
     router.push("/")
   }, [supabase, router])
 
+  const handleManualRetry = useCallback(() => {
+    setRetryCount(0)
+    setAuthTimedOut(false)
+    setIsLoading(true)
+    checkUser()
+  }, [checkUser])
+
   const renderAuthTimeoutUI = () => {
-    // Show loading state while auto-refresh is triggered
+    // If still within retry limit, show loading
+    if (retryCount < maxRetries) {
+      return (
+        <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
+          <span className="text-xs text-muted-foreground">Retrying...</span>
+        </div>
+      )
+    }
+    // After max retries, show login button (don't block the user)
     return (
-      <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
-        <span className="text-xs text-muted-foreground">Loading...</span>
-      </div>
+      <Link href="/auth/login">
+        <Button variant="outline" size="sm">
+          Login
+        </Button>
+      </Link>
     )
   }
 
   const renderMobileAuthTimeoutUI = () => {
-    // Show loading state while auto-refresh is triggered
+    // If still within retry limit, show loading
+    if (retryCount < maxRetries) {
+      return (
+        <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
+          <span className="text-xs text-muted-foreground">Retrying...</span>
+        </div>
+      )
+    }
+    // After max retries, show login button (don't block the user)
     return (
-      <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
-        <span className="text-xs text-muted-foreground">Loading...</span>
-      </div>
+      <Link href="/auth/login" className="w-full mt-2">
+        <Button variant="outline" size="sm" className="w-full">
+          Login
+        </Button>
+      </Link>
     )
   }
 

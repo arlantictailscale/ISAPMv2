@@ -75,22 +75,23 @@ export default function EventsPage() {
     {
       day: "Day 1 - Thursday, April 16, 2026",
       title: "CPD Day 1",
+      courseDirector: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
       sessions: [
         {
           sesi: "Session 1",
           items: [
-            { time: "08:00 - 08:30", title: "Opening (Pre-test)", speaker: "TBD" },
-            { time: "08:30 - 08:55", title: "Anatomy and Physiology of Pain", speaker: "TBD" },
-            { time: "08:55 - 09:20", title: "Assessment and Diagnosis of Pain", speaker: "TBD" },
+            { time: "08:00 - 08:30", title: "Opening (Pre-test)", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "08:30 - 08:55", title: "Anatomy and Physiology of Pain", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
+            { time: "08:55 - 09:20", title: "Assessment and Diagnosis of Pain", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
             { time: "09:20 - 09:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 2",
           items: [
-            { time: "09:30 - 09:55", title: "Pharmacology Opioid", speaker: "TBD" },
-            { time: "09:55 - 10:20", title: "Non Opioid", speaker: "TBD" },
-            { time: "10:20 - 10:45", title: "Adjuvant Analgesia", speaker: "TBD" },
+            { time: "09:30 - 09:55", title: "Pharmacology Opioid", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "09:55 - 10:20", title: "Non Opioid", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "10:20 - 10:45", title: "Adjuvant Analgesia", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             { time: "10:45 - 11:00", title: "Discussion", speaker: "-" },
           ],
         },
@@ -99,25 +100,26 @@ export default function EventsPage() {
           items: [
             {
               time: "11:00 - 11:25",
-              title: "Procedure Specific Pain Management Recommendation (PROSPECT)",
-              speaker: "TBD",
+              title: "Procedure Specific Pain Management",
+              speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
             },
-            { time: "11:25 - 11:50", title: "Interventional Technique for Perioperative Pain", speaker: "TBD" },
-            { time: "11:50 - 12:15", title: "Acute Pain Service", speaker: "TBD" },
+            { time: "11:25 - 11:50", title: "Interventional Technique for Perioperative Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "11:50 - 12:15", title: "The Role and Privilege of Anesthesiologist in Pain Management", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
             { time: "12:15 - 12:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "ISHOMA (Lunch Break)", speaker: "-" }],
         },
         {
           sesi: "Session 4",
           items: [
-            { time: "13:00 - 13:30", title: "Discussion Session: Postoperative Pain", speaker: "-" },
-            { time: "13:30 - 15:30", title: "Skill Station A: PCA, PCEA", speaker: "TBD" },
-            { time: "13:30 - 15:30", title: "Skill Station B: Postop. ACB, FICB", speaker: "TBD" },
-            { time: "13:30 - 15:30", title: "Skill Station C: Postop. Block Trunk (TAP, ESP)", speaker: "TBD" },
+            { time: "13:00 - 13:30", title: "Discussion Session: Cancer Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP / Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "13:30 - 15:30", title: "Skill Station A: Epidural Analgesia, Epidural USG guidance", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Intra-articular knee, CTS", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
+            { time: "13:30 - 15:30", title: "Skill Station C: Suprascapular, Paravertebra block, Occipital", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "15:30 - 16:00", title: "Post-Test / Closing", speaker: "-" },
           ],
         },
       ],
@@ -125,58 +127,58 @@ export default function EventsPage() {
     {
       day: "Day 2 - Friday, April 17, 2026",
       title: "CPD Day 2",
+      courseDirector: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
       sessions: [
         {
           sesi: "Session 1",
           items: [
-            { time: "08:00 - 08:25", title: "Chronic Pain After Surgery", speaker: "TBD" },
-            { time: "08:25 - 08:50", title: "Neuropathic Pain", speaker: "TBD" },
-            { time: "08:50 - 09:15", title: "Pain in Special Population: Pediatric and Geriatric", speaker: "TBD" },
+            { time: "08:00 - 08:25", title: "Chronic Pain After Surgery", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
+            { time: "08:25 - 08:50", title: "Neuropathic Pain", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
+            { time: "08:50 - 09:15", title: "Pain in Special Population: Pediatric and Geriatric", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
             { time: "09:15 - 09:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 2",
           items: [
-            { time: "09:30 - 09:55", title: "CRPS", speaker: "TBD" },
-            { time: "09:55 - 10:20", title: "Cancer Pain and The Management", speaker: "TBD" },
-            { time: "10:20 - 10:45", title: "Interventional Technique for Chronic Pain", speaker: "TBD" },
+            { time: "09:30 - 09:55", title: "CRPS", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
+            { time: "09:55 - 10:20", title: "Cancer Pain and The Management", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "10:20 - 10:45", title: "Interventional Technique for Chronic Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
             { time: "10:45 - 11:00", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 3",
           items: [
-            { time: "11:00 - 11:25", title: "The Role of Interventional Pain Management", speaker: "TBD" },
-            { time: "11:25 - 11:50", title: "Ethic and Patient Safety in Pain Management", speaker: "TBD" },
+            { time: "11:00 - 11:25", title: "The Role of Interventional Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
+            { time: "11:25 - 11:50", title: "Ethic and Patient Safety in Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
             {
               time: "11:50 - 12:15",
-              title: "The Role and Privilege of Anesthesiologist in Pain Management",
-              speaker: "TBD",
+              title: "Acute Pain Service",
+              speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP",
             },
             { time: "12:15 - 12:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "ISHOMA (Lunch Break)", speaker: "-" }],
         },
         {
           sesi: "Session 4",
           items: [
-            { time: "13:00 - 13:30", title: "Discussion Session: Cancer Pain", speaker: "-" },
+            { time: "13:00 - 13:30", title: "Discussion Session: Postoperative Pain", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K) / dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             {
               time: "13:30 - 15:30",
-              title: "Skill Station A: Epidural Analgesia, Epidural USG guidance",
-              speaker: "TBD",
+              title: "Skill Station A: PCA, PCEA",
+              speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP / Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
             },
-            { time: "13:30 - 15:30", title: "Skill Station B: Intra-articular knee, CTS", speaker: "TBD" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Postop. ACB, FICB", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             {
               time: "13:30 - 15:30",
-              title: "Skill Station C: Suprascapular, Paravertebra block, Occipital",
-              speaker: "TBD",
+              title: "Skill Station C: Postop. Block Trunk (TAP, ESP)",
+              speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
             },
-            { time: "15:30 - 16:00", title: "Post-Test / Closing", speaker: "-" },
           ],
         },
       ],
@@ -900,6 +902,11 @@ export default function EventsPage() {
                         <div className="border-l-4 border-purple-600 pl-4">
                           <h2 className="text-2xl font-bold">{day.day}</h2>
                           <p className="text-muted-foreground">{day.title}</p>
+                          {day.courseDirector && (
+                            <p className="text-sm text-purple-600 mt-1 font-medium">
+                              Course Director: {day.courseDirector}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-4">

@@ -27,7 +27,7 @@ export async function getRoomAvailability() {
           console.error("Error fetching room settings:", settingsError)
           return {
             deluxe: { total: 120, booked: 0, available: 120 },
-            premier: { total: 56, booked: 0, available: 56 },
+            premier: { total: 23, booked: 0, available: 23 },
           }
         }
 
@@ -44,7 +44,7 @@ export async function getRoomAvailability() {
 
         if (!hotelItems || hotelItems.length === 0) {
           const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
-          const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+          const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 23
           return {
             deluxe: { total: deluxeCapacity, booked: 0, available: deluxeCapacity },
             premier: { total: premierCapacity, booked: 0, available: premierCapacity },
@@ -73,9 +73,9 @@ export async function getRoomAvailability() {
         const deluxeBookings = hotelItems.filter((item) => validOrderIds.includes(item.order_id) && item.hotel_room_type === "deluxe").length
         const premierBookings = hotelItems.filter((item) => validOrderIds.includes(item.order_id) && item.hotel_room_type === "premier").length
 
-        // Get default capacities
+        // Get default capacities (Premier has 23 rooms, not 56)
         const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
-        const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
+        const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 23
 
         const deluxeAvailable = deluxeCapacity - deluxeBookings
         const premierAvailable = premierCapacity - premierBookings
@@ -104,10 +104,10 @@ export async function getRoomAvailability() {
         console.error("Error in getRoomAvailability:", error)
         return {
           deluxe: { total: 120, booked: 0, available: 120 },
-          premier: { total: 56, booked: 0, available: 56 },
+          premier: { total: 23, booked: 0, available: 23 },
         }
       }
     },
-    CACHE_TTL.MEDIUM, // 5 minutes cache
+    CACHE_TTL.SHORT, // 30 seconds cache - room availability is critical data
   )
 }

@@ -32,6 +32,7 @@ import {
   Hotel,
   RefreshCw,
   Send,
+  BarChart3,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -61,6 +62,7 @@ const adminNavItems = [
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
   { label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
+  { label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
 ]
 
 const navItems = [
@@ -77,8 +79,6 @@ export default function Navigation() {
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [authTimedOut, setAuthTimedOut] = useState(false)
-  const [autoRetryDone, setAutoRetryDone] = useState(false)
-  const [autoReloadDone, setAutoReloadDone] = useState(false)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
   const isMounted = useRef(true)
@@ -88,13 +88,7 @@ export default function Navigation() {
 
   const isAdmin = useMemo(() => userRole === "admin", [userRole])
 
-  useEffect(() => {
-    const hasAutoReloaded = sessionStorage.getItem("auth_auto_reloaded")
-    if (hasAutoReloaded === "true") {
-      setAutoReloadDone(true)
-      sessionStorage.removeItem("auth_auto_reloaded")
-    }
-  }, [])
+
 
   const fetchUserRole = useCallback(
     async (userId: string) => {
@@ -120,13 +114,14 @@ export default function Navigation() {
     setIsLoading(true)
     setAuthTimedOut(false)
 
-    const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T | null> => {
-      return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))])
-    }
-
     try {
-      const timeout = 2500
-      const sessionResult = await withTimeout(supabase.auth.getSession(), timeout)
+      // Reduced timeout - most auth operations complete in <1s
+      // getSession() reads from cookies/localStorage, no network call needed
+      const timeout = 2000
+      const sessionPromise = supabase.auth.getSession()
+      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeout))
+      
+      const sessionResult = await Promise.race([sessionPromise, timeoutPromise])
 
       if (!isMounted.current) return
 
@@ -137,17 +132,24 @@ export default function Navigation() {
         setAuthTimedOut(false)
         setAutoRetryDone(false)
 
-        fetchUserRole(sessionUser.id).then((role) => {
-          if (isMounted.current) setUserRole(role)
-        })
+        // Check sessionStorage cache for role first (avoids DB call)
+        const cachedRole = sessionStorage.getItem(`user_role_${sessionUser.id}`)
+        const cacheTime = sessionStorage.getItem(`user_role_time_${sessionUser.id}`)
+        const isCacheValid = cacheTime && Date.now() - parseInt(cacheTime) < 5 * 60 * 1000 // 5 min cache
 
-        withTimeout(supabase.auth.getUser(), timeout).then((result) => {
-          if (!isMounted.current) return
-          if (!result || !result.data?.user) {
-            setUser(null)
-            setUserRole("user")
-          }
-        })
+        if (cachedRole && isCacheValid) {
+          setUserRole(cachedRole)
+        } else {
+          // Fetch and cache role
+          fetchUserRole(sessionUser.id).then((role) => {
+            if (isMounted.current) {
+              setUserRole(role)
+              sessionStorage.setItem(`user_role_${sessionUser.id}`, role)
+              sessionStorage.setItem(`user_role_time_${sessionUser.id}`, Date.now().toString())
+            }
+          })
+        }
+        // Removed redundant getUser() call - middleware already validates sessions
       } else if (sessionResult === null) {
         if (isMounted.current) {
           setAuthTimedOut(true)
@@ -171,36 +173,15 @@ export default function Navigation() {
   useEffect(() => {
     if (!authTimedOut) return
 
-    if (!autoRetryDone) {
-      const retryTimer = setTimeout(() => {
-        if (isMounted.current) {
-          setAutoRetryDone(true)
-          checkUser()
-        }
-      }, 250)
-      return () => clearTimeout(retryTimer)
-    }
-
-    if (autoRetryDone && !autoReloadDone) {
-      const reloadTimer = setTimeout(() => {
-        if (isMounted.current) {
-          sessionStorage.setItem("auth_auto_reloaded", "true")
-          window.location.reload()
-        }
-      }, 250)
-      return () => clearTimeout(reloadTimer)
-    }
-  }, [authTimedOut, autoRetryDone, autoReloadDone, checkUser])
-
-  const handleRetry = useCallback(() => {
-    setAuthTimedOut(false)
-    setAutoRetryDone(false)
-    checkUser()
-  }, [checkUser])
-
-  const handleRefreshPage = useCallback(() => {
-    window.location.reload()
-  }, [])
+    // Auto-refresh page immediately when auth times out
+    // This is more reliable than retrying the auth check
+    const refreshTimer = setTimeout(() => {
+      if (isMounted.current) {
+        window.location.reload()
+      }
+    }, 300) // Quick refresh after 300ms
+    return () => clearTimeout(refreshTimer)
+  }, [authTimedOut])
 
   useEffect(() => {
     isMounted.current = true
@@ -247,53 +228,19 @@ export default function Navigation() {
   }, [supabase, router])
 
   const renderAuthTimeoutUI = () => {
-    if (!autoRetryDone || !autoReloadDone) {
-      return (
-        <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
-          <span className="text-xs text-muted-foreground">Loading account...</span>
-        </div>
-      )
-    }
-
+    // Show loading state while auto-refresh is triggered
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={handleRetry} className="flex items-center gap-1.5 bg-transparent">
-          <RefreshCw className="w-3.5 h-3.5" />
-          Retry
-        </Button>
-        <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="text-xs text-muted-foreground">
-          Refresh
-        </Button>
+      <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
+        <span className="text-xs text-muted-foreground">Loading...</span>
       </div>
     )
   }
 
   const renderMobileAuthTimeoutUI = () => {
-    if (!autoRetryDone || !autoReloadDone) {
-      return (
-        <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
-          <span className="text-xs text-muted-foreground">Loading account...</span>
-        </div>
-      )
-    }
-
+    // Show loading state while auto-refresh is triggered
     return (
-      <div className="flex flex-col gap-2 mt-2">
-        <p className="text-xs text-muted-foreground px-3">Connection slow. Please retry.</p>
-        <div className="flex gap-2 px-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRetry}
-            className="flex-1 flex items-center justify-center gap-1.5 bg-transparent"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            Retry
-          </Button>
-          <Button variant="ghost" size="sm" onClick={handleRefreshPage} className="flex-1">
-            Refresh Page
-          </Button>
-        </div>
+      <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
+        <span className="text-xs text-muted-foreground">Loading...</span>
       </div>
     )
   }

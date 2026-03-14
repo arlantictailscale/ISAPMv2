@@ -9,9 +9,10 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, Send, AlertCircle, Upload, X, FileText } from "lucide-react"
+import { Loader2, Send, AlertCircle, Upload, X, FileText, BookOpen } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
+import { submitPoster } from "@/app/actions/submit-poster"
 
 export default function SubmitPosterPage() {
   const [formData, setFormData] = useState({
@@ -31,6 +32,9 @@ export default function SubmitPosterPage() {
   const [selectedAbstractFile, setSelectedAbstractFile] = useState<File | null>(null)
   const [uploadedAbstractUrl, setUploadedAbstractUrl] = useState<string | null>(null)
   const [isUploadingAbstract, setIsUploadingAbstract] = useState(false)
+  const [selectedFullTextFile, setSelectedFullTextFile] = useState<File | null>(null)
+  const [uploadedFullTextUrl, setUploadedFullTextUrl] = useState<string | null>(null)
+  const [isUploadingFullText, setIsUploadingFullText] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -112,6 +116,63 @@ export default function SubmitPosterPage() {
   const handleRemoveAbstractFile = () => {
     setSelectedAbstractFile(null)
     setUploadedAbstractUrl(null)
+  }
+
+  const handleFullTextFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowedTypes = ["application/pdf"]
+
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Only PDF files are allowed.")
+      return
+    }
+
+    const maxSize = 10 * 1024 * 1024
+    if (file.size > maxSize) {
+      toast.error("File size exceeds 10MB limit")
+      return
+    }
+
+    setSelectedFullTextFile(file)
+    setUploadedFullTextUrl(null)
+  }
+
+  const handleRemoveFullTextFile = () => {
+    setSelectedFullTextFile(null)
+    setUploadedFullTextUrl(null)
+  }
+
+  const handleFullTextUpload = async () => {
+    if (!selectedFullTextFile) return null
+
+    setIsUploadingFullText(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", selectedFullTextFile)
+
+      const response = await fetch("/api/upload-poster", {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
+
+      const data = await response.json()
+      setUploadedFullTextUrl(data.url)
+      toast.success("Full text file uploaded successfully!")
+      return data.url
+    } catch (err: any) {
+      console.error("[v0] Full text upload error:", err)
+      toast.error(err.message || "Failed to upload full text file")
+      return null
+    } finally {
+      setIsUploadingFullText(false)
+    }
   }
 
   const handleFileUpload = async () => {
@@ -206,6 +267,7 @@ export default function SubmitPosterPage() {
         fileUrl = await handleFileUpload()
         if (!fileUrl) {
           setError("Failed to upload poster file. Please try again.")
+          setIsLoading(false)
           return
         }
       }
@@ -215,60 +277,60 @@ export default function SubmitPosterPage() {
         abstractUrl = await handleAbstractUpload()
         if (!abstractUrl) {
           setError("Failed to upload abstract file. Please try again.")
+          setIsLoading(false)
           return
         }
       }
 
-      const { error: insertError } = await supabase.from("abstracts").insert([
-        {
-          user_id: user.id,
-          email: user.email,
-          title: formData.title,
-          authors: formData.authors,
-          keywords: formData.topic, // Store topic in keywords field
-          content: abstractUrl, // Store abstract PDF URL in content field
-          category: formData.category, // Store category (Case Report/Research) in category field
-          submission_status: "pending",
-          file_url: fileUrl, // Store poster PDF URL in file_url field
-          university: formData.university, // Use university from form input
-        },
-      ])
-
-      if (insertError) {
-        console.error("[v0] Error inserting abstract:", insertError)
-        setError("Failed to submit e-poster. Please try again.")
-        toast.error("Failed to submit e-poster: " + insertError.message)
+      // Validate full text file is provided
+      if (!selectedFullTextFile && !uploadedFullTextUrl) {
+        setError("Full text file is required")
+        toast.error("Full text file is required")
+        setIsLoading(false)
         return
       }
 
-      try {
-        const userName = user.email?.split("@")[0] || "Participant"
-
-        const response = await fetch("/api/send-poster-submission-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: user.email,
-            userName,
-            posterTitle: formData.title,
-            topic: formData.topic,
-          }),
-        })
-
-        if (!response.ok) {
-          console.error("[v0] Failed to send confirmation email")
+      // Upload full text file if not yet uploaded
+      let fullTextUrl = uploadedFullTextUrl
+      if (selectedFullTextFile && !uploadedFullTextUrl) {
+        fullTextUrl = await handleFullTextUpload()
+        if (!fullTextUrl) {
+          setError("Failed to upload full text file. Please try again.")
+          setIsLoading(false)
+          return
         }
-      } catch (emailError) {
-        console.error("[v0] Error sending email:", emailError)
+      }
+      
+      // Call server action to submit poster (bypasses RLS issues)
+      const result = await submitPoster({
+        title: formData.title,
+        authors: formData.authors,
+        university: formData.university,
+        category: formData.category,
+        topic: formData.topic,
+        fileUrl: fileUrl!,
+        abstractUrl: abstractUrl!,
+        fullTextUrl: fullTextUrl!,
+      })
+
+      if (!result.success) {
+        setError(result.error || "Failed to submit e-poster. Please try again.")
+        toast.error(result.error || "Failed to submit e-poster")
+        setIsLoading(false)
+        return
       }
 
       toast.success("E-poster submitted successfully!")
-      router.push("/my-posters")
+      setIsLoading(false)
+      
+      // Small delay to allow toast to show before redirect
+      setTimeout(() => {
+        router.push("/my-posters")
+      }, 500)
     } catch (err) {
       console.error("[v0] Error in handleSubmit:", err)
       setError("An unexpected error occurred. Please try again.")
       toast.error("An unexpected error occurred. Please try again.")
-    } finally {
       setIsLoading(false)
     }
   }
@@ -600,6 +662,83 @@ export default function SubmitPosterPage() {
                     </p>
                   </div>
 
+                  <div className="min-w-0 w-full">
+                    <label className="block text-sm font-semibold mb-2">Full Text (PDF) *</label>
+
+                    {!selectedFullTextFile && !uploadedFullTextUrl && (
+                      <div className="border-2 border-dashed border-input rounded-lg p-6 text-center hover:border-primary/50 transition-colors min-w-0 w-full max-w-full">
+                        <input
+                          type="file"
+                          id="fulltext-file"
+                          accept=".pdf"
+                          onChange={handleFullTextFileChange}
+                          className="hidden"
+                        />
+                        <label htmlFor="fulltext-file" className="cursor-pointer flex flex-col items-center gap-2">
+                          <BookOpen className="w-8 h-8 text-muted-foreground" />
+                          <p className="text-sm font-medium break-words">Click to upload full text PDF</p>
+                          <p className="text-xs text-muted-foreground break-words">PDF only (max 10MB)</p>
+                        </label>
+                      </div>
+                    )}
+
+                    {selectedFullTextFile && !uploadedFullTextUrl && (
+                      <div className="border border-input rounded-lg p-4 flex items-center justify-between gap-2 min-w-0 w-full max-w-full">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="bg-primary/10 p-2 rounded flex-shrink-0">
+                            <BookOpen className="w-5 h-5 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">{selectedFullTextFile.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {(selectedFullTextFile.size / 1024 / 1024).toFixed(2)} MB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveFullTextFile}
+                          className="flex-shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {uploadedFullTextUrl && (
+                      <div className="border border-green-500/30 bg-green-500/5 rounded-lg p-4 flex items-center justify-between gap-2 min-w-0 w-full max-w-full">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="bg-green-500/10 p-2 rounded flex-shrink-0">
+                            <BookOpen className="w-5 h-5 text-green-500" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-green-700 break-words">
+                              Full text uploaded successfully
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {selectedFullTextFile?.name || "Uploaded file"}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemoveFullTextFile}
+                          className="flex-shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground mt-2 break-words">
+                      Full text file is required. Accepted format: PDF (max 10MB)
+                    </p>
+                  </div>
+
                   <div className="flex flex-col sm:flex-row gap-4 w-full">
                     <Button
                       type="button"
@@ -611,13 +750,13 @@ export default function SubmitPosterPage() {
                     </Button>
                     <Button
                       type="submit"
-                      disabled={isLoading || isUploading || isUploadingAbstract}
+                      disabled={isLoading || isUploading || isUploadingAbstract || isUploadingFullText}
                       className="w-full sm:flex-1"
                     >
-                      {isLoading || isUploading || isUploadingAbstract ? (
+                      {isLoading || isUploading || isUploadingAbstract || isUploadingFullText ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          {isUploading || isUploadingAbstract ? "Uploading..." : "Submitting..."}
+                          {isUploading || isUploadingAbstract || isUploadingFullText ? "Uploading..." : "Submitting..."}
                         </>
                       ) : (
                         <>

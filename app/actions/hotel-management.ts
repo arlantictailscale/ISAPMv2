@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { invalidateRoomAvailabilityCache } from "./get-room-availability"
 
 export type HotelBooking = {
   id: string
@@ -342,10 +343,14 @@ export async function updateRoomSettings(settings: {
     
     console.log("[v0] [updateRoomSettings] RPC function success, response:", JSON.stringify(data))
 
-    console.log("[v0] [updateRoomSettings] Room settings saved successfully, revalidating paths...")
+    console.log("[v0] [updateRoomSettings] Room settings saved successfully, invalidating cache and revalidating paths...")
+
+    // Invalidate the room availability cache so fresh data is fetched
+    await invalidateRoomAvailabilityCache()
 
     revalidatePath("/admin/hotel-management")
     revalidatePath("/venue")
+    revalidatePath("/hotel-booking")
     
     console.log("[v0] [updateRoomSettings] Paths revalidated, returning success")
     return { success: true, error: null }

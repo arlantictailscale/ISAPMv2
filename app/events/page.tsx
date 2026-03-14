@@ -75,22 +75,23 @@ export default function EventsPage() {
     {
       day: "Day 1 - Thursday, April 16, 2026",
       title: "CPD Day 1",
+      courseDirector: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
       sessions: [
         {
           sesi: "Session 1",
           items: [
-            { time: "08:00 - 08:30", title: "Opening (Pre-test)", speaker: "TBD" },
-            { time: "08:30 - 08:55", title: "Anatomy and Physiology of Pain", speaker: "TBD" },
-            { time: "08:55 - 09:20", title: "Assessment and Diagnosis of Pain", speaker: "TBD" },
+            { time: "08:00 - 08:30", title: "Opening (Pre-test)", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "08:30 - 08:55", title: "Anatomy and Physiology of Pain", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
+            { time: "08:55 - 09:20", title: "Assessment and Diagnosis of Pain", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
             { time: "09:20 - 09:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 2",
           items: [
-            { time: "09:30 - 09:55", title: "Pharmacology Opioid", speaker: "TBD" },
-            { time: "09:55 - 10:20", title: "Non Opioid", speaker: "TBD" },
-            { time: "10:20 - 10:45", title: "Adjuvant Analgesia", speaker: "TBD" },
+            { time: "09:30 - 09:55", title: "Pharmacology Opioid", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "09:55 - 10:20", title: "Non Opioid", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "10:20 - 10:45", title: "Adjuvant Analgesia", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             { time: "10:45 - 11:00", title: "Discussion", speaker: "-" },
           ],
         },
@@ -99,25 +100,26 @@ export default function EventsPage() {
           items: [
             {
               time: "11:00 - 11:25",
-              title: "Procedure Specific Pain Management Recommendation (PROSPECT)",
-              speaker: "TBD",
+              title: "Procedure Specific Pain Management",
+              speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
             },
-            { time: "11:25 - 11:50", title: "Interventional Technique for Perioperative Pain", speaker: "TBD" },
-            { time: "11:50 - 12:15", title: "Acute Pain Service", speaker: "TBD" },
+            { time: "11:25 - 11:50", title: "Interventional Technique for Perioperative Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "11:50 - 12:15", title: "The Role and Privilege of Anesthesiologist in Pain Management", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
             { time: "12:15 - 12:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "ISHOMA (Lunch Break)", speaker: "-" }],
         },
         {
           sesi: "Session 4",
           items: [
-            { time: "13:00 - 13:30", title: "Discussion Session: Postoperative Pain", speaker: "-" },
-            { time: "13:30 - 15:30", title: "Skill Station A: PCA, PCEA", speaker: "TBD" },
-            { time: "13:30 - 15:30", title: "Skill Station B: Postop. ACB, FICB", speaker: "TBD" },
-            { time: "13:30 - 15:30", title: "Skill Station C: Postop. Block Trunk (TAP, ESP)", speaker: "TBD" },
+            { time: "13:00 - 13:30", title: "Discussion Session: Cancer Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP / Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "13:30 - 15:30", title: "Skill Station A: Epidural Analgesia, Epidural USG guidance", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Intra-articular knee, CTS", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
+            { time: "13:30 - 15:30", title: "Skill Station C: Suprascapular, Paravertebra block, Occipital", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "15:30 - 16:00", title: "Post-Test / Closing", speaker: "-" },
           ],
         },
       ],
@@ -125,58 +127,58 @@ export default function EventsPage() {
     {
       day: "Day 2 - Friday, April 17, 2026",
       title: "CPD Day 2",
+      courseDirector: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
       sessions: [
         {
           sesi: "Session 1",
           items: [
-            { time: "08:00 - 08:25", title: "Chronic Pain After Surgery", speaker: "TBD" },
-            { time: "08:25 - 08:50", title: "Neuropathic Pain", speaker: "TBD" },
-            { time: "08:50 - 09:15", title: "Pain in Special Population: Pediatric and Geriatric", speaker: "TBD" },
+            { time: "08:00 - 08:25", title: "Chronic Pain After Surgery", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
+            { time: "08:25 - 08:50", title: "Neuropathic Pain", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
+            { time: "08:50 - 09:15", title: "Pain in Special Population: Pediatric and Geriatric", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
             { time: "09:15 - 09:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 2",
           items: [
-            { time: "09:30 - 09:55", title: "CRPS", speaker: "TBD" },
-            { time: "09:55 - 10:20", title: "Cancer Pain and The Management", speaker: "TBD" },
-            { time: "10:20 - 10:45", title: "Interventional Technique for Chronic Pain", speaker: "TBD" },
+            { time: "09:30 - 09:55", title: "CRPS", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
+            { time: "09:55 - 10:20", title: "Cancer Pain and The Management", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "10:20 - 10:45", title: "Interventional Technique for Chronic Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
             { time: "10:45 - 11:00", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 3",
           items: [
-            { time: "11:00 - 11:25", title: "The Role of Interventional Pain Management", speaker: "TBD" },
-            { time: "11:25 - 11:50", title: "Ethic and Patient Safety in Pain Management", speaker: "TBD" },
+            { time: "11:00 - 11:25", title: "The Role of Interventional Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
+            { time: "11:25 - 11:50", title: "Ethic and Patient Safety in Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
             {
               time: "11:50 - 12:15",
-              title: "The Role and Privilege of Anesthesiologist in Pain Management",
-              speaker: "TBD",
+              title: "Acute Pain Service",
+              speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP",
             },
             { time: "12:15 - 12:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "ISHOMA (Lunch Break)", speaker: "-" }],
         },
         {
           sesi: "Session 4",
           items: [
-            { time: "13:00 - 13:30", title: "Discussion Session: Cancer Pain", speaker: "-" },
+            { time: "13:00 - 13:30", title: "Discussion Session: Postoperative Pain", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K) / dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             {
               time: "13:30 - 15:30",
-              title: "Skill Station A: Epidural Analgesia, Epidural USG guidance",
-              speaker: "TBD",
+              title: "Skill Station A: PCA, PCEA",
+              speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP / Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
             },
-            { time: "13:30 - 15:30", title: "Skill Station B: Intra-articular knee, CTS", speaker: "TBD" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Postop. ACB, FICB", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             {
               time: "13:30 - 15:30",
-              title: "Skill Station C: Suprascapular, Paravertebra block, Occipital",
-              speaker: "TBD",
+              title: "Skill Station C: Postop. Block Trunk (TAP, ESP)",
+              speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
             },
-            { time: "15:30 - 16:00", title: "Post-Test / Closing", speaker: "-" },
           ],
         },
       ],
@@ -192,87 +194,86 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
+        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
         {
           time: "08.15-08.45",
           event: "Pathophysiology of Chronic Pain and Tissue Healing Mechanisms",
-          speaker: "TBD",
+          speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM / dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
         },
         {
-          time: "08.45– 09.30",
+          time: "08.45-09.30",
           event: "Principles and Evidence of Prolotherapy and PRP in Pain Management",
-          speaker: "TBD",
+          speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM / dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
         },
         {
           time: "09.30-10.15",
-          event:
-            "Comparison of Regenerative vs Conventional Steroid Injections (efikasi, keamanan, cost-effectiveness)",
-          speaker: "TBD",
+          event: "Comparison of Regenerative vs Conventional Steroid Injections (efikasi, keamanan, cost-effectiveness)",
+          speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM / dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
         },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
         {
-          time: "10.30 – 11.15",
+          time: "10.30-11.15",
           event: "Introduction to Microinvasive Procedures: Dry Needling, Perineural Injection, and Hydrodissection",
-          speaker: "TBD",
+          speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM / dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
         },
         {
           time: "11.15-12.00",
           event: "Complications and Safety Checklist in Regenerative and Microinvasive Procedures",
-          speaker: "TBD",
+          speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM / dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
         },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
         {
           time: "13.00-15.30",
           event:
             "Station 1: PRP Preparation and Injection Technique (USG-guided)\nStation 2: Prolotherapy Injection Technique\nStation 3: Microinvasive Needling / Hydrodissection Techniques",
-          speaker: "Instructor",
+          speaker: "Instruktur",
         },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        { time: "", event: "CLOSING", speaker: "" },
       ],
     },
     {
       no: 2,
       title: "Basic Interventional Pain Management (Musculoskeletal)",
       participant: "Anesthesiology and Intensive Therapy Specialist",
-      director: "dr. John Frans Sitepu, M.Ked (An), Sp.An-TI, Subsp. MN (K), FIPM",
+      director: "Dr. John Frans Sitepu, M.Ked (An), Sp.An-TI, Subsp. MN (K), FIPM",
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
+        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
         {
           time: "08.15-08.45",
           event: "Principles of Interventional Pain Management in Musculoskeletal Disorders",
-          speaker: "TBD",
+          speaker: "Dr. John Frans Sitepu, M.Ked (An), Sp.An-TI, Subsp. MN (K), FIPM",
         },
         {
-          time: "08.45– 09.30",
+          time: "08.45-09.30",
           event: "Common Musculoskeletal Pain Syndromes (Shoulder, Neck, Low Back, Knee)",
-          speaker: "TBD",
+          speaker: "dr. Taufiq Agus Siswagama, Sp.An-TI., Subsp. M.N. (K)",
         },
         {
           time: "09.30-10.15",
           event: "Ultrasound-Guided Musculoskeletal Procedures: Tips and Pitfalls",
-          speaker: "TBD",
+          speaker: "dr. Y.R. Yosi Asmara SpAn-TI, Subsp.An.R (K), FIP, FIPP, CIPS",
         },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
         {
-          time: "10.30 – 11.15",
+          time: "10.30-11.15",
           event: "Steroid, PRP, and Regenerative Injections: What's the Evidence?",
-          speaker: "TBD",
+          speaker: "dr Ratri Dwi Indriani Sp.An-TI, FIP., FIPP",
         },
         {
           time: "11.15-12.00",
           event: "Case Discussion: Approach to Chronic Musculoskeletal Pain",
-          speaker: "TBD",
+          speaker: "All Instructor",
         },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
         {
           time: "13.00-15.30",
           event:
             "Station 1: Ultrasound-Guided Shoulder Injection (Suprascapular & Glenohumeral)\nStation 2: Low Back Pain Procedures: Facet Joint, Trigger Point, & Sacroiliac Joint Injection\nStation 3: Knee & Hip Joint Injection Techniques (Sonoanatomy & Practice on Phantom)\nStation 4: Dry Needling, Myofascial Release, and Safe Injection Practices",
-          speaker: "Instructor",
+          speaker: "All Instructor",
         },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        { time: "", event: "CLOSING", speaker: "" },
       ],
     },
     {
@@ -283,37 +284,26 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        {
-          time: "08.15-08.45",
-          event: "Pain Assessment in Neonates and Children (FLACC, NIPS, Wong-Baker, etc.)",
-          speaker: "TBD",
-        },
-        {
-          time: "08.45– 09.30",
-          event: "Regional Techniques for Pediatric Pain (Caudal, TAP, Peripheral Block)",
-          speaker: "TBD",
-        },
-        { time: "09.30-10.15", event: "Pharmacological Pain Management in Pediatric Patients", speaker: "TBD" },
-        { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        {
-          time: "10.30 – 11.15",
-          event: "Non-Pharmacologic & Behavioral Pain Management (Distraction, Parental Involvement, Comfort Measures)",
-          speaker: "TBD",
-        },
-        {
-          time: "11.15-12.00",
-          event: "Case Discussion: Postoperative Pain Management in Pediatric Surgery",
-          speaker: "TBD",
-        },
-        { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        {
-          time: "13.00-15.30",
-          event:
-            "Station 1: Pediatric Pain Assessment Tools (FLACC, NIPS, Wong-Baker) – Praktik Observasi dan Simulasi Kasus\nStation 2: Caudal & TAP Block on Pediatric Phantom (Ultrasound-Guided)\nStation 3: Pediatric Analgesic Dosing & PCA Setup (Calculation, Safety, Titration)\nStation 4: Non-Pharmacologic Pain Management Simulation (Distraction, Parental Support, Communication)",
-          speaker: "Instructor",
-        },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
+        { time: "08.15-08.30", event: "Introduction + Recognize", speaker: "Instruktur" },
+        { time: "08.30-08.45", event: "Pain Assessment in Paediatrics", speaker: "Instruktur" },
+        { time: "08.45-09.00", event: "Non-Pharmacological Treatment", speaker: "Instruktur" },
+        { time: "09.00-09.15", event: "Pharmacological Treatment", speaker: "Instruktur" },
+        { time: "09.15-09.30", event: "COFFEE BREAK", speaker: "-" },
+        { time: "09.30-09.55", event: "Pain Management Barrier", speaker: "All Facilitator" },
+        { time: "09.55-10.20", event: "Overcoming Barriers Presentation", speaker: "All Facilitator" },
+        { time: "10.20-11.20", event: "RAT Cases & Presentation", speaker: "All Facilitator" },
+        { time: "11.20-11.30", event: "Post Test", speaker: "All Facilitator" },
+        { time: "11.30-13.00", event: "BREAK SESSION (LUNCH)", speaker: "-" },
+        { time: "13.00-13.20", event: "Adult learning – Teaching Overview", speaker: "All Facilitator" },
+        { time: "13.20-13.40", event: "Giving Lecture – Running a Discussion Group", speaker: "All Facilitator" },
+        { time: "13.40-13.45", event: "Divide Into group", speaker: "All Facilitator" },
+        { time: "13.45-14.15", event: "Giving Lecture", speaker: "All Facilitator" },
+        { time: "14.15-14.45", event: "Running a Discussion Group", speaker: "All Facilitator" },
+        { time: "14.45-14.50", event: "COFFEE BREAK", speaker: "-" },
+        { time: "14.50-15.20", event: "EPM Planning – Workshop Presentation", speaker: "All Facilitator" },
+        { time: "15.20-15.30", event: "Feedback – Group photo & Closing", speaker: "All Facilitator" },
+        { time: "", event: "CLOSING", speaker: "" },
       ],
     },
     {
@@ -324,37 +314,41 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
+        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
         {
           time: "08.15-08.45",
           event: "Three in one methode technique (massage, TENS, Shock wave therapy)",
-          speaker: "Willy Halim MD, PhD, FIPP",
+          speaker: "Willy Halim, MD, PhD, FIPP",
         },
-        { time: "08.45– 09.30", event: "SEFT (Spiritual Emotional Freedom Technique)", speaker: "Rahmaya Nova" },
         {
-          time: "09.30-10.15",
+          time: "08.45-09.30",
+          event: "SEFT (Spiritual Emotional Freedom Technique)",
+          speaker: "Dr. Ns. Rahmaya Nova Handayani, S.Kep., M.Sc., Sp.Kep.MD",
+        },
+        {
+          time: "09.30-11.15",
           event: "Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
-          speaker: "dr. Arif Alamsyah dan tim",
+          speaker: "dr. Arief Alamsyah, MARS, Sp.KKLP, CHt",
         },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
         {
-          time: "10.30 – 11.15",
-          event: "Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
-          speaker: "TBD",
+          time: "10.30-11.15",
+          event: "Adjuvant Drugs in Pain Management (Antidepressant, Anticonvulsant, NMDA Antagonist)",
+          speaker: "dr. Taufiq Agus Siswagama, Sp.An-TI., Subsp. M.N. (K)",
         },
         {
           time: "11.15-12.00",
           event: "Case Discussion: Integrating Adjunct Therapies in Acute and Chronic Pain Patients",
-          speaker: "TBD",
+          speaker: "Instruktur",
         },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
         {
           time: "13.00-15.30",
           event:
             "Station 1: Three in one methode technique (massage, TENS, Shock wave therapy)\nStation 2: SEFT (Spiritual Emotional Freedom Technique)\nStation 3: Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
-          speaker: "Instructor",
+          speaker: "Instruktur",
         },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        { time: "", event: "CLOSING", speaker: "" },
       ],
     },
     {
@@ -386,12 +380,12 @@ export default function EventsPage() {
           credentials: "Head of Pain Management Installation RSUD Dr. KH. Idham Chalid Ciawi",
         },
         {
-          name: "dr. Ristanti Karina, MARS",
-          role: "Director of Medical Services Mayapada Hospital Bogor (2020-2025)",
-          credentials: "Head Pain Management Center Mayapada Hospital Bogor",
+          name: "dr. Ristanti, MARS",
+          role: "Director of Medical Services",
+          credentials: "Head Pain Management Center",
         },
         {
-          name: "dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K., C.MSC",
+          name: "dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
           role: "Director RSUD Ciawi (2019-2022)",
           credentials:
             "Founder Pain Management Installation RSUD Dr. KH. Idham Chalid Ciawi - Winner of Government Innovation Awards 2021",
@@ -404,119 +398,122 @@ export default function EventsPage() {
         },
       ],
       materials: [
-        "Standardized Pain Service Development & Best Practices",
-        "Financial Management & Revenue Optimization for Pain Services",
-        "Collaboration Strategies & Marketing Pain Clinic Services",
-        "Sustainable Service Models & Quality Improvement Systems",
+        "Brainstorming: Framework and regulation, Burden of Pain Indonesia, Designing Pain Clinic in Indonesia's setting",
+        "Pembagian Kelompok dan Memperkenalkan Fasilitator",
+        "Sesi I: Tim Pelayanan, Tim Keuangan dan Administrasi, Tim Marketing, Asuransi dan JKN, Tim Dokter Pelaksana",
+        "Sesi II: Tim Pelayanan, Tim Keuangan dan Administrasi, Tim Marketing, Asuransi dan JKN, Tim Dokter Pelaksana",
       ],
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
+        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
         {
           time: "08.15-08.45",
-          event: "The Concept and Philosophy of Pain Medicine: From Acute to Chronic Pain Service",
-          speaker: "TBD",
-        },
-        { time: "08.45– 09.30", event: "Designing a Pain Clinic: Scope, Structure, and Staffing", speaker: "TBD" },
-        {
-          time: "09.30-10.15",
-          event: "Establishing Multidisciplinary Collaboration: Anesthesia, Neurology, Rehab, and Palliative Teams",
-          speaker: "TBD",
-        },
-        { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        {
-          time: "10.30 – 11.15",
-          event: "Workflow and Patient Pathway in Pain Clinic: Assessment to Follow-Up",
-          speaker: "TBD",
-        },
-        {
-          time: "11.15-12.00",
-          event: "Essential Equipment, Documentation, and Coding for Pain Procedures",
-          speaker: "TBD",
-        },
-        { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        {
-          time: "13.00-15.30",
           event:
-            "Station 1: Pain Clinic Setup Simulation: Patient Flow, Documentation, and Scheduling System\nStation 2: Clinical Pathway Simulation: Pain Assessment, Counseling, and Treatment Planning\nStation 3: Basic Interventional Tools Introduction (USG, TENS, Epidural Kit, Phantom)\nStation 4: Multidisciplinary Team Roleplay: Case Conference Between Anesthesiologist, Rehab, and Psychologist",
-          speaker: "Instructor",
+            "Brainstorming: Framework and regulation, Burden of Pain Indonesia, Designing Pain Clinic in Indonesia's setting",
+          speaker: "dr. Said Shofwan, Sp.An-TI, FIP, FIPP",
         },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        {
+          time: "08.45-09.00",
+          event: "Pembagian Kelompok dan Memperkenalkan Fasilitator",
+          speaker: "dr. Henny Widyastuti, Sp.An-TI., Subsp. M.N. (K)., FIP",
+        },
+        {
+          time: "09.00-11.00",
+          event:
+            "Sesi I:\n1. Tim Pelayanan\n2. Tim Keuangan dan Administrasi\n3. Tim Marketing, Asuransi dan JKN\n4. Tim Dokter Pelaksana",
+          speaker:
+            "Instruktur:\n1. dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K\n2. Rahmi Winandari, SKM., M.Kes\n3. dr. Ristanti, MARS\n4. dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
+        },
+        { time: "11.00-12.30", event: "COFFEE BREAK", speaker: "-" },
+        {
+          time: "11.00-12.30",
+          event:
+            "Sesi II:\n1. Tim Pelayanan\n2. Tim Keuangan dan Administrasi\n3. Tim Marketing, Asuransi dan JKN\n4. Tim Dokter Pelaksana",
+          speaker:
+            "Instruktur:\n1. dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K\n2. Rahmi Winandari, SKM., M.Kes\n3. dr. Ristanti, MARS\n4. dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
+        },
+        { time: "11.15-12.00", event: "Brainstorming", speaker: "Team Reflection" },
+        { time: "", event: "CLOSING", speaker: "" },
       ],
     },
     {
       no: 6,
-      title: "Cancer Pain",
+      title: "Cancer Pain Management",
       participant: "Anesthesiology and Intensive Therapy Specialist, General Practitioner, Nurse",
-      director: "Dr. dr. Tasrif Hamdi Sp.An-TI, Subsp.M.N (K)",
+      director: "Dr. dr. Tasrif Hamdi, Sp.An-TI, Subsp.M.N (K)",
       date: "Friday, April 17, 2026",
       agenda: [
-        { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
-        { time: "08.15-08.45", event: "Pathophysiology and Classification of Cancer Pain", speaker: "TBD" },
-        { time: "08.45– 09.30", event: "WHO Analgesic Ladder in 2025: Still Relevant?", speaker: "TBD" },
+        { time: "07.30-08.00", event: "Registration", speaker: "Committee" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Chairman of the Committee" },
+        {
+          time: "08.15-08.45",
+          event: "Pathophysiology and Classification of Cancer Pain",
+          speaker: "Dr. dr. Tasrif Hamdi, Sp.An-TI, Subsp.M.N (K)",
+        },
+        {
+          time: "08.45-09.30",
+          event: "Pharmacologic Management of Cancer Pain (Opioid & Non-Opioid Strategies)",
+          speaker: "dr. Madonna Damayanthie Datu, SpAn-TI., FCPM., FIP., Subsp.M.N.(K)",
+        },
         {
           time: "09.30-10.15",
-          event: "Pharmacologic Management of Cancer Pain (Opioid & Non-Opioid Strategies)",
-          speaker: "TBD",
+          event: "Application of the WHO Analgesic Ladder in Cancer Pain",
+          speaker: "dr. Nur Surya Wirawan., Sp.An-TI., Subsp.MN(K)., MARS., AIFO(K)",
         },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "10.30 – 11.15", event: "Interventional Pain Techniques in Cancer Pain", speaker: "TBD" },
-        { time: "11.15-12.00", event: "Psychological & Palliative Aspects in Cancer Pain", speaker: "TBD" },
-        { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
+        {
+          time: "10.30-11.15",
+          event: "Interventional Pain Techniques in Cancer Pain",
+          speaker: "Dr. dr. Tasrif Hamdi, Sp.An-TI, Subsp.M.N (K)",
+        },
+        {
+          time: "11.15-12.00",
+          event: "Symptom Management in Cancer Pain (Dyspnea, Nausea & Vomiting, Delirium, Constipation)",
+          speaker: "dr. Madonna Damayanthie Datu, SpAn-TI., FCPM., FIP., Subsp.M.N.(K)",
+        },
+        { time: "12.00-13.00", event: "BREAK SESSION (LUNCH)", speaker: "-" },
         {
           time: "13.00-15.30",
           event:
-            "Station 1: Ultrasound-Guided Nerve Block for Cancer Pain (Celiac Plexus / TAP / Paravertebral)\nStation 2: Intrathecal & Epidural Catheter Techniques for Chronic Pain\nStation 3: Opioid Rotation and Conversion Workshop (opioid equivalence, dosing, titration)\nStation 4: Communication & Palliative Counseling Skills",
-          speaker: "Instructor",
+            "Hands-On Workshop (Parallel Stations):\nStation 1: Ultrasound-Guided Nerve Block for Cancer Pain (Celiac Plexus / TAP / Paravertebral)\nStation 2: Intrathecal & Epidural Catheter Techniques for Chronic Cancer Pain\nStation 3: Opioid Rotation and Conversion Workshop (Equianalgesic Dosing, Titration)\nStation 4: Communication & Palliative Counseling Skills",
+          speaker: "Instructors",
         },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        { time: "15.30-16.00", event: "Closing Session", speaker: "Organizing Committee" },
       ],
     },
     {
       no: 7,
       title: "Advanced Intervention of Pain Management",
       participant: "Anesthesiology and Intensive Therapy Specialist, Fellowship & SP2",
-      director: "dr. Mirza Koesherdiandi, SpAn, FIPM, FIPP",
+      director: "dr. Mirza Koesherdiandi, Sp.An, FIPM, FIPP",
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Opening & Pretest", speaker: "Committee Chair" },
+        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
         {
           time: "08.15-08.45",
-          event: "Neuromodulation Principles: Spinal Cord, Dorsal Root Ganglion, and Peripheral Nerve Stimulation",
-          speaker: "TBD",
+          event: "Basic MRI Reading for Spinal Canal Problem",
+          speaker: "Dr. Irma Darinafitri, Sp.Rad(K)",
         },
         {
-          time: "08.45– 09.30",
-          event: "Intrathecal Drug Delivery Systems: Indications, Pump Selection, and Troubleshooting",
-          speaker: "TBD",
+          time: "08.45-09.15",
+          event: "Diagnosis of Canal Stenosis",
+          speaker: "dr. Agus Setiyana, Sp. An-TI., Subsp.An. Kv (K)., FIPM, FIPP",
         },
+        { time: "09.15-09.30", event: "COFFEE BREAK", speaker: "-" },
         {
-          time: "09.30-10.15",
-          event: "Fluoroscopy & Ultrasound Synergy for Advanced Pain Procedures",
-          speaker: "TBD",
+          time: "09.30-10.00",
+          event: "Laminaplasty Procedures",
+          speaker: "dr. Mirza Koesherdiandi, Sp.An. F IPM. FIPP",
         },
-        { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
+        { time: "11.00-13.00", event: "BREAK SESSION (LUNCH)", speaker: "-" },
         {
-          time: "10.30 – 11.15",
-          event: "Updates in Radiofrequency Technology: Pulsed, Bipolar, and Cooled RF Applications",
-          speaker: "TBD",
+          time: "10.00-15.30",
+          event: "Hands On Laminaplasty Procedures",
+          speaker:
+            "dr. Mirza Koesherdiandi, Sp.An. F IPM. FIPP / dr. Agus Setiyana, Sp. An-TI., Subsp.An. Kv (K)., FIPM, FIPP",
         },
-        {
-          time: "11.15-12.00",
-          event:
-            "Case-Based Symposium: Comprehensive Algorithm for Refractory Pain Syndromes (FBSS, CRPS, Postherpetic Neuralgia, Cancer Pain)",
-          speaker: "TBD",
-        },
-        { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
-        {
-          time: "13.00-15.30",
-          event:
-            "DRG Stimulation System (Trial & Permanent Implantation Simulation)\nUltrasound-Guided\nFluoroscopy-Guided Cervical & Lumbar RF Ablation (Medial Branch & DRG)\nSpinal Cord Stimulation (SCS): Lead Placement, Programming, and Troubleshooting (Demo System: Abbott / Medtronic)",
-          speaker: "Instructor",
-        },
-        { time: "15.30-16.00", event: "CLOSING", speaker: "Committee" },
+        { time: "", event: "CLOSING", speaker: "" },
       ],
     },
   ]
@@ -525,113 +522,194 @@ export default function EventsPage() {
     grandTheme:
       "Practical Pain Management for Doctors and Nurses: From Assessment, Safe Analgesic Use, and Intervention Pain Management",
     date: "Saturday, April 18, 2026",
-    agenda: [
-      { time: "07.30 – 08.00", activity: "Re-Registration + Onsite Registration", speaker: "Committee" },
-      { time: "08.00 – 08:05", activity: "Opening Ceremony", speaker: "Committee" },
-      { time: "08:05 – 08:25", activity: "Ethics and Patient Safety in Pain Management", speaker: "TBD" },
+    sections: [
       {
-        time: "08:25 – 08:45",
-        activity: "Realizing Integrated Pain Services: Regulatory Challenges and Implementation in Health Facilities",
-        speaker: "TBD",
+        title: "Opening Session",
+        items: [
+          { time: "07:30 - 08:00", activity: "Re-Registration + Registrasi Onsite", speaker: "Committee" },
+          { time: "08:00 - 08:05", activity: "Opening Ceremony", speaker: "Committee" },
+          {
+            time: "08:05 - 08:25",
+            activity: "Ethics and Patient Safety in Pain Management",
+            speaker: "Prof. Dr. dr. Nancy Margarita Rehatta, Sp.An-TI, Subsp.N.An.(K), Subsp.M.N.(K)",
+          },
+          {
+            time: "08:25 - 08:45",
+            activity:
+              "Mewujudkan Layanan Nyeri Terintegrasi: Tantangan Regulasi dan Implementasi di Fasilitas Kesehatan",
+            speaker: "Kemenkes - Prof. dr. Dante Saksono Harbuwono, Sp.PD, KEMD, Ph.D",
+          },
+          {
+            time: "08:45 - 09:05",
+            activity:
+              "Peran BPJS Kesehatan dalam Menjamin Akses, Mutu, dan Efisiensi Layanan Nyeri di Indonesia",
+            speaker: "BPJS Pusat - Mayjen TNI (Purn) Dr. Prihati Pujowaskito, Sp.JP(K), FIHFAA, MMRS",
+          },
+          {
+            time: "09:05 - 09:25",
+            activity:
+              "Bridging Policy and Practice: Sinergi Profesi Anestesi dengan Kemenkes dan BPJS dalam Pengakuan Layanan Nyeri",
+            speaker: "Ketua ISAPM - Dr. dr. A. M. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
+          },
+          {
+            time: "09:25 - 09:55",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Doso Sutiyono, SpAn-TI, Subsp. An.R (K)., Subsp.M.N.(K)., MARS",
+          },
+        ],
       },
       {
-        time: "08:45 – 09:05",
-        activity:
-          "The Role of BPJS Kesehatan in Ensuring Access, Quality, and Efficiency of Pain Services in Indonesia",
-        speaker: "TBD",
+        title: "Drug Symposium",
+        items: [
+          {
+            time: "09:55 - 10:15",
+            activity: "Industrial Symposium",
+            speaker: "Dr. dr. A. M. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
+          },
+          {
+            time: "10:15 - 10:35",
+            activity: "Multimodal Analgesia for Acute Postoperative Pain: Current Evidence and Future Directions",
+            speaker: "Prof. dr. Andi Husni Tanra, PhD, SpAn-TI., Subsp.T.I.(K)., Subsp.M.N.(K)",
+          },
+          {
+            time: "10:35 - 10:55",
+            activity:
+              "Preventing Transition from Acute to Chronic Post-Surgical Pain: Early Recognition and Intervention",
+            speaker: "Prof. Dr. Suwarman, dr., Sp.An-., Subsp.T.I.(K)., Subsp.M.N.(K)., M.Kes",
+          },
+          {
+            time: "10:55 - 11:15",
+            activity: "Integrasi Layanan Acute Pain Service (APS) dalam Perawatan Perioperatif di Rumah Sakit",
+            speaker: "Prof. Dr. dr. Tjokorda Gde Agung Senapathi, SpAn-TI., Subsp.An.R(K)",
+          },
+          {
+            time: "11:15 - 11:25",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Heri Dwi Purnomo, Sp.An-TI., M.Kes., Subsp. M.N (K)., FIP., Subsp. An.R (K)",
+          },
+        ],
       },
       {
-        time: "09:05– 09:25",
-        activity:
-          "Bridging Policy and Practice: Synergy of the Anesthesia Profession with the Ministry of Health and BPJS in Recognition of Pain Services",
-        speaker: "TBD",
-      },
-      { time: "09:25– 09:55", activity: "DISCUSSION", speaker: "-" },
-      { time: "09:55– 10:15", activity: "Industrial Symposium", speaker: "TBD" },
-      {
-        time: "10:15 – 10:35",
-        activity: "Multimodal Analgesia for Acute Postoperative Pain: Current Evidence and Future Directions",
-        speaker: "TBD",
-      },
-      {
-        time: "10:35 - 10:55",
-        activity: "Preventing Transition from Acute to Chronic Post-Surgical Pain: Early Recognition and Intervention",
-        speaker: "TBD",
-      },
-      {
-        time: "10:55 – 11:15",
-        activity: "Integration of Acute Pain Service (APS) in Perioperative Care in Hospitals",
-        speaker: "TBD",
-      },
-      { time: "11:15 – 11:25", activity: "DISCUSSION", speaker: "-" },
-      {
-        time: "11:25 -11:45",
-        activity:
-          "Ultrasound-Guided Pain Interventions: Evidence-Based Updates, Clinical Pearls, and Future Directions",
-        speaker: "TBD",
-      },
-      {
-        time: "11:45-12:05",
-        activity: "Steroid Injections in Pain Medicine: Still Relevant or Outdated?",
-        speaker: "TBD",
+        title: "Multimodal Symposium",
+        items: [
+          {
+            time: "11:25 - 11:40",
+            activity: "Industrial Symposium",
+            speaker: "dr. Taufiq Agus Siswagama, Sp.An-TI., Subsp. M.N. (K)",
+          },
+          {
+            time: "11:40 - 12:00",
+            activity:
+              "Ultrasound-Guided Pain Interventions: Evidence-Based Updates, Clinical Pearls, and Future Directions",
+            speaker: "Dr. John Frans Sitepu, M.Ked (An), Sp.An-TI, Subsp. MN (K), FIPM",
+          },
+          {
+            time: "12:00 - 12:20",
+            activity: "Steroid Injections in Pain Medicine: Still Relevant or Outdated?",
+            speaker: "dr. Mahmud, M.Sc., SpAn-TI. Subsp. MN(K), FIPM",
+          },
+          {
+            time: "12:20 - 12:40",
+            activity:
+              "Sugar Heals: Understanding the Science Behind Dextrose Prolotherapy in Chronic Pain Management",
+            speaker: "dr. Y.R. Yosi Asmara SpAn-TI, Subsp.An.R (K), FIP, FIPP, CIPS",
+          },
+          {
+            time: "12:40 - 12:50",
+            activity: "DISCUSSION",
+            speaker: "Moderator: Dr. dr. Aswoco Andyk Asmoro, Sp.An-TI., FIP",
+          },
+        ],
       },
       {
-        time: "12:05-12:25",
-        activity: "Sugar Heals: Understanding the Science Behind Dextrose Prolotherapy in Chronic Pain Management",
-        speaker: "TBD",
-      },
-      { time: "12:25-12:35", activity: "DISCUSSION", speaker: "-" },
-      { time: "12:35 – 13:15", activity: "Break and Lunch Symposium", speaker: "TBD" },
-      {
-        time: "13:15-13:35",
-        activity: "Regenerative Pain Medicine: From Biologic Science to Ultrasound-Guided Clinical Application",
-        speaker: "TBD",
+        title: "Break",
+        items: [{ time: "12:50 - 13:15", activity: "ISHOMA (Lunch Break)", speaker: "-" }],
       },
       {
-        time: "13:35– 13:55",
-        activity:
-          "Secretome and Exosome-Based Therapy: Evidence, Mechanism, and Clinical Potential in Pain and Tissue Repair",
-        speaker: "TBD",
+        title: "Regenerative Pain Symposium",
+        items: [
+          {
+            time: "13:00 - 13:15",
+            activity: "Industrial Symposium",
+            speaker: "dr. Puja Laksana Maqbul, Sp.An-TI, FIPM, FIPP",
+          },
+          {
+            time: "13:15 - 13:35",
+            activity:
+              "Regenerative Pain Medicine: From Biologic Science to Ultrasound-Guided Clinical Application",
+            speaker: "dr. Said Sofwan, SpAn-TI., FIPP., FIP",
+          },
+          {
+            time: "13:35 - 13:55",
+            activity:
+              "Secretome and Exosome-Based Therapy: Evidence, Mechanism, and Clinical Potential in Pain and Tissue Repair",
+            speaker: "dr. Nur Surya Wirawan., Sp.An-TI., Subsp.MN(K)., MARS., AIFO(K)",
+          },
+          {
+            time: "13:55 - 14:15",
+            activity:
+              "Comparative Effectiveness of Regenerative Pain Interventions: PRP, Stem Cell, and Biologic Derivatives in Chronic Pain Management",
+            speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM",
+          },
+          {
+            time: "14:15 - 14:25",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)",
+          },
+        ],
       },
       {
-        time: "13:55– 14:15",
-        activity:
-          "Comparative Effectiveness of Regenerative Pain Interventions: PRP, Stem Cell, and Biologic Derivatives in Chronic Pain Management",
-        speaker: "TBD",
-      },
-      { time: "14:15 – 14:25", activity: "DISCUSSION", speaker: "-" },
-      { time: "14:25– 14:45", activity: "Industrial Symposium 2", speaker: "TBD" },
-      {
-        time: "14:45 – 15:05",
-        activity:
-          "Radiofrequency Interventions for Chronic Pain: Current Evidence, Expanding Indications, and Long-Term Outcomes",
-        speaker: "TBD",
-      },
-      {
-        time: "15:05 – 15:25",
-        activity: "From Needles to Neuromodulation: Advances in Minimally Invasive Pain Procedures",
-        speaker: "TBD",
-      },
-      {
-        time: "15:25-15:45",
-        activity:
-          "Hybrid Regenerative-Radiofrequency Techniques: Combining Biologic and Thermal Modulation for Enhanced Pain Relief",
-        speaker: "TBD",
-      },
-      { time: "15:45-15:55", activity: "DISCUSSION", speaker: "-" },
-      {
-        time: "15:55-16:15",
-        activity: "Interventional Pain Procedures in Palliative Care: Balancing Efficacy, Safety, and Quality of Life",
-        speaker: "TBD",
+        title: "High Technology Pain Management Symposium",
+        items: [
+          { time: "14:25 - 14:45", activity: "Industrial Symposium", speaker: "-" },
+          {
+            time: "14:45 - 15:05",
+            activity:
+              "Radiofrequency Interventions for Chronic Pain: Current Evidence, Expanding Indications, and Long-Term Outcomes",
+            speaker: "Dr. dr. Ristiawan Muji Laksono, Sp. An-TI., Subsp. M. N. (K)., FIPP",
+          },
+          {
+            time: "15:05 - 15:25",
+            activity: "From Needles to Neuromodulation: Advances in Minimally Invasive Pain Procedures",
+            speaker: "dr. Mirza Koeshardiandi, SpAn-TI., FIP., FIPP",
+          },
+          {
+            time: "15:25 - 15:45",
+            activity:
+              "Hybrid Regenerative-Radiofrequency Techniques: Combining Biologic and Thermal Modulation for Enhanced Pain Relief",
+            speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
+          },
+          {
+            time: "15:45 - 15:55",
+            activity: "DISCUSSION",
+            speaker: "Moderator: dr. Buyung Hartiyo Laksono, Sp. An-TI., Subsp.N.An.(K)., FIP",
+          },
+        ],
       },
       {
-        time: "16:15-16:35",
-        activity:
-          "Integrated Palliative Pain Management: Bridging Pharmacologic, Interventional, and Psychosocial Strategies",
-        speaker: "TBD",
+        title: "Drug and Equipment in Cancer Pain Management",
+        items: [
+          { time: "15:55 - 16:10", activity: "Industrial Symposium", speaker: "-" },
+          {
+            time: "15:55 - 16:15",
+            activity:
+              "Interventional Pain Procedures in Palliative Care: Balancing Efficacy, Safety, and Quality of Life",
+            speaker: "Dr. dr. R. Dwi Pantja Wibowo, Sp.An-TI, Subsp. T.I. (K), Subsp. M.N. (K)",
+          },
+          {
+            time: "16:15 - 16:35",
+            activity:
+              "Integrated Palliative Pain Management: Bridging Pharmacologic, Interventional, and Psychosocial Strategies",
+            speaker: "Dr. dr. Tasrif Hamdi M. Ked (An)., Sp.An-TI, Subsp. MN(K)",
+          },
+          {
+            time: "16:35 - 16:45",
+            activity: "DISCUSSION",
+            speaker: "Moderator: Dr. dr. Hari Bagianto, Sp. An-TI, Subsp. An.O (K), Subsp. MN(K)",
+          },
+          { time: "16:45 - 17:00", activity: "Closing & Pengumuman Juara E-Poster", speaker: "Committee" },
+        ],
       },
-      { time: "16:35-16:45", activity: "DISCUSSION", speaker: "-" },
-      { time: "16:45-17:00", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
     ],
   }
 
@@ -900,6 +978,11 @@ export default function EventsPage() {
                         <div className="border-l-4 border-purple-600 pl-4">
                           <h2 className="text-2xl font-bold">{day.day}</h2>
                           <p className="text-muted-foreground">{day.title}</p>
+                          {day.courseDirector && (
+                            <p className="text-sm text-purple-600 mt-1 font-medium">
+                              Course Director: {day.courseDirector}
+                            </p>
+                          )}
                         </div>
 
                         <div className="space-y-4">
@@ -1351,22 +1434,31 @@ export default function EventsPage() {
 
                 <div>
                   <h3 className="font-display text-3xl font-bold text-cyan-600 mb-6">Agenda</h3>
-                  <div className="space-y-4">
-                    {symposiumSchedule.agenda.map((item, index) => (
-                      <div
-                        key={index}
-                        className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${getAgendaItemClasses(item.activity)} transition-colors`}
-                      >
-                        <div className="md:col-span-2">
-                          <p className="text-sm font-bold text-cyan-600">{item.time}</p>
-                        </div>
-                        <div className="md:col-span-7">
-                          <p className="font-semibold text-foreground">{item.activity}</p>
-                        </div>
-                        <div className="md:col-span-3">
-                          <p className="text-sm text-muted-foreground">
-                            {item.speaker === "-" ? "-" : `Speaker: ${item.speaker}`}
-                          </p>
+                  <div className="space-y-8">
+                    {symposiumSchedule.sections.map((section, sectionIndex) => (
+                      <div key={sectionIndex} className="space-y-4">
+                        <h4 className="font-display text-xl font-bold text-cyan-700 border-b border-cyan-200 pb-2">
+                          {section.title}
+                        </h4>
+                        <div className="space-y-3">
+                          {section.items.map((item, index) => (
+                            <div
+                              key={index}
+                              className={`grid grid-cols-1 md:grid-cols-12 gap-4 p-4 rounded-lg border ${getAgendaItemClasses(item.activity)} transition-colors`}
+                            >
+                              <div className="md:col-span-2">
+                                <p className="text-sm font-bold text-cyan-600">{item.time}</p>
+                              </div>
+                              <div className="md:col-span-6">
+                                <p className="font-semibold text-foreground">{item.activity}</p>
+                              </div>
+                              <div className="md:col-span-4">
+                                <p className="text-sm text-muted-foreground">
+                                  {item.speaker === "-" ? "-" : item.speaker}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     ))}
@@ -1553,7 +1645,7 @@ export default function EventsPage() {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span>Early Bird Available</span>
+                <span>CPD Available</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -1564,6 +1656,26 @@ export default function EventsPage() {
                   />
                 </svg>
                 <span>7 Workshops Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>Symposium Available</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <span>City Tour Available</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">

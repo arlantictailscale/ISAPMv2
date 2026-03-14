@@ -8,7 +8,7 @@ import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Search, FileSpreadsheet, FileText } from "lucide-react"
+import { Loader2, Search, FileSpreadsheet, FileText, BookOpen } from "lucide-react"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -37,6 +37,7 @@ interface PosterSubmission {
   category: string
   submission_status: string
   file_url: string | null
+  full_text_url: string | null
   created_at: string
   updated_at: string
   rejection_comment: string | null
@@ -421,7 +422,8 @@ export default function AdminPostersPage() {
         Status: sub.submission_status,
         "Submitted By": sub.user_name || "N/A",
         Email: sub.user_email || "N/A",
-        "Has File": sub.file_url ? "Yes" : "No",
+        "Has Poster File": sub.file_url ? "Yes" : "No",
+        "Has Full Text": sub.full_text_url ? "Yes" : "No",
         "Can Resubmit": sub.can_resubmit ? "Yes" : "No",
         "Rejection Comment": sub.rejection_comment || "",
         "Submission Date": new Date(sub.created_at).toLocaleDateString(),
@@ -670,6 +672,12 @@ export default function AdminPostersPage() {
                                 Poster File
                               </Badge>
                             )}
+                            {submission.full_text_url && (
+                              <Badge variant="outline" className="text-xs">
+                                <BookOpen className="w-3 h-3 mr-1" />
+                                Full Text
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <div className="flex flex-wrap sm:flex-nowrap gap-2 shrink-0">
@@ -806,6 +814,18 @@ export default function AdminPostersPage() {
                       <a href={viewingSubmission.file_url} target="_blank" rel="noopener noreferrer" download>
                         <FileText className="w-4 h-4 mr-2" />
                         Download Poster File
+                      </a>
+                    </Button>
+                  </div>
+                )}
+
+                {viewingSubmission.full_text_url && (
+                  <div className="border-t pt-4">
+                    <Label className="text-sm font-medium mb-2 block">Full Text:</Label>
+                    <Button variant="outline" size="sm" asChild className="w-full sm:w-auto bg-transparent">
+                      <a href={viewingSubmission.full_text_url} target="_blank" rel="noopener noreferrer" download>
+                        <BookOpen className="w-4 h-4 mr-2" />
+                        Download Full Text
                       </a>
                     </Button>
                   </div>

@@ -18,6 +18,7 @@ import {
   Upload,
   AlertCircle,
   Trash2,
+  BookOpen,
 } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -47,6 +48,7 @@ interface Abstract {
   created_at: string
   updated_at: string
   file_url: string | null
+  full_text_url: string | null
   rejection_comment: string | null
   can_resubmit: boolean
 }
@@ -317,6 +319,31 @@ export default function MyPostersPage() {
                               <a href={abstract.file_url} target="_blank" rel="noopener noreferrer" download>
                                 <Download className="w-4 h-4 mr-2" />
                                 Download Poster File
+                              </a>
+                            </Button>
+                            <span className="text-xs text-green-600 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              File uploaded
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Upload className="w-3 h-3" />
+                              No file uploaded
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t min-w-0">
+                        <p className="text-sm text-muted-foreground mb-2">Full Text:</p>
+                        {abstract.full_text_url ? (
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                            <Button variant="outline" size="sm" asChild className="w-full sm:w-auto bg-transparent">
+                              <a href={abstract.full_text_url} target="_blank" rel="noopener noreferrer" download>
+                                <BookOpen className="w-4 h-4 mr-2" />
+                                Download Full Text
                               </a>
                             </Button>
                             <span className="text-xs text-green-600 flex items-center gap-1">

@@ -23,6 +23,7 @@ interface AddToCartButtonProps {
   size?: "default" | "sm" | "lg"
   className?: string
   onSuccess?: () => void
+  isSoldOut?: boolean
 }
 
 export function AddToCartButton({
@@ -31,6 +32,7 @@ export function AddToCartButton({
   size = "default",
   className,
   onSuccess,
+  isSoldOut = false,
 }: AddToCartButtonProps) {
   const [isAdding, setIsAdding] = useState(false)
   const [showLoginDialog, setShowLoginDialog] = useState(false)
@@ -87,10 +89,12 @@ export function AddToCartButton({
         variant={variant}
         size={size}
         onClick={handleAddToCart}
-        disabled={isAdding || isLoading}
+        disabled={isAdding || isLoading || isSoldOut}
         className={className}
       >
-        {isAdding ? (
+        {isSoldOut ? (
+          <>Sold Out</>
+        ) : isAdding ? (
           <>
             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             Adding...

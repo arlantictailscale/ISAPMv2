@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -204,6 +204,9 @@ export default async function DashboardPage() {
 
   if (isAdmin) {
     const authUserCountResult = await getAuthUserCount()
+    
+    // Use admin client for abstracts queries to bypass RLS
+    const adminClient = createAdminClient()
 
     const [
       postersResult,
@@ -214,8 +217,8 @@ export default async function DashboardPage() {
       eventsResult,
       hotelBookingsResult,
     ] = await Promise.all([
-      supabase.from("abstracts").select("id", { count: "exact", head: true }),
-      supabase.from("abstracts").select("id", { count: "exact", head: true }).eq("submission_status", "pending"),
+      adminClient.from("abstracts").select("id", { count: "exact", head: true }),
+      adminClient.from("abstracts").select("id", { count: "exact", head: true }).eq("submission_status", "pending"),
       supabase.from("order_payments").select("id", { count: "exact", head: true }).eq("payment_status", "pending"),
       supabase.from("orders").select("id", { count: "exact", head: true }),
       supabase.from("order_payments").select("id, amount", { count: "exact" }).eq("payment_status", "verified"),
@@ -420,6 +423,14 @@ export default async function DashboardPage() {
       icon: ShoppingCart,
       href: "/admin/carts",
       color: "bg-rose-500",
+      stats: null,
+    },
+    {
+      title: "Event Quotas",
+      description: "Manage event capacity limits",
+      icon: BarChart3,
+      href: "/admin/event-quotas",
+      color: "bg-violet-500",
       stats: null,
     },
   ]

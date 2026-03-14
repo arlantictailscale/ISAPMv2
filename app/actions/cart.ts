@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import type { CartItem } from "@/lib/cart/types"
 import { isDuplicateCartItem, validateCartItem } from "@/lib/cart/utils"
 import { getCachedCart, invalidateCartCache } from "@/lib/cache"
+import { checkEventQuotaAvailable } from "@/app/actions/get-event-quotas"
 
 /**
  * Get or create active cart for current user
@@ -73,6 +74,14 @@ export async function addToCart(item: Omit<CartItem, "id" | "cart_id" | "created
   // Validate item
   if (!validateCartItem(item)) {
     return { error: "Invalid cart item data" }
+  }
+
+  // Check quota availability for workshop items
+  if (item.item_type === "event") {
+    const quotaAvailable = await checkEventQuotaAvailable(item.event_id)
+    if (!quotaAvailable) {
+      return { error: "Sorry, this event is sold out. No more seats available." }
+    }
   }
 
   // Get or create cart (uses cache)

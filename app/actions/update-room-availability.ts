@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
+import { invalidateRoomAvailabilityCache } from "./get-room-availability"
 
 export async function updateRoomAvailability({ deluxe, premier }: { deluxe: number; premier: number }) {
   const supabase = await createClient()
@@ -22,39 +23,25 @@ export async function updateRoomAvailability({ deluxe, premier }: { deluxe: numb
       return { success: false, error: "Not authorized" }
     }
 
-    // Update deluxe room capacity
-    const { error: deluxeError } = await supabase.from("room_availability_settings").upsert(
-      {
-        room_type: "deluxe",
-        default_capacity: deluxe,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "room_type" },
-    )
+    // Call database function with elevated privileges (SECURITY DEFINER)
+    const { error: rpcError } = await supabase.rpc("update_room_availability_settings", {
+      p_deluxe_rooms: deluxe,
+      p_premier_rooms: premier,
+    })
 
-    if (deluxeError) {
-      console.error("[v0] Error updating deluxe capacity:", deluxeError)
-      return { success: false, error: "Failed to update deluxe room capacity" }
+    if (rpcError) {
+      console.error("[v0] Error calling update_room_availability_settings RPC:", rpcError)
+      return { success: false, error: rpcError.message || "Failed to update room availability" }
     }
 
-    // Update premier room capacity
-    const { error: premierError } = await supabase.from("room_availability_settings").upsert(
-      {
-        room_type: "premier",
-        default_capacity: premier,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: "room_type" },
-    )
+    // Invalidate the room availability cache so fresh data is fetched
+    await invalidateRoomAvailabilityCache()
 
-    if (premierError) {
-      console.error("[v0] Error updating premier capacity:", premierError)
-      return { success: false, error: "Failed to update premier room capacity" }
-    }
-
-    // Revalidate the venue page to show updated availability
+    // Revalidate all pages that show room availability
     revalidatePath("/venue")
     revalidatePath("/admin/room-availability")
+    revalidatePath("/admin/hotel-management")
+    revalidatePath("/hotel-booking")
 
     return { success: true }
   } catch (error) {

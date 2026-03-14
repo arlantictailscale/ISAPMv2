@@ -14,10 +14,25 @@ export default function CallbackPage() {
   useEffect(() => {
     const supabase = createClient()
     const debug: string[] = []
+    let isProcessed = false // Prevent duplicate processing/redirects
+    let isMounted = true
+
+    // Mobile detection for adjusted timing
+    const userAgent = navigator.userAgent
+    const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+    const isMobileChrome =
+      (isMobile && /Chrome/i.test(userAgent)) || /CriOS/i.test(userAgent) // CriOS = Chrome on iOS
 
     debug.push(`Full URL: ${window.location.href}`)
     debug.push(`Hash present: ${window.location.hash ? "Yes" : "No"}`)
     debug.push(`Search params: ${window.location.search || "(none)"}`)
+    debug.push(`Mobile: ${isMobile ? "Yes" : "No"}`)
+    debug.push(`Mobile Chrome: ${isMobileChrome ? "Yes" : "No"}`)
+    debug.push(`Cookies enabled: ${navigator.cookieEnabled ? "Yes" : "No"}`)
+
+    // Adjusted timeouts for mobile browsers (slower JS execution, network delays)
+    const processingDelay = isMobileChrome ? 2000 : 1000
+    const errorTimeout = isMobileChrome ? 8000 : 5000
 
     // Check for error in URL first
     const errorParam = searchParams.get("error")
@@ -31,77 +46,107 @@ export default function CallbackPage() {
       return
     }
 
+    // Helper to safely redirect only once
+    const safeRedirect = (path: string) => {
+      if (isProcessed || !isMounted) return
+      isProcessed = true
+      debug.push(`Redirecting to: ${path}`)
+      setDebugInfo(debug)
+      // Longer delay for mobile to ensure cookies are persisted
+      setTimeout(
+        () => {
+          if (isMounted) router.push(path)
+        },
+        isMobileChrome ? 1000 : 500
+      )
+    }
+
     // Set up auth state listener FIRST - this handles hash fragments automatically
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (isProcessed) return // Skip if already processed
+
       debug.push(`Auth event: ${event}`)
       console.log("[v0] Auth state change:", event, session?.user?.email)
 
       if (event === "SIGNED_IN" && session) {
         debug.push(`Signed in as: ${session.user.email}`)
-        setDebugInfo(debug)
         setStatus("success")
         setMessage("Email confirmed successfully!")
-
-        // Small delay to ensure session is fully established
-        setTimeout(() => {
-          router.push("/auth/email-confirmed")
-        }, 500)
+        safeRedirect("/auth/email-confirmed")
       } else if (event === "TOKEN_REFRESHED" && session) {
         debug.push("Token refreshed")
-        router.push("/dashboard")
+        safeRedirect("/dashboard")
       } else if (event === "USER_UPDATED" && session) {
         debug.push("User updated - email confirmed")
         setStatus("success")
-        router.push("/auth/email-confirmed")
+        safeRedirect("/auth/email-confirmed")
       }
     })
 
-    // Also try to get existing session after a short delay
-    const checkSession = async () => {
-      // Wait for Supabase to process hash fragment
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+    // Session check with retry logic for mobile reliability
+    const checkSessionWithRetry = async (retries = 3): Promise<boolean> => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        if (isProcessed) return true // Already handled
 
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession()
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession()
 
-      if (error) {
-        debug.push(`getSession error: ${error.message}`)
-        console.error("[v0] getSession error:", error)
-      }
-
-      if (session) {
-        debug.push(`Session found for: ${session.user.email}`)
-        debug.push(`Email confirmed: ${session.user.email_confirmed_at ? "Yes" : "No"}`)
-        console.log("[v0] Session found:", session.user.email)
-        setDebugInfo(debug)
-        setStatus("success")
-
-        setTimeout(() => {
-          router.push("/auth/email-confirmed")
-        }, 500)
-        return
-      }
-
-      // If still no session after waiting, show error with debug info
-      debug.push("No session established after waiting")
-      setDebugInfo(debug)
-
-      // Wait longer before showing error to allow auth state change to fire
-      setTimeout(() => {
-        if (status === "loading") {
-          setStatus("error")
-          setMessage("Could not establish session. The confirmation link may have expired.")
+        if (error) {
+          debug.push(`getSession attempt ${attempt} error: ${error.message}`)
+          console.error("[v0] getSession error:", error)
         }
-      }, 3000)
+
+        if (session) {
+          debug.push(`Session found for: ${session.user.email} (attempt ${attempt})`)
+          debug.push(`Email confirmed: ${session.user.email_confirmed_at ? "Yes" : "No"}`)
+          console.log("[v0] Session found:", session.user.email)
+          setStatus("success")
+          safeRedirect("/auth/email-confirmed")
+          return true
+        }
+
+        // Wait before retry (increasing delay)
+        if (attempt < retries) {
+          await new Promise((resolve) => setTimeout(resolve, 500 * attempt))
+        }
+      }
+      return false
+    }
+
+    // Also try to get existing session after a delay
+    const checkSession = async () => {
+      // Wait for Supabase to process hash fragment (longer on mobile)
+      await new Promise((resolve) => setTimeout(resolve, processingDelay))
+
+      const sessionFound = await checkSessionWithRetry(isMobileChrome ? 4 : 3)
+
+      if (!sessionFound && !isProcessed) {
+        // If still no session after waiting, show error with debug info
+        debug.push("No session established after retries")
+        setDebugInfo(debug)
+
+        // Wait longer before showing error to allow auth state change to fire
+        setTimeout(() => {
+          if (!isProcessed && isMounted && status === "loading") {
+            setStatus("error")
+            setMessage(
+              isMobileChrome
+                ? "Could not establish session. Please try closing and reopening your browser, or use a different browser."
+                : "Could not establish session. The confirmation link may have expired."
+            )
+          }
+        }, errorTimeout)
+      }
     }
 
     checkSession()
 
     return () => {
+      isMounted = false
       subscription.unsubscribe()
     }
   }, [router, searchParams, status])

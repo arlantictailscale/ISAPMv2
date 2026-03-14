@@ -12,12 +12,20 @@ export async function GET(request: Request) {
   const redirect_to = requestUrl.searchParams.get("redirect_to") || "/dashboard"
   const origin = requestUrl.origin
 
+  // Mobile detection for debugging auth loops
+  const userAgent = request.headers.get("user-agent") || ""
+  const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+  const isMobileChrome = (isMobile && /Chrome/i.test(userAgent)) || /CriOS/i.test(userAgent)
+
   console.log("[v0] Callback params:", {
     code: !!code,
     token_hash: !!token_hash,
     type,
     error,
     error_description,
+    isMobile,
+    isMobileChrome,
+    userAgent: userAgent.substring(0, 100), // Truncate for logging
   })
 
   // Handle OAuth errors

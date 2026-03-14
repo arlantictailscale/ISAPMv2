@@ -61,6 +61,10 @@ export async function updateSession(request: NextRequest) {
     process.env.SUPABASE_ANON_KEY ||
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpbGllbnVsZXRoZ2Z4ZGlxZ2h3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NzgxOTUsImV4cCI6MjA3ODU1NDE5NX0.AEvTooDW5Zswza55RXnf6e-A5bZu-kOYY6kuV6cZ9Cw"
 
+  // Detect mobile browsers for adjusted cookie handling
+  const userAgent = request.headers.get("user-agent") || ""
+  const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(userAgent)
+
   try {
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
@@ -72,7 +76,18 @@ export async function updateSession(request: NextRequest) {
           supabaseResponse = NextResponse.next({
             request,
           })
-          cookiesToSet.forEach(({ name, value, options }) => supabaseResponse.cookies.set(name, value, options))
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // Ensure mobile-safe cookie settings to prevent auth loops
+            const safeOptions = {
+              ...options,
+              sameSite: "lax" as const, // Required for OAuth redirects on mobile
+              secure: process.env.NODE_ENV === "production",
+              path: "/",
+              // Extend maxAge slightly for mobile to handle slower connections
+              maxAge: options?.maxAge || (isMobile ? 60 * 60 * 24 * 7 : undefined), // 7 days for mobile
+            }
+            supabaseResponse.cookies.set(name, value, safeOptions)
+          })
         },
       },
     })

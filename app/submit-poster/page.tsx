@@ -353,9 +353,9 @@ export default function SubmitPosterPage() {
   return (
     <>
       <Navigation />
-      <main className="pt-24 overflow-x-hidden w-full">
-        <section className="py-20 px-4 bg-gradient-to-br from-primary/5 to-secondary/5 overflow-x-hidden w-full">
-          <div className="max-w-4xl mx-auto min-w-0 w-full">
+      <main className="pt-24 w-full">
+        <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/5 to-secondary/5 w-full">
+          <div className="max-w-4xl mx-auto min-w-0 w-full px-1">
             <h1 className="font-display text-4xl sm:text-5xl font-bold mb-6 break-words">Submit e-Poster</h1>
             <p className="text-lg text-muted-foreground mb-4 break-words">
               Submit your abstract for ISAPM 8th National Meeting 2026
@@ -368,9 +368,9 @@ export default function SubmitPosterPage() {
           </div>
         </section>
 
-        <section className="py-8 px-4 overflow-x-hidden w-full">
-          <div className="max-w-4xl mx-auto min-w-0 w-full">
-            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 sm:p-6 flex gap-4 overflow-x-hidden w-full">
+        <section className="py-8 px-4 sm:px-6 lg:px-8 w-full">
+          <div className="max-w-4xl mx-auto min-w-0 w-full px-1">
+            <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 sm:p-6 flex gap-4 w-full">
               <AlertCircle className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-foreground mb-2 break-words">Submission Deadline: March 15, 2026</p>
@@ -391,15 +391,15 @@ export default function SubmitPosterPage() {
           </div>
         </section>
 
-        <section className="py-12 px-4 pb-20 overflow-x-hidden w-full">
-          <div className="max-w-4xl mx-auto min-w-0 w-full">
+        <section className="py-12 px-4 sm:px-6 lg:px-8 pb-20 w-full">
+          <div className="max-w-4xl mx-auto min-w-0 w-full px-1">
             {error && (
               <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-900 break-words">
                 {error}
               </div>
             )}
 
-            <Card className="overflow-x-hidden w-full">
+            <Card className="w-full shadow-sm">
               <CardHeader className="min-w-0">
                 <CardTitle className="break-words">E-Poster Submission Form</CardTitle>
                 <CardDescription className="break-words">

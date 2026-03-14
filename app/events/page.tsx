@@ -89,8 +89,8 @@ export default function EventsPage() {
         {
           sesi: "Session 2",
           items: [
-            { time: "09:30 - 09:55", title: "Pharmacology Opioid", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
-            { time: "09:55 - 10:20", title: "Non Opioid", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "09:30 - 09:55", title: "Opioid Pharmacology", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "09:55 - 10:20", title: "Non-Opioid Analgesics", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             { time: "10:20 - 10:45", title: "Adjuvant Analgesia", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             { time: "10:45 - 11:00", title: "Discussion", speaker: "-" },
           ],
@@ -110,7 +110,7 @@ export default function EventsPage() {
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "ISHOMA (Lunch Break)", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
         },
         {
           sesi: "Session 4",
@@ -151,7 +151,7 @@ export default function EventsPage() {
           sesi: "Session 3",
           items: [
             { time: "11:00 - 11:25", title: "The Role of Interventional Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
-            { time: "11:25 - 11:50", title: "Ethic and Patient Safety in Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
+            { time: "11:25 - 11:50", title: "Ethics and Patient Safety in Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
             {
               time: "11:50 - 12:15",
               title: "Acute Pain Service",
@@ -162,7 +162,7 @@ export default function EventsPage() {
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "ISHOMA (Lunch Break)", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
         },
         {
           sesi: "Session 4",
@@ -173,10 +173,10 @@ export default function EventsPage() {
               title: "Skill Station A: PCA, PCEA",
               speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP / Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
             },
-            { time: "13:30 - 15:30", title: "Skill Station B: Postop. ACB, FICB", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Postoperative ACB, FICB", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
             {
               time: "13:30 - 15:30",
-              title: "Skill Station C: Postop. Block Trunk (TAP, ESP)",
+              title: "Skill Station C: Postoperative Trunk Block (TAP, ESP)",
               speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
             },
           ],
@@ -194,7 +194,7 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Committee Chair" },
         {
           time: "08.15-08.45",
           event: "Pathophysiology of Chronic Pain and Tissue Healing Mechanisms",
@@ -207,7 +207,7 @@ export default function EventsPage() {
         },
         {
           time: "09.30-10.15",
-          event: "Comparison of Regenerative vs Conventional Steroid Injections (efikasi, keamanan, cost-effectiveness)",
+          event: "Comparison of Regenerative vs Conventional Steroid Injections (Efficacy, Safety, Cost-Effectiveness)",
           speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM / dr. Puja Laksana Maqbul, Sp.An, FIPM, FIPP",
         },
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
@@ -226,7 +226,7 @@ export default function EventsPage() {
           time: "13.00-15.30",
           event:
             "Station 1: PRP Preparation and Injection Technique (USG-guided)\nStation 2: Prolotherapy Injection Technique\nStation 3: Microinvasive Needling / Hydrodissection Techniques",
-          speaker: "Instruktur",
+          speaker: "Instructors",
         },
         { time: "", event: "CLOSING", speaker: "" },
       ],
@@ -239,7 +239,7 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Committee Chair" },
         {
           time: "08.15-08.45",
           event: "Principles of Interventional Pain Management in Musculoskeletal Disorders",
@@ -264,14 +264,14 @@ export default function EventsPage() {
         {
           time: "11.15-12.00",
           event: "Case Discussion: Approach to Chronic Musculoskeletal Pain",
-          speaker: "All Instructor",
+          speaker: "All Instructors",
         },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
         {
           time: "13.00-15.30",
           event:
             "Station 1: Ultrasound-Guided Shoulder Injection (Suprascapular & Glenohumeral)\nStation 2: Low Back Pain Procedures: Facet Joint, Trigger Point, & Sacroiliac Joint Injection\nStation 3: Knee & Hip Joint Injection Techniques (Sonoanatomy & Practice on Phantom)\nStation 4: Dry Needling, Myofascial Release, and Safe Injection Practices",
-          speaker: "All Instructor",
+          speaker: "All Instructors",
         },
         { time: "", event: "CLOSING", speaker: "" },
       ],
@@ -284,25 +284,25 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
-        { time: "08.15-08.30", event: "Introduction + Recognize", speaker: "Instruktur" },
-        { time: "08.30-08.45", event: "Pain Assessment in Paediatrics", speaker: "Instruktur" },
-        { time: "08.45-09.00", event: "Non-Pharmacological Treatment", speaker: "Instruktur" },
-        { time: "09.00-09.15", event: "Pharmacological Treatment", speaker: "Instruktur" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Committee Chair" },
+        { time: "08.15-08.30", event: "Introduction & Recognition", speaker: "Instructor" },
+        { time: "08.30-08.45", event: "Pain Assessment in Pediatrics", speaker: "Instructor" },
+        { time: "08.45-09.00", event: "Non-Pharmacological Treatment", speaker: "Instructor" },
+        { time: "09.00-09.15", event: "Pharmacological Treatment", speaker: "Instructor" },
         { time: "09.15-09.30", event: "COFFEE BREAK", speaker: "-" },
-        { time: "09.30-09.55", event: "Pain Management Barrier", speaker: "All Facilitator" },
-        { time: "09.55-10.20", event: "Overcoming Barriers Presentation", speaker: "All Facilitator" },
-        { time: "10.20-11.20", event: "RAT Cases & Presentation", speaker: "All Facilitator" },
-        { time: "11.20-11.30", event: "Post Test", speaker: "All Facilitator" },
+        { time: "09.30-09.55", event: "Barriers in Pain Management", speaker: "All Facilitators" },
+        { time: "09.55-10.20", event: "Overcoming Barriers Presentation", speaker: "All Facilitators" },
+        { time: "10.20-11.20", event: "RAT Cases & Presentation", speaker: "All Facilitators" },
+        { time: "11.20-11.30", event: "Post-Test", speaker: "All Facilitators" },
         { time: "11.30-13.00", event: "BREAK SESSION (LUNCH)", speaker: "-" },
-        { time: "13.00-13.20", event: "Adult learning – Teaching Overview", speaker: "All Facilitator" },
-        { time: "13.20-13.40", event: "Giving Lecture – Running a Discussion Group", speaker: "All Facilitator" },
-        { time: "13.40-13.45", event: "Divide Into group", speaker: "All Facilitator" },
-        { time: "13.45-14.15", event: "Giving Lecture", speaker: "All Facilitator" },
-        { time: "14.15-14.45", event: "Running a Discussion Group", speaker: "All Facilitator" },
+        { time: "13.00-13.20", event: "Adult Learning - Teaching Overview", speaker: "All Facilitators" },
+        { time: "13.20-13.40", event: "Delivering Lectures - Running a Discussion Group", speaker: "All Facilitators" },
+        { time: "13.40-13.45", event: "Group Division", speaker: "All Facilitators" },
+        { time: "13.45-14.15", event: "Lecture Practice", speaker: "All Facilitators" },
+        { time: "14.15-14.45", event: "Running a Discussion Group", speaker: "All Facilitators" },
         { time: "14.45-14.50", event: "COFFEE BREAK", speaker: "-" },
-        { time: "14.50-15.20", event: "EPM Planning – Workshop Presentation", speaker: "All Facilitator" },
-        { time: "15.20-15.30", event: "Feedback – Group photo & Closing", speaker: "All Facilitator" },
+        { time: "14.50-15.20", event: "EPM Planning - Workshop Presentation", speaker: "All Facilitators" },
+        { time: "15.20-15.30", event: "Feedback - Group Photo & Closing", speaker: "All Facilitators" },
         { time: "", event: "CLOSING", speaker: "" },
       ],
     },
@@ -314,10 +314,10 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Committee Chair" },
         {
           time: "08.15-08.45",
-          event: "Three in one methode technique (massage, TENS, Shock wave therapy)",
+          event: "Three-in-One Method Technique (Massage, TENS, Shock Wave Therapy)",
           speaker: "Willy Halim, MD, PhD, FIPP",
         },
         {
@@ -333,20 +333,20 @@ export default function EventsPage() {
         { time: "10.15-10.30", event: "COFFEE BREAK", speaker: "-" },
         {
           time: "10.30-11.15",
-          event: "Adjuvant Drugs in Pain Management (Antidepressant, Anticonvulsant, NMDA Antagonist)",
+          event: "Adjuvant Drugs in Pain Management (Antidepressants, Anticonvulsants, NMDA Antagonists)",
           speaker: "dr. Taufiq Agus Siswagama, Sp.An-TI., Subsp. M.N. (K)",
         },
         {
           time: "11.15-12.00",
           event: "Case Discussion: Integrating Adjunct Therapies in Acute and Chronic Pain Patients",
-          speaker: "Instruktur",
+          speaker: "Instructor",
         },
         { time: "12.00-13.00", event: "BREAK SESSION", speaker: "-" },
         {
           time: "13.00-15.30",
           event:
-            "Station 1: Three in one methode technique (massage, TENS, Shock wave therapy)\nStation 2: SEFT (Spiritual Emotional Freedom Technique)\nStation 3: Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
-          speaker: "Instruktur",
+            "Station 1: Three-in-One Method Technique (Massage, TENS, Shock Wave Therapy)\nStation 2: SEFT (Spiritual Emotional Freedom Technique)\nStation 3: Psychological and Behavioral Approach: Mindfulness and Coping Strategies",
+          speaker: "Instructors",
         },
         { time: "", event: "CLOSING", speaker: "" },
       ],
@@ -398,39 +398,39 @@ export default function EventsPage() {
         },
       ],
       materials: [
-        "Brainstorming: Framework and regulation, Burden of Pain Indonesia, Designing Pain Clinic in Indonesia's setting",
-        "Pembagian Kelompok dan Memperkenalkan Fasilitator",
-        "Sesi I: Tim Pelayanan, Tim Keuangan dan Administrasi, Tim Marketing, Asuransi dan JKN, Tim Dokter Pelaksana",
-        "Sesi II: Tim Pelayanan, Tim Keuangan dan Administrasi, Tim Marketing, Asuransi dan JKN, Tim Dokter Pelaksana",
+        "Brainstorming: Framework and Regulations, Burden of Pain in Indonesia, Designing a Pain Clinic in Indonesia",
+        "Group Division and Facilitator Introduction",
+        "Session I: Service Team, Finance and Administration Team, Marketing, Insurance and JKN Team, Physician Team",
+        "Session II: Service Team, Finance and Administration Team, Marketing, Insurance and JKN Team, Physician Team",
       ],
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Committee Chair" },
         {
           time: "08.15-08.45",
           event:
-            "Brainstorming: Framework and regulation, Burden of Pain Indonesia, Designing Pain Clinic in Indonesia's setting",
+            "Brainstorming: Framework and Regulations, Burden of Pain in Indonesia, Designing a Pain Clinic in Indonesia",
           speaker: "dr. Said Shofwan, Sp.An-TI, FIP, FIPP",
         },
         {
           time: "08.45-09.00",
-          event: "Pembagian Kelompok dan Memperkenalkan Fasilitator",
+          event: "Group Division and Facilitator Introduction",
           speaker: "dr. Henny Widyastuti, Sp.An-TI., Subsp. M.N. (K)., FIP",
         },
         {
           time: "09.00-11.00",
           event:
-            "Sesi I:\n1. Tim Pelayanan\n2. Tim Keuangan dan Administrasi\n3. Tim Marketing, Asuransi dan JKN\n4. Tim Dokter Pelaksana",
+            "Session I:\n1. Service Team\n2. Finance and Administration Team\n3. Marketing, Insurance and JKN Team\n4. Physician Team",
           speaker:
-            "Instruktur:\n1. dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K\n2. Rahmi Winandari, SKM., M.Kes\n3. dr. Ristanti, MARS\n4. dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
+            "Instructors:\n1. dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K\n2. Rahmi Winandari, SKM., M.Kes\n3. dr. Ristanti, MARS\n4. dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
         },
         { time: "11.00-12.30", event: "COFFEE BREAK", speaker: "-" },
         {
           time: "11.00-12.30",
           event:
-            "Sesi II:\n1. Tim Pelayanan\n2. Tim Keuangan dan Administrasi\n3. Tim Marketing, Asuransi dan JKN\n4. Tim Dokter Pelaksana",
+            "Session II:\n1. Service Team\n2. Finance and Administration Team\n3. Marketing, Insurance and JKN Team\n4. Physician Team",
           speaker:
-            "Instruktur:\n1. dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K\n2. Rahmi Winandari, SKM., M.Kes\n3. dr. Ristanti, MARS\n4. dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
+            "Instructors:\n1. dr. Henny Widyastuti, M.Kes., Sp.An-TI, FIP, Subsp.MN(K)., AIFO-K\n2. Rahmi Winandari, SKM., M.Kes\n3. dr. Ristanti, MARS\n4. dr. Mohammad Tsani Musyafa, M.Kes., Sp.OT., AIFO-K",
         },
         { time: "11.15-12.00", event: "Brainstorming", speaker: "Team Reflection" },
         { time: "", event: "CLOSING", speaker: "" },
@@ -489,10 +489,10 @@ export default function EventsPage() {
       date: "Friday, April 17, 2026",
       agenda: [
         { time: "07.30-08.00", event: "REGISTRATION", speaker: "Committee" },
-        { time: "08.00-08.15", event: "Pembukaan & Pretest", speaker: "Ketua Panitia" },
+        { time: "08.00-08.15", event: "Opening & Pre-Test", speaker: "Committee Chair" },
         {
           time: "08.15-08.45",
-          event: "Basic MRI Reading for Spinal Canal Problem",
+          event: "Basic MRI Reading for Spinal Canal Problems",
           speaker: "Dr. Irma Darinafitri, Sp.Rad(K)",
         },
         {
@@ -503,13 +503,13 @@ export default function EventsPage() {
         { time: "09.15-09.30", event: "COFFEE BREAK", speaker: "-" },
         {
           time: "09.30-10.00",
-          event: "Laminaplasty Procedures",
+          event: "Laminoplasty Procedures",
           speaker: "dr. Mirza Koesherdiandi, Sp.An. F IPM. FIPP",
         },
         { time: "11.00-13.00", event: "BREAK SESSION (LUNCH)", speaker: "-" },
         {
           time: "10.00-15.30",
-          event: "Hands On Laminaplasty Procedures",
+          event: "Hands-On Laminoplasty Procedures",
           speaker:
             "dr. Mirza Koesherdiandi, Sp.An. F IPM. FIPP / dr. Agus Setiyana, Sp. An-TI., Subsp.An. Kv (K)., FIPM, FIPP",
         },
@@ -526,7 +526,7 @@ export default function EventsPage() {
       {
         title: "Opening Session",
         items: [
-          { time: "07:30 - 08:00", activity: "Re-Registration + Registrasi Onsite", speaker: "Committee" },
+          { time: "07:30 - 08:00", activity: "Re-Registration + Onsite Registration", speaker: "Committee" },
           { time: "08:00 - 08:05", activity: "Opening Ceremony", speaker: "Committee" },
           {
             time: "08:05 - 08:25",
@@ -536,20 +536,20 @@ export default function EventsPage() {
           {
             time: "08:25 - 08:45",
             activity:
-              "Mewujudkan Layanan Nyeri Terintegrasi: Tantangan Regulasi dan Implementasi di Fasilitas Kesehatan",
-            speaker: "Kemenkes - Prof. dr. Dante Saksono Harbuwono, Sp.PD, KEMD, Ph.D",
+              "Realizing Integrated Pain Services: Regulatory Challenges and Implementation in Healthcare Facilities",
+            speaker: "Ministry of Health - Prof. dr. Dante Saksono Harbuwono, Sp.PD, KEMD, Ph.D",
           },
           {
             time: "08:45 - 09:05",
             activity:
-              "Peran BPJS Kesehatan dalam Menjamin Akses, Mutu, dan Efisiensi Layanan Nyeri di Indonesia",
-            speaker: "BPJS Pusat - Mayjen TNI (Purn) Dr. Prihati Pujowaskito, Sp.JP(K), FIHFAA, MMRS",
+              "The Role of BPJS Health in Ensuring Access, Quality, and Efficiency of Pain Services in Indonesia",
+            speaker: "BPJS Central - Maj. Gen. TNI (Ret.) Dr. Prihati Pujowaskito, Sp.JP(K), FIHFAA, MMRS",
           },
           {
             time: "09:05 - 09:25",
             activity:
-              "Bridging Policy and Practice: Sinergi Profesi Anestesi dengan Kemenkes dan BPJS dalam Pengakuan Layanan Nyeri",
-            speaker: "Ketua ISAPM - Dr. dr. A. M. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
+              "Bridging Policy and Practice: Synergy Between the Anesthesia Profession, Ministry of Health, and BPJS in Pain Service Recognition",
+            speaker: "ISAPM Chairman - Dr. dr. A. M. Takdir Musba, Sp.An-TI, Subsp. M.N. (K)",
           },
           {
             time: "09:25 - 09:55",
@@ -579,7 +579,7 @@ export default function EventsPage() {
           },
           {
             time: "10:55 - 11:15",
-            activity: "Integrasi Layanan Acute Pain Service (APS) dalam Perawatan Perioperatif di Rumah Sakit",
+            activity: "Integration of Acute Pain Service (APS) in Perioperative Hospital Care",
             speaker: "Prof. Dr. dr. Tjokorda Gde Agung Senapathi, SpAn-TI., Subsp.An.R(K)",
           },
           {
@@ -623,7 +623,7 @@ export default function EventsPage() {
       },
       {
         title: "Break",
-        items: [{ time: "12:50 - 13:15", activity: "ISHOMA (Lunch Break)", speaker: "-" }],
+        items: [{ time: "12:50 - 13:15", activity: "Lunch Break", speaker: "-" }],
       },
       {
         title: "Regenerative Pain Symposium",
@@ -707,7 +707,7 @@ export default function EventsPage() {
             activity: "DISCUSSION",
             speaker: "Moderator: Dr. dr. Hari Bagianto, Sp. An-TI, Subsp. An.O (K), Subsp. MN(K)",
           },
-          { time: "16:45 - 17:00", activity: "Closing & Pengumuman Juara E-Poster", speaker: "Committee" },
+          { time: "16:45 - 17:00", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
         ],
       },
     ],

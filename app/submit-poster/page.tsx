@@ -406,8 +406,8 @@ export default function SubmitPosterPage() {
                   Fill in all required fields. You can edit your submission before the deadline.
                 </CardDescription>
               </CardHeader>
-              <CardContent className="min-w-0">
-                <form onSubmit={handleSubmit} className="space-y-6 overflow-x-hidden w-full">
+              <CardContent className="min-w-0 overflow-visible">
+                <form onSubmit={handleSubmit} className="space-y-6 w-full">
                   <div className="min-w-0 w-full">
                     <label htmlFor="title" className="block text-sm font-semibold mb-2">
                       Poster Title *

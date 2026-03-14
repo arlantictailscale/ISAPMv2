@@ -93,16 +93,27 @@ export async function getRoomAvailability() {
         const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120
         const premierCapacity = settings?.find((s) => s.room_type === "premier")?.default_capacity || 56
 
+        const deluxeAvailable = deluxeCapacity - deluxeBookings
+        const premierAvailable = premierCapacity - premierBookings
+
+        // Log if rooms are overbooked for monitoring
+        if (deluxeAvailable < 0) {
+          console.warn(`[Room Availability] Deluxe rooms overbooked: ${deluxeBookings}/${deluxeCapacity}`)
+        }
+        if (premierAvailable < 0) {
+          console.warn(`[Room Availability] Premier rooms overbooked: ${premierBookings}/${premierCapacity}`)
+        }
+
         return {
           deluxe: {
             total: deluxeCapacity,
             booked: deluxeBookings,
-            available: Math.max(0, deluxeCapacity - deluxeBookings),
+            available: Math.max(0, deluxeAvailable),
           },
           premier: {
             total: premierCapacity,
             booked: premierBookings,
-            available: Math.max(0, premierCapacity - premierBookings),
+            available: Math.max(0, premierAvailable),
           },
         }
       } catch (error) {

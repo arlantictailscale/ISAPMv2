@@ -55,21 +55,33 @@ export function EventOverviewCard({ availability }: EventOverviewCardProps) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm">Deluxe Room</span>
-              {availability?.deluxe.available === 0 ? (
+              {!availability ? (
+                <Badge variant="secondary" className="bg-muted text-muted-foreground">Loading...</Badge>
+              ) : availability.deluxe.available <= 0 ? (
                 <Badge variant="destructive">Sold Out</Badge>
+              ) : availability.deluxe.available <= 5 ? (
+                <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                  {availability.deluxe.available} left
+                </Badge>
               ) : (
                 <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {availability?.deluxe.available ?? "..."} available
+                  {availability.deluxe.available} available
                 </Badge>
               )}
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Premier Room</span>
-              {availability?.premier.available === 0 ? (
+              {!availability ? (
+                <Badge variant="secondary" className="bg-muted text-muted-foreground">Loading...</Badge>
+              ) : availability.premier.available <= 0 ? (
                 <Badge variant="destructive">Sold Out</Badge>
+              ) : availability.premier.available <= 5 ? (
+                <Badge variant="secondary" className="bg-amber-100 text-amber-700">
+                  {availability.premier.available} left
+                </Badge>
               ) : (
                 <Badge variant="secondary" className="bg-primary/10 text-primary">
-                  {availability?.premier.available ?? "..."} available
+                  {availability.premier.available} available
                 </Badge>
               )}
             </div>

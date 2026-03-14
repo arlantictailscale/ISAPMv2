@@ -68,26 +68,10 @@ export async function getRoomAvailability() {
 
         const validOrderIds = orders?.map((o) => o.id) || []
 
-        // Step 4: Get verified payments for these orders
-        const { data: payments, error: paymentsError } = await supabase
-          .from("order_payments")
-          .select("order_id, payment_status")
-          .in("order_id", validOrderIds)
-          .eq("payment_status", "verified")
-
-        if (paymentsError) {
-          console.error("Error fetching payments:", paymentsError)
-          throw paymentsError
-        }
-
-        // Get order IDs with verified payments
-        const verifiedOrderIds = new Set(payments?.map((p) => p.order_id) || [])
-
-        // Step 5: Count bookings by room type for verified orders only
-        const verifiedBookings = hotelItems.filter((item) => verifiedOrderIds.has(item.order_id))
-
-        const deluxeBookings = verifiedBookings.filter((b) => b.hotel_room_type === "deluxe").length
-        const premierBookings = verifiedBookings.filter((b) => b.hotel_room_type === "premier").length
+        // Step 4: Count ALL bookings for these non-cancelled orders (including pending)
+        // This matches the admin dashboard logic which counts all bookings
+        const deluxeBookings = hotelItems.filter((item) => validOrderIds.includes(item.order_id) && item.hotel_room_type === "deluxe").length
+        const premierBookings = hotelItems.filter((item) => validOrderIds.includes(item.order_id) && item.hotel_room_type === "premier").length
 
         // Get default capacities
         const deluxeCapacity = settings?.find((s) => s.room_type === "deluxe")?.default_capacity || 120

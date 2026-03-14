@@ -33,7 +33,7 @@ export async function submitPoster(input: SubmitPosterInput): Promise<{ success:
     // Use admin client to bypass RLS for insert
     const adminClient = createAdminClient()
 
-    const { error: insertError } = await adminClient.from("abstracts").insert([
+    const { data: insertedData, error: insertError } = await adminClient.from("abstracts").insert([
       {
         user_id: user.id,
         email: user.email,
@@ -47,18 +47,30 @@ export async function submitPoster(input: SubmitPosterInput): Promise<{ success:
         university: input.university,
         full_text_url: input.fullTextUrl,
       },
-    ])
+    ]).select("id").single()
 
     if (insertError) {
       console.error("[v0] submitPoster: Insert error:", insertError)
       return { success: false, error: insertError.message }
     }
 
-    console.log("[v0] submitPoster: Insert successful!")
+    console.log("[v0] submitPoster: Insert successful! ID:", insertedData?.id)
 
     // Send confirmation email
     try {
-      const userName = user.email?.split("@")[0] || "Participant"
+      // Get user's full name from profile
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("first_name, last_name, full_name")
+        .eq("id", user.id)
+        .single()
+      
+      const userName = profile?.full_name || 
+        (profile?.first_name && profile?.last_name 
+          ? `${profile.first_name} ${profile.last_name}` 
+          : user.email?.split("@")[0] || "Participant")
+      
+      console.log("[v0] submitPoster: Sending email to", user.email, "for poster:", input.title)
       
       const response = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'https://isapm2026.org'}/api/send-poster-submission-email`, {
         method: "POST",
@@ -67,12 +79,19 @@ export async function submitPoster(input: SubmitPosterInput): Promise<{ success:
           email: user.email,
           userName,
           posterTitle: input.title,
+          posterId: insertedData?.id || "N/A",
+          category: input.category,
           topic: input.topic,
         }),
       })
 
+      const responseText = await response.text()
+      console.log("[v0] submitPoster: Email API response:", response.status, responseText)
+
       if (!response.ok) {
         console.warn("[v0] submitPoster: Email send failed but submission succeeded")
+      } else {
+        console.log("[v0] submitPoster: Confirmation email sent successfully!")
       }
     } catch (emailError) {
       console.warn("[v0] submitPoster: Email error (submission still successful):", emailError)

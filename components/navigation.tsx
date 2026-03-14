@@ -135,7 +135,6 @@ export default function Navigation() {
         setUser(sessionUser)
         setIsLoading(false)
         setAuthTimedOut(false)
-        setAutoRetryDone(false)
 
         // Check sessionStorage cache for role first (avoids DB call)
         const cachedRole = sessionStorage.getItem(`user_role_${sessionUser.id}`)
@@ -164,7 +163,6 @@ export default function Navigation() {
         setUser(null)
         setIsLoading(false)
         setAuthTimedOut(false)
-        setAutoRetryDone(false)
       }
     } catch (authError) {
       console.error("Auth check failed:", authError)

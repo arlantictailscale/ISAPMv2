@@ -373,7 +373,7 @@ export default function SubmitPosterPage() {
             <div className="bg-accent/10 border border-accent/30 rounded-lg p-4 sm:p-6 flex gap-4 w-full">
               <AlertCircle className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-foreground mb-2 break-words">Submission Deadline: March 15, 2026</p>
+                <p className="font-semibold text-foreground mb-2 break-words">Submission Deadline: March 31, 2026</p>
                 <p className="text-sm text-muted-foreground mb-3 break-words">
                   Please ensure your abstract follows all guidelines before submission.
                 </p>

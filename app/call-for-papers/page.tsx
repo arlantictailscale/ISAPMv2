@@ -24,9 +24,9 @@ export default function EPoster() {
             <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 flex gap-4">
               <AlertCircle className="w-6 h-6 text-accent flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-semibold text-foreground mb-2">Submission Deadline: March 15, 2026</p>
+                <p className="font-semibold text-foreground mb-2">Submission Deadline: March 31, 2026</p>
                 <p className="text-sm text-muted-foreground">
-                  All e-Poster abstracts must be submitted online through our submission form by March 15, 2026
+                  All e-Poster abstracts must be submitted online through our submission form by March 31, 2026
                 </p>
               </div>
             </div>
@@ -226,7 +226,7 @@ export default function EPoster() {
                 Submit your e-Poster abstract through our online submission form.
               </p>
               <p className="text-foreground mb-6">
-                <strong>Submission Deadline:</strong> March 15, 2026
+                <strong>Submission Deadline:</strong> March 31, 2026
               </p>
               
               <Link href="/submit-poster">

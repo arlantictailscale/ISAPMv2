@@ -445,9 +445,9 @@ export default function PaymentValidationPage() {
     const isSponsored = payment.payment_method?.toLowerCase() === "sponsored"
 
     return (
-      <Card className="hover:shadow-lg transition-shadow">
-        <CardContent className="p-6">
-          <div className="space-y-4">
+      <Card className="hover:shadow-lg transition-shadow overflow-hidden">
+        <CardContent className="p-4 sm:p-6">
+          <div className="space-y-4 overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-lg truncate">{order?.full_name}</h3>
@@ -485,32 +485,38 @@ export default function PaymentValidationPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3 text-xs bg-muted/50 rounded-lg p-3">
-              <div className="flex items-center gap-1">
-                <Hash className="w-3 h-3 text-muted-foreground" />
-                <span className="text-muted-foreground">Order:</span>
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 sm:gap-3 text-xs bg-muted/50 rounded-lg p-3 overflow-hidden">
+              <div className="flex items-center gap-1 min-w-0">
+                <Hash className="w-3 h-3 text-muted-foreground shrink-0" />
+                <span className="text-muted-foreground shrink-0">Order:</span>
                 <button
                   onClick={() => copyToClipboard(payment.order_id, "Order ID")}
-                  className="font-mono hover:text-primary transition-colors flex items-center gap-1"
+                  className="font-mono hover:text-primary transition-colors flex items-center gap-1 truncate"
                 >
-                  {payment.order_id.slice(0, 8)}...
-                  <Copy className="w-3 h-3" />
+                  <span className="truncate">{payment.order_id.slice(0, 8)}...</span>
+                  <Copy className="w-3 h-3 shrink-0" />
                 </button>
               </div>
-              {payment.invoice_number && (
-                <div className="flex items-center gap-1">
-                  <FileText className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">Invoice:</span>
-                  <span className="font-mono">{payment.invoice_number}</span>
-                </div>
-              )}
               {payment.transaction_reference && (
-                <div className="flex items-center gap-1">
-                  <span className="text-muted-foreground">Ref:</span>
-                  <span className="font-mono">{payment.transaction_reference}</span>
+                <div className="flex items-center gap-1 min-w-0">
+                  <span className="text-muted-foreground shrink-0">Ref:</span>
+                  <button
+                    onClick={() => copyToClipboard(payment.transaction_reference!, "Reference")}
+                    className="font-mono hover:text-primary transition-colors flex items-center gap-1 truncate"
+                  >
+                    <span className="truncate max-w-[120px] sm:max-w-[180px]">{payment.transaction_reference}</span>
+                    <Copy className="w-3 h-3 shrink-0" />
+                  </button>
                 </div>
               )}
-              <div className="flex items-center gap-1">
+              {payment.invoice_number && (
+                <div className="flex items-center gap-1 min-w-0">
+                  <FileText className="w-3 h-3 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground shrink-0">Invoice:</span>
+                  <span className="font-mono truncate max-w-[100px]">{payment.invoice_number}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1 shrink-0">
                 <Calendar className="w-3 h-3 text-muted-foreground" />
                 <span className="text-muted-foreground">Created:</span>
                 <span>{format(new Date(payment.created_at), "dd MMM yyyy HH:mm")}</span>
@@ -524,37 +530,37 @@ export default function PaymentValidationPage() {
                 <p className="font-semibold text-muted-foreground">Order Items Breakdown:</p>
               </div>
               {items.map((item, idx) => (
-                <div key={idx} className="bg-muted/50 rounded-lg p-3 space-y-1.5">
-                  <div className="flex items-start justify-between gap-3">
+                <div key={idx} className="bg-muted/50 rounded-lg p-3 space-y-1.5 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-3">
                     <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
                       {item.item_type === "event" ? (
                         <>
                           {getEventTypeBadge(item.event_label)}
-                          <span className="break-words text-sm">{item.event_label}</span>
+                          <span className="text-sm line-clamp-2">{item.event_label}</span>
                         </>
                       ) : item.item_type === "webinar" ? (
                         <>
                           <Badge
-                            className={`${BADGE_COLORS.WEBINAR.bg} ${BADGE_COLORS.WEBINAR.text} ${BADGE_COLORS.WEBINAR.border}`}
+                            className={`${BADGE_COLORS.WEBINAR.bg} ${BADGE_COLORS.WEBINAR.text} ${BADGE_COLORS.WEBINAR.border} shrink-0`}
                           >
                             {BADGE_COLORS.WEBINAR.label}
                           </Badge>
-                          <span className="break-words text-sm">{item.event_label}</span>
+                          <span className="text-sm line-clamp-2">{item.event_label}</span>
                         </>
                       ) : (
                         <>
                           <Badge
-                            className={`${BADGE_COLORS.HOTEL.bg} ${BADGE_COLORS.HOTEL.text} ${BADGE_COLORS.HOTEL.border}`}
+                            className={`${BADGE_COLORS.HOTEL.bg} ${BADGE_COLORS.HOTEL.text} ${BADGE_COLORS.HOTEL.border} shrink-0`}
                           >
                             {BADGE_COLORS.HOTEL.label}
                           </Badge>
-                          <span className="break-words text-sm font-medium">
+                          <span className="text-sm font-medium">
                             {item.hotel_room_type} ({item.nights} night{item.nights > 1 ? "s" : ""})
                           </span>
                         </>
                       )}
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="text-left sm:text-right shrink-0">
                       <div className="font-semibold text-base">
                         {item.item_type === "hotel" && item.nights
                           ? formatCurrency(item.unit_price * item.nights, payment.currency)
@@ -807,10 +813,10 @@ export default function PaymentValidationPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       <Navigation />
-      <main className="flex-1 container mx-auto pt-24 pb-20 px-4">
-        <div className="space-y-6">
+      <main className="flex-1 w-full max-w-7xl mx-auto pt-24 pb-20 px-4 overflow-x-hidden">
+        <div className="space-y-6 w-full">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h1 className="text-3xl font-bold">Payment Validation</h1>
@@ -891,10 +897,10 @@ export default function PaymentValidationPage() {
                     className="pl-10"
                   />
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Select value={dateFilter} onValueChange={(v: any) => setDateFilter(v)}>
-                    <SelectTrigger className="w-[140px]">
-                      <Calendar className="w-4 h-4 mr-2" />
+                    <SelectTrigger className="w-full sm:w-[140px]">
+                      <Calendar className="w-4 h-4 mr-2 shrink-0" />
                       <SelectValue placeholder="Date" />
                     </SelectTrigger>
                     <SelectContent>
@@ -905,8 +911,8 @@ export default function PaymentValidationPage() {
                     </SelectContent>
                   </Select>
                   <Select value={paymentMethodFilter} onValueChange={(v: any) => setPaymentMethodFilter(v)}>
-                    <SelectTrigger className="w-[160px]">
-                      <Filter className="w-4 h-4 mr-2" />
+                    <SelectTrigger className="w-full sm:w-[160px]">
+                      <Filter className="w-4 h-4 mr-2 shrink-0" />
                       <SelectValue placeholder="Payment Type" />
                     </SelectTrigger>
                     <SelectContent>

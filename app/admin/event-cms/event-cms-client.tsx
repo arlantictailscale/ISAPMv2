@@ -454,6 +454,13 @@ export default function EventCMSPage() {
   async function handleAddResource() {
     if (!formData.title || !formData.url) return
 
+    // Validate resource_type before proceeding
+    const resourceType = activeTab as ResourceType
+    if (!["document", "link", "video", "image"].includes(resourceType)) {
+      alert("Please select a valid resource tab (Document, Link, Video, or Image) before adding")
+      return
+    }
+
     setIsProcessing(true)
     try {
       const {
@@ -479,33 +486,52 @@ export default function EventCMSPage() {
           .select()
           .single()
 
-        if (eventError) throw eventError
+        if (eventError) {
+          console.error("[v0] Error creating event:", eventError)
+          throw eventError
+        }
         eventId = newEvent.id
       }
 
-      const { error } = await supabase.from("event_resources").insert({
-        event_id: eventId, // This is now the UUID from the database
-        resource_type: activeTab as ResourceType,
+      // Ensure file_size is a valid integer (convert from bytes if needed)
+      const fileSize = formData.file_size ? Math.round(formData.file_size) : null
+
+      const insertPayload = {
+        event_id: eventId,
+        resource_type: resourceType,
         title: formData.title,
         description: formData.description || null,
         url: formData.url,
         file_type: formData.file_type || null,
-        file_size: formData.file_size || null,
+        file_size: fileSize,
         sort_order: formData.sort_order,
         is_public: formData.is_public,
         is_active: true,
         created_by: user.id,
         updated_by: user.id,
-      })
+      }
 
-      if (error) throw error
+      console.log("[v0] Inserting resource:", insertPayload)
+
+      const { data: insertedResource, error } = await supabase
+        .from("event_resources")
+        .insert(insertPayload)
+        .select()
+        .single()
+
+      if (error) {
+        console.error("[v0] Error inserting resource:", error)
+        throw error
+      }
+
+      console.log("[v0] Resource inserted successfully:", insertedResource)
 
       await loadEventData()
       setIsAddDialogOpen(false)
       resetForm()
-    } catch (error) {
-      console.error("Error adding resource:", error)
-      alert("Failed to add resource")
+    } catch (error: any) {
+      console.error("[v0] Error adding resource:", error)
+      alert(`Failed to add resource: ${error?.message || "Unknown error"}`)
     } finally {
       setIsProcessing(false)
     }

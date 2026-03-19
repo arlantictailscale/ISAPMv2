@@ -44,6 +44,7 @@ interface PosterSubmission {
   can_resubmit: boolean
   user_email?: string
   user_name?: string
+  user_phone?: string
   topic?: string
 }
 
@@ -197,7 +198,8 @@ export default function AdminPostersPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              to: originalSubmission.user_email,
+              email: originalSubmission.user_email,
+              userName: originalSubmission.user_name || originalSubmission.user_email.split("@")[0],
               posterTitle: originalSubmission.title,
               status: "accepted",
             }),
@@ -295,7 +297,8 @@ export default function AdminPostersPage() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              to: originalSubmission.user_email,
+              email: originalSubmission.user_email,
+              userName: originalSubmission.user_name || originalSubmission.user_email.split("@")[0],
               posterTitle: originalSubmission.title,
               status: "rejected",
               rejectionComment: currentRejectionComment,
@@ -422,6 +425,7 @@ export default function AdminPostersPage() {
         Status: sub.submission_status,
         "Submitted By": sub.user_name || "N/A",
         Email: sub.user_email || "N/A",
+        Phone: sub.user_phone || "N/A",
         "Has Poster File": sub.file_url ? "Yes" : "No",
         "Has Full Text": sub.full_text_url ? "Yes" : "No",
         "Can Resubmit": sub.can_resubmit ? "Yes" : "No",
@@ -782,6 +786,12 @@ export default function AdminPostersPage() {
                       {viewingSubmission.user_name || "Unknown"}
                       <br />
                       {viewingSubmission.user_email || "No email"}
+                      {viewingSubmission.user_phone && (
+                        <>
+                          <br />
+                          {viewingSubmission.user_phone}
+                        </>
+                      )}
                     </p>
                   </div>
                   <div>

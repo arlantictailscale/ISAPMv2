@@ -135,7 +135,8 @@ export default function Navigation() {
         setUser(sessionUser)
         setIsLoading(false)
         setAuthTimedOut(false)
-        setAutoRetryDone(false)
+        // Clear reload flag on successful auth
+        sessionStorage.removeItem("isapm_auth_reloaded")
 
         // Check sessionStorage cache for role first (avoids DB call)
         const cachedRole = sessionStorage.getItem(`user_role_${sessionUser.id}`)
@@ -164,7 +165,8 @@ export default function Navigation() {
         setUser(null)
         setIsLoading(false)
         setAuthTimedOut(false)
-        setAutoRetryDone(false)
+        // Clear reload flag - auth check completed (even if no session)
+        sessionStorage.removeItem("isapm_auth_reloaded")
       }
     } catch (authError) {
       console.error("Auth check failed:", authError)
@@ -178,8 +180,24 @@ export default function Navigation() {
   useEffect(() => {
     if (!authTimedOut) return
 
-    // Only auto-retry if we haven't exceeded max retries
-    // This prevents infinite refresh loops on mobile Chrome
+    // On first timeout, try a page reload (which helps on mobile Chrome)
+    // Use sessionStorage to track if we've already tried reloading this session
+    const hasReloadedKey = "isapm_auth_reloaded"
+    const hasReloaded = sessionStorage.getItem(hasReloadedKey)
+
+    if (!hasReloaded) {
+      // First timeout - try reloading the page (bypasses some mobile browser cache issues)
+      sessionStorage.setItem(hasReloadedKey, "true")
+      // Small delay to allow any pending operations to complete
+      setTimeout(() => {
+        if (isMounted.current) {
+          window.location.reload()
+        }
+      }, 500)
+      return
+    }
+
+    // Already reloaded once this session, try soft retry
     if (retryCount < maxRetries) {
       const retryTimer = setTimeout(() => {
         if (isMounted.current) {
@@ -190,7 +208,7 @@ export default function Navigation() {
       }, 1000) // Wait 1 second before retry
       return () => clearTimeout(retryTimer)
     }
-    // After max retries, don't auto-refresh - let user manually retry or continue
+    // After max retries, show login button - don't loop forever
   }, [authTimedOut, retryCount, checkUser])
 
   useEffect(() => {

@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
     const { data: profilesData, error: profilesError } = await supabase
       .from("profiles")
-      .select("id, first_name, last_name")
+      .select("id, first_name, last_name, phone")
       .in("id", userIds)
 
     if (profilesError) {
@@ -88,6 +88,7 @@ export async function GET(request: NextRequest) {
           ...submission,
           user_email: userEmail,
           user_name: userName,
+          user_phone: profile?.phone || null,
           topic,
           keywords: cleanKeywords,
           university: submission.university || null,

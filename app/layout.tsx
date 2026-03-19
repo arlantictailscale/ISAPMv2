@@ -94,6 +94,9 @@ export const metadata: Metadata = {
     email: true,
     address: true,
   },
+  other: {
+    "facebook-domain-verification": "2lkqcnahzfqor7sw69uh5itdns02sq",
+  },
   openGraph: {
     title: "ISAPM 8th National Meeting 2026 | Pain Management Conference Indonesia",
     description:

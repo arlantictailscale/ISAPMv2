@@ -10,6 +10,7 @@ import { toast } from "sonner"
 import { createOrderFromCart } from "@/app/actions/checkout"
 import { useCart } from "@/lib/cart/cart-context"
 import { ConfettiTrigger } from "@/components/confetti-trigger"
+import { trackInitiateCheckout, trackLead } from "@/lib/meta-pixel"
 
 interface CheckoutFormProps {
   defaultValues: {
@@ -73,6 +74,21 @@ export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(fu
       }
 
       await refreshCart()
+
+      // Track Lead event for Meta Pixel (order placed, pending payment)
+      trackLead({
+        content_name: "ISAPM 2026 Event Order",
+        content_category: "Event Registration",
+        value: result.data?.total_amount || 0,
+        currency: "IDR",
+      })
+      
+      // Track InitiateCheckout for funnel tracking
+      trackInitiateCheckout({
+        value: result.data?.total_amount || 0,
+        currency: "IDR",
+        num_items: result.data?.order_items?.length || 1,
+      })
 
       setShowConfetti(true)
 

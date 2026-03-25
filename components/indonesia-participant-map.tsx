@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { MapPin, Users, Globe } from "lucide-react"
 
-// Indonesia Provinces TopoJSON - using a reliable CDN source
-const INDONESIA_PROVINCES_URL = "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/indonesia/indonesia-provinces.json"
+// Indonesia GeoJSON - hosted locally for reliability
+const INDONESIA_PROVINCES_URL = "/indonesia-provinces.json"
 
 // Color scale for heat map
 function getProvinceColor(count: number, maxCount: number): string {

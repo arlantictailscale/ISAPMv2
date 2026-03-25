@@ -16,7 +16,8 @@ export default async function PaymentOrderPage({
       `
       *,
       order_items (*),
-      order_payments (*)
+      order_payments (*),
+      promo_code:promo_codes (code, description)
     `,
     )
     .eq("id", orderId)

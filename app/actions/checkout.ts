@@ -180,6 +180,9 @@ export async function createOrderFromCart(
       orderItems: orderItemsData,
       totalAmount: totalAmount,
       currency: currency,
+      originalAmount: originalAmount,
+      discountAmount: totalDiscount,
+      promoCode: promoData?.promo_code,
     })
     console.log("[v0] Order confirmation email sent to:", guestInfo.email)
   } catch (emailError) {

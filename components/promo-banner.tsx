@@ -87,7 +87,7 @@ export default function PromoBanner() {
                 <span>Refer a Nurse (IDR 500K) or GP (IDR 1.5M) for Adjunct Therapy Workshop</span>
               </li>
             </ul>
-            <p className="text-xs mt-3 opacity-80">Limited slots available. Use promo code at checkout.</p>
+            <p className="text-xs mt-3 opacity-80">Limited slots available. Use promo code <strong className="text-yellow-200">AREMANEST2026</strong> at checkout.</p>
           </div>
         )}
         

@@ -79,7 +79,13 @@ interface PromoCodeUse {
   discount_amount: number
   original_amount: number
   created_at: string
-  user_email?: string
+  order?: {
+    id: string
+    full_name: string
+    email: string
+    status: string
+    total_amount: number
+  }
 }
 
 const EVENT_OPTIONS = [
@@ -179,7 +185,10 @@ export default function PromoCodesAdminPage() {
         .select(`
           *,
           rules:promo_code_rules(*),
-          uses:promo_code_uses(*)
+          uses:promo_code_uses(
+            *,
+            order:orders(id, full_name, email, status, total_amount)
+          )
         `)
         .order("created_at", { ascending: false })
 
@@ -431,8 +440,15 @@ export default function PromoCodesAdminPage() {
     total: promoCodes.length,
     active: promoCodes.filter(p => p.is_active).length,
     totalUses: promoCodes.reduce((sum, p) => sum + p.current_uses, 0),
+    // Only count discounts from verified/paid orders
+    verifiedUses: promoCodes.reduce((sum, p) => 
+      sum + (p.uses?.filter(u => u.order?.status === "paid").length || 0), 0
+    ),
     totalDiscount: promoCodes.reduce((sum, p) => 
-      sum + (p.uses?.reduce((s, u) => s + (u.discount_amount || 0), 0) || 0), 0
+      sum + (p.uses?.filter(u => u.order?.status === "paid").reduce((s, u) => s + (u.discount_amount || 0), 0) || 0), 0
+    ),
+    pendingDiscount: promoCodes.reduce((sum, p) => 
+      sum + (p.uses?.filter(u => u.order?.status !== "paid").reduce((s, u) => s + (u.discount_amount || 0), 0) || 0), 0
     ),
   }
 
@@ -502,8 +518,11 @@ export default function PromoCodesAdminPage() {
                     <Users className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-purple-700">{stats.totalUses}</p>
-                    <p className="text-sm text-purple-600">Total Uses</p>
+                    <p className="text-2xl font-bold text-purple-700">
+                      {stats.verifiedUses}
+                      <span className="text-sm font-normal text-purple-400 ml-1">/ {stats.totalUses}</span>
+                    </p>
+                    <p className="text-sm text-purple-600">Verified / Total Uses</p>
                   </div>
                 </div>
               </CardContent>
@@ -516,7 +535,10 @@ export default function PromoCodesAdminPage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-amber-700">{formatCurrency(stats.totalDiscount, "IDR")}</p>
-                    <p className="text-sm text-amber-600">Total Discounts</p>
+                    <p className="text-sm text-amber-600">Verified Discounts</p>
+                    {stats.pendingDiscount > 0 && (
+                      <p className="text-xs text-amber-500">+{formatCurrency(stats.pendingDiscount, "IDR")} pending</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -929,15 +951,15 @@ export default function PromoCodesAdminPage() {
 
       {/* Usage Statistics Dialog */}
       <Dialog open={isUsageDialogOpen} onOpenChange={setIsUsageDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Usage Statistics for {selectedPromo?.code}</DialogTitle>
             <DialogDescription>
-              View how this promo code has been used
+              View who has used this promo code and their payment status
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card>
                 <CardContent className="p-4 text-center">
                   <p className="text-2xl font-bold">{selectedPromo?.current_uses || 0}</p>
@@ -946,19 +968,29 @@ export default function PromoCodesAdminPage() {
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
-                  <p className="text-2xl font-bold">{selectedPromo?.max_uses || "∞"}</p>
-                  <p className="text-sm text-muted-foreground">Max Uses</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {selectedPromo?.uses?.filter(u => u.order?.status === "paid").length || 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Verified</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="p-4 text-center">
+                  <p className="text-2xl font-bold text-amber-600">
+                    {selectedPromo?.uses?.filter(u => u.order?.status !== "paid").length || 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Pending</p>
                 </CardContent>
               </Card>
               <Card>
                 <CardContent className="p-4 text-center">
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(
-                      selectedPromo?.uses?.reduce((sum, u) => sum + (u.discount_amount || 0), 0) || 0,
+                      selectedPromo?.uses?.filter(u => u.order?.status === "paid").reduce((sum, u) => sum + (u.discount_amount || 0), 0) || 0,
                       "IDR"
                     )}
                   </p>
-                  <p className="text-sm text-muted-foreground">Total Savings</p>
+                  <p className="text-sm text-muted-foreground">Verified Savings</p>
                 </CardContent>
               </Card>
             </div>
@@ -968,19 +1000,41 @@ export default function PromoCodesAdminPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
+                    <TableHead>User</TableHead>
                     <TableHead>Order ID</TableHead>
-                    <TableHead>Original</TableHead>
                     <TableHead>Discount</TableHead>
+                    <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {selectedPromo.uses.map((use) => (
                     <TableRow key={use.id}>
-                      <TableCell>{format(new Date(use.created_at), "dd MMM yyyy HH:mm")}</TableCell>
+                      <TableCell className="text-sm">{format(new Date(use.created_at), "dd MMM yyyy HH:mm")}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-sm">{use.order?.full_name || "Unknown"}</p>
+                          <p className="text-xs text-muted-foreground">{use.order?.email || "-"}</p>
+                        </div>
+                      </TableCell>
                       <TableCell className="font-mono text-xs">{use.order_id.slice(0, 8)}...</TableCell>
-                      <TableCell>{formatCurrency(use.original_amount, "IDR")}</TableCell>
                       <TableCell className="text-green-600 font-medium">
                         -{formatCurrency(use.discount_amount, "IDR")}
+                      </TableCell>
+                      <TableCell>
+                        {use.order?.status === "paid" ? (
+                          <Badge className="bg-green-100 text-green-700 border-green-200">
+                            <Check className="w-3 h-3 mr-1" />
+                            Verified
+                          </Badge>
+                        ) : use.order?.status === "pending" ? (
+                          <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50">
+                            Pending
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-gray-500">
+                            {use.order?.status || "Unknown"}
+                          </Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

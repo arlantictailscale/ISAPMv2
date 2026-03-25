@@ -55,9 +55,10 @@ export function IndonesiaSvgMap() {
   const maxCount = mapData?.provinces.reduce((max, p) => Math.max(max, p.count), 0) || 1
 
   mapData?.provinces.forEach(p => {
-    // Find province ID from name
+    // Find province ID from name - add null checks
+    if (!p.name) return
     const province = INDONESIA_PROVINCES.find(prov => 
-      prov.name.toLowerCase() === p.name.toLowerCase()
+      prov.name && p.name && prov.name.toLowerCase() === p.name.toLowerCase()
     )
     if (province) {
       provinceCountMap.set(province.id, p.count)

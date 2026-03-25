@@ -83,21 +83,28 @@ interface PromoCodeUse {
 }
 
 const EVENT_OPTIONS = [
-  { value: "symposium", label: "Symposium" },
-  { value: "workshop-pediatric-pain", label: "Workshop: Pediatric Essential Pain Management" },
-  { value: "workshop-cancer-pain", label: "Workshop: Cancer Pain" },
-  { value: "workshop-adjunct-therapy", label: "Workshop: Adjunct Therapy for Pain Management" },
-  { value: "cpd-course", label: "CPD Course" },
   { value: "all", label: "All Events" },
+  { value: "symposium", label: "Symposium" },
+  { value: "cpd", label: "CPD Courses (2 days)" },
+  { value: "ws1", label: "WS 1: Regenerative Pain Therapy" },
+  { value: "ws2", label: "WS 2: Basic Interventional Pain Management" },
+  { value: "ws3", label: "WS 3: Pediatric Essential Pain Management" },
+  { value: "ws4", label: "WS 4: Adjunct Therapy for Pain Management" },
+  { value: "ws5", label: "WS 5: Developing a Pain Clinic" },
+  { value: "ws6", label: "WS 6: Cancer Pain" },
+  { value: "ws7", label: "WS 7: Advanced Intervention of Pain Management" },
+  { value: "webinar_equity_pain", label: "Webinar: Equity in Pain Management" },
 ]
 
 const PARTICIPANT_OPTIONS = [
   { value: "all", label: "All Participants" },
-  { value: "specialist", label: "Specialist Doctor" },
-  { value: "gp", label: "General Practitioner" },
-  { value: "nurse", label: "Nurse" },
+  { value: "span", label: "Anesthesiologist" },
   { value: "resident", label: "Resident" },
-  { value: "student", label: "Student" },
+  { value: "dokter_umum", label: "General Practitioner" },
+  { value: "perawat", label: "Nurse" },
+  { value: "penata_anestesi", label: "Nurse Anesthetist" },
+  { value: "medical_student", label: "Medical Student" },
+  { value: "span_team", label: "Anesthesiologist Team (4 participants)" },
 ]
 
 export default function PromoCodesAdminPage() {

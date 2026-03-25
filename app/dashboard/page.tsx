@@ -26,6 +26,8 @@ import {
   Building,
   FileCheck,
   UserCheck,
+  Send,
+  Tag,
 } from "lucide-react"
 import Link from "next/link"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
@@ -431,6 +433,22 @@ export default async function DashboardPage() {
       icon: BarChart3,
       href: "/admin/event-quotas",
       color: "bg-violet-500",
+      stats: null,
+    },
+    {
+      title: "Email Broadcast",
+      description: "Send email notifications to participants",
+      icon: Send,
+      href: "/admin/email-broadcast",
+      color: "bg-sky-500",
+      stats: null,
+    },
+    {
+      title: "Promo Codes",
+      description: "Manage discount codes and promotions",
+      icon: Tag,
+      href: "/admin/promo-codes",
+      color: "bg-lime-500",
       stats: null,
     },
   ]

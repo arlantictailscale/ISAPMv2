@@ -3,15 +3,15 @@
 import dynamic from "next/dynamic"
 import { StatsSkeleton } from "./skeleton-loaders"
 
-// Dynamic import with ssr: false is allowed in Client Components
-const IndonesiaParticipantMap = dynamic(
-  () => import("./indonesia-participant-map").then(mod => ({ default: mod.IndonesiaParticipantMap })),
+// Dynamic import with ssr: false - using SVG-based map for reliability
+const IndonesiaSvgMap = dynamic(
+  () => import("./indonesia-svg-map").then(mod => ({ default: mod.IndonesiaSvgMap })),
   {
     loading: () => <StatsSkeleton />,
-    ssr: false, // This is fine in a Client Component
+    ssr: false, // SVG manipulation needs client-side DOM
   }
 )
 
 export function ParticipantMapWrapper() {
-  return <IndonesiaParticipantMap />
+  return <IndonesiaSvgMap />
 }

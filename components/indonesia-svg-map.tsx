@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { Globe, MapPin } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -8,16 +8,22 @@ import { getParticipantDistribution, type ParticipantMapData } from "@/app/actio
 import { INDONESIA_PROVINCES } from "@/lib/data/indonesia-provinces"
 
 // Color scale for participant counts
-const getProvinceColor = (count: number, maxCount: number): string => {
-  if (count === 0) return "#e2e8f0" // slate-200 for empty provinces
-  
+const getMarkerColor = (count: number, maxCount: number): string => {
   const intensity = Math.min(count / Math.max(maxCount, 1), 1)
   
-  if (intensity < 0.2) return "#99f6e4" // teal-200
-  if (intensity < 0.4) return "#5eead4" // teal-300
-  if (intensity < 0.6) return "#2dd4bf" // teal-400
-  if (intensity < 0.8) return "#14b8a6" // teal-500
-  return "#0d9488" // teal-600
+  if (intensity < 0.2) return "#5eead4" // teal-300
+  if (intensity < 0.4) return "#2dd4bf" // teal-400
+  if (intensity < 0.6) return "#14b8a6" // teal-500
+  if (intensity < 0.8) return "#0d9488" // teal-600
+  return "#0f766e" // teal-700
+}
+
+// Calculate marker size based on count
+const getMarkerSize = (count: number, maxCount: number): number => {
+  const minSize = 8
+  const maxSize = 28
+  const intensity = Math.min(count / Math.max(maxCount, 1), 1)
+  return minSize + (maxSize - minSize) * Math.sqrt(intensity)
 }
 
 export function IndonesiaSvgMap() {
@@ -25,8 +31,6 @@ export function IndonesiaSvgMap() {
   const [loading, setLoading] = useState(true)
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
-  const svgContainerRef = useRef<HTMLDivElement>(null)
-  const [svgContent, setSvgContent] = useState<string>("")
 
   useEffect(() => {
     async function loadData() {
@@ -42,98 +46,41 @@ export function IndonesiaSvgMap() {
     loadData()
   }, [])
 
-  useEffect(() => {
-    // Load SVG content
-    fetch("/indonesia-map.svg")
-      .then(res => res.text())
-      .then(svg => setSvgContent(svg))
-      .catch(err => console.error("Failed to load SVG:", err))
-  }, [])
+  // Create a map of province name to participant count and coordinates
+  const provinceMarkers: Array<{
+    id: string
+    name: string
+    count: number
+    x: number
+    y: number
+  }> = []
 
-  // Create a map of province ID to participant count
-  const provinceCountMap = new Map<string, number>()
   const maxCount = mapData?.provinces.reduce((max, p) => Math.max(max, p.count), 0) || 1
 
   mapData?.provinces.forEach(p => {
-    // Find province ID from name - add null checks
     if (!p.name) return
     const province = INDONESIA_PROVINCES.find(prov => 
       prov.name && p.name && prov.name.toLowerCase() === p.name.toLowerCase()
     )
-    if (province) {
-      provinceCountMap.set(province.id, p.count)
+    if (province && province.coordinates) {
+      provinceMarkers.push({
+        id: province.id,
+        name: province.name,
+        count: p.count,
+        // Convert lng/lat to SVG coordinates (approximate mapping for Indonesia)
+        // SVG viewBox is 0 0 1875 750
+        // Indonesia roughly spans: lng 95-141, lat -11 to 6
+        x: ((province.coordinates.lng - 95) / (141 - 95)) * 1875,
+        y: ((6 - province.coordinates.lat) / (6 - (-11))) * 750,
+      })
     }
   })
 
   // Get province info for tooltip
   const getProvinceInfo = (provinceId: string) => {
-    const province = INDONESIA_PROVINCES.find(p => p.id === provinceId)
-    const count = provinceCountMap.get(provinceId) || 0
-    return { name: province?.name || provinceId, count }
+    const marker = provinceMarkers.find(m => m.id === provinceId)
+    return marker || null
   }
-
-  // Apply colors to SVG paths
-  useEffect(() => {
-    if (!svgContent || !svgContainerRef.current) return
-
-    const container = svgContainerRef.current
-    const parser = new DOMParser()
-    const svgDoc = parser.parseFromString(svgContent, "image/svg+xml")
-    const svgElement = svgDoc.querySelector("svg")
-    
-    if (!svgElement) return
-
-    // Style the SVG
-    svgElement.setAttribute("width", "100%")
-    svgElement.setAttribute("height", "100%")
-    svgElement.style.maxHeight = "500px"
-
-    // Color each province path
-    const paths = svgElement.querySelectorAll("path[id^='ID-']")
-    paths.forEach(path => {
-      const id = path.getAttribute("id")
-      if (id) {
-        const count = provinceCountMap.get(id) || 0
-        const color = getProvinceColor(count, maxCount)
-        path.setAttribute("fill", color)
-        path.setAttribute("stroke", "#ffffff")
-        path.setAttribute("stroke-width", "0.5")
-        path.setAttribute("data-province-id", id)
-        path.style.cursor = "pointer"
-        path.style.transition = "fill 0.2s ease, opacity 0.2s ease"
-      }
-    })
-
-    // Clear and append
-    container.innerHTML = ""
-    container.appendChild(svgElement)
-
-    // Add event listeners for hover
-    const allPaths = container.querySelectorAll("path[data-province-id]")
-    allPaths.forEach(path => {
-      path.addEventListener("mouseenter", (e) => {
-        const target = e.target as SVGPathElement
-        const id = target.getAttribute("data-province-id")
-        if (id) {
-          setHoveredProvince(id)
-          target.style.opacity = "0.8"
-          target.setAttribute("stroke-width", "1.5")
-        }
-      })
-      
-      path.addEventListener("mousemove", (e) => {
-        const mouseEvent = e as MouseEvent
-        setTooltipPos({ x: mouseEvent.clientX, y: mouseEvent.clientY })
-      })
-      
-      path.addEventListener("mouseleave", (e) => {
-        const target = e.target as SVGPathElement
-        setHoveredProvince(null)
-        target.style.opacity = "1"
-        target.setAttribute("stroke-width", "0.5")
-      })
-    })
-  }, [svgContent, mapData, maxCount, provinceCountMap])
 
   const stats = {
     totalParticipants: mapData?.totalParticipants || 0,
@@ -150,18 +97,18 @@ export function IndonesiaSvgMap() {
               <Globe className="w-6 h-6 text-teal-600" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Participant Distribution</h2>
-              <p className="text-sm text-muted-foreground">Loading map...</p>
+              <h3 className="text-xl font-bold">Participant Distribution</h3>
+              <p className="text-sm text-muted-foreground">Loading map data...</p>
             </div>
           </div>
-          <div className="h-[400px] bg-slate-100 rounded-lg animate-pulse" />
+          <div className="h-[400px] bg-sky-50 rounded-xl animate-pulse" />
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="w-full overflow-hidden">
+    <Card className="w-full">
       <CardContent className="p-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
@@ -169,24 +116,22 @@ export function IndonesiaSvgMap() {
             <Globe className="w-6 h-6 text-teal-600" />
           </div>
           <div>
-            <h2 className="text-xl font-bold">Participant Distribution</h2>
+            <h3 className="text-xl font-bold">Participant Distribution</h3>
             <p className="text-sm text-muted-foreground">Verified participants from across Indonesia</p>
           </div>
         </div>
 
         {/* Stats Row */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
-          <div className="flex gap-8">
-            <div className="text-center">
-              <p className="text-3xl font-bold text-teal-600">{stats.totalParticipants}</p>
-              <p className="text-sm text-muted-foreground">Total Participants</p>
-            </div>
-            <div className="text-center">
-              <p className="text-3xl font-bold text-teal-600">{stats.totalProvinces}</p>
-              <p className="text-sm text-muted-foreground">Provinces</p>
-            </div>
+        <div className="flex flex-wrap gap-4 mb-4 items-center">
+          <div className="text-center px-4">
+            <p className="text-3xl font-bold text-teal-600">{stats.totalParticipants}</p>
+            <p className="text-sm text-muted-foreground">Total Participants</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="text-center px-4 border-l">
+            <p className="text-3xl font-bold text-teal-600">{stats.totalProvinces}</p>
+            <p className="text-sm text-muted-foreground">Provinces</p>
+          </div>
+          <div className="flex flex-wrap gap-2 ml-auto">
             {stats.topProvinces.map((p, i) => (
               <Badge key={i} variant="outline" className="bg-white">
                 <MapPin className="w-3 h-3 mr-1" />
@@ -197,39 +142,113 @@ export function IndonesiaSvgMap() {
         </div>
 
         {/* Map Container */}
-        <div className="relative bg-gradient-to-b from-sky-50 to-sky-100 rounded-lg overflow-hidden">
-          <div 
-            ref={svgContainerRef}
-            className="w-full h-[400px] md:h-[500px] p-4"
-          />
+        <div className="relative bg-gradient-to-b from-sky-50 to-sky-100 rounded-xl overflow-hidden">
+          {/* SVG Map Background */}
+          <div className="w-full h-[400px] md:h-[500px]">
+            <svg
+              viewBox="0 0 1875 750"
+              className="w-full h-full"
+              style={{ maxHeight: "500px" }}
+            >
+              {/* Indonesia map as image background */}
+              <image
+                href="/indonesia-map.svg"
+                width="1875"
+                height="750"
+                className="opacity-60"
+              />
+              
+              {/* Participant markers */}
+              {provinceMarkers.map((marker) => {
+                const size = getMarkerSize(marker.count, maxCount)
+                const color = getMarkerColor(marker.count, maxCount)
+                
+                return (
+                  <g key={marker.id}>
+                    {/* Outer glow */}
+                    <circle
+                      cx={marker.x}
+                      cy={marker.y}
+                      r={size + 4}
+                      fill={color}
+                      opacity={0.3}
+                    />
+                    {/* Main marker */}
+                    <circle
+                      cx={marker.x}
+                      cy={marker.y}
+                      r={size}
+                      fill={color}
+                      stroke="#ffffff"
+                      strokeWidth={2}
+                      className="cursor-pointer transition-all duration-200 hover:opacity-80"
+                      onMouseEnter={(e) => {
+                        setHoveredProvince(marker.id)
+                        const rect = (e.target as SVGCircleElement).getBoundingClientRect()
+                        setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top })
+                      }}
+                      onMouseLeave={() => setHoveredProvince(null)}
+                    />
+                    {/* Count label for large markers */}
+                    {size > 16 && (
+                      <text
+                        x={marker.x}
+                        y={marker.y + 4}
+                        textAnchor="middle"
+                        fill="white"
+                        fontSize={size > 20 ? 12 : 10}
+                        fontWeight="bold"
+                        className="pointer-events-none"
+                      >
+                        {marker.count}
+                      </text>
+                    )}
+                  </g>
+                )
+              })}
+            </svg>
+          </div>
 
           {/* Tooltip */}
           {hoveredProvince && (
-            <div 
-              className="fixed z-50 px-3 py-2 bg-white rounded-lg shadow-lg border text-sm pointer-events-none"
-              style={{ 
-                left: tooltipPos.x + 10, 
-                top: tooltipPos.y - 40,
+            <div
+              className="fixed z-50 bg-white px-3 py-2 rounded-lg shadow-lg border text-sm pointer-events-none"
+              style={{
+                left: tooltipPos.x,
+                top: tooltipPos.y - 50,
+                transform: "translateX(-50%)",
               }}
             >
-              <p className="font-semibold">{getProvinceInfo(hoveredProvince).name}</p>
-              <p className="text-teal-600">{getProvinceInfo(hoveredProvince).count} participants</p>
+              {(() => {
+                const info = getProvinceInfo(hoveredProvince)
+                return info ? (
+                  <>
+                    <p className="font-semibold">{info.name}</p>
+                    <p className="text-teal-600">{info.count} participants</p>
+                  </>
+                ) : null
+              })()}
             </div>
           )}
 
           {/* Legend */}
-          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-sm">
+          <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-sm">
             <p className="text-xs font-medium mb-2">Participants</p>
             <div className="flex items-center gap-1">
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: "#e2e8f0" }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: "#99f6e4" }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: "#5eead4" }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: "#2dd4bf" }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: "#14b8a6" }} />
-              <div className="w-4 h-4 rounded" style={{ backgroundColor: "#0d9488" }} />
+              {[8, 12, 16, 20, 24].map((size, i) => (
+                <div
+                  key={i}
+                  className="rounded-full"
+                  style={{
+                    width: size,
+                    height: size,
+                    backgroundColor: getMarkerColor((i + 1) * 10, 50),
+                  }}
+                />
+              ))}
             </div>
             <div className="flex justify-between text-xs text-muted-foreground mt-1">
-              <span>0</span>
+              <span>Few</span>
               <span>Many</span>
             </div>
           </div>

@@ -1,9 +1,10 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Globe, MapPin } from "lucide-react"
+import { useEffect, useState, useRef, useCallback } from "react"
+import { Globe, MapPin, ZoomIn, ZoomOut, RotateCcw } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { getParticipantDistribution, type ParticipantMapData } from "@/app/actions/participant-map"
 
 // Color scale for participant counts
@@ -30,6 +31,17 @@ export function IndonesiaSvgMap() {
   const [loading, setLoading] = useState(true)
   const [hoveredProvince, setHoveredProvince] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+  
+  // Zoom and pan state
+  const [scale, setScale] = useState(1)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [isDragging, setIsDragging] = useState(false)
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+  const containerRef = useRef<HTMLDivElement>(null)
+  const lastTouchDistance = useRef<number | null>(null)
+  
+  const MIN_SCALE = 1
+  const MAX_SCALE = 4
 
   useEffect(() => {
     async function loadData() {
@@ -43,6 +55,87 @@ export function IndonesiaSvgMap() {
       }
     }
     loadData()
+  }, [])
+
+  // Zoom handlers
+  const handleZoomIn = useCallback(() => {
+    setScale(prev => Math.min(prev * 1.5, MAX_SCALE))
+  }, [])
+
+  const handleZoomOut = useCallback(() => {
+    setScale(prev => Math.max(prev / 1.5, MIN_SCALE))
+    // Reset position when zooming out to minimum
+    if (scale <= 1.5) {
+      setPosition({ x: 0, y: 0 })
+    }
+  }, [scale])
+
+  const handleReset = useCallback(() => {
+    setScale(1)
+    setPosition({ x: 0, y: 0 })
+  }, [])
+
+  // Mouse/Touch drag handlers
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (scale > 1) {
+      setIsDragging(true)
+      setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y })
+      e.currentTarget.setPointerCapture(e.pointerId)
+    }
+  }, [scale, position])
+
+  const handlePointerMove = useCallback((e: React.PointerEvent) => {
+    if (isDragging && scale > 1) {
+      const newX = e.clientX - dragStart.x
+      const newY = e.clientY - dragStart.y
+      
+      // Limit panning based on scale
+      const container = containerRef.current
+      if (container) {
+        const maxPan = (scale - 1) * container.offsetWidth / 2
+        const maxPanY = (scale - 1) * container.offsetHeight / 2
+        setPosition({
+          x: Math.max(-maxPan, Math.min(maxPan, newX)),
+          y: Math.max(-maxPanY, Math.min(maxPanY, newY))
+        })
+      }
+    }
+  }, [isDragging, dragStart, scale])
+
+  const handlePointerUp = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // Touch pinch-to-zoom handler
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      e.preventDefault()
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      )
+
+      if (lastTouchDistance.current !== null) {
+        const delta = distance - lastTouchDistance.current
+        const scaleFactor = 1 + delta * 0.005
+        setScale(prev => Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev * scaleFactor)))
+      }
+
+      lastTouchDistance.current = distance
+    }
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    lastTouchDistance.current = null
+  }, [])
+
+  // Wheel zoom handler
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    e.preventDefault()
+    const scaleFactor = e.deltaY > 0 ? 0.9 : 1.1
+    setScale(prev => Math.max(MIN_SCALE, Math.min(MAX_SCALE, prev * scaleFactor)))
   }, [])
 
   // Create a map of province name to participant count and coordinates
@@ -139,12 +232,66 @@ export function IndonesiaSvgMap() {
 
         {/* Map Container */}
         <div className="relative bg-gradient-to-b from-sky-50 to-sky-100 rounded-xl overflow-hidden">
+          {/* Zoom Controls */}
+          <div className="absolute top-3 right-3 z-20 flex flex-col gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 bg-white/90 backdrop-blur-sm shadow-sm"
+              onClick={handleZoomIn}
+              disabled={scale >= MAX_SCALE}
+            >
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 bg-white/90 backdrop-blur-sm shadow-sm"
+              onClick={handleZoomOut}
+              disabled={scale <= MIN_SCALE}
+            >
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            {scale > 1 && (
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 bg-white/90 backdrop-blur-sm shadow-sm"
+                onClick={handleReset}
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+          
+          {/* Mobile zoom hint */}
+          {scale === 1 && (
+            <div className="absolute bottom-3 right-3 z-20 text-xs text-slate-500 bg-white/80 px-2 py-1 rounded-md backdrop-blur-sm md:hidden">
+              Pinch to zoom
+            </div>
+          )}
+          
           {/* SVG Map Background */}
-          <div className="w-full h-[400px] md:h-[500px]">
+          <div 
+            ref={containerRef}
+            className="w-full h-[400px] md:h-[500px] touch-none"
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerUp}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onWheel={handleWheel}
+            style={{ cursor: scale > 1 ? (isDragging ? "grabbing" : "grab") : "default" }}
+          >
             <svg
               viewBox="0 0 1875 750"
-              className="w-full h-full"
-              style={{ maxHeight: "500px" }}
+              className="w-full h-full transition-transform duration-100"
+              style={{ 
+                maxHeight: "500px",
+                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                transformOrigin: "center center"
+              }}
             >
               {/* Indonesia map as image background */}
               <image

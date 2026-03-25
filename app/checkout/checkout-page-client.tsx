@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,10 +30,38 @@ interface CheckoutPageClientProps {
   }
 }
 
+// Key for localStorage - must match cart page
+const PROMO_STORAGE_KEY = "isapm_applied_promo"
+
 export function CheckoutPageClient({ profileStatus, profile, userEmail, items, cartSummary }: CheckoutPageClientProps) {
   const formRef = useRef<CheckoutFormHandle>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null)
+
+  // Load saved promo from localStorage on mount (carried over from cart)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PROMO_STORAGE_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed && parsed.valid) {
+          setAppliedPromo(parsed)
+        }
+      }
+    } catch (e) {
+      // Ignore parse errors
+    }
+  }, [])
+
+  // Save/clear promo in localStorage when changed
+  const handlePromoApplied = (result: PromoValidationResult | null) => {
+    setAppliedPromo(result)
+    if (result && result.valid) {
+      localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(result))
+    } else {
+      localStorage.removeItem(PROMO_STORAGE_KEY)
+    }
+  }
 
   // Calculate final total with discount
   const totalDiscount = appliedPromo?.total_discount || 0
@@ -196,7 +224,7 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                   </div>
                   <PromoCodeInput
                     cartItems={cartItemsForPromo}
-                    onPromoApplied={setAppliedPromo}
+                    onPromoApplied={handlePromoApplied}
                     appliedPromo={appliedPromo}
                   />
                 </div>

@@ -63,6 +63,9 @@ export function IndonesiaSvgMap() {
       prov.name && p.name && prov.name.toLowerCase() === p.name.toLowerCase()
     )
     if (province && province.coordinates) {
+      // coordinates is [longitude, latitude] array
+      const lng = province.coordinates[0]
+      const lat = province.coordinates[1]
       provinceMarkers.push({
         id: province.id,
         name: province.name,
@@ -70,11 +73,13 @@ export function IndonesiaSvgMap() {
         // Convert lng/lat to SVG coordinates (approximate mapping for Indonesia)
         // SVG viewBox is 0 0 1875 750
         // Indonesia roughly spans: lng 95-141, lat -11 to 6
-        x: ((province.coordinates.lng - 95) / (141 - 95)) * 1875,
-        y: ((6 - province.coordinates.lat) / (6 - (-11))) * 750,
+        x: ((lng - 95) / (141 - 95)) * 1875,
+        y: ((6 - lat) / (6 - (-11))) * 750,
       })
     }
   })
+
+  console.log("[v0] Province markers generated:", provinceMarkers.length, provinceMarkers.slice(0, 3))
 
   // Get province info for tooltip
   const getProvinceInfo = (provinceId: string) => {

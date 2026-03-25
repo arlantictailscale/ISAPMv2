@@ -34,8 +34,10 @@ export async function getParticipantDistribution(): Promise<ParticipantMapData> 
     `)
     .eq("order_payments.payment_status", "verified")
 
+  console.log("[v0] Participant map query result:", { count: orders?.length, error, sample: orders?.slice(0, 3) })
+
   if (error) {
-    console.error("Error fetching orders for map:", error)
+    console.error("[v0] Error fetching orders for map:", error)
     return {
       provinces: [],
       totalParticipants: 0,

@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { MapPin, Users, Globe } from "lucide-react"
 
-// Indonesia Provinces GeoJSON - using GADM data via jsdelivr
-const INDONESIA_PROVINCES_URL = "https://cdn.jsdelivr.net/gh/superpikar/indonesia-geojson@master/indonesia-provinces-simple.json"
+// Indonesia Provinces TopoJSON - using a reliable CDN source
+const INDONESIA_PROVINCES_URL = "https://raw.githubusercontent.com/deldersveld/topojson/master/countries/indonesia/indonesia-provinces.json"
 
 // Color scale for heat map
 function getProvinceColor(count: number, maxCount: number): string {
@@ -145,10 +145,11 @@ export function IndonesiaParticipantMap() {
               maxZoom={4}
             >
               <Geographies geography={INDONESIA_PROVINCES_URL}>
-                {({ geographies }) =>
-                  geographies.map((geo) => {
-                    // Handle different GeoJSON property formats
-                    const provinceName = geo.properties.Propinsi || geo.properties.Provinsi || geo.properties.NAME_1 || geo.properties.name || geo.properties.PROVINSI || ""
+                {({ geographies }) => {
+                  console.log("[v0] Geographies loaded:", geographies?.length, "features")
+                  return geographies.map((geo) => {
+                    // Handle different GeoJSON/TopoJSON property formats
+                    const provinceName = geo.properties?.NAME_1 || geo.properties?.Propinsi || geo.properties?.Provinsi || geo.properties?.name || geo.properties?.PROVINSI || ""
                     const provinceData = getProvinceData(provinceName)
                     const count = provinceData?.count || 0
                     
@@ -186,7 +187,7 @@ export function IndonesiaParticipantMap() {
                       />
                     )
                   })
-                }
+                }}
               </Geographies>
 
               {/* Markers for provinces with participants */}

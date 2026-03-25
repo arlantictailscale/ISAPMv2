@@ -5,7 +5,6 @@ import { Globe, MapPin } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getParticipantDistribution, type ParticipantMapData } from "@/app/actions/participant-map"
-import { INDONESIA_PROVINCES } from "@/lib/data/indonesia-provinces"
 
 // Color scale for participant counts
 const getMarkerColor = (count: number, maxCount: number): string => {
@@ -57,34 +56,24 @@ export function IndonesiaSvgMap() {
 
   const maxCount = mapData?.provinces.reduce((max, p) => Math.max(max, p.count), 0) || 1
 
+  // The server action already returns coordinates with each province!
   mapData?.provinces.forEach(p => {
-    if (!p.name) return
-    // Try to find province by name - handle partial matches and variations
-    const searchName = p.name.toLowerCase().trim()
-    const province = INDONESIA_PROVINCES.find(prov => {
-      if (!prov.name) return false
-      const provName = prov.name.toLowerCase().trim()
-      // Exact match or partial match
-      return provName === searchName || 
-             provName.includes(searchName) || 
-             searchName.includes(provName)
-    })
+    if (!p.provinceName || !p.coordinates) return
     
-    if (province && province.coordinates) {
-      // coordinates is [longitude, latitude] array
-      const lng = province.coordinates[0]
-      const lat = province.coordinates[1]
-      provinceMarkers.push({
-        id: province.id,
-        name: p.name, // Use the original name from data
-        count: p.count,
-        // Convert lng/lat to SVG coordinates (approximate mapping for Indonesia)
-        // SVG viewBox is 0 0 1875 750
-        // Indonesia roughly spans: lng 95-141, lat -11 to 6
-        x: ((lng - 95) / (141 - 95)) * 1875,
-        y: ((6 - lat) / (6 - (-11))) * 750,
-      })
-    }
+    // coordinates is [longitude, latitude] array from server
+    const lng = p.coordinates[0]
+    const lat = p.coordinates[1]
+    
+    provinceMarkers.push({
+      id: p.provinceId,
+      name: p.provinceName,
+      count: p.count,
+      // Convert lng/lat to SVG coordinates (approximate mapping for Indonesia)
+      // SVG viewBox is 0 0 1875 750
+      // Indonesia roughly spans: lng 95-141, lat -11 to 6
+      x: ((lng - 95) / (141 - 95)) * 1875,
+      y: ((6 - lat) / (6 - (-11))) * 750,
+    })
   })
 
   // Get province info for tooltip
@@ -146,7 +135,7 @@ export function IndonesiaSvgMap() {
             {stats.topProvinces.map((p, i) => (
               <Badge key={i} variant="outline" className="bg-white">
                 <MapPin className="w-3 h-3 mr-1" />
-                {p.name}: {p.count}
+                {p.provinceName}: {p.count}
               </Badge>
             ))}
           </div>
@@ -169,8 +158,7 @@ export function IndonesiaSvgMap() {
                 className="opacity-60"
               />
               
-              {/* Debug: test marker to verify SVG rendering works */}
-              <circle cx="500" cy="400" r="20" fill="red" />
+
               
               {/* Participant markers */}
               {provinceMarkers.length > 0 && provinceMarkers.map((marker) => {

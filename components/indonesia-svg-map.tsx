@@ -59,16 +59,24 @@ export function IndonesiaSvgMap() {
 
   mapData?.provinces.forEach(p => {
     if (!p.name) return
-    const province = INDONESIA_PROVINCES.find(prov => 
-      prov.name && p.name && prov.name.toLowerCase() === p.name.toLowerCase()
-    )
+    // Try to find province by name - handle partial matches and variations
+    const searchName = p.name.toLowerCase().trim()
+    const province = INDONESIA_PROVINCES.find(prov => {
+      if (!prov.name) return false
+      const provName = prov.name.toLowerCase().trim()
+      // Exact match or partial match
+      return provName === searchName || 
+             provName.includes(searchName) || 
+             searchName.includes(provName)
+    })
+    
     if (province && province.coordinates) {
       // coordinates is [longitude, latitude] array
       const lng = province.coordinates[0]
       const lat = province.coordinates[1]
       provinceMarkers.push({
         id: province.id,
-        name: province.name,
+        name: p.name, // Use the original name from data
         count: p.count,
         // Convert lng/lat to SVG coordinates (approximate mapping for Indonesia)
         // SVG viewBox is 0 0 1875 750
@@ -78,8 +86,6 @@ export function IndonesiaSvgMap() {
       })
     }
   })
-
-  console.log("[v0] Province markers generated:", provinceMarkers.length, provinceMarkers.slice(0, 3))
 
   // Get province info for tooltip
   const getProvinceInfo = (provinceId: string) => {
@@ -163,8 +169,11 @@ export function IndonesiaSvgMap() {
                 className="opacity-60"
               />
               
+              {/* Debug: test marker to verify SVG rendering works */}
+              <circle cx="500" cy="400" r="20" fill="red" />
+              
               {/* Participant markers */}
-              {provinceMarkers.map((marker) => {
+              {provinceMarkers.length > 0 && provinceMarkers.map((marker) => {
                 const size = getMarkerSize(marker.count, maxCount)
                 const color = getMarkerColor(marker.count, maxCount)
                 

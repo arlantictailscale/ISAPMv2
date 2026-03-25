@@ -33,6 +33,7 @@ import {
   RefreshCw,
   Send,
   BarChart3,
+  Tag,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -61,8 +62,9 @@ const adminNavItems = [
   { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel },
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
-  { label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
-  { label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
+{ label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
+{ label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
+{ label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
 ]
 
 const navItems = [

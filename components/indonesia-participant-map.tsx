@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { MapPin, Users, Globe } from "lucide-react"
 
-// Indonesia GeoJSON URL - using reliable CDN
-const INDONESIA_TOPO_JSON = "https://raw.githubusercontent.com/ans-4175/peta-indonesia-geojson/master/indonesia-prov.geojson"
+// Indonesia Provinces GeoJSON - using GADM data via jsdelivr
+const INDONESIA_PROVINCES_URL = "https://cdn.jsdelivr.net/gh/superpikar/indonesia-geojson@master/indonesia-provinces-simple.json"
 
 // Color scale for heat map
 function getProvinceColor(count: number, maxCount: number): string {
@@ -43,10 +43,9 @@ export function IndonesiaParticipantMap() {
     async function loadData() {
       try {
         const data = await getParticipantDistribution()
-        console.log("[v0] Map data received:", data)
         setMapData(data)
       } catch (error) {
-        console.error("[v0] Failed to load participant map data:", error)
+        console.error("Failed to load participant map data:", error)
       } finally {
         setLoading(false)
       }
@@ -145,7 +144,7 @@ export function IndonesiaParticipantMap() {
               minZoom={0.8}
               maxZoom={4}
             >
-              <Geographies geography={INDONESIA_TOPO_JSON}>
+              <Geographies geography={INDONESIA_PROVINCES_URL}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
                     // Handle different GeoJSON property formats

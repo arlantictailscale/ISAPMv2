@@ -29,11 +29,8 @@ export async function getParticipantDistribution(): Promise<ParticipantMapData> 
     .select("id, institution, full_name")
     .eq("status", "paid")
 
-  console.log("[v0] Participant map - paid orders count:", orders?.length || 0)
-  console.log("[v0] Participant map - sample institutions:", orders?.slice(0, 5).map(o => o.institution))
-
   if (error) {
-    console.error("[v0] Error fetching orders for map:", error)
+    console.error("Error fetching orders for map:", error)
     return {
       provinces: [],
       totalParticipants: 0,
@@ -47,8 +44,6 @@ export async function getParticipantDistribution(): Promise<ParticipantMapData> 
 
   for (const order of orders || []) {
     const province = deriveProvinceFromInstitution(order.institution)
-    
-    console.log("[v0] Institution:", order.institution, "-> Province:", province?.name || "UNKNOWN")
     
     if (province) {
       const currentCount = provinceCounts.get(province.id) || 0

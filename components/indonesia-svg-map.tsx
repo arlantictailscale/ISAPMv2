@@ -124,10 +124,6 @@ export function IndonesiaSvgMap() {
         {/* Stats Row */}
         <div className="flex flex-wrap gap-4 mb-4 items-center">
           <div className="text-center px-4">
-            <p className="text-3xl font-bold text-teal-600">{stats.totalParticipants}</p>
-            <p className="text-sm text-muted-foreground">Total Participants</p>
-          </div>
-          <div className="text-center px-4 border-l">
             <p className="text-3xl font-bold text-teal-600">{stats.totalProvinces}</p>
             <p className="text-sm text-muted-foreground">Provinces</p>
           </div>

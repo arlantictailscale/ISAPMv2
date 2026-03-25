@@ -11,6 +11,7 @@ import { createOrderFromCart } from "@/app/actions/checkout"
 import { useCart } from "@/lib/cart/cart-context"
 import { ConfettiTrigger } from "@/components/confetti-trigger"
 import { trackInitiateCheckout, trackLead } from "@/lib/meta-pixel"
+import type { PromoValidationResult } from "@/app/actions/promo-code"
 
 interface CheckoutFormProps {
   defaultValues: {
@@ -21,6 +22,7 @@ interface CheckoutFormProps {
     position: string
   }
   profileComplete: boolean
+  appliedPromo?: PromoValidationResult | null
 }
 
 export interface CheckoutFormHandle {
@@ -29,7 +31,7 @@ export interface CheckoutFormHandle {
 }
 
 export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(function CheckoutForm(
-  { defaultValues, profileComplete },
+  { defaultValues, profileComplete, appliedPromo },
   ref,
 ) {
   const router = useRouter()
@@ -63,7 +65,14 @@ export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(fu
     setIsSubmitting(true)
 
     try {
-      const result = await createOrderFromCart(formData)
+      const promoData = appliedPromo?.valid ? {
+        promo_code_id: appliedPromo.promo_code?.id,
+        promo_code: appliedPromo.promo_code?.code,
+        total_discount: appliedPromo.total_discount,
+        item_discounts: appliedPromo.item_discounts,
+      } : undefined
+      
+      const result = await createOrderFromCart(formData, promoData)
 
       if (result.error) {
         toast.error("Checkout failed", {

@@ -28,6 +28,14 @@ const RegistrationStats = dynamic(() => import("@/components/registration-stats"
   ssr: true,
 })
 
+const IndonesiaParticipantMap = dynamic(
+  () => import("@/components/indonesia-participant-map").then(mod => ({ default: mod.IndonesiaParticipantMap })),
+  {
+    loading: () => <StatsSkeleton />,
+    ssr: false, // Disable SSR for map component
+  }
+)
+
 const WelcomeSection = dynamic(() => import("@/components/welcome-section"), {
   loading: () => <WelcomeSkeleton />,
   ssr: true,
@@ -78,6 +86,12 @@ export default async function Home() {
             <RegistrationStats initialCount={registeredCount} />
           </ScrollReveal>
         </ParallaxSection>
+
+        <ScrollReveal direction="up" delay={150}>
+          <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+            <IndonesiaParticipantMap />
+          </section>
+        </ScrollReveal>
 
         <ScrollReveal direction="up" duration={900}>
           <WelcomeSection />

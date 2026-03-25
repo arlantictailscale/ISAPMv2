@@ -116,11 +116,23 @@ export async function validatePromoCode(
     let totalDiscount = 0
     let originalTotal = 0
 
+    console.log("[v0] Promo validation - Cart items:", JSON.stringify(cartItems, null, 2))
+
     for (const item of cartItems) {
       originalTotal += item.price
 
       // Find matching rule for this item (most specific first)
       const rules = promoCode.rules as PromoCodeRule[]
+      
+      console.log("[v0] Checking item:", item.event_slug, "type:", item.event_type, "participant:", item.participant_type)
+      console.log("[v0] Available rules:", JSON.stringify(rules.map(r => ({ 
+        event_slug: r.event_slug, 
+        event_type: r.event_type, 
+        participant_type: r.participant_type,
+        discount_type: r.discount_type,
+        discount_value: r.discount_value,
+        is_active: r.is_active 
+      })), null, 2))
       
       // Priority: exact event_slug match > event_type match > general rule
       let matchingRule: PromoCodeRule | null = null
@@ -130,8 +142,9 @@ export async function validatePromoCode(
         matchingRule = rules.find(
           (r) => r.event_slug === item.event_slug && 
                  r.participant_type === item.participant_type &&
-                 r.is_active
+                 (r as any).is_active !== false
         ) || null
+        console.log("[v0] Trying slug+participant match:", matchingRule ? "FOUND" : "not found")
       }
 
       // Then try exact event_slug match without participant type
@@ -139,8 +152,9 @@ export async function validatePromoCode(
         matchingRule = rules.find(
           (r) => r.event_slug === item.event_slug && 
                  !r.participant_type &&
-                 r.is_active
+                 (r as any).is_active !== false
         ) || null
+        console.log("[v0] Trying slug-only match:", matchingRule ? "FOUND" : "not found")
       }
 
       // Then try event_type match
@@ -148,9 +162,12 @@ export async function validatePromoCode(
         matchingRule = rules.find(
           (r) => !r.event_slug && 
                  r.event_type === item.event_type &&
-                 r.is_active
+                 (r as any).is_active !== false
         ) || null
+        console.log("[v0] Trying type-only match:", matchingRule ? "FOUND" : "not found")
       }
+      
+      console.log("[v0] Final matching rule:", matchingRule)
 
       // Calculate discount based on rule
       let discountedPrice = item.price

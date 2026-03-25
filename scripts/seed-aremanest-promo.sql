@@ -1,4 +1,5 @@
 -- Seed AREMANEST2026 promo code for AREMANEST FKUB Alumni
+-- UPDATED: Using correct event slugs from event-pricing.ts
 
 -- First, insert the main promo code
 INSERT INTO promo_codes (
@@ -37,7 +38,7 @@ BEGIN
   -- Delete existing rules for this promo code (to avoid duplicates on re-run)
   DELETE FROM promo_code_rules WHERE promo_code_id = v_promo_id;
 
-  -- Rule 1: 50% off Symposium
+  -- Rule 1: 50% off Symposium (event_slug = 'symposium')
   INSERT INTO promo_code_rules (
     promo_code_id,
     event_slug,
@@ -58,7 +59,7 @@ BEGIN
     true
   );
 
-  -- Rule 2: 30% off Workshop - Pediatric Essential Pain Management
+  -- Rule 2: 30% off Workshop WS3 - Pediatric Essential Pain Management (event_slug = 'ws3')
   INSERT INTO promo_code_rules (
     promo_code_id,
     event_slug,
@@ -70,16 +71,16 @@ BEGIN
     is_active
   ) VALUES (
     v_promo_id,
-    'workshop-pediatric-pain',
+    'ws3',
     'workshop',
     'percentage',
     30,
     NULL,
-    '30% discount for Pediatric Essential Pain Management Workshop',
+    '30% discount for WS3 Pediatric Essential Pain Management Workshop',
     true
   );
 
-  -- Rule 3: 30% off Workshop - Cancer Pain
+  -- Rule 3: 30% off Workshop WS6 - Cancer Pain (event_slug = 'ws6')
   INSERT INTO promo_code_rules (
     promo_code_id,
     event_slug,
@@ -91,16 +92,16 @@ BEGIN
     is_active
   ) VALUES (
     v_promo_id,
-    'workshop-cancer-pain',
+    'ws6',
     'workshop',
     'percentage',
     30,
     NULL,
-    '30% discount for Cancer Pain Workshop',
+    '30% discount for WS6 Cancer Pain Workshop',
     true
   );
 
-  -- Rule 4: 50% off Workshop - Adjunct Therapy for Pain Management (default)
+  -- Rule 4: 50% off Workshop WS4 - Adjunct Therapy for Pain Management (event_slug = 'ws4')
   INSERT INTO promo_code_rules (
     promo_code_id,
     event_slug,
@@ -112,16 +113,16 @@ BEGIN
     is_active
   ) VALUES (
     v_promo_id,
-    'workshop-adjunct-therapy',
+    'ws4',
     'workshop',
     'percentage',
     50,
     NULL, -- Default for doctors/specialists
-    '50% discount for Adjunct Therapy Workshop',
+    '50% discount for WS4 Adjunct Therapy Workshop',
     true
   );
 
-  -- Rule 5: Fixed price IDR 500,000 for Nurse referral - Adjunct Therapy Workshop
+  -- Rule 5: Fixed price IDR 500,000 for Nurse (perawat) - Adjunct Therapy Workshop WS4
   INSERT INTO promo_code_rules (
     promo_code_id,
     event_slug,
@@ -133,16 +134,16 @@ BEGIN
     is_active
   ) VALUES (
     v_promo_id,
-    'workshop-adjunct-therapy',
+    'ws4',
     'workshop',
     'fixed_price',
     500000,
-    'nurse',
+    'perawat',
     'Special fixed price IDR 500,000 for Nurse partner referral',
     true
   );
 
-  -- Rule 6: Fixed price IDR 1,500,000 for GP referral - Adjunct Therapy Workshop
+  -- Rule 6: Fixed price IDR 1,500,000 for GP (dokter_umum) - Adjunct Therapy Workshop WS4
   INSERT INTO promo_code_rules (
     promo_code_id,
     event_slug,
@@ -154,11 +155,11 @@ BEGIN
     is_active
   ) VALUES (
     v_promo_id,
-    'workshop-adjunct-therapy',
+    'ws4',
     'workshop',
     'fixed_price',
     1500000,
-    'gp',
+    'dokter_umum',
     'Special fixed price IDR 1,500,000 for GP partner referral',
     true
   );

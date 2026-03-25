@@ -44,8 +44,8 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
     id: item.id,
     event_slug: item.event_id || item.item_type,
     event_type: item.item_type,
-    price: item.item_type === "hotel" ? item.unit_price * item.nights : item.unit_price,
-    participant_type: item.participant_type,
+    price: item.item_type === "hotel" ? item.unit_price * (item.nights || 1) : item.unit_price,
+    participant_type: item.participant_type_id, // Use participant_type_id for promo rule matching
   }))
 
   const handlePlaceOrder = async () => {

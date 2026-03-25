@@ -23,11 +23,16 @@ export interface ParticipantMapData {
 export async function getParticipantDistribution(): Promise<ParticipantMapData> {
   const supabase = createAdminClient()
 
-  // Get all paid orders with institution info
+  // Get all orders that have verified payments
   const { data: orders, error } = await supabase
     .from("orders")
-    .select("id, institution, full_name")
-    .eq("status", "paid")
+    .select(`
+      id, 
+      institution, 
+      full_name,
+      order_payments!inner(payment_status)
+    `)
+    .eq("order_payments.payment_status", "verified")
 
   if (error) {
     console.error("Error fetching orders for map:", error)

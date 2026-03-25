@@ -9,8 +9,10 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/cart/utils"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
-import { Bed, Coffee, Gift, Loader2, Lock, ShoppingBag } from "lucide-react"
+import { Bed, Coffee, Gift, Loader2, Lock, ShoppingBag, Tag } from "lucide-react"
 import { CheckoutForm, type CheckoutFormHandle } from "./checkout-form"
+import { PromoCodeInput } from "@/components/promo-code-input"
+import type { PromoValidationResult } from "@/app/actions/promo-code"
 
 interface CheckoutPageClientProps {
   profileStatus: {
@@ -31,6 +33,20 @@ interface CheckoutPageClientProps {
 export function CheckoutPageClient({ profileStatus, profile, userEmail, items, cartSummary }: CheckoutPageClientProps) {
   const formRef = useRef<CheckoutFormHandle>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null)
+
+  // Calculate final total with discount
+  const totalDiscount = appliedPromo?.total_discount || 0
+  const finalTotal = cartSummary.subtotal - totalDiscount
+
+  // Prepare cart items for promo validation
+  const cartItemsForPromo = items.map((item) => ({
+    id: item.id,
+    event_slug: item.event_id || item.item_type,
+    event_type: item.item_type,
+    price: item.item_type === "hotel" ? item.unit_price * item.nights : item.unit_price,
+    participant_type: item.participant_type,
+  }))
 
   const handlePlaceOrder = async () => {
     if (formRef.current) {
@@ -88,6 +104,7 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                     position: profile?.position || "",
                   }}
                   profileComplete={profileStatus.isComplete}
+                  appliedPromo={appliedPromo}
                 />
               </CardContent>
             </Card>
@@ -171,6 +188,21 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
 
                 <Separator className="my-4" />
 
+                {/* Promo Code Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Tag className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Have a promo code?</span>
+                  </div>
+                  <PromoCodeInput
+                    cartItems={cartItemsForPromo}
+                    onPromoApplied={setAppliedPromo}
+                    appliedPromo={appliedPromo}
+                  />
+                </div>
+
+                <Separator className="my-4" />
+
                 <div className="bg-background rounded-lg p-4 space-y-3 border border-border">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">Subtotal</span>
@@ -178,6 +210,14 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                       {formatCurrency(cartSummary.subtotal, cartSummary.currency)}
                     </span>
                   </div>
+                  {totalDiscount > 0 && (
+                    <div className="flex justify-between items-center text-green-600">
+                      <span className="text-sm font-medium">Promo Discount</span>
+                      <span className="font-semibold">
+                        -{formatCurrency(totalDiscount, cartSummary.currency)}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-muted-foreground">Items ({cartSummary.itemCount})</span>
                     <span className="text-sm text-muted-foreground">{cartSummary.itemCount}</span>
@@ -187,9 +227,16 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                 <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-lg p-5 border-2 border-primary/20">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-bold">Total Amount:</span>
-                    <span className="text-3xl font-bold text-primary">
-                      {formatCurrency(cartSummary.subtotal, cartSummary.currency)}
-                    </span>
+                    <div className="text-right">
+                      {totalDiscount > 0 && (
+                        <div className="text-sm text-muted-foreground line-through">
+                          {formatCurrency(cartSummary.subtotal, cartSummary.currency)}
+                        </div>
+                      )}
+                      <span className="text-3xl font-bold text-primary">
+                        {formatCurrency(finalTotal, cartSummary.currency)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -214,7 +261,7 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
                       Processing Order...
                     </>
                   ) : (
-                    <>Place Order - {formatCurrency(cartSummary.subtotal, cartSummary.currency)}</>
+                    <>Place Order - {formatCurrency(finalTotal, cartSummary.currency)}</>
                   )}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground mt-4">

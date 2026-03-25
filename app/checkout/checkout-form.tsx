@@ -10,6 +10,8 @@ import { toast } from "sonner"
 import { createOrderFromCart } from "@/app/actions/checkout"
 import { useCart } from "@/lib/cart/cart-context"
 import { ConfettiTrigger } from "@/components/confetti-trigger"
+import { trackInitiateCheckout, trackLead } from "@/lib/meta-pixel"
+import type { PromoValidationResult } from "@/app/actions/promo-code"
 
 interface CheckoutFormProps {
   defaultValues: {
@@ -20,6 +22,7 @@ interface CheckoutFormProps {
     position: string
   }
   profileComplete: boolean
+  appliedPromo?: PromoValidationResult | null
 }
 
 export interface CheckoutFormHandle {
@@ -28,7 +31,7 @@ export interface CheckoutFormHandle {
 }
 
 export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(function CheckoutForm(
-  { defaultValues, profileComplete },
+  { defaultValues, profileComplete, appliedPromo },
   ref,
 ) {
   const router = useRouter()
@@ -62,7 +65,14 @@ export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(fu
     setIsSubmitting(true)
 
     try {
-      const result = await createOrderFromCart(formData)
+      const promoData = appliedPromo?.valid ? {
+        promo_code_id: appliedPromo.promo_code?.id,
+        promo_code: appliedPromo.promo_code?.code,
+        total_discount: appliedPromo.total_discount,
+        item_discounts: appliedPromo.item_discounts,
+      } : undefined
+      
+      const result = await createOrderFromCart(formData, promoData)
 
       if (result.error) {
         toast.error("Checkout failed", {
@@ -73,6 +83,21 @@ export const CheckoutForm = forwardRef<CheckoutFormHandle, CheckoutFormProps>(fu
       }
 
       await refreshCart()
+
+      // Track Lead event for Meta Pixel (order placed, pending payment)
+      trackLead({
+        content_name: "ISAPM 2026 Event Order",
+        content_category: "Event Registration",
+        value: result.data?.total_amount || 0,
+        currency: "IDR",
+      })
+      
+      // Track InitiateCheckout for funnel tracking
+      trackInitiateCheckout({
+        value: result.data?.total_amount || 0,
+        currency: "IDR",
+        num_items: result.data?.order_items?.length || 1,
+      })
 
       setShowConfetti(true)
 

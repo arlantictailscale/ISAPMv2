@@ -1,8 +1,24 @@
+"use client"
+
+import { useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { trackLead, trackCompleteRegistration } from "@/lib/meta-pixel"
 
 export default function SignUpSuccessPage() {
+  useEffect(() => {
+    // Track Lead and CompleteRegistration events for Meta Pixel
+    trackLead({
+      content_name: "ISAPM 2026 Registration",
+      content_category: "Account Registration",
+    })
+    trackCompleteRegistration({
+      content_name: "ISAPM 2026 Account",
+      status: "pending_verification",
+    })
+  }, [])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
       <div className="w-full max-w-sm">

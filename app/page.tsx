@@ -1,5 +1,6 @@
 import Navigation from "@/components/navigation"
 import LandingHero from "@/components/landing-hero"
+import PromoBanner from "@/components/promo-banner"
 import dynamic from "next/dynamic"
 import { getRegisteredCount } from "@/app/actions/public-stats"
 import { ParallaxSection } from "@/components/parallax-section"
@@ -63,6 +64,9 @@ export default async function Home() {
   return (
     <main className="overflow-x-hidden">
       <Navigation />
+      <div className="pt-16 sm:pt-20">
+        <PromoBanner />
+      </div>
       <LandingHero />
       <div id="content">
         <ScrollReveal direction="up" duration={800}>

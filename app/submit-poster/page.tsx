@@ -13,6 +13,7 @@ import { Loader2, Send, AlertCircle, Upload, X, FileText, BookOpen } from "lucid
 import { toast } from "sonner"
 import Link from "next/link"
 import { submitPoster } from "@/app/actions/submit-poster"
+import { trackLead } from "@/lib/meta-pixel"
 
 export default function SubmitPosterPage() {
   const [formData, setFormData] = useState({
@@ -320,13 +321,19 @@ export default function SubmitPosterPage() {
         return
       }
 
-      toast.success("E-poster submitted successfully!")
-      setIsLoading(false)
-      
-      // Small delay to allow toast to show before redirect
-      setTimeout(() => {
-        router.push("/my-posters")
-      }, 500)
+    // Track Lead event for Meta Pixel
+    trackLead({
+      content_name: formData.title,
+      content_category: "E-Poster Submission",
+    })
+    
+    toast.success("E-poster submitted successfully!")
+    setIsLoading(false)
+    
+    // Small delay to allow toast to show before redirect
+    setTimeout(() => {
+    router.push("/my-posters")
+    }, 500)
     } catch (err) {
       console.error("[v0] Error in handleSubmit:", err)
       setError("An unexpected error occurred. Please try again.")

@@ -47,6 +47,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getBadgeColors, BADGE_COLORS } from "@/lib/badge-colors"
 import Image from "next/image" // Added Image component import
+import { trackPurchase } from "@/lib/meta-pixel"
 
 interface Payment {
   id: string
@@ -342,11 +343,21 @@ export default function PaymentValidationPage() {
       return
     }
 
-    toast({
-      title: "Success",
-      description: "Payment approved successfully",
+    // Track Purchase event for Meta Pixel
+    trackPurchase({
+      value: calculatedTotal,
+      currency: "IDR",
+      content_name: items.map((i: any) => i.event_label || i.hotel_room_type).join(", "),
+      content_ids: items.map((i: any) => i.event_id || i.hotel_booking_id).filter(Boolean),
+      content_type: "product",
+      num_items: items.length,
     })
-
+    
+    toast({
+    title: "Success",
+    description: "Payment approved successfully",
+    })
+    
     setIsApproveDialogOpen(false)
     setSelectedPayment(null)
     setIsProcessing(false)

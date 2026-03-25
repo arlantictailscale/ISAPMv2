@@ -28,13 +28,7 @@ const RegistrationStats = dynamic(() => import("@/components/registration-stats"
   ssr: true,
 })
 
-const IndonesiaParticipantMap = dynamic(
-  () => import("@/components/indonesia-participant-map").then(mod => ({ default: mod.IndonesiaParticipantMap })),
-  {
-    loading: () => <StatsSkeleton />,
-    ssr: true,
-  }
-)
+import { ParticipantMapWrapper } from "@/components/participant-map-wrapper"
 
 const WelcomeSection = dynamic(() => import("@/components/welcome-section"), {
   loading: () => <WelcomeSkeleton />,
@@ -89,7 +83,7 @@ export default async function Home() {
 
         <ScrollReveal direction="up" delay={150}>
           <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
-            <IndonesiaParticipantMap />
+            <ParticipantMapWrapper />
           </section>
         </ScrollReveal>
 

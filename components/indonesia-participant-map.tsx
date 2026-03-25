@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { MapPin, Users, Globe } from "lucide-react"
 
-// Indonesia GeoJSON URL
-const INDONESIA_TOPO_JSON = "https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-provinces-simple.json"
+// Indonesia GeoJSON URL - using reliable CDN
+const INDONESIA_TOPO_JSON = "https://raw.githubusercontent.com/ans-4175/peta-indonesia-geojson/master/indonesia-prov.geojson"
 
 // Color scale for heat map
 function getProvinceColor(count: number, maxCount: number): string {
@@ -37,13 +37,16 @@ export function IndonesiaParticipantMap() {
   const [tooltipContent, setTooltipContent] = useState("")
   const [position, setPosition] = useState({ coordinates: [118, -2] as [number, number], zoom: 1 })
 
+  const [geoError, setGeoError] = useState(false)
+
   useEffect(() => {
     async function loadData() {
       try {
         const data = await getParticipantDistribution()
+        console.log("[v0] Map data received:", data)
         setMapData(data)
       } catch (error) {
-        console.error("Failed to load participant map data:", error)
+        console.error("[v0] Failed to load participant map data:", error)
       } finally {
         setLoading(false)
       }
@@ -145,7 +148,8 @@ export function IndonesiaParticipantMap() {
               <Geographies geography={INDONESIA_TOPO_JSON}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
-                    const provinceName = geo.properties.Propinsi || geo.properties.name || ""
+                    // Handle different GeoJSON property formats
+                    const provinceName = geo.properties.Propinsi || geo.properties.Provinsi || geo.properties.NAME_1 || geo.properties.name || geo.properties.PROVINSI || ""
                     const provinceData = getProvinceData(provinceName)
                     const count = provinceData?.count || 0
                     

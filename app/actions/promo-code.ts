@@ -91,14 +91,15 @@ export async function validatePromoCode(
       return { valid: false, error: "Promo code is not yet active" }
     }
 
-    // Check max uses
+    // Check max uses (global limit)
     if (promoCode.max_uses !== null && promoCode.current_uses >= promoCode.max_uses) {
       return { valid: false, error: "Promo code usage limit reached" }
     }
 
-    // Check if user has already used this code
+    // Only check per-user usage if max_uses is set (limited usage code)
+    // If max_uses is null (unlimited), allow multiple uses per user
     const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
+    if (user && promoCode.max_uses !== null) {
       const { data: existingUse } = await supabase
         .from("promo_code_uses")
         .select("id")
@@ -130,7 +131,7 @@ export async function validatePromoCode(
         matchingRule = rules.find(
           (r) => r.event_slug === item.event_slug && 
                  r.participant_type === item.participant_type &&
-                 r.is_active
+                 (r as any).is_active !== false
         ) || null
       }
 
@@ -139,7 +140,7 @@ export async function validatePromoCode(
         matchingRule = rules.find(
           (r) => r.event_slug === item.event_slug && 
                  !r.participant_type &&
-                 r.is_active
+                 (r as any).is_active !== false
         ) || null
       }
 
@@ -148,7 +149,7 @@ export async function validatePromoCode(
         matchingRule = rules.find(
           (r) => !r.event_slug && 
                  r.event_type === item.event_type &&
-                 r.is_active
+                 (r as any).is_active !== false
         ) || null
       }
 

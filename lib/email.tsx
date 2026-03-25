@@ -180,6 +180,9 @@ export async function sendOrderConfirmationEmail({
   orderItems,
   totalAmount,
   currency,
+  originalAmount,
+  discountAmount,
+  promoCode,
 }: {
   email: string
   userName: string
@@ -193,10 +196,15 @@ export async function sendOrderConfirmationEmail({
     check_out_date?: string
     nights?: number
     unit_price: number
-    extra_beds?: number // Add extra_beds to type
+    original_price?: number
+    discount_amount?: number
+    extra_beds?: number
   }>
   totalAmount: number
   currency: string
+  originalAmount?: number
+  discountAmount?: number
+  promoCode?: string
 }) {
   try {
     const EXTRA_BED_PRICE = 550000 // Define extra bed price constant
@@ -232,8 +240,19 @@ export async function sendOrderConfirmationEmail({
           }
         }
 
+        // Handle discount display
+        const itemDiscount = item.discount_amount || 0
+        const originalPrice = item.original_price || itemPrice + itemDiscount
+        const hasItemDiscount = itemDiscount > 0
+        
         let priceDisplay = ""
-        if (item.item_type === "hotel") {
+        if (hasItemDiscount) {
+          priceDisplay = `
+            <span style="text-decoration: line-through; color: #94a3b8; font-size: 12px;">${currency} ${originalPrice.toLocaleString()}</span><br/>
+            <span style="color: #00A9E0; font-weight: 700;">${currency} ${itemPrice.toLocaleString()}</span>
+            <span style="color: #16a34a; font-size: 11px; margin-left: 4px;">(-${Math.round((itemDiscount / originalPrice) * 100)}%)</span>
+          `
+        } else if (item.item_type === "hotel") {
           const priceLines = []
           if (nights > 1) {
             priceLines.push(
@@ -349,7 +368,23 @@ export async function sendOrderConfirmationEmail({
                   ${itemsHtml}
                 </div>
 
+                ${promoCode ? `
+                <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 12px 16px; margin-bottom: 15px; display: flex; align-items: center;">
+                  <span style="color: #16a34a; font-weight: 600; font-size: 14px;">✓ Promo Code Applied: ${promoCode}</span>
+                </div>
+                ` : ''}
+
                 <div class="total-section">
+                  ${discountAmount && discountAmount > 0 ? `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px;">
+                    <span style="color: #64748b;">Original Price</span>
+                    <span style="color: #64748b; text-decoration: line-through;">${currency} ${(originalAmount || totalAmount + discountAmount).toLocaleString()}</span>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 14px;">
+                    <span style="color: #16a34a; font-weight: 600;">Discount</span>
+                    <span style="color: #16a34a; font-weight: 600;">-${currency} ${discountAmount.toLocaleString()}</span>
+                  </div>
+                  ` : ''}
                   <div class="total-row">
                     <span class="total-label">Total Amount</span>
                     <span class="total-amount">${currency} ${totalAmount.toLocaleString()}</span>

@@ -28,6 +28,11 @@ interface Order {
   id: string
   user_id: string
   order_items: any[]
+  promo_code_id?: string
+  promo_code?: { code: string; description: string } | null
+  original_amount?: number
+  discount_amount?: number
+  total_amount?: number
 }
 
 interface Payment {
@@ -71,12 +76,27 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   }
 
   const calculateTotal = () => {
+    // Use total_amount from order if available (includes discount)
+    if (initialOrder?.total_amount) return initialOrder.total_amount
     if (!initialOrder?.order_items) return 0
     return initialOrder.order_items.reduce((sum: number, item: any) => {
       const nights = item.item_type === "hotel" && item.nights ? item.nights : 1
       return sum + (item.unit_price || 0) * nights
     }, 0)
   }
+  
+  const calculateOriginalTotal = () => {
+    if (initialOrder?.original_amount) return initialOrder.original_amount
+    if (!initialOrder?.order_items) return 0
+    return initialOrder.order_items.reduce((sum: number, item: any) => {
+      const nights = item.item_type === "hotel" && item.nights ? item.nights : 1
+      const originalPrice = item.original_price || item.unit_price || 0
+      return sum + originalPrice * nights
+    }, 0)
+  }
+  
+  const hasDiscount = (initialOrder?.discount_amount && initialOrder.discount_amount > 0) || 
+    initialOrder?.order_items?.some((item: any) => item.discount_amount && item.discount_amount > 0)
 
   const handleFileSelect = (file: File | null) => {
     setSelectedFile(file)
@@ -317,7 +337,19 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                           )}
                         </div>
                         <div className="text-right">
-                          {item.item_type === "hotel" && item.nights > 1 ? (
+                          {item.discount_amount && item.discount_amount > 0 ? (
+                            <>
+                              <p className="text-xs text-muted-foreground line-through">
+                                IDR {(item.original_price || item.unit_price * (item.nights || 1) + item.discount_amount).toLocaleString("id-ID")}
+                              </p>
+                              <p className="font-semibold text-cyan-700">
+                                IDR {((item.unit_price || 0) * (item.nights || 1)).toLocaleString("id-ID")}
+                              </p>
+                              <p className="text-xs text-green-600 font-medium">
+                                -{((item.discount_amount / (item.original_price || item.unit_price * (item.nights || 1) + item.discount_amount)) * 100).toFixed(0)}% off
+                              </p>
+                            </>
+                          ) : item.item_type === "hotel" && item.nights > 1 ? (
                             <>
                               <p className="font-semibold text-cyan-700">
                                 IDR {((item.unit_price || 0) * item.nights).toLocaleString("id-ID")}
@@ -337,9 +369,37 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                     ))}
                   </div>
 
-                  <div className="flex justify-between items-center pt-3 border-t">
-                    <p className="font-semibold text-lg">Total Amount</p>
-                    <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>
+                  {/* Promo Code Applied Banner */}
+                  {hasDiscount && initialOrder?.promo_code && (
+                    <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg mt-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      <span className="text-sm font-medium text-green-700">
+                        Promo Code Applied: {initialOrder.promo_code.code}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="pt-3 border-t space-y-2">
+                    {hasDiscount && (
+                      <>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-muted-foreground">Original Price</span>
+                          <span className="text-muted-foreground line-through">
+                            IDR {calculateOriginalTotal().toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-green-600">
+                          <span className="font-medium">Discount</span>
+                          <span className="font-medium">
+                            -IDR {(initialOrder?.discount_amount || (calculateOriginalTotal() - calculateTotal())).toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                    <div className="flex justify-between items-center">
+                      <p className="font-semibold text-lg">Total Amount</p>
+                      <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

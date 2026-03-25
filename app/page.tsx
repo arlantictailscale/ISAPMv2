@@ -32,7 +32,7 @@ const IndonesiaParticipantMap = dynamic(
   () => import("@/components/indonesia-participant-map").then(mod => ({ default: mod.IndonesiaParticipantMap })),
   {
     loading: () => <StatsSkeleton />,
-    ssr: false, // Disable SSR for map component
+    ssr: true,
   }
 )
 

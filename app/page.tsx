@@ -28,6 +28,8 @@ const RegistrationStats = dynamic(() => import("@/components/registration-stats"
   ssr: true,
 })
 
+import { ParticipantMapWrapper } from "@/components/participant-map-wrapper"
+
 const WelcomeSection = dynamic(() => import("@/components/welcome-section"), {
   loading: () => <WelcomeSkeleton />,
   ssr: true,
@@ -78,6 +80,12 @@ export default async function Home() {
             <RegistrationStats initialCount={registeredCount} />
           </ScrollReveal>
         </ParallaxSection>
+
+        <ScrollReveal direction="up" delay={150}>
+          <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+            <ParticipantMapWrapper />
+          </section>
+        </ScrollReveal>
 
         <ScrollReveal direction="up" duration={900}>
           <WelcomeSection />

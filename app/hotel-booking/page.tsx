@@ -498,9 +498,9 @@ export default function HotelBookingPage() {
   // Redirect to dedicated sold-out page when all promotional rates are exhausted
   useEffect(() => {
     if (isAllSoldOut) {
-      router.replace("/hotel-booking/sold-out")
+      window.location.href = "/hotel-booking/sold-out"
     }
-  }, [isAllSoldOut, router])
+  }, [isAllSoldOut])
 
   // Show loading while redirecting to sold out page
   if (isAllSoldOut) {

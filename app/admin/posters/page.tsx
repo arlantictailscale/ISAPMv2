@@ -26,6 +26,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import * as XLSX from "xlsx"
 
+interface ValidatedEvent {
+  event_id: string
+  event_label: string
+}
+
 interface PosterSubmission {
   id: string
   user_id: string
@@ -46,6 +51,7 @@ interface PosterSubmission {
   user_name?: string
   user_phone?: string
   topic?: string
+  validated_events?: ValidatedEvent[]
 }
 
 export default function AdminPostersPage() {
@@ -401,6 +407,54 @@ export default function AdminPostersPage() {
     }
   }
 
+  const getEventBadge = (eventId: string, eventLabel: string) => {
+    // Normalize event ID to determine badge color
+    const normalizedId = eventId.toLowerCase()
+    
+    if (normalizedId === "symposium") {
+      return (
+        <Badge key={eventId} className="bg-purple-100 text-purple-700 border-purple-300 text-xs">
+          Symposium
+        </Badge>
+      )
+    }
+    if (normalizedId === "cpd") {
+      return (
+        <Badge key={eventId} className="bg-cyan-100 text-cyan-700 border-cyan-300 text-xs">
+          CPD
+        </Badge>
+      )
+    }
+    if (normalizedId.startsWith("ws")) {
+      const wsNumber = normalizedId.replace("ws", "")
+      return (
+        <Badge key={eventId} className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
+          WS {wsNumber}
+        </Badge>
+      )
+    }
+    if (normalizedId.includes("webinar")) {
+      return (
+        <Badge key={eventId} className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+          Webinar
+        </Badge>
+      )
+    }
+    if (normalizedId === "city-tour") {
+      return (
+        <Badge key={eventId} className="bg-teal-100 text-teal-700 border-teal-300 text-xs">
+          City Tour
+        </Badge>
+      )
+    }
+    // Default fallback
+    return (
+      <Badge key={eventId} variant="outline" className="text-xs">
+        {eventLabel || eventId}
+      </Badge>
+    )
+  }
+
   const stats = {
     total: filteredSubmissions.length,
     pending: filteredSubmissions.filter((s) => s.submission_status === "pending").length,
@@ -657,6 +711,17 @@ export default function AdminPostersPage() {
                               </p>
                             )}
                           </div>
+                          {/* Event Validation Badges */}
+                          <div className="flex flex-wrap gap-1.5 items-center">
+                            <span className="text-xs font-medium text-muted-foreground mr-1">Registered Events:</span>
+                            {submission.validated_events && submission.validated_events.length > 0 ? (
+                              submission.validated_events.map((event) => getEventBadge(event.event_id, event.event_label))
+                            ) : (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200 text-xs">
+                                No Events
+                              </Badge>
+                            )}
+                          </div>
                           <div className="flex flex-wrap gap-2 items-center">
                             {getStatusBadge(submission.submission_status)}
                             {submission.topic && (
@@ -736,6 +801,20 @@ export default function AdminPostersPage() {
                       Resubmission Allowed
                     </Badge>
                   )}
+                </div>
+
+                {/* Event Registration Status */}
+                <div className="bg-slate-50 rounded-lg p-3 border">
+                  <Label className="text-sm font-medium">Registered Events:</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {viewingSubmission.validated_events && viewingSubmission.validated_events.length > 0 ? (
+                      viewingSubmission.validated_events.map((event) => getEventBadge(event.event_id, event.event_label))
+                    ) : (
+                      <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
+                        No Events Registered
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">

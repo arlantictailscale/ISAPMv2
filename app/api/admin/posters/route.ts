@@ -68,6 +68,58 @@ export async function GET(request: NextRequest) {
       console.error("[v0] Error fetching profiles:", profilesError)
     }
 
+    // Fetch validated events for all submitters
+    // Get orders with verified or pending payments for these users
+    const { data: ordersData, error: ordersError } = await supabase
+      .from("orders")
+      .select(`
+        id,
+        user_id,
+        status,
+        order_items (
+          event_id,
+          event_label,
+          item_type
+        ),
+        order_payments (
+          payment_status
+        )
+      `)
+      .in("user_id", userIds)
+      .neq("status", "cancelled")
+
+    if (ordersError) {
+      console.error("[v0] Error fetching orders for event validation:", ordersError)
+    }
+
+    // Build a map of user_id -> validated events
+    const userValidatedEventsMap: Record<string, { event_id: string; event_label: string }[]> = {}
+    
+    ordersData?.forEach((order: any) => {
+      const userId = order.user_id
+      const paymentStatus = order.order_payments?.[0]?.payment_status
+      
+      // Consider verified or pending payment as validated (slot reserved)
+      if (paymentStatus === "verified" || paymentStatus === "pending") {
+        if (!userValidatedEventsMap[userId]) {
+          userValidatedEventsMap[userId] = []
+        }
+        
+        order.order_items?.forEach((item: any) => {
+          if (item.item_type === "event" && item.event_id) {
+            // Avoid duplicates
+            const exists = userValidatedEventsMap[userId].some(e => e.event_id === item.event_id)
+            if (!exists) {
+              userValidatedEventsMap[userId].push({
+                event_id: item.event_id,
+                event_label: item.event_label || item.event_id,
+              })
+            }
+          }
+        })
+      }
+    })
+
     // Transform data to include user information
     const transformedData =
       abstractsData?.map((submission: any) => {
@@ -92,6 +144,7 @@ export async function GET(request: NextRequest) {
           topic,
           keywords: cleanKeywords,
           university: submission.university || null,
+          validated_events: userValidatedEventsMap[submission.user_id] || [],
         }
       }) || []
 

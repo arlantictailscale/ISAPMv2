@@ -24,8 +24,8 @@ export interface QuotaStatus {
 
 /**
  * Get all event quotas with real-time registration counts
- * Counts registrations from orders with verified OR pending payments
- * (to reserve slots while payments are being processed)
+ * Counts registrations from orders with verified, pending, OR no_proof payments
+ * (to reserve slots while payments are being processed or awaiting upload)
  */
 export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
   try {
@@ -47,7 +47,7 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
       return []
     }
 
-    // Fetch registration counts for each event from orders with verified OR pending payments
+    // Fetch registration counts for each event from orders with verified, pending, OR no_proof payments
     const quotaStatuses = await Promise.all(
       quotas.map(async (quota) => {
         // Count items from orders with verified payments
@@ -86,8 +86,57 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
           console.error(`[v0] Error counting pending registrations for ${quota.event_id}:`, pendingError)
         }
 
-        // Total registered = verified + pending (to reserve slots while payments are processed)
-        const registered_count = (verifiedCount ?? 0) + (pendingCount ?? 0)
+        // Count items from orders with no_proof status (payment not yet uploaded)
+        const { count: noProofCount, error: noProofError } = await adminClient
+          .from("order_items")
+          .select(`
+            id,
+            order_id!inner(
+              id,
+              order_payments!inner(payment_status)
+            )
+          `, { count: "exact", head: true })
+          .eq("item_type", "event")
+          .eq("event_id", quota.event_id)
+          .eq("order_id.order_payments.payment_status", "no_proof")
+
+        if (noProofError) {
+          console.error(`[v0] Error counting no_proof registrations for ${quota.event_id}:`, noProofError)
+        }
+
+        // Count items from orders that have NO payment record at all (orders created before payment system)
+        // First get all order_items for this event, then filter those without payments
+        const { data: allItems, error: allItemsError } = await adminClient
+          .from("order_items")
+          .select(`
+            id,
+            order_id,
+            orders!inner(
+              id,
+              status
+            )
+          `)
+          .eq("item_type", "event")
+          .eq("event_id", quota.event_id)
+          .neq("orders.status", "cancelled")
+
+        let noPaymentCount = 0
+        if (!allItemsError && allItems) {
+          // Get all order IDs that have payment records
+          const orderIds = [...new Set(allItems.map(item => item.order_id))]
+          if (orderIds.length > 0) {
+            const { data: paymentsData } = await adminClient
+              .from("order_payments")
+              .select("order_id")
+              .in("order_id", orderIds)
+            
+            const orderIdsWithPayments = new Set(paymentsData?.map(p => p.order_id) || [])
+            noPaymentCount = allItems.filter(item => !orderIdsWithPayments.has(item.order_id)).length
+          }
+        }
+
+        // Total registered = verified + pending + no_proof + no_payment (to reserve slots)
+        const registered_count = (verifiedCount ?? 0) + (pendingCount ?? 0) + (noProofCount ?? 0) + noPaymentCount
         const available_seats = Math.max(0, quota.max_capacity - registered_count)
         const is_sold_out = available_seats === 0
         const is_low_stock = available_seats > 0 && available_seats <= 5
@@ -179,8 +228,52 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
       console.error(`[v0] Error counting pending registrations for ${eventId}:`, pendingError)
     }
 
-    // Total registered = verified + pending (to reserve slots while payments are processed)
-    const registered_count = (verifiedCount ?? 0) + (pendingCount ?? 0)
+    // Count no_proof registrations (payment not yet uploaded)
+    const { count: noProofCount, error: noProofError } = await adminClient
+      .from("order_items")
+      .select(`
+        id,
+        order_id!inner(
+          id,
+          order_payments!inner(payment_status)
+        )
+      `, { count: "exact", head: true })
+      .eq("item_type", "event")
+      .eq("event_id", eventId)
+      .eq("order_id.order_payments.payment_status", "no_proof")
+
+    if (noProofError) {
+      console.error(`[v0] Error counting no_proof registrations for ${eventId}:`, noProofError)
+    }
+
+    // Count orders without any payment record
+    const { data: allItems } = await adminClient
+      .from("order_items")
+      .select(`
+        id,
+        order_id,
+        orders!inner(id, status)
+      `)
+      .eq("item_type", "event")
+      .eq("event_id", eventId)
+      .neq("orders.status", "cancelled")
+
+    let noPaymentCount = 0
+    if (allItems) {
+      const orderIds = [...new Set(allItems.map(item => item.order_id))]
+      if (orderIds.length > 0) {
+        const { data: paymentsData } = await adminClient
+          .from("order_payments")
+          .select("order_id")
+          .in("order_id", orderIds)
+        
+        const orderIdsWithPayments = new Set(paymentsData?.map(p => p.order_id) || [])
+        noPaymentCount = allItems.filter(item => !orderIdsWithPayments.has(item.order_id)).length
+      }
+    }
+
+    // Total registered = verified + pending + no_proof + no_payment
+    const registered_count = (verifiedCount ?? 0) + (pendingCount ?? 0) + (noProofCount ?? 0) + noPaymentCount
     const available_seats = Math.max(0, quota.max_capacity - registered_count)
     const is_sold_out = available_seats === 0
     const is_low_stock = available_seats > 0 && available_seats <= 5

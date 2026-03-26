@@ -43,7 +43,7 @@ export default async function RoomAvailabilityPage() {
     .not("hotel_room_type", "is", null)
     .neq("orders.status", "cancelled")
 
-  // Count total bookings (verified + pending) for each room type
+  // Count total bookings (verified + pending + no_proof + no_payment) for each room type
   const deluxeBookings = bookings?.filter((b) => b.hotel_room_type === "deluxe") || []
   const premierBookings = bookings?.filter((b) => b.hotel_room_type === "premier") || []
 
@@ -54,12 +54,19 @@ export default async function RoomAvailabilityPage() {
   }
 
   // Count verified and pending separately for display
+  // "Pending Payment" now includes: pending, no_proof, and no_payment statuses
   const deluxeVerified = deluxeBookings.filter((b) => getPaymentStatus(b) === "verified").length
-  const deluxePending = deluxeBookings.filter((b) => getPaymentStatus(b) === "pending").length
+  const deluxePending = deluxeBookings.filter((b) => {
+    const status = getPaymentStatus(b)
+    return status === "pending" || status === "no_proof" || status === "no_payment"
+  }).length
   const deluxeBooked = deluxeVerified + deluxePending
 
   const premierVerified = premierBookings.filter((b) => getPaymentStatus(b) === "verified").length
-  const premierPending = premierBookings.filter((b) => getPaymentStatus(b) === "pending").length
+  const premierPending = premierBookings.filter((b) => {
+    const status = getPaymentStatus(b)
+    return status === "pending" || status === "no_proof" || status === "no_payment"
+  }).length
   const premierBooked = premierVerified + premierPending
 
   return (

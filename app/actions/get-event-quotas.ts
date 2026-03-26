@@ -24,7 +24,8 @@ export interface QuotaStatus {
 
 /**
  * Get all event quotas with real-time registration counts
- * Counts registrations from confirmed/verified orders only
+ * Counts registrations from orders with verified OR pending payments
+ * (to reserve slots while payments are being processed)
  */
 export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
   try {
@@ -46,21 +47,10 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
       return []
     }
 
-    // Fetch registration counts for each event from confirmed orders
+    // Fetch registration counts for each event from orders with verified OR pending payments
     const quotaStatuses = await Promise.all(
       quotas.map(async (quota) => {
-        // Count order items that match this event_id, from orders with verified payments
-        const { count, error: countError } = await adminClient
-          .from("order_items")
-          .select("id, order_id!inner(id)", { count: "exact", head: true })
-          .eq("item_type", "event")
-          .eq("event_id", quota.event_id)
-
-        if (countError) {
-          console.error(`[v0] Error counting registrations for ${quota.event_id}:`, countError)
-        }
-
-        // Also count items from orders with verified payments
+        // Count items from orders with verified payments
         const { count: verifiedCount, error: verifiedError } = await adminClient
           .from("order_items")
           .select(`
@@ -78,8 +68,26 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
           console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
         }
 
-        // Use verified count if available, otherwise fall back to all orders
-        const registered_count = verifiedCount ?? count ?? 0
+        // Count items from orders with pending payments (waiting for approval)
+        const { count: pendingCount, error: pendingError } = await adminClient
+          .from("order_items")
+          .select(`
+            id,
+            order_id!inner(
+              id,
+              order_payments!inner(payment_status)
+            )
+          `, { count: "exact", head: true })
+          .eq("item_type", "event")
+          .eq("event_id", quota.event_id)
+          .eq("order_id.order_payments.payment_status", "pending")
+
+        if (pendingError) {
+          console.error(`[v0] Error counting pending registrations for ${quota.event_id}:`, pendingError)
+        }
+
+        // Total registered = verified + pending (to reserve slots while payments are processed)
+        const registered_count = (verifiedCount ?? 0) + (pendingCount ?? 0)
         const available_seats = Math.max(0, quota.max_capacity - registered_count)
         const is_sold_out = available_seats === 0
         const is_low_stock = available_seats > 0 && available_seats <= 5
@@ -153,7 +161,26 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
       console.error(`[v0] Error counting verified registrations for ${eventId}:`, verifiedError)
     }
 
-    const registered_count = verifiedCount ?? 0
+    // Count pending registrations from orders with pending payments
+    const { count: pendingCount, error: pendingError } = await adminClient
+      .from("order_items")
+      .select(`
+        id,
+        order_id!inner(
+          id,
+          order_payments!inner(payment_status)
+        )
+      `, { count: "exact", head: true })
+      .eq("item_type", "event")
+      .eq("event_id", eventId)
+      .eq("order_id.order_payments.payment_status", "pending")
+
+    if (pendingError) {
+      console.error(`[v0] Error counting pending registrations for ${eventId}:`, pendingError)
+    }
+
+    // Total registered = verified + pending (to reserve slots while payments are processed)
+    const registered_count = (verifiedCount ?? 0) + (pendingCount ?? 0)
     const available_seats = Math.max(0, quota.max_capacity - registered_count)
     const is_sold_out = available_seats === 0
     const is_low_stock = available_seats > 0 && available_seats <= 5

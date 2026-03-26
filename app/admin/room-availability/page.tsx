@@ -29,15 +29,38 @@ export default async function RoomAvailabilityPage() {
   const deluxeSetting = settings?.find((s) => s.room_type === "deluxe")
   const premierSetting = settings?.find((s) => s.room_type === "premier")
 
+  // Get all hotel bookings with their payment status
   const { data: bookings } = await supabase
     .from("order_items")
-    .select("hotel_room_type, orders!inner(status)")
+    .select(`
+      hotel_room_type, 
+      orders!inner(
+        status,
+        order_payments(payment_status)
+      )
+    `)
     .in("hotel_room_type", ["deluxe", "premier"])
     .not("hotel_room_type", "is", null)
     .neq("orders.status", "cancelled")
 
-  const deluxeBooked = bookings?.filter((b) => b.hotel_room_type === "deluxe").length || 0
-  const premierBooked = bookings?.filter((b) => b.hotel_room_type === "premier").length || 0
+  // Count total bookings (verified + pending) for each room type
+  const deluxeBookings = bookings?.filter((b) => b.hotel_room_type === "deluxe") || []
+  const premierBookings = bookings?.filter((b) => b.hotel_room_type === "premier") || []
+
+  // Helper to check payment status
+  const getPaymentStatus = (booking: any) => {
+    const payment = booking.orders?.order_payments?.[0]
+    return payment?.payment_status || "no_payment"
+  }
+
+  // Count verified and pending separately for display
+  const deluxeVerified = deluxeBookings.filter((b) => getPaymentStatus(b) === "verified").length
+  const deluxePending = deluxeBookings.filter((b) => getPaymentStatus(b) === "pending").length
+  const deluxeBooked = deluxeVerified + deluxePending
+
+  const premierVerified = premierBookings.filter((b) => getPaymentStatus(b) === "verified").length
+  const premierPending = premierBookings.filter((b) => getPaymentStatus(b) === "pending").length
+  const premierBooked = premierVerified + premierPending
 
   return (
     <>
@@ -68,6 +91,14 @@ export default async function RoomAvailabilityPage() {
                     <span className="text-sm text-muted-foreground">Currently Booked:</span>
                     <span className="text-2xl font-bold text-slate-700">{deluxeBooked}</span>
                   </div>
+                  <div className="flex justify-between items-center text-sm pl-4">
+                    <span className="text-muted-foreground">- Confirmed:</span>
+                    <span className="font-medium text-green-600">{deluxeVerified}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm pl-4">
+                    <span className="text-muted-foreground">- Pending Payment:</span>
+                    <span className="font-medium text-amber-600">{deluxePending}</span>
+                  </div>
                   <div className="flex justify-between items-center pt-3 border-t">
                     <span className="text-sm font-medium">Available Rooms:</span>
                     <span className="text-2xl font-bold text-green-600">
@@ -90,6 +121,14 @@ export default async function RoomAvailabilityPage() {
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Currently Booked:</span>
                     <span className="text-2xl font-bold text-slate-700">{premierBooked}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm pl-4">
+                    <span className="text-muted-foreground">- Confirmed:</span>
+                    <span className="font-medium text-green-600">{premierVerified}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm pl-4">
+                    <span className="text-muted-foreground">- Pending Payment:</span>
+                    <span className="font-medium text-amber-600">{premierPending}</span>
                   </div>
                   <div className="flex justify-between items-center pt-3 border-t">
                     <span className="text-sm font-medium">Available Rooms:</span>

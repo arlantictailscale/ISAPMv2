@@ -1,6 +1,6 @@
 import { Metadata } from "next"
 import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
+import Footer from "@/components/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

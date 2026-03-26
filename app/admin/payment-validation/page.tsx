@@ -165,13 +165,14 @@ export default function PaymentValidationPage() {
         return
       }
 
-      // Fetch orders without payment records
+      // Fetch orders without payment records (exclude cancelled orders)
       const { data: ordersData, error: ordersError } = await createClient()
         .from("orders")
         .select(`
           *,
           order_items (*)
         `)
+        .neq("status", "cancelled")
         .order("created_at", { ascending: false })
 
       if (ordersError) {

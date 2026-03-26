@@ -179,22 +179,30 @@ export default function HotelBookingPage() {
 
   // Refresh room availability periodically and when page becomes visible
   useEffect(() => {
-    // Refresh every 30 seconds to ensure fresh availability data
+    // Refresh every 10 seconds to ensure fresh availability data
+    // Critical for preventing overselling when rooms sell out
     const interval = setInterval(() => {
       loadRoomAvailability()
-    }, 30000)
+    }, 10000)
 
-    // Also refresh when the tab becomes visible again
+    // Also refresh when the tab becomes visible again (user returns to tab)
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         loadRoomAvailability()
       }
     }
     document.addEventListener("visibilitychange", handleVisibilityChange)
+    
+    // Also refresh when window regains focus (user switches windows)
+    const handleFocus = () => {
+      loadRoomAvailability()
+    }
+    window.addEventListener("focus", handleFocus)
 
     return () => {
       clearInterval(interval)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("focus", handleFocus)
     }
   }, [])
 

@@ -108,6 +108,6 @@ export async function getRoomAvailability() {
         }
       }
     },
-    CACHE_TTL.SHORT, // 30 seconds cache - room availability is critical data
+    10, // 10 seconds cache - room availability is critical data that changes rapidly
   )
 }

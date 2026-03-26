@@ -1,6 +1,7 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
+import { adminCancelOrder } from "@/app/actions/admin-cancel-order"
 import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -165,13 +166,14 @@ export default function PaymentValidationPage() {
         return
       }
 
-      // Fetch orders without payment records
+      // Fetch orders without payment records (exclude cancelled orders)
       const { data: ordersData, error: ordersError } = await createClient()
         .from("orders")
         .select(`
           *,
           order_items (*)
         `)
+        .neq("status", "cancelled")
         .order("created_at", { ascending: false })
 
       if (ordersError) {
@@ -787,6 +789,31 @@ export default function PaymentValidationPage() {
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Reject
+                </Button>
+              </div>
+            )}
+
+            {/* Cancel button for no_proof orders */}
+            {payment.payment_status === "no_proof" && (
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
+                      return
+                    }
+                    const result = await adminCancelOrder(payment.order_id)
+                    if (result.success) {
+                      alert("Order cancelled successfully")
+                      fetchPayments()
+                    } else {
+                      alert(`Failed to cancel order: ${result.error}`)
+                    }
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Cancel Order
                 </Button>
               </div>
             )}

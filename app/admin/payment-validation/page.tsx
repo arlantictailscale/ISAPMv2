@@ -1490,5 +1490,5 @@ export default function PaymentValidationPage() {
         </Dialog>
       </div>
     </>
-  )
+  );
 }

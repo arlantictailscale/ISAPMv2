@@ -22,6 +22,9 @@ import {
   BedDouble,
   UtensilsCrossed,
   Plus,
+  AlertCircle,
+  ExternalLink,
+  Building2,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { format, differenceInDays, parseISO } from "date-fns"
@@ -485,6 +488,146 @@ export default function HotelBookingPage() {
         <main className="pt-24 min-h-screen flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </main>
+        <Footer />
+      </>
+    )
+  }
+
+  // Check if ALL promotional rooms are sold out
+  const isAllSoldOut = availability && 
+    availability.deluxe.available <= 0 && 
+    availability.premier.available <= 0
+
+  // Show sold out page when all promotional rates are exhausted
+  if (isAllSoldOut) {
+    return (
+      <>
+        <Navigation />
+        <div className="min-h-screen bg-gradient-to-b from-amber-50/50 to-background pt-16 pb-12">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Sold Out Notice */}
+            <Card className="mt-8 border-amber-200 bg-white shadow-lg">
+              <CardContent className="pt-8 pb-10 px-6 sm:px-10">
+                <div className="text-center space-y-6">
+                  {/* Icon */}
+                  <div className="mx-auto w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center">
+                    <Hotel className="w-10 h-10 text-amber-600" />
+                  </div>
+                  
+                  {/* Title */}
+                  <div className="space-y-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">
+                      Promotional Rate Sold Out
+                    </h1>
+                    <p className="text-amber-600 font-medium text-lg">
+                      ISAPM 2026 Special Hotel Package
+                    </p>
+                  </div>
+                  
+                  {/* Message */}
+                  <div className="max-w-lg mx-auto space-y-4 text-slate-600">
+                    <p className="text-base leading-relaxed">
+                      We apologize, but the special promotional rates for hotel accommodation 
+                      through our website have been fully booked. Thank you for your overwhelming 
+                      interest in the ISAPM 8th National Meeting 2026!
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      You can still book directly with the hotel or through online travel platforms 
+                      at regular rates.
+                    </p>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t border-slate-200 pt-6">
+                    <p className="text-sm font-medium text-slate-700 mb-4">
+                      Alternative Booking Options
+                    </p>
+                    
+                    {/* Alternative Options */}
+                    <div className="grid sm:grid-cols-2 gap-4 max-w-md mx-auto">
+                      <a
+                        href="https://www.thesinghasari.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+                      >
+                        <Building2 className="w-4 h-4" />
+                        Hotel Official Website
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                      <a
+                        href="https://www.traveloka.com/en-id/hotel/indonesia/the-singhasari-resort-1000000324763"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors border border-slate-200"
+                      >
+                        Traveloka
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Hotel Info */}
+                  <div className="bg-slate-50 rounded-xl p-5 text-left max-w-md mx-auto">
+                    <h3 className="font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                      <Hotel className="w-4 h-4 text-teal-600" />
+                      The Singhasari Hotel & Convention
+                    </h3>
+                    <p className="text-sm text-slate-600 mb-3">
+                      Jl. Ir. Soekarno No.120, Beji, Kec. Junrejo, Kota Batu, Jawa Timur 65236
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <Badge variant="secondary" className="bg-white">Event Venue</Badge>
+                      <Badge variant="secondary" className="bg-white">April 16-19, 2026</Badge>
+                    </div>
+                  </div>
+
+                  {/* Contact Support */}
+                  <div className="pt-4">
+                    <p className="text-sm text-slate-500 mb-2">
+                      Need assistance with your registration?
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => window.open("https://wa.me/6289602626709", "_blank")}
+                      className="gap-2"
+                    >
+                      Contact Support
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Room Availability Status */}
+            <Card className="mt-6">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-500" />
+                  Current Availability Status
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                    <span className="text-sm text-slate-600">Deluxe Room (Promotional)</span>
+                    <Badge variant="destructive">Sold Out</Badge>
+                  </div>
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-sm text-slate-600">Premier Room (Promotional)</span>
+                    <Badge variant="destructive">Sold Out</Badge>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mt-4">
+                  Last updated: {new Date().toLocaleString("en-US", { 
+                    dateStyle: "medium", 
+                    timeStyle: "short" 
+                  })}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
         <Footer />
       </>
     )

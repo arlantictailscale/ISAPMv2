@@ -30,12 +30,11 @@ export async function GET(request: NextRequest) {
 
     const supabaseAdmin = createSupabaseAdmin(supabaseUrl, supabaseServiceKey)
 
-    // Calculate the cutoff time (1 hour ago)
+    // Calculate the cutoff time
     const cutoffTime = new Date(Date.now() - EXPIRATION_TIME_MS).toISOString()
-    console.log("[v0] Looking for no_proof orders created before:", cutoffTime)
+    console.log("[v0] Looking for unpaid orders created before:", cutoffTime)
 
-    // Find all orders with no_proof payment status that are older than 1 hour
-    // These are orders where payment hasn't been uploaded yet
+    // Strategy 1: Find orders with no_proof payment status
     const { data: expiredPayments, error: fetchError } = await supabaseAdmin
       .from("order_payments")
       .select(`
@@ -56,13 +55,48 @@ export async function GET(request: NextRequest) {
       .lt("created_at", cutoffTime)
 
     if (fetchError) {
-      console.error("[v0] Error fetching expired orders:", fetchError)
-      return NextResponse.json({ error: "Failed to fetch expired orders" }, { status: 500 })
+      console.error("[v0] Error fetching expired payments:", fetchError)
     }
 
-    console.log("[v0] Found expired no_proof orders:", expiredPayments?.length || 0)
+    console.log("[v0] Found expired no_proof payment records:", expiredPayments?.length || 0)
 
-    if (!expiredPayments || expiredPayments.length === 0) {
+    // Strategy 2: Find orders that have NO payment record at all (older orders)
+    // First get all order IDs that DO have payment records
+    const { data: ordersWithPayments } = await supabaseAdmin
+      .from("order_payments")
+      .select("order_id")
+    
+    const orderIdsWithPayments = new Set(ordersWithPayments?.map(p => p.order_id) || [])
+
+    // Get all orders older than cutoff that are not cancelled/paid and have no payment record
+    const { data: ordersWithoutPayments, error: ordersError } = await supabaseAdmin
+      .from("orders")
+      .select(`
+        id,
+        status,
+        created_at,
+        user_id,
+        full_name,
+        email
+      `)
+      .lt("created_at", cutoffTime)
+      .not("status", "in", '("cancelled","paid")')
+
+    if (ordersError) {
+      console.error("[v0] Error fetching orders without payments:", ordersError)
+    }
+
+    // Filter to only orders that don't have payment records
+    const expiredOrdersWithoutPayments = (ordersWithoutPayments || []).filter(
+      order => !orderIdsWithPayments.has(order.id)
+    )
+
+    console.log("[v0] Found expired orders without payment records:", expiredOrdersWithoutPayments.length)
+
+    // Combine both lists
+    const totalExpired = (expiredPayments?.length || 0) + expiredOrdersWithoutPayments.length
+
+    if (totalExpired === 0) {
       return NextResponse.json({
         success: true,
         message: "No expired orders to cancel",
@@ -72,14 +106,14 @@ export async function GET(request: NextRequest) {
 
     // Track results
     const results = {
-      total: expiredPayments.length,
+      total: totalExpired,
       cancelled: 0,
       failed: 0,
       errors: [] as string[],
     }
 
-    // Cancel each expired order
-    for (const payment of expiredPayments) {
+    // Process expired orders WITH payment records (update both payment and order)
+    for (const payment of expiredPayments || []) {
       const order = payment.orders as any
       
       // Skip if order is already cancelled or paid
@@ -121,13 +155,42 @@ export async function GET(request: NextRequest) {
           continue
         }
 
-        console.log(`[v0] Successfully cancelled expired order: ${payment.order_id} (User: ${order.full_name}, Email: ${order.email})`)
+        console.log(`[v0] Cancelled expired order (with payment record): ${payment.order_id} (User: ${order.full_name}, Email: ${order.email})`)
         results.cancelled++
 
       } catch (error: any) {
         console.error(`[v0] Exception cancelling order ${payment.order_id}:`, error)
         results.failed++
         results.errors.push(`Order ${payment.order_id}: ${error.message}`)
+      }
+    }
+
+    // Process expired orders WITHOUT payment records (only update order status)
+    for (const order of expiredOrdersWithoutPayments) {
+      try {
+        // Update order status to cancelled
+        const { error: orderError } = await supabaseAdmin
+          .from("orders")
+          .update({
+            status: "cancelled",
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", order.id)
+
+        if (orderError) {
+          console.error(`[v0] Error cancelling order ${order.id}:`, orderError)
+          results.failed++
+          results.errors.push(`Order ${order.id}: ${orderError.message}`)
+          continue
+        }
+
+        console.log(`[v0] Cancelled expired order (no payment record): ${order.id} (User: ${order.full_name}, Email: ${order.email})`)
+        results.cancelled++
+
+      } catch (error: any) {
+        console.error(`[v0] Exception cancelling order ${order.id}:`, error)
+        results.failed++
+        results.errors.push(`Order ${order.id}: ${error.message}`)
       }
     }
 

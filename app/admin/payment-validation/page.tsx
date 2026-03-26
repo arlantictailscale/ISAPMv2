@@ -493,6 +493,39 @@ export default function PaymentValidationPage() {
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(payment.created_at), { addSuffix: true })}
                 </span>
+                {/* Expiration warning for no_proof orders */}
+                {(payment.payment_status === "no_proof" || (!payment.payment_proof_url && payment.payment_status !== "verified" && payment.payment_status !== "rejected")) && (() => {
+                  const createdAt = new Date(payment.created_at)
+                  const expiresAt = new Date(createdAt.getTime() + 60 * 60 * 1000) // 1 hour
+                  const now = new Date()
+                  const isExpired = now > expiresAt
+                  const timeLeft = expiresAt.getTime() - now.getTime()
+                  const minutesLeft = Math.max(0, Math.floor(timeLeft / (60 * 1000)))
+                  
+                  if (isExpired) {
+                    return (
+                      <Badge variant="destructive" className="text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Expired - Will be cancelled
+                      </Badge>
+                    )
+                  } else if (minutesLeft <= 15) {
+                    return (
+                      <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Expires in {minutesLeft}m
+                      </Badge>
+                    )
+                  } else if (minutesLeft <= 30) {
+                    return (
+                      <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
+                        <Clock className="w-3 h-3 mr-1" />
+                        Expires in {minutesLeft}m
+                      </Badge>
+                    )
+                  }
+                  return null
+                })()}
               </div>
             </div>
 
@@ -1065,6 +1098,20 @@ export default function PaymentValidationPage() {
             </TabsContent>
 
             <TabsContent value="no_proof" className="mt-6">
+              {/* Auto-cancellation policy notice */}
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-amber-800">Auto-Cancellation Policy</h4>
+                    <p className="text-sm text-amber-700 mt-1">
+                      Orders without payment proof will be automatically cancelled after <strong>1 hour</strong> to free up event slots.
+                      The system checks for expired orders every 15 minutes.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {noProofPayments.length === 0 ? (
                 <Card>
                   <CardContent className="p-12 text-center text-muted-foreground">

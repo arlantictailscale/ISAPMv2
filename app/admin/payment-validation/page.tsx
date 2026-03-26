@@ -1,6 +1,5 @@
 "use client"
 
-import React from "react"
 import { createClient } from "@/lib/supabase/client"
 import { adminCancelOrder } from "@/app/actions/admin-cancel-order"
 import { useEffect, useState, useMemo } from "react"
@@ -105,9 +104,6 @@ export default function PaymentValidationPage() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
-  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false)
-  const [paymentToCancel, setPaymentToCancel] = useState<Payment | null>(null)
-  const [isCancelling, setIsCancelling] = useState(false)
   const [rejectionReason, setRejectionReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -841,9 +837,17 @@ export default function PaymentValidationPage() {
                 <Button
                   className="flex-1"
                   variant="outline"
-                  onClick={() => {
-                    setPaymentToCancel(payment)
-                    setIsCancelDialogOpen(true)
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to cancel this order? This action cannot be undone.")) {
+                      return
+                    }
+                    const result = await adminCancelOrder(payment.order_id)
+                    if (result.success) {
+                      alert("Order cancelled successfully")
+                      fetchPayments()
+                    } else {
+                      alert(`Failed to cancel order: ${result.error}`)
+                    }
                   }}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
@@ -1401,95 +1405,8 @@ export default function PaymentValidationPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        {/* Cancel Order Dialog */}
-        <Dialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-red-600">
-                <XCircle className="w-5 h-5" />
-                Cancel Order
-              </DialogTitle>
-              <DialogDescription>
-                Are you sure you want to cancel this order? This action cannot be undone.
-              </DialogDescription>
-            </DialogHeader>
-            {paymentToCancel && (
-              <div className="py-4 space-y-2">
-                <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-                  <p className="text-sm">
-                    <span className="font-medium">Customer:</span>{" "}
-                    {(paymentToCancel.orders as any)?.full_name || "Unknown"}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Email:</span>{" "}
-                    {(paymentToCancel.orders as any)?.email || "Unknown"}
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Order ID:</span>{" "}
-                    {paymentToCancel.order_id.slice(0, 8)}...
-                  </p>
-                  <p className="text-sm">
-                    <span className="font-medium">Amount:</span>{" "}
-                    {new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                      minimumFractionDigits: 0,
-                    }).format(paymentToCancel.amount)}
-                  </p>
-                </div>
-                <p className="text-sm text-red-600 font-medium">
-                  The customer will see this order as cancelled in their purchase history.
-                </p>
-              </div>
-            )}
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsCancelDialogOpen(false)
-                  setPaymentToCancel(null)
-                }}
-                disabled={isCancelling}
-              >
-                Keep Order
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={async () => {
-                  if (!paymentToCancel) return
-                  setIsCancelling(true)
-                  try {
-                    const result = await adminCancelOrder(paymentToCancel.order_id)
-                    if (result.success) {
-                      setIsCancelDialogOpen(false)
-                      setPaymentToCancel(null)
-                      fetchPayments()
-                    } else {
-                      alert(`Failed to cancel order: ${result.error}`)
-                    }
-                  } finally {
-                    setIsCancelling(false)
-                  }
-                }}
-                disabled={isCancelling}
-              >
-                {isCancelling ? (
-                  <span className="flex items-center">
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Cancelling...
-                  </span>
-                ) : (
-                  <span className="flex items-center">
-                    <XCircle className="w-4 h-4 mr-2" />
-                    Cancel Order
-                  </span>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </React.Fragment>
+      </main>
+      <Footer />
+    </div>
   )
 }

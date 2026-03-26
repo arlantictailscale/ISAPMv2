@@ -69,6 +69,7 @@ export default function HotelBookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profile, setProfile] = useState<any>(null)
   const [availability, setAvailability] = useState<any>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const roomRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
@@ -135,7 +136,8 @@ export default function HotelBookingPage() {
     checkAuth() // Keep existing checkAuth call
 
     loadUserProfile()
-  }, [supabase])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run only once on mount - supabase client is stable
 
   const checkAuth = async () => {
     try {
@@ -174,29 +176,46 @@ export default function HotelBookingPage() {
 
   const loadRoomAvailability = async () => {
     const data = await getRoomAvailability()
+    
+    // Check if all rooms are sold out and redirect immediately
+    if (data && data.deluxe.available <= 0 && data.premier.available <= 0) {
+      window.location.replace("/hotel-booking/sold-out")
+      return
+    }
+    
     setAvailability(data)
   }
 
   // Refresh room availability periodically and when page becomes visible
+  // Only set up refresh if not already redirecting
   useEffect(() => {
+    if (isRedirecting) return
+    
     // Refresh every 30 seconds to ensure fresh availability data
     const interval = setInterval(() => {
       loadRoomAvailability()
     }, 30000)
 
-    // Also refresh when the tab becomes visible again
+    // Also refresh when the tab becomes visible again (user returns to tab)
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         loadRoomAvailability()
       }
     }
     document.addEventListener("visibilitychange", handleVisibilityChange)
+    
+    // Also refresh when window regains focus (user switches windows)
+    const handleFocus = () => {
+      loadRoomAvailability()
+    }
+    window.addEventListener("focus", handleFocus)
 
     return () => {
       clearInterval(interval)
       document.removeEventListener("visibilitychange", handleVisibilityChange)
+      window.removeEventListener("focus", handleFocus)
     }
-  }, [])
+  }, [isRedirecting])
 
   const calculateNights = (checkInDate: string, checkOutDate: string) => {
     if (!checkInDate || !checkOutDate) return 0
@@ -476,6 +495,20 @@ export default function HotelBookingPage() {
         <Navigation />
         <main className="pt-24 min-h-screen flex items-center justify-center">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </main>
+        <Footer />
+      </>
+    )
+  }
+
+  // Show loading while redirecting to sold out page (redirect happens in loadRoomAvailability)
+  if (isRedirecting) {
+    return (
+      <>
+        <Navigation />
+        <main className="pt-24 min-h-screen flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+          <p className="text-slate-600">Promotional rooms are sold out. Redirecting...</p>
         </main>
         <Footer />
       </>

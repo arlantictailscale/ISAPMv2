@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache"
 import { sendOrderConfirmationEmail } from "@/lib/email"
 import { checkProfileCompleteness } from "@/lib/profile/validation"
 import type { CartItemDiscount } from "@/app/actions/promo-code"
+import { getRoomAvailability, invalidateRoomAvailabilityCache } from "@/app/actions/get-room-availability"
+import { acquireLock, releaseLock } from "@/lib/cache"
 
 interface PromoData {
   promo_code_id?: string
@@ -60,6 +62,49 @@ export async function createOrderFromCart(
   const items = cart.cart_items || []
   if (items.length === 0) {
     return { error: "Cart is empty" }
+  }
+
+  // Check hotel room availability before creating order (server-side validation)
+  const hotelItems = items.filter((item) => item.item_type === "hotel")
+  if (hotelItems.length > 0) {
+    // Acquire distributed lock to prevent race conditions
+    const { acquired, lockId } = await acquireLock("hotel_booking", 10)
+    
+    if (!acquired) {
+      return { error: "System is busy processing another booking. Please try again in a few seconds." }
+    }
+    
+    try {
+      // Invalidate cache to get fresh data
+      await invalidateRoomAvailabilityCache()
+      const availability = await getRoomAvailability()
+      
+      const deluxeCount = hotelItems.filter((item) => item.hotel_room_type === "deluxe").length
+      const premierCount = hotelItems.filter((item) => item.hotel_room_type === "premier").length
+      
+      if (deluxeCount > 0 && availability.deluxe.available < deluxeCount) {
+        await releaseLock("hotel_booking", lockId)
+        if (availability.deluxe.available === 0) {
+          return { error: "Sorry, Deluxe rooms are now fully booked. Please remove them from your cart and try again." }
+        }
+        return { error: `Only ${availability.deluxe.available} Deluxe room(s) available. Please update your cart.` }
+      }
+      
+      if (premierCount > 0 && availability.premier.available < premierCount) {
+        await releaseLock("hotel_booking", lockId)
+        if (availability.premier.available === 0) {
+          return { error: "Sorry, Premier rooms are now fully booked. Please remove them from your cart and try again." }
+        }
+        return { error: `Only ${availability.premier.available} Premier room(s) available. Please update your cart.` }
+      }
+      
+      // Release lock after validation passes - order will be created
+      await releaseLock("hotel_booking", lockId)
+    } catch (error) {
+      await releaseLock("hotel_booking", lockId)
+      console.error("[v0] Error checking room availability:", error)
+      return { error: "Failed to verify room availability. Please try again." }
+    }
   }
 
   const originalAmount = items.reduce((sum, item) => {
@@ -190,8 +235,15 @@ export async function createOrderFromCart(
     console.error("[v0] Failed to send order confirmation email:", emailError)
   }
 
+  // Invalidate room availability cache if order contains hotel items
+  // This ensures other users see updated availability immediately
+  if (hotelItems.length > 0) {
+    await invalidateRoomAvailabilityCache()
+  }
+
   revalidatePath("/cart")
   revalidatePath("/checkout")
+  revalidatePath("/hotel-booking")
   revalidatePath("/", "layout")
 
   return { data: order }

@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils"
 // Configuration - easily updateable
 const WHATSAPP_CONFIG = {
   // WhatsApp number (include country code without + or spaces)
-  phoneNumber: "6281234567890",
+  // +62 896-0262-6709 -> 6289602626709
+  phoneNumber: "6289602626709",
   // Default message when user clicks to chat
   defaultMessage: "Hi! I have a question about ISAPM 2026 National Meeting.",
   // Tooltip text

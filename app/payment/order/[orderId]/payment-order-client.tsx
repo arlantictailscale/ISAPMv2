@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, AlertCircle, CreditCard, Gift, Copy, CheckCircle } from "lucide-react"
+import { Upload, AlertCircle, CreditCard, Gift, Copy, CheckCircle, Clock } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -33,6 +33,7 @@ interface Order {
   original_amount?: number
   discount_amount?: number
   total_amount?: number
+  created_at: string
 }
 
 interface Payment {
@@ -740,6 +741,44 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                 </div>
               </CardContent>
             </Card>
+
+            {/* 24-hour expiration warning for orders without payment */}
+            {!initialPayment && (() => {
+              const createdAt = new Date(initialOrder.created_at)
+              const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000) // 24 hours
+              const now = new Date()
+              const isExpired = now > expiresAt
+              const timeLeft = expiresAt.getTime() - now.getTime()
+              const hoursLeft = Math.max(0, Math.floor(timeLeft / (60 * 60 * 1000)))
+              const minutesLeft = Math.max(0, Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000)))
+              const isUrgent = hoursLeft < 6
+              
+              return (
+                <div className={`mb-6 p-4 rounded-lg border ${isExpired ? "bg-red-50 border-red-200" : isUrgent ? "bg-amber-50 border-amber-200" : "bg-blue-50 border-blue-200"}`}>
+                  <div className="flex items-start gap-3">
+                    <Clock className={`w-5 h-5 mt-0.5 shrink-0 ${isExpired ? "text-red-600" : isUrgent ? "text-amber-600" : "text-blue-600"}`} />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <h4 className={`font-semibold text-sm ${isExpired ? "text-red-900" : isUrgent ? "text-amber-900" : "text-blue-900"}`}>
+                          {isExpired ? "Payment Deadline Expired" : "Payment Deadline"}
+                        </h4>
+                        {!isExpired && (
+                          <span className={`text-xs font-medium px-2 py-1 rounded-full ${isUrgent ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                            {hoursLeft}h {minutesLeft}m remaining
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-sm mt-1 ${isExpired ? "text-red-700" : isUrgent ? "text-amber-700" : "text-blue-700"}`}>
+                        {isExpired 
+                          ? "This order has exceeded the 24-hour payment window and will be automatically cancelled."
+                          : `Please complete your payment within 24 hours of placing your order. Orders without payment proof will be automatically cancelled.`
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
 
             <Card className="mb-6">
               <CardHeader>

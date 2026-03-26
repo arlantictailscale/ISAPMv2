@@ -63,6 +63,7 @@ export default function AdminPostersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [filterEventStatus, setFilterEventStatus] = useState<string>("all")
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectionComment, setRejectionComment] = useState("")
@@ -376,10 +377,14 @@ export default function AdminPostersPage() {
       submission.keywords?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       submission.topic?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = filterStatus === "all" || submission.submission_status === filterStatus
-    const matchesCategory = filterCategory === "all" || submission.topic === filterCategory
-
-    return matchesSearch && matchesStatus && matchesCategory
+  const matchesStatus = filterStatus === "all" || submission.submission_status === filterStatus
+  const matchesCategory = filterCategory === "all" || submission.topic === filterCategory
+  const hasEvents = submission.validated_events && submission.validated_events.length > 0
+  const matchesEventStatus = filterEventStatus === "all" ||
+    (filterEventStatus === "no_events" && !hasEvents) ||
+    (filterEventStatus === "has_events" && hasEvents)
+  
+  return matchesSearch && matchesStatus && matchesCategory && matchesEventStatus
   })
 
   const getStatusBadge = (status: string) => {
@@ -648,7 +653,36 @@ export default function AdminPostersPage() {
                   </div>
                 </div>
 
-                {(filterStatus !== "all" || filterCategory !== "all" || searchTerm) && (
+                <div className="space-y-2 w-full">
+                  <Label className="text-sm font-medium">Event Registration:</Label>
+                  <div className="flex flex-wrap gap-2 w-full">
+                    <Button
+                      variant={filterEventStatus === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterEventStatus("all")}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant={filterEventStatus === "has_events" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterEventStatus("has_events")}
+                      className={filterEventStatus === "has_events" ? "bg-green-600 hover:bg-green-700" : ""}
+                    >
+                      Has Events
+                    </Button>
+                    <Button
+                      variant={filterEventStatus === "no_events" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterEventStatus("no_events")}
+                      className={filterEventStatus === "no_events" ? "bg-amber-500 hover:bg-amber-600" : "border-amber-400 text-amber-600 hover:bg-amber-50"}
+                    >
+                      No Events
+                    </Button>
+                  </div>
+                </div>
+
+                {(filterStatus !== "all" || filterCategory !== "all" || filterEventStatus !== "all" || searchTerm) && (
                   <div className="pt-2 border-t flex flex-col sm:flex-row sm:items-center gap-2">
                     <Button
                       variant="outline"
@@ -656,6 +690,7 @@ export default function AdminPostersPage() {
                       onClick={() => {
                         setFilterStatus("all")
                         setFilterCategory("all")
+                        setFilterEventStatus("all")
                         setSearchTerm("")
                       }}
                     >

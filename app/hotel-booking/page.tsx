@@ -136,7 +136,8 @@ export default function HotelBookingPage() {
     checkAuth() // Keep existing checkAuth call
 
     loadUserProfile()
-  }, [supabase])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run only once on mount - supabase client is stable
 
   const checkAuth = async () => {
     try {

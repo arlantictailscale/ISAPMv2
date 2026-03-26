@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { CartItemCard } from "@/components/cart/cart-item-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +10,7 @@ import { ShoppingBag, ArrowRight, Lock, Tag } from "lucide-react"
 import Link from "next/link"
 import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 import { PromoCodeInput } from "@/components/promo-code-input"
-import type { PromoValidationResult } from "@/app/actions/promo-code"
+import { validatePromoCode, type PromoValidationResult } from "@/app/actions/promo-code"
 
 interface CartItem {
   id: string
@@ -52,21 +52,55 @@ const PROMO_STORAGE_KEY = "isapm_applied_promo"
 export function CartPageClient({ items, cartSummary, profileStatus }: CartPageClientProps) {
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null)
 
-  // Load saved promo from localStorage on mount
+  // Prepare cart items for promo validation - EXCLUDE hotel items as they don't qualify for promo codes
+  const getPromoEligibleItems = useCallback(() => {
+    return items
+      .filter((item) => item.item_type !== "hotel") // Hotel items never get promo discounts
+      .map((item) => ({
+        id: item.id,
+        event_slug: item.event_id || item.item_type,
+        event_type: item.item_type,
+        price: item.unit_price,
+        participant_type: item.participant_type_id,
+      }))
+  }, [items])
+
+  // Load and RE-VALIDATE saved promo from localStorage when cart items change
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(PROMO_STORAGE_KEY)
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        // Re-validate the promo when cart changes
-        if (parsed && parsed.valid) {
-          setAppliedPromo(parsed)
+    const revalidateSavedPromo = async () => {
+      try {
+        const saved = localStorage.getItem(PROMO_STORAGE_KEY)
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed && parsed.valid && parsed.promo_code?.code) {
+            // Re-validate the promo with current cart items (excluding hotels)
+            const promoEligibleItems = getPromoEligibleItems()
+            
+            if (promoEligibleItems.length === 0) {
+              // No promo-eligible items in cart, clear the promo
+              setAppliedPromo(null)
+              localStorage.removeItem(PROMO_STORAGE_KEY)
+              return
+            }
+            
+            const result = await validatePromoCode(parsed.promo_code.code, promoEligibleItems)
+            if (result.valid) {
+              setAppliedPromo(result)
+              localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(result))
+            } else {
+              // Promo no longer valid, clear it
+              setAppliedPromo(null)
+              localStorage.removeItem(PROMO_STORAGE_KEY)
+            }
+          }
         }
+      } catch (e) {
+        // Ignore parse errors
       }
-    } catch (e) {
-      // Ignore parse errors
     }
-  }, [])
+    
+    revalidateSavedPromo()
+  }, [getPromoEligibleItems])
 
   // Save promo to localStorage when applied
   const handlePromoApplied = (result: PromoValidationResult | null) => {
@@ -82,14 +116,8 @@ export function CartPageClient({ items, cartSummary, profileStatus }: CartPageCl
   const totalDiscount = appliedPromo?.total_discount || 0
   const finalTotal = cartSummary.subtotal - totalDiscount
 
-  // Prepare cart items for promo validation
-  const cartItemsForPromo = items.map((item) => ({
-    id: item.id,
-    event_slug: item.event_id || item.item_type,
-    event_type: item.item_type,
-    price: item.item_type === "hotel" ? item.unit_price * (item.nights || 1) : item.unit_price,
-    participant_type: item.participant_type_id,
-  }))
+  // Use the memoized function for promo-eligible items
+  const cartItemsForPromo = getPromoEligibleItems()
 
   if (items.length === 0) {
     return (

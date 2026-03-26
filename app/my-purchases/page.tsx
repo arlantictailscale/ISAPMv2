@@ -38,7 +38,6 @@ export default async function MyPurchasesPage() {
       )
     `)
     .eq("user_id", user.id)
-    .neq("status", "cancelled") // Exclude cancelled orders at database level
     .order("created_at", { ascending: false })
 
   if (error) {
@@ -76,6 +75,16 @@ export default async function MyPurchasesPage() {
 
   const getPaymentStatusBadge = (order: any) => {
     const payment = order.order_payments?.[0]
+
+    // Check if order is cancelled first
+    if (order.status === "cancelled") {
+      return (
+        <Badge variant="destructive" className="flex items-center gap-1 w-fit max-w-full whitespace-nowrap shrink-0 bg-gray-500 hover:bg-gray-600">
+          <XCircle className="w-3 h-3 shrink-0" />
+          <span className="text-xs sm:text-sm">Order Cancelled</span>
+        </Badge>
+      )
+    }
 
     if (!payment) {
       // No payment record yet - needs to submit proof
@@ -333,7 +342,23 @@ export default async function MyPurchasesPage() {
                             </div>
                           )}
 
-                          {!payment && (() => {
+                          {/* Cancelled order notice */}
+                          {order.status === "cancelled" && (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                              <div className="flex gap-2">
+                                <XCircle className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <h4 className="font-semibold text-gray-900 text-sm mb-1">Order Cancelled</h4>
+                                  <p className="text-sm text-gray-700">
+                                    This order has been cancelled. If you believe this was a mistake, please contact support or place a new order.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Action required for orders without payment (only show if not cancelled) */}
+                          {!payment && order.status !== "cancelled" && (() => {
                             const createdAt = new Date(order.created_at)
                             const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000) // 24 hours
                             const now = new Date()
@@ -543,27 +568,30 @@ export default async function MyPurchasesPage() {
                             </div>
                           </div>
 
-                          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                            <Link href={`/payment/order/${order.id}`} className="flex-1">
-                              <Button className="w-full flex items-center gap-2" variant={actionButton.variant}>
-                                <ActionIcon className="w-4 h-4" />
-                                {actionButton.text}
-                              </Button>
-                            </Link>
-                            {canDownloadInvoice && (
-                              <DownloadInvoiceButton
-                                orderId={order.id}
-                                variant="outline"
-                                className="shrink-0"
-                                isSponsored={payment?.payment_method?.toLowerCase() === "sponsored"}
-                              />
-                            )}
-                            {canCancel && (
-                              <div className="shrink-0">
-                                <CancelOrderButton orderId={order.id} />
-                              </div>
-                            )}
-                          </div>
+                          {/* Action buttons - only show for non-cancelled orders */}
+                          {order.status !== "cancelled" && (
+                            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                              <Link href={`/payment/order/${order.id}`} className="flex-1">
+                                <Button className="w-full flex items-center gap-2" variant={actionButton.variant}>
+                                  <ActionIcon className="w-4 h-4" />
+                                  {actionButton.text}
+                                </Button>
+                              </Link>
+                              {canDownloadInvoice && (
+                                <DownloadInvoiceButton
+                                  orderId={order.id}
+                                  variant="outline"
+                                  className="shrink-0"
+                                  isSponsored={payment?.payment_method?.toLowerCase() === "sponsored"}
+                                />
+                              )}
+                              {canCancel && (
+                                <div className="shrink-0">
+                                  <CancelOrderButton orderId={order.id} />
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

@@ -69,6 +69,7 @@ export default function HotelBookingPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [profile, setProfile] = useState<any>(null)
   const [availability, setAvailability] = useState<any>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const roomRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
@@ -497,13 +498,14 @@ export default function HotelBookingPage() {
 
   // Redirect to dedicated sold-out page when all promotional rates are exhausted
   useEffect(() => {
-    if (isAllSoldOut) {
-      window.location.href = "/hotel-booking/sold-out"
+    if (isAllSoldOut && !isRedirecting) {
+      setIsRedirecting(true)
+      window.location.replace("/hotel-booking/sold-out")
     }
-  }, [isAllSoldOut])
+  }, [isAllSoldOut, isRedirecting])
 
   // Show loading while redirecting to sold out page
-  if (isAllSoldOut) {
+  if (isAllSoldOut || isRedirecting) {
     return (
       <>
         <Navigation />

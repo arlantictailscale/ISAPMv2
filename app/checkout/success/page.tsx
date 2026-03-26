@@ -85,15 +85,6 @@ export default async function CheckoutSuccessPage({
               </div>
             )}
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-center">
-              <p className="text-sm font-medium text-amber-800">
-                Please complete your payment within <strong>24 hours</strong>
-              </p>
-              <p className="text-xs text-amber-700 mt-1">
-                Orders without payment proof will be automatically cancelled after 24 hours.
-              </p>
-            </div>
-
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground text-center">
                 You will be redirected to the payment page to upload your payment proof.

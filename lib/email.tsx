@@ -357,10 +357,9 @@ export async function sendOrderConfirmationEmail({
                 </div>
 
                 <div class="alert">
-                  <div class="alert-title">⚠️ Action Required - Complete Within 24 Hours</div>
+                  <div class="alert-title">⚠️ Action Required</div>
                   <div class="alert-text">
-                    Please submit your payment proof within <strong>24 hours</strong> to complete your order. 
-                    Orders without payment proof will be automatically cancelled after 24 hours to free up event slots.
+                    Please submit your payment proof to complete your order. Click the button below to upload your payment confirmation.
                   </div>
                 </div>
 

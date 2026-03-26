@@ -48,6 +48,7 @@
     "@upstash/redis": "1.36.0",
     "@vercel/analytics": "latest",
     "@vercel/blob": "latest",
+    "@vercel/speed-insights": "latest",
     "@vue/compiler-sfc": "latest",
     "autoprefixer": "^10.4.20",
     "canvas-confetti": "1.9.4",

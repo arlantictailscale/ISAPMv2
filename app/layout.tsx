@@ -11,6 +11,7 @@ import { MobileBottomNav } from "@/components/mobile-bottom-nav"
 import { LinkPrefetch } from "@/components/link-prefetch"
 import { OfflineIndicator } from "@/components/offline-indicator"
 import { WebVitalsReporter } from "@/components/web-vitals-reporter"
+import { FloatingWhatsApp } from "@/components/floating-whatsapp"
 
 import { Inter, Playfair_Display } from "next/font/google"
 
@@ -282,6 +283,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <CartProvider>
           <div className="pb-16 md:pb-0">{children}</div>
           <MobileBottomNav />
+          <FloatingWhatsApp 
+            phoneNumber="6281234567890"
+            defaultMessage="Hi! I have a question about ISAPM 2026 National Meeting."
+            welcomeMessage="Hello! Need help with registration or have questions about ISAPM 2026? We're here to help!"
+          />
           {/* <PWAInstallPrompt /> */}
         </CartProvider>
         <Analytics />

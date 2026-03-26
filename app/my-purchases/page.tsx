@@ -333,20 +333,47 @@ export default async function MyPurchasesPage() {
                             </div>
                           )}
 
-                          {!payment && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                              <div className="flex gap-2">
-                                <Upload className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                                <div>
-                                  <h4 className="font-semibold text-blue-900 text-sm mb-1">Action Required</h4>
-                                  <p className="text-sm text-blue-700">
-                                    Please submit your payment proof to complete your order. Click the button below to
-                                    upload your payment confirmation.
-                                  </p>
+                          {!payment && (() => {
+                            const createdAt = new Date(order.created_at)
+                            const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000) // 24 hours
+                            const now = new Date()
+                            const isExpired = now > expiresAt
+                            const timeLeft = expiresAt.getTime() - now.getTime()
+                            const hoursLeft = Math.max(0, Math.floor(timeLeft / (60 * 60 * 1000)))
+                            const minutesLeft = Math.max(0, Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000)))
+                            
+                            const isUrgent = hoursLeft < 6
+                            const bgColor = isExpired ? "bg-red-50 border-red-200" : isUrgent ? "bg-amber-50 border-amber-200" : "bg-blue-50 border-blue-200"
+                            const textColor = isExpired ? "text-red-" : isUrgent ? "text-amber-" : "text-blue-"
+                            
+                            return (
+                              <div className={`${bgColor} border rounded-lg p-4`}>
+                                <div className="flex gap-2">
+                                  <Upload className={`w-5 h-5 ${textColor}600 flex-shrink-0 mt-0.5`} />
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                      <h4 className={`font-semibold ${textColor}900 text-sm mb-1`}>Action Required</h4>
+                                      {!isExpired && (
+                                        <span className={`text-xs font-medium ${isUrgent ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"} px-2 py-1 rounded-full`}>
+                                          Expires in {hoursLeft}h {minutesLeft}m
+                                        </span>
+                                      )}
+                                      {isExpired && (
+                                        <span className="text-xs font-medium bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                                          Expired - Will be cancelled soon
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className={`text-sm ${textColor}700`}>
+                                      Please submit your payment proof within 24 hours to complete your order. 
+                                      {isUrgent && !isExpired && " Time is running out!"}
+                                      {isExpired && " This order will be automatically cancelled."}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          )}
+                            )
+                          })()}
 
                           {/* Order summary */}
                           <div className="grid gap-4 md:grid-cols-2">

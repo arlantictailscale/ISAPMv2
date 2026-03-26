@@ -14,6 +14,8 @@ import { toast } from "sonner"
 import Link from "next/link"
 import { submitPoster } from "@/app/actions/submit-poster"
 import { trackLead } from "@/lib/meta-pixel"
+import { checkProfileCompleteness, type ProfileCompletenessResult } from "@/lib/profile/validation"
+import { ProfileIncompleteAlert } from "@/components/profile/profile-incomplete-alert"
 
 export default function SubmitPosterPage() {
   const [formData, setFormData] = useState({
@@ -36,11 +38,12 @@ export default function SubmitPosterPage() {
   const [selectedFullTextFile, setSelectedFullTextFile] = useState<File | null>(null)
   const [uploadedFullTextUrl, setUploadedFullTextUrl] = useState<string | null>(null)
   const [isUploadingFullText, setIsUploadingFullText] = useState(false)
+  const [profileCheck, setProfileCheck] = useState<ProfileCompletenessResult | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUserAndProfile = async () => {
       setIsAuthCheckLoading(true)
       const {
         data: { user },
@@ -53,10 +56,21 @@ export default function SubmitPosterPage() {
       }
 
       setUser(user)
+
+      // Check profile completeness
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, satu_sehat_name, satu_sehat_email, nik, phone, institution, position")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      const completenessResult = checkProfileCompleteness(profile)
+      setProfileCheck(completenessResult)
+
       setIsAuthCheckLoading(false)
     }
 
-    checkUser()
+    checkUserAndProfile()
   }, [supabase, router])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -249,6 +263,14 @@ export default function SubmitPosterPage() {
         return
       }
 
+      // Validate profile is complete
+      if (profileCheck && !profileCheck.isComplete) {
+        setError("Please complete your profile before submitting an e-poster.")
+        toast.error("Profile incomplete. Please complete your profile first.")
+        setIsLoading(false)
+        return
+      }
+
       if (!selectedFile && !uploadedFileUrl) {
         setError("Poster file is required. Please upload a PDF file before submitting.")
         toast.error("Poster file is required")
@@ -406,7 +428,31 @@ export default function SubmitPosterPage() {
               </div>
             )}
 
-            <Card className="w-full shadow-sm">
+            {/* Profile Incomplete Blocking Section */}
+            {profileCheck && !profileCheck.isComplete && (
+              <Card className="w-full shadow-sm mb-6 border-amber-200 bg-amber-50/50">
+                <CardHeader className="min-w-0 pb-2">
+                  <CardTitle className="break-words flex items-center gap-2 text-amber-800">
+                    <AlertCircle className="w-5 h-5" />
+                    Complete Your Profile First
+                  </CardTitle>
+                  <CardDescription className="break-words text-amber-700">
+                    You must complete your profile before submitting an e-poster.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="min-w-0">
+                  <ProfileIncompleteAlert
+                    missingFields={profileCheck.missingFields}
+                    completionPercentage={profileCheck.completionPercentage}
+                    variant="default"
+                    showButton={true}
+                    className="border-amber-300 bg-white"
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            <Card className={`w-full shadow-sm ${profileCheck && !profileCheck.isComplete ? "opacity-50 pointer-events-none" : ""}`}>
               <CardHeader className="min-w-0">
                 <CardTitle className="break-words">E-Poster Submission Form</CardTitle>
                 <CardDescription className="break-words">

@@ -51,7 +51,27 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
     } catch (e) {
       // Ignore parse errors
     }
-  }, [])
+    
+    // Push GTM begin_checkout event on page load
+    if (typeof window !== "undefined" && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: "begin_checkout",
+        ecommerce: {
+          currency: cartSummary.currency,
+          value: cartSummary.subtotal,
+          items: items.map((item, index) => ({
+            item_id: item.id,
+            item_name: item.event_label || item.hotel_room_type || "Unknown",
+            item_category: item.item_type,
+            item_variant: item.participant_type_label || undefined,
+            price: item.unit_price,
+            quantity: item.item_type === "hotel" ? item.nights : 1,
+            index: index,
+          })),
+        },
+      })
+    }
+  }, [items, cartSummary])
 
   // Save/clear promo in localStorage when changed
   const handlePromoApplied = (result: PromoValidationResult | null) => {
@@ -79,6 +99,32 @@ export function CheckoutPageClient({ profileStatus, profile, userEmail, items, c
   const handlePlaceOrder = async () => {
     if (formRef.current) {
       setIsSubmitting(true)
+      
+      // Push GTM event for Place Order button click
+      if (typeof window !== "undefined" && (window as any).dataLayer) {
+        // GA4 begin_checkout event
+        (window as any).dataLayer.push({
+          event: "place_order_click",
+          ecommerce: {
+            currency: cartSummary.currency,
+            value: finalTotal,
+            coupon: appliedPromo?.code || undefined,
+            discount: totalDiscount,
+            items: items.map((item, index) => ({
+              item_id: item.id,
+              item_name: item.event_label || item.hotel_room_type || "Unknown",
+              item_category: item.item_type,
+              item_variant: item.participant_type_label || undefined,
+              price: item.unit_price,
+              quantity: item.item_type === "hotel" ? item.nights : 1,
+              index: index,
+            })),
+          },
+          checkout_step: "place_order",
+          user_email: userEmail,
+        })
+      }
+      
       await formRef.current.submit()
       // Reset after a delay in case of error
       setTimeout(() => setIsSubmitting(false), 2000)

@@ -1,5 +1,5 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
@@ -74,6 +74,29 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
     accountName: "PT. Tombo Farma Indonesia",
     branch: "KCP MALANG SAWOJAJAR",
   }
+  
+  // GTM: Track payment page view on mount
+  useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).dataLayer && !hasSubmittedPayment) {
+      (window as any).dataLayer.push({
+        event: "view_payment_page",
+        ecommerce: {
+          transaction_id: initialOrder.id,
+          currency: "IDR",
+          value: calculateTotal(),
+          items: initialOrder.order_items?.map((item: any, index: number) => ({
+            item_id: item.event_id || item.id,
+            item_name: item.event_label || item.hotel_room_type || "Unknown",
+            item_category: item.item_type,
+            item_variant: item.participant_type_label || undefined,
+            price: item.unit_price,
+            quantity: item.item_type === "hotel" ? item.nights : 1,
+            index: index,
+          })),
+        },
+      })
+    }
+  }, [initialOrder])
 
   const calculateTotal = () => {
     // Use total_amount from order if available (includes discount)
@@ -154,6 +177,32 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
     }
 
     setIsUploading(true)
+    
+    // Push GTM event for Submit Payment Proof button click
+    if (typeof window !== "undefined" && (window as any).dataLayer) {
+      (window as any).dataLayer.push({
+        event: "submit_payment_proof",
+        ecommerce: {
+          transaction_id: initialOrder.id,
+          currency: "IDR",
+          value: calculateTotal(),
+          items: initialOrder.order_items?.map((item: any, index: number) => ({
+            item_id: item.event_id || item.id,
+            item_name: item.event_label || item.hotel_room_type || "Unknown",
+            item_category: item.item_type,
+            item_variant: item.participant_type_label || undefined,
+            price: item.unit_price,
+            quantity: item.item_type === "hotel" ? item.nights : 1,
+            index: index,
+          })),
+        },
+        payment_method: paymentMethod,
+        bank_name: bankName || undefined,
+        has_promo_code: !!initialOrder.promo_code,
+        promo_code: initialOrder.promo_code?.code || undefined,
+        discount_amount: initialOrder.discount_amount || 0,
+      })
+    }
 
     try {
       const formData = new FormData()
@@ -193,6 +242,20 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
 
       const result = await response.json()
       console.log("[v0] Payment proof uploaded successfully:", result)
+      
+      // GTM: Track successful payment proof submission
+      if (typeof window !== "undefined" && (window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: "payment_proof_submitted",
+          ecommerce: {
+            transaction_id: initialOrder.id,
+            currency: "IDR",
+            value: calculateTotal(),
+          },
+          payment_method: paymentMethod,
+          submission_status: "success",
+        })
+      }
 
       toast.success("Payment proof submitted successfully! Awaiting verification.")
 

@@ -496,11 +496,12 @@ export default function PaymentValidationPage() {
                 {/* Expiration warning for no_proof orders */}
                 {(payment.payment_status === "no_proof" || (!payment.payment_proof_url && payment.payment_status !== "verified" && payment.payment_status !== "rejected")) && (() => {
                   const createdAt = new Date(payment.created_at)
-                  const expiresAt = new Date(createdAt.getTime() + 60 * 60 * 1000) // 1 hour
+                  const expiresAt = new Date(createdAt.getTime() + 24 * 60 * 60 * 1000) // 24 hours
                   const now = new Date()
                   const isExpired = now > expiresAt
                   const timeLeft = expiresAt.getTime() - now.getTime()
-                  const minutesLeft = Math.max(0, Math.floor(timeLeft / (60 * 1000)))
+                  const hoursLeft = Math.max(0, Math.floor(timeLeft / (60 * 60 * 1000)))
+                  const minutesLeft = Math.max(0, Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000)))
                   
                   if (isExpired) {
                     return (
@@ -509,18 +510,18 @@ export default function PaymentValidationPage() {
                         Expired - Will be cancelled
                       </Badge>
                     )
-                  } else if (minutesLeft <= 15) {
+                  } else if (hoursLeft < 2) {
                     return (
                       <Badge className="bg-red-100 text-red-700 border-red-200 text-xs">
                         <Clock className="w-3 h-3 mr-1" />
-                        Expires in {minutesLeft}m
+                        Expires in {hoursLeft}h {minutesLeft}m
                       </Badge>
                     )
-                  } else if (minutesLeft <= 30) {
+                  } else if (hoursLeft < 6) {
                     return (
                       <Badge className="bg-amber-100 text-amber-700 border-amber-200 text-xs">
                         <Clock className="w-3 h-3 mr-1" />
-                        Expires in {minutesLeft}m
+                        Expires in {hoursLeft}h
                       </Badge>
                     )
                   }
@@ -1106,8 +1107,8 @@ export default function PaymentValidationPage() {
                     <div>
                       <h4 className="font-medium text-amber-800">Auto-Cancellation Policy</h4>
                       <p className="text-sm text-amber-700 mt-1">
-                        Orders without payment proof will be automatically cancelled after <strong>1 hour</strong> to free up event slots.
-                        The system checks for expired orders every 15 minutes.
+                        Orders without payment proof will be automatically cancelled after <strong>24 hours</strong> to free up event slots.
+                        The system checks for expired orders once daily at 6:00 AM UTC.
                       </p>
                     </div>
                   </div>

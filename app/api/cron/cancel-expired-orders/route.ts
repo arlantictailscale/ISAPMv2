@@ -1,8 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createClient as createSupabaseAdmin } from "@supabase/supabase-js"
 
-// Time limit for no_proof orders (1 hour in milliseconds)
-const EXPIRATION_TIME_MS = 60 * 60 * 1000 // 1 hour
+// Time limit for no_proof orders (24 hours in milliseconds)
+const EXPIRATION_TIME_MS = 24 * 60 * 60 * 1000 // 24 hours
 
 export async function GET(request: NextRequest) {
   try {
@@ -94,7 +94,7 @@ export async function GET(request: NextRequest) {
           .from("order_payments")
           .update({
             payment_status: "expired",
-            notes: `Auto-cancelled: No payment proof uploaded within 1 hour. Original created at: ${payment.created_at}`,
+            notes: `Auto-cancelled: No payment proof uploaded within 24 hours. Original created at: ${payment.created_at}`,
           })
           .eq("id", payment.id)
 

@@ -543,26 +543,80 @@ export default function HotelBookingPage() {
                       Alternative Booking Options
                     </p>
                     
-                    {/* Alternative Options */}
-                    <div className="grid sm:grid-cols-2 gap-4 max-w-md mx-auto">
+                    {/* Hotel Official Website - Primary */}
+                    <a
+                      href="https://www.thesinghasari.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-3 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors mb-4 max-w-sm mx-auto"
+                    >
+                      <Building2 className="w-5 h-5" />
+                      Hotel Official Website
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    
+                    <p className="text-xs text-slate-500 mb-3">Or book through these platforms:</p>
+                    
+                    {/* OTA Options Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-lg mx-auto">
+                      {/* Traveloka */}
                       <a
-                        href="https://www.thesinghasari.com"
+                        href="https://www.traveloka.com/en-id/hotel/detail?spec=09-04-2026.10-04-2026.1.1.HOTEL.3000010000303.The%20Singhasari%20Resort%20Batu.2&loginPromo=1&prevSearchId=1860731724614365329&priceDisplay=NIGHTNOTAX&iuid=d185076a-ca27-4b31-a1f2-7509eef6a831"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+                        className="flex flex-col items-center justify-center gap-2 p-3 bg-white hover:bg-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors group"
                       >
-                        <Building2 className="w-4 h-4" />
-                        Hotel Official Website
-                        <ExternalLink className="w-3 h-3" />
+                        <img 
+                          src="https://d1785e74lyxkqq.cloudfront.net/_next/static/v2/9/97f3e7a54e9c6987283b78e016664776.svg" 
+                          alt="Traveloka" 
+                          className="h-5 object-contain"
+                        />
+                        <span className="text-xs text-slate-500 group-hover:text-blue-600">Traveloka</span>
                       </a>
+                      
+                      {/* Tiket.com */}
                       <a
-                        href="https://www.traveloka.com/en-id/hotel/indonesia/the-singhasari-resort-1000000324763"
+                        href="https://www.tiket.com/id-id/hotel/indonesia/the-singhasari-resort-batu-412001639950331681"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium transition-colors border border-slate-200"
+                        className="flex flex-col items-center justify-center gap-2 p-3 bg-white hover:bg-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors group"
                       >
-                        Traveloka
-                        <ExternalLink className="w-3 h-3" />
+                        <img 
+                          src="https://s-light.tiket.photos/t/01E25EBZS3W0FY9GTG6C42E1SE/original/core-ina/2023/11/15/c36b23ef-ac3f-44c2-8c0c-5e84c0a32f9e-1700019959330-d43ba6be5d9cba4f84c4a4db85f78a1f.png" 
+                          alt="Tiket.com" 
+                          className="h-5 object-contain"
+                        />
+                        <span className="text-xs text-slate-500 group-hover:text-blue-600">Tiket.com</span>
+                      </a>
+                      
+                      {/* Agoda */}
+                      <a
+                        href="https://www.agoda.com/the-singhasari-resort/hotel/malang-id.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center justify-center gap-2 p-3 bg-white hover:bg-red-50 rounded-lg border border-slate-200 hover:border-red-300 transition-colors group"
+                      >
+                        <img 
+                          src="https://upload.wikimedia.org/wikipedia/commons/c/ce/Agoda_transparent_logo.png" 
+                          alt="Agoda" 
+                          className="h-5 object-contain"
+                        />
+                        <span className="text-xs text-slate-500 group-hover:text-red-600">Agoda</span>
+                      </a>
+                      
+                      {/* Booking.com */}
+                      <a
+                        href="https://www.booking.com/hotel/id/the-singhasari-resort-batu.en-gb.html"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex flex-col items-center justify-center gap-2 p-3 bg-white hover:bg-blue-50 rounded-lg border border-slate-200 hover:border-blue-300 transition-colors group"
+                      >
+                        <img 
+                          src="https://cf.bstatic.com/static/img/favicon/9f92ee64ab887057f3dabbe4a26cd9e9e8c4e7a9.svg" 
+                          alt="Booking.com" 
+                          className="h-5 object-contain"
+                        />
+                        <span className="text-xs text-slate-500 group-hover:text-blue-600">Booking.com</span>
                       </a>
                     </div>
                   </div>

@@ -176,16 +176,25 @@ export default function HotelBookingPage() {
 
   const loadRoomAvailability = async () => {
     const data = await getRoomAvailability()
+    
+    // Check if all rooms are sold out and redirect immediately
+    if (data && data.deluxe.available <= 0 && data.premier.available <= 0) {
+      window.location.replace("/hotel-booking/sold-out")
+      return
+    }
+    
     setAvailability(data)
   }
 
   // Refresh room availability periodically and when page becomes visible
+  // Only set up refresh if not already redirecting
   useEffect(() => {
-    // Refresh every 10 seconds to ensure fresh availability data
-    // Critical for preventing overselling when rooms sell out
+    if (isRedirecting) return
+    
+    // Refresh every 30 seconds to ensure fresh availability data
     const interval = setInterval(() => {
       loadRoomAvailability()
-    }, 10000)
+    }, 30000)
 
     // Also refresh when the tab becomes visible again (user returns to tab)
     const handleVisibilityChange = () => {
@@ -206,7 +215,7 @@ export default function HotelBookingPage() {
       document.removeEventListener("visibilitychange", handleVisibilityChange)
       window.removeEventListener("focus", handleFocus)
     }
-  }, [])
+  }, [isRedirecting])
 
   const calculateNights = (checkInDate: string, checkOutDate: string) => {
     if (!checkInDate || !checkOutDate) return 0
@@ -492,21 +501,8 @@ export default function HotelBookingPage() {
     )
   }
 
-  // Check if ALL promotional rooms are sold out
-  const isAllSoldOut = availability && 
-    availability.deluxe.available <= 0 && 
-    availability.premier.available <= 0
-
-  // Redirect to dedicated sold-out page when all promotional rates are exhausted
-  useEffect(() => {
-    if (isAllSoldOut && !isRedirecting) {
-      setIsRedirecting(true)
-      window.location.replace("/hotel-booking/sold-out")
-    }
-  }, [isAllSoldOut, isRedirecting])
-
-  // Show loading while redirecting to sold out page
-  if (isAllSoldOut || isRedirecting) {
+  // Show loading while redirecting to sold out page (redirect happens in loadRoomAvailability)
+  if (isRedirecting) {
     return (
       <>
         <Navigation />

@@ -2,7 +2,6 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 
 import { Analytics } from "@vercel/analytics/next"
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import "./globals.css"
 import { Toaster } from "sonner"
 import { CartProvider } from "@/lib/cart/cart-context"
@@ -291,7 +290,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           {/* <PWAInstallPrompt /> */}
         </CartProvider>
         <Analytics />
-        <SpeedInsights sampleRate={0.3} />
         <Toaster
           position="top-right"
           toastOptions={{

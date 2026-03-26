@@ -1100,15 +1100,42 @@ export default function PaymentValidationPage() {
             <TabsContent value="no_proof" className="mt-6">
               {/* Auto-cancellation policy notice */}
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-amber-800">Auto-Cancellation Policy</h4>
-                    <p className="text-sm text-amber-700 mt-1">
-                      Orders without payment proof will be automatically cancelled after <strong>1 hour</strong> to free up event slots.
-                      The system checks for expired orders every 15 minutes.
-                    </p>
+                <div className="flex items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+                    <div>
+                      <h4 className="font-medium text-amber-800">Auto-Cancellation Policy</h4>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Orders without payment proof will be automatically cancelled after <strong>1 hour</strong> to free up event slots.
+                        The system checks for expired orders every 15 minutes.
+                      </p>
+                    </div>
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={async () => {
+                      try {
+                        const res = await fetch("/api/cron/cancel-expired-orders", {
+                          method: "GET",
+                          headers: { "x-manual-trigger": "true" }
+                        })
+                        const data = await res.json()
+                        if (data.cancelled > 0) {
+                          alert(`Successfully cancelled ${data.cancelled} expired order(s). Please refresh the page.`)
+                          window.location.reload()
+                        } else {
+                          alert("No expired orders found to cancel.")
+                        }
+                      } catch (error) {
+                        alert("Failed to run cancellation. Please try again.")
+                      }
+                    }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" />
+                    Cancel Expired Now
+                  </Button>
                 </div>
               </div>
 

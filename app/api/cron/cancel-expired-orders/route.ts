@@ -6,16 +6,19 @@ const EXPIRATION_TIME_MS = 60 * 60 * 1000 // 1 hour
 
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret for security
+    // Check if this is a manual trigger from admin panel
+    const isManualTrigger = request.headers.get("x-manual-trigger") === "true"
+    
+    // Verify cron secret for security (skip for manual triggers from same origin)
     const authHeader = request.headers.get("authorization")
     const cronSecret = process.env.CRON_SECRET
 
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    if (!isManualTrigger && (!cronSecret || authHeader !== `Bearer ${cronSecret}`)) {
       console.log("[v0] Unauthorized cron attempt - cancel-expired-orders")
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    console.log("[v0] Starting auto-cancel expired orders cron job...")
+    console.log(`[v0] Starting ${isManualTrigger ? "MANUAL" : "auto"}-cancel expired orders...`)
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY

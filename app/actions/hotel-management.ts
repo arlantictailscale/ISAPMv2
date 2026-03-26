@@ -43,8 +43,8 @@ export type BookingStats = {
   cancelledBookings: number
   totalRevenue: number
   occupancyRate: {
-    deluxe: { booked: number; total: number; percentage: number }
-    premier: { booked: number; total: number; percentage: number }
+    deluxe: { booked: number; confirmed: number; pending: number; total: number; percentage: number }
+    premier: { booked: number; confirmed: number; pending: number; total: number; percentage: number }
   }
 }
 
@@ -238,14 +238,16 @@ export async function getBookingStats(): Promise<{
     let pendingBookings = 0
     let cancelledBookings = 0
     let totalRevenue = 0
-    let deluxeBooked = 0
-    let premierBooked = 0
+    let deluxeConfirmed = 0
+    let deluxePending = 0
+    let premierConfirmed = 0
+    let premierPending = 0
 
     for (const item of hotelItems || []) {
       const order = orderMap.get(item.order_id)
       if (!order) continue
 
-      const paymentStatus = order.order_payments?.[0]?.payment_status || "pending"
+      const paymentStatus = order.order_payments?.[0]?.payment_status || "no_payment"
       totalBookings++
 
       if (paymentStatus === "verified") {
@@ -253,26 +255,48 @@ export async function getBookingStats(): Promise<{
         totalRevenue += (item.unit_price || 0) * (item.nights || 1)
 
         if (item.hotel_room_type === "deluxe") {
-          deluxeBooked += 1
+          deluxeConfirmed += 1
         } else if (item.hotel_room_type === "premier") {
-          premierBooked += 1
+          premierConfirmed += 1
         }
-      } else if (paymentStatus === "pending") {
+      } else if (paymentStatus === "pending" || paymentStatus === "no_proof" || paymentStatus === "no_payment") {
+        // Count pending, no_proof, and no_payment as pending bookings
         pendingBookings++
+        
+        if (item.hotel_room_type === "deluxe") {
+          deluxePending += 1
+        } else if (item.hotel_room_type === "premier") {
+          premierPending += 1
+        }
       } else if (paymentStatus === "rejected") {
         cancelledBookings++
       }
     }
+
+    // Total booked = confirmed + pending (to reserve slots while payments are processed)
+    const deluxeBooked = deluxeConfirmed + deluxePending
+    const premierBooked = premierConfirmed + premierPending
 
     console.log(
       "[v0] Stats - Total:",
       totalBookings,
       "Confirmed:",
       confirmedBookings,
+      "Pending:",
+      pendingBookings,
       "Deluxe:",
       deluxeBooked,
-      "Premier:",
+      "(Confirmed:",
+      deluxeConfirmed,
+      "Pending:",
+      deluxePending,
+      ") Premier:",
       premierBooked,
+      "(Confirmed:",
+      premierConfirmed,
+      "Pending:",
+      premierPending,
+      ")",
     )
 
     return {
@@ -285,11 +309,15 @@ export async function getBookingStats(): Promise<{
         occupancyRate: {
           deluxe: {
             booked: deluxeBooked,
+            confirmed: deluxeConfirmed,
+            pending: deluxePending,
             total: deluxeTotal,
             percentage: deluxeTotal > 0 ? Math.round((deluxeBooked / deluxeTotal) * 100) : 0,
           },
           premier: {
             booked: premierBooked,
+            confirmed: premierConfirmed,
+            pending: premierPending,
             total: premierTotal,
             percentage: premierTotal > 0 ? Math.round((premierBooked / premierTotal) * 100) : 0,
           },
@@ -307,8 +335,8 @@ export async function getBookingStats(): Promise<{
         cancelledBookings: 0,
         totalRevenue: 0,
         occupancyRate: {
-          deluxe: { booked: 0, total: 120, percentage: 0 },
-          premier: { booked: 0, total: 56, percentage: 0 },
+          deluxe: { booked: 0, confirmed: 0, pending: 0, total: 120, percentage: 0 },
+          premier: { booked: 0, confirmed: 0, pending: 0, total: 56, percentage: 0 },
         },
       },
       error: "Failed to fetch stats",

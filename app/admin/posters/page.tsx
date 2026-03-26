@@ -26,6 +26,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import * as XLSX from "xlsx"
 
+interface ValidatedEvent {
+  event_id: string
+  event_label: string
+}
+
 interface PosterSubmission {
   id: string
   user_id: string
@@ -46,6 +51,7 @@ interface PosterSubmission {
   user_name?: string
   user_phone?: string
   topic?: string
+  validated_events?: ValidatedEvent[]
 }
 
 export default function AdminPostersPage() {
@@ -57,6 +63,7 @@ export default function AdminPostersPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [filterEventStatus, setFilterEventStatus] = useState<string>("all")
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectionComment, setRejectionComment] = useState("")
@@ -370,10 +377,14 @@ export default function AdminPostersPage() {
       submission.keywords?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       submission.topic?.toLowerCase().includes(searchTerm.toLowerCase())
 
-    const matchesStatus = filterStatus === "all" || submission.submission_status === filterStatus
-    const matchesCategory = filterCategory === "all" || submission.topic === filterCategory
-
-    return matchesSearch && matchesStatus && matchesCategory
+  const matchesStatus = filterStatus === "all" || submission.submission_status === filterStatus
+  const matchesCategory = filterCategory === "all" || submission.topic === filterCategory
+  const hasEvents = submission.validated_events && submission.validated_events.length > 0
+  const matchesEventStatus = filterEventStatus === "all" ||
+    (filterEventStatus === "no_events" && !hasEvents) ||
+    (filterEventStatus === "has_events" && hasEvents)
+  
+  return matchesSearch && matchesStatus && matchesCategory && matchesEventStatus
   })
 
   const getStatusBadge = (status: string) => {
@@ -399,6 +410,54 @@ export default function AdminPostersPage() {
       default:
         return <Badge variant="outline">{status}</Badge>
     }
+  }
+
+  const getEventBadge = (eventId: string, eventLabel: string) => {
+    // Normalize event ID to determine badge color
+    const normalizedId = eventId.toLowerCase()
+    
+    if (normalizedId === "symposium") {
+      return (
+        <Badge key={eventId} className="bg-purple-100 text-purple-700 border-purple-300 text-xs">
+          Symposium
+        </Badge>
+      )
+    }
+    if (normalizedId === "cpd") {
+      return (
+        <Badge key={eventId} className="bg-cyan-100 text-cyan-700 border-cyan-300 text-xs">
+          CPD
+        </Badge>
+      )
+    }
+    if (normalizedId.startsWith("ws")) {
+      const wsNumber = normalizedId.replace("ws", "")
+      return (
+        <Badge key={eventId} className="bg-orange-100 text-orange-700 border-orange-300 text-xs">
+          WS {wsNumber}
+        </Badge>
+      )
+    }
+    if (normalizedId.includes("webinar")) {
+      return (
+        <Badge key={eventId} className="bg-blue-100 text-blue-700 border-blue-300 text-xs">
+          Webinar
+        </Badge>
+      )
+    }
+    if (normalizedId === "city-tour") {
+      return (
+        <Badge key={eventId} className="bg-teal-100 text-teal-700 border-teal-300 text-xs">
+          City Tour
+        </Badge>
+      )
+    }
+    // Default fallback
+    return (
+      <Badge key={eventId} variant="outline" className="text-xs">
+        {eventLabel || eventId}
+      </Badge>
+    )
   }
 
   const stats = {
@@ -594,7 +653,36 @@ export default function AdminPostersPage() {
                   </div>
                 </div>
 
-                {(filterStatus !== "all" || filterCategory !== "all" || searchTerm) && (
+                <div className="space-y-2 w-full">
+                  <Label className="text-sm font-medium">Event Registration:</Label>
+                  <div className="flex flex-wrap gap-2 w-full">
+                    <Button
+                      variant={filterEventStatus === "all" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterEventStatus("all")}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant={filterEventStatus === "has_events" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterEventStatus("has_events")}
+                      className={filterEventStatus === "has_events" ? "bg-green-600 hover:bg-green-700" : ""}
+                    >
+                      Has Events
+                    </Button>
+                    <Button
+                      variant={filterEventStatus === "no_events" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setFilterEventStatus("no_events")}
+                      className={filterEventStatus === "no_events" ? "bg-amber-500 hover:bg-amber-600" : "border-amber-400 text-amber-600 hover:bg-amber-50"}
+                    >
+                      No Events
+                    </Button>
+                  </div>
+                </div>
+
+                {(filterStatus !== "all" || filterCategory !== "all" || filterEventStatus !== "all" || searchTerm) && (
                   <div className="pt-2 border-t flex flex-col sm:flex-row sm:items-center gap-2">
                     <Button
                       variant="outline"
@@ -602,6 +690,7 @@ export default function AdminPostersPage() {
                       onClick={() => {
                         setFilterStatus("all")
                         setFilterCategory("all")
+                        setFilterEventStatus("all")
                         setSearchTerm("")
                       }}
                     >
@@ -655,6 +744,17 @@ export default function AdminPostersPage() {
                               <p className="text-muted-foreground truncate">
                                 <span className="font-medium">Submitter:</span> {submission.user_name}
                               </p>
+                            )}
+                          </div>
+                          {/* Event Validation Badges */}
+                          <div className="flex flex-wrap gap-1.5 items-center">
+                            <span className="text-xs font-medium text-muted-foreground mr-1">Registered Events:</span>
+                            {submission.validated_events && submission.validated_events.length > 0 ? (
+                              submission.validated_events.map((event) => getEventBadge(event.event_id, event.event_label))
+                            ) : (
+                              <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200 text-xs">
+                                No Events
+                              </Badge>
                             )}
                           </div>
                           <div className="flex flex-wrap gap-2 items-center">
@@ -736,6 +836,20 @@ export default function AdminPostersPage() {
                       Resubmission Allowed
                     </Badge>
                   )}
+                </div>
+
+                {/* Event Registration Status */}
+                <div className="bg-slate-50 rounded-lg p-3 border">
+                  <Label className="text-sm font-medium">Registered Events:</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {viewingSubmission.validated_events && viewingSubmission.validated_events.length > 0 ? (
+                      viewingSubmission.validated_events.map((event) => getEventBadge(event.event_id, event.event_label))
+                    ) : (
+                      <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200">
+                        No Events Registered
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">

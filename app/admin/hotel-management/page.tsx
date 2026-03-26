@@ -580,13 +580,25 @@ export default function HotelManagementPage() {
                       className="mt-1"
                     />
                   </div>
-                  <div className="pt-2 border-t">
-                    <p className="text-sm text-gray-500">
-                      Currently booked: {stats?.occupancyRate.deluxe.booked || 0} rooms
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Remaining: {roomSettings.deluxe_rooms - (stats?.occupancyRate.deluxe.booked || 0)} rooms
-                    </p>
+                  <div className="pt-2 border-t space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Currently Booked:</span>
+                      <span className="text-lg font-bold text-slate-700">{stats?.occupancyRate.deluxe.booked || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pl-4">
+                      <span className="text-muted-foreground">- Confirmed:</span>
+                      <span className="text-green-600 font-medium">{stats?.occupancyRate.deluxe.confirmed || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pl-4">
+                      <span className="text-muted-foreground">- Pending Payment:</span>
+                      <span className="text-amber-600 font-medium">{stats?.occupancyRate.deluxe.pending || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <span className="text-sm font-medium text-muted-foreground">Available Rooms:</span>
+                      <span className="text-lg font-bold text-cyan-600">
+                        {Math.max(0, roomSettings.deluxe_rooms - (stats?.occupancyRate.deluxe.booked || 0))}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -615,13 +627,25 @@ export default function HotelManagementPage() {
                       className="mt-1"
                     />
                   </div>
-                  <div className="pt-2 border-t">
-                    <p className="text-sm text-gray-500">
-                      Currently booked: {stats?.occupancyRate.premier.booked || 0} rooms
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Remaining: {roomSettings.premier_rooms - (stats?.occupancyRate.premier.booked || 0)} rooms
-                    </p>
+                  <div className="pt-2 border-t space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Currently Booked:</span>
+                      <span className="text-lg font-bold text-slate-700">{stats?.occupancyRate.premier.booked || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pl-4">
+                      <span className="text-muted-foreground">- Confirmed:</span>
+                      <span className="text-green-600 font-medium">{stats?.occupancyRate.premier.confirmed || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm pl-4">
+                      <span className="text-muted-foreground">- Pending Payment:</span>
+                      <span className="text-amber-600 font-medium">{stats?.occupancyRate.premier.pending || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t">
+                      <span className="text-sm font-medium text-muted-foreground">Available Rooms:</span>
+                      <span className="text-lg font-bold text-orange-600">
+                        {Math.max(0, roomSettings.premier_rooms - (stats?.occupancyRate.premier.booked || 0))}
+                      </span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

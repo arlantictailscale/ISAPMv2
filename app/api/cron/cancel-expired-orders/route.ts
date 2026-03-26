@@ -34,13 +34,15 @@ export async function GET(request: NextRequest) {
     const cutoffTime = new Date(Date.now() - EXPIRATION_TIME_MS).toISOString()
     console.log("[v0] Looking for unpaid orders created before:", cutoffTime)
 
-    // Strategy 1: Find orders with no_proof payment status
-    const { data: expiredPayments, error: fetchError } = await supabaseAdmin
+    // Strategy 1: Find payment records without proof uploaded (payment_proof_url is null)
+    // This catches orders where payment was started but proof never uploaded
+    const { data: expiredPaymentsNoProof, error: fetchError1 } = await supabaseAdmin
       .from("order_payments")
       .select(`
         id,
         order_id,
         payment_status,
+        payment_proof_url,
         created_at,
         orders!order_payments_order_id_fkey (
           id,
@@ -51,14 +53,21 @@ export async function GET(request: NextRequest) {
           email
         )
       `)
-      .eq("payment_status", "no_proof")
+      .is("payment_proof_url", null)
+      .not("payment_status", "in", '("verified","expired","rejected")')
       .lt("created_at", cutoffTime)
 
-    if (fetchError) {
-      console.error("[v0] Error fetching expired payments:", fetchError)
+    if (fetchError1) {
+      console.error("[v0] Error fetching payments without proof:", fetchError1)
     }
 
-    console.log("[v0] Found expired no_proof payment records:", expiredPayments?.length || 0)
+    // Filter out orders that are already cancelled or paid
+    const expiredPayments = (expiredPaymentsNoProof || []).filter(p => {
+      const order = p.orders as any
+      return order && order.status !== "cancelled" && order.status !== "paid"
+    })
+
+    console.log("[v0] Found expired payment records without proof:", expiredPayments?.length || 0)
 
     // Strategy 2: Find orders that have NO payment record at all (older orders)
     // First get all order IDs that DO have payment records

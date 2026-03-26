@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { createClient } from "@/lib/supabase/client"
 import { adminCancelOrder } from "@/app/actions/admin-cancel-order"
 import { useEffect, useState, useMemo } from "react"
@@ -1474,21 +1475,21 @@ export default function PaymentValidationPage() {
                 disabled={isCancelling}
               >
                 {isCancelling ? (
-                  <>
+                  <span className="flex items-center">
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     Cancelling...
-                  </>
+                  </span>
                 ) : (
-                  <>
+                  <span className="flex items-center">
                     <XCircle className="w-4 h-4 mr-2" />
                     Cancel Order
-                  </>
+                  </span>
                 )}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
-    </>
-  );
+    </React.Fragment>
+  )
 }

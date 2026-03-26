@@ -112,6 +112,7 @@ export default function PaymentValidationPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all")
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<"all" | "bank_transfer" | "sponsored">("all")
+  const [cancelledOrders, setCancelledOrders] = useState<Payment[]>([])
 
   useEffect(() => {
     checkAuth()
@@ -212,6 +213,41 @@ export default function PaymentValidationPage() {
       // Combine both lists
       const allPayments = [...(paymentsData || []), ...noProofPayments]
       setPayments(allPayments)
+
+      // Fetch cancelled orders separately
+      const { data: cancelledOrdersData } = await createClient()
+        .from("orders")
+        .select(`
+          *,
+          order_items (*)
+        `)
+        .eq("status", "cancelled")
+        .order("created_at", { ascending: false })
+
+      // Transform cancelled orders to payment-like objects for display
+      const cancelledPayments = (cancelledOrdersData || []).map((order) => ({
+        id: `cancelled-${order.id}`,
+        order_id: order.id,
+        user_id: order.user_id,
+        amount: order.total_amount,
+        currency: order.currency,
+        payment_method: null,
+        payment_proof_url: null,
+        bank_name: null,
+        account_name: null,
+        transaction_reference: null,
+        payment_status: "cancelled",
+        rejection_reason: null,
+        notes: null,
+        sponsor_name: null,
+        invoice_number: null,
+        verified_by: null,
+        verified_at: null,
+        created_at: order.created_at,
+        updated_at: order.updated_at,
+        orders: order,
+      }))
+      setCancelledOrders(cancelledPayments)
     } catch (err) {
       setError("Failed to fetch payments")
     } finally {
@@ -486,11 +522,13 @@ export default function PaymentValidationPage() {
                       ? "default"
                       : payment.payment_status === "pending"
                         ? "secondary"
-                        : "destructive"
+                        : payment.payment_status === "cancelled"
+                          ? "outline"
+                          : "destructive"
                   }
-                  className="whitespace-nowrap"
+                  className={`whitespace-nowrap ${payment.payment_status === "cancelled" ? "bg-gray-500 text-white border-gray-500" : ""}`}
                 >
-                  {payment.payment_status}
+                  {payment.payment_status === "cancelled" ? "cancelled" : payment.payment_status}
                 </Badge>
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
                   {formatDistanceToNow(new Date(payment.created_at), { addSuffix: true })}
@@ -1017,11 +1055,15 @@ export default function PaymentValidationPage() {
                 <XCircle className="w-4 h-4 mr-2 hidden sm:inline" />
                 Rejected ({rejectedPayments.length})
               </TabsTrigger>
-              <TabsTrigger value="no_proof" className="flex-1 min-w-[100px] data-[state=active]:bg-gray-100">
-                <FileX className="w-4 h-4 mr-2 hidden sm:inline" />
-                No Proof ({noProofPayments.length})
-              </TabsTrigger>
-            </TabsList>
+            <TabsTrigger value="no_proof" className="flex-1 min-w-[100px] data-[state=active]:bg-gray-100">
+              <FileX className="w-4 h-4 mr-2 hidden sm:inline" />
+              No Proof ({noProofPayments.length})
+            </TabsTrigger>
+            <TabsTrigger value="cancelled" className="flex-1 min-w-[100px] data-[state=active]:bg-gray-200">
+              <XCircle className="w-4 h-4 mr-2 hidden sm:inline" />
+              Cancelled ({cancelledOrders.length})
+            </TabsTrigger>
+          </TabsList>
 
             <TabsContent value="pending" className="mt-6">
               {pendingPayments.length === 0 ? (
@@ -1102,6 +1144,23 @@ export default function PaymentValidationPage() {
               ) : (
                 <div className="grid gap-4">
                   {noProofPayments.map((payment) => (
+                    <PaymentCard key={payment.id} payment={payment} />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="cancelled" className="mt-6">
+              {cancelledOrders.length === 0 ? (
+                <Card>
+                  <CardContent className="p-12 text-center text-muted-foreground">
+                    <XCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No cancelled orders</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4">
+                  {cancelledOrders.map((payment) => (
                     <PaymentCard key={payment.id} payment={payment} />
                   ))}
                 </div>

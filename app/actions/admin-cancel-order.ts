@@ -81,6 +81,8 @@ export async function adminCancelOrder(orderId: string, forceCancel: boolean = f
 
     // Revalidate paths
     revalidatePath("/admin/payment-validation")
+    revalidatePath("/admin/event-quotas")
+    revalidatePath("/admin/confirmed-attendees")
     revalidatePath("/my-purchases")
 
     return { success: true }

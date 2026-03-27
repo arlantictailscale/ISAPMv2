@@ -52,14 +52,12 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
       quotas.map(async (quota) => {
         // Count items from orders with verified payments (excluding cancelled orders)
         // Use orders table as base to properly filter by status
-        const { count: verifiedCount, data: verifiedData, error: verifiedError } = await adminClient
+        const { count: verifiedCount, error: verifiedError } = await adminClient
           .from("orders")
           .select(`
-            id,
-            status,
             order_items!inner(id, event_id, item_type),
             order_payments!inner(payment_status)
-          `, { count: "exact" })
+          `, { count: "exact", head: true })
           .neq("status", "cancelled")
           .eq("order_items.item_type", "event")
           .eq("order_items.event_id", quota.event_id)
@@ -67,38 +65,6 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
 
         if (verifiedError) {
           console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
-        }
-
-        // Debug logging for ws2 - check the cancelled order specifically
-        if (quota.event_id === "ws2") {
-          const cancelledOrderId = "7d5789c9-2207-4074-bb1e-152555d50e32"
-          
-          // Check the cancelled order's actual data
-          const { data: cancelledOrder } = await adminClient
-            .from("orders")
-            .select(`
-              id,
-              status,
-              order_items(event_id, item_type),
-              order_payments(payment_status)
-            `)
-            .eq("id", cancelledOrderId)
-            .single()
-          
-          console.log(`[v0] Cancelled order details:`, JSON.stringify(cancelledOrder))
-          
-          // Count ALL verified WS2 orders INCLUDING cancelled to see total
-          const { count: totalWithCancelled } = await adminClient
-            .from("orders")
-            .select(`
-              order_items!inner(id, event_id, item_type),
-              order_payments!inner(payment_status)
-            `, { count: "exact", head: true })
-            .eq("order_items.item_type", "event")
-            .eq("order_items.event_id", "ws2")
-            .eq("order_payments.payment_status", "verified")
-          
-          console.log(`[v0] WS2 total verified (including cancelled): ${totalWithCancelled}, excluding cancelled: ${verifiedCount}`)
         }
 
         // Count items from orders with pending payments (waiting for approval, excluding cancelled orders)

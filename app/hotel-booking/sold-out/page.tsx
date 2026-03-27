@@ -87,8 +87,8 @@ export default function HotelSoldOutPage() {
                     Jl. Ir. Soekarno No.120, Beji, Kec. Junrejo, Kota Batu, Jawa Timur 65236
                   </p>
                   <div className="flex flex-wrap gap-2 text-xs">
-                    <Badge variant="secondary" className="bg-white">Event Venue</Badge>
-                    <Badge variant="secondary" className="bg-white">April 16-19, 2026</Badge>
+                    <Badge variant="secondary" className="bg-teal-100 text-teal-700 border-teal-200">Event Venue</Badge>
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-700 border-amber-200">April 16-19, 2026</Badge>
                   </div>
                 </div>
 

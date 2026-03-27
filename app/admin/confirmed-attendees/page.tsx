@@ -89,6 +89,14 @@ export default function ConfirmedAttendeesPage() {
       grouped[event.id] = []
     })
 
+    // Debug: Log orders data to check if cancelled orders are being filtered
+    console.log(`[v0] Total payments loaded: ${paymentsData?.length}`)
+    const ws2Orders = paymentsData?.filter(p => p.orders?.order_items?.some((i: any) => i.event_id === "ws2"))
+    console.log(`[v0] WS2 orders in paymentsData: ${ws2Orders?.length}`)
+    const cancelledOrderId = "7d5789c9-2207-4074-bb1e-152555d50e32"
+    const hasCancelledOrder = paymentsData?.some(p => p.orders?.id === cancelledOrderId)
+    console.log(`[v0] Contains cancelled order ${cancelledOrderId}: ${hasCancelledOrder}`)
+
     const hotelList: any[] = []
     const webinarList: any[] = []
 

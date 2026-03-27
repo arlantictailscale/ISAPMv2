@@ -150,16 +150,17 @@ export default function PaymentValidationPage() {
     setError(null)
 
     try {
-      // Fetch existing payment records
+      // Fetch existing payment records (exclude payments for cancelled orders)
       const { data: paymentsData, error: paymentsError } = await createClient()
         .from("order_payments")
         .select(`
           *,
-          orders (
+          orders!inner (
             *,
             order_items (*)
           )
         `)
+        .neq("orders.status", "cancelled")
         .order("created_at", { ascending: false })
 
       if (paymentsError) {

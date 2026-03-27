@@ -87,9 +87,18 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
           
           console.log(`[v0] Cancelled order details:`, JSON.stringify(cancelledOrder))
           
-          // Check if cancelled order is in verifiedData
-          const hasCancelledOrder = verifiedData?.some(d => d.id === cancelledOrderId)
-          console.log(`[v0] WS2 verified count: ${verifiedCount}, includes cancelled order: ${hasCancelledOrder}`)
+          // Count ALL verified WS2 orders INCLUDING cancelled to see total
+          const { count: totalWithCancelled } = await adminClient
+            .from("orders")
+            .select(`
+              order_items!inner(id, event_id, item_type),
+              order_payments!inner(payment_status)
+            `, { count: "exact", head: true })
+            .eq("order_items.item_type", "event")
+            .eq("order_items.event_id", "ws2")
+            .eq("order_payments.payment_status", "verified")
+          
+          console.log(`[v0] WS2 total verified (including cancelled): ${totalWithCancelled}, excluding cancelled: ${verifiedCount}`)
         }
 
         // Count items from orders with pending payments (waiting for approval, excluding cancelled orders)

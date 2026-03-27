@@ -50,54 +50,60 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
     // Fetch registration counts for each event from orders with verified, pending, OR no_proof payments
     const quotaStatuses = await Promise.all(
       quotas.map(async (quota) => {
-        // Count items from orders with verified payments
+        // Count items from orders with verified payments (excluding cancelled orders)
         const { count: verifiedCount, error: verifiedError } = await adminClient
           .from("order_items")
           .select(`
             id,
             order_id!inner(
               id,
+              status,
               order_payments!inner(payment_status)
             )
           `, { count: "exact", head: true })
           .eq("item_type", "event")
           .eq("event_id", quota.event_id)
+          .neq("order_id.status", "cancelled")
           .eq("order_id.order_payments.payment_status", "verified")
 
         if (verifiedError) {
           console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
         }
 
-        // Count items from orders with pending payments (waiting for approval)
+        // Count items from orders with pending payments (waiting for approval, excluding cancelled orders)
         const { count: pendingCount, error: pendingError } = await adminClient
           .from("order_items")
           .select(`
             id,
             order_id!inner(
               id,
+              status,
               order_payments!inner(payment_status)
             )
           `, { count: "exact", head: true })
           .eq("item_type", "event")
           .eq("event_id", quota.event_id)
+          .neq("order_id.status", "cancelled")
           .eq("order_id.order_payments.payment_status", "pending")
 
         if (pendingError) {
           console.error(`[v0] Error counting pending registrations for ${quota.event_id}:`, pendingError)
         }
 
-        // Count items from orders with no_proof status (payment not yet uploaded)
+        // Count items from orders with no_proof status (payment not yet uploaded, excluding cancelled orders)
         const { count: noProofCount, error: noProofError } = await adminClient
           .from("order_items")
           .select(`
             id,
             order_id!inner(
               id,
+              status,
               order_payments!inner(payment_status)
             )
           `, { count: "exact", head: true })
           .eq("item_type", "event")
           .eq("event_id", quota.event_id)
+          .neq("order_id.status", "cancelled")
           .eq("order_id.order_payments.payment_status", "no_proof")
 
         if (noProofError) {
@@ -192,54 +198,60 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
       return null
     }
 
-    // Count verified registrations from orders with verified payments
+    // Count verified registrations from orders with verified payments (excluding cancelled orders)
     const { count: verifiedCount, error: verifiedError } = await adminClient
       .from("order_items")
       .select(`
         id,
         order_id!inner(
           id,
+          status,
           order_payments!inner(payment_status)
         )
       `, { count: "exact", head: true })
       .eq("item_type", "event")
       .eq("event_id", eventId)
+      .neq("order_id.status", "cancelled")
       .eq("order_id.order_payments.payment_status", "verified")
 
     if (verifiedError) {
       console.error(`[v0] Error counting verified registrations for ${eventId}:`, verifiedError)
     }
 
-    // Count pending registrations from orders with pending payments
+    // Count pending registrations from orders with pending payments (excluding cancelled orders)
     const { count: pendingCount, error: pendingError } = await adminClient
       .from("order_items")
       .select(`
         id,
         order_id!inner(
           id,
+          status,
           order_payments!inner(payment_status)
         )
       `, { count: "exact", head: true })
       .eq("item_type", "event")
       .eq("event_id", eventId)
+      .neq("order_id.status", "cancelled")
       .eq("order_id.order_payments.payment_status", "pending")
 
     if (pendingError) {
       console.error(`[v0] Error counting pending registrations for ${eventId}:`, pendingError)
     }
 
-    // Count no_proof registrations (payment not yet uploaded)
+    // Count no_proof registrations (payment not yet uploaded, excluding cancelled orders)
     const { count: noProofCount, error: noProofError } = await adminClient
       .from("order_items")
       .select(`
         id,
         order_id!inner(
           id,
+          status,
           order_payments!inner(payment_status)
         )
       `, { count: "exact", head: true })
       .eq("item_type", "event")
       .eq("event_id", eventId)
+      .neq("order_id.status", "cancelled")
       .eq("order_id.order_payments.payment_status", "no_proof")
 
     if (noProofError) {

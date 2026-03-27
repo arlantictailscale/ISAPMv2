@@ -63,8 +63,9 @@ export default function ConfirmedAttendeesPage() {
   const loadData = async () => {
     const { data: paymentsData, error: paymentsError } = await supabase
       .from("order_payments")
-      .select(`*, orders (*, order_items (*))`)
+      .select(`*, orders!inner (*, order_items (*))`)
       .eq("payment_status", "verified")
+      .neq("orders.status", "cancelled")
       .order("verified_at", { ascending: false })
 
     if (paymentsError) throw paymentsError

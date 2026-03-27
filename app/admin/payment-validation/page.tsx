@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client"
 import { adminCancelOrder } from "@/app/actions/admin-cancel-order"
+import { adminRemoveOrderItem } from "@/app/actions/admin-remove-order-item"
 import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -28,6 +29,7 @@ import {
   Building,
   Hash,
   ExternalLink,
+  Trash2,
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
@@ -612,16 +614,41 @@ export default function PaymentValidationPage() {
                         </>
                       )}
                     </div>
-                    <div className="text-left sm:text-right shrink-0">
-                      <div className="font-semibold text-base">
-                        {item.item_type === "hotel" && item.nights
-                          ? formatCurrency(item.unit_price * item.nights, payment.currency)
-                          : formatCurrency(item.unit_price, payment.currency)}
-                      </div>
-                      {item.item_type === "hotel" && item.nights && (
-                        <div className="text-xs text-muted-foreground">
-                          {formatCurrency(item.unit_price, payment.currency)} × {item.nights}
+                    <div className="flex items-center gap-2">
+                      <div className="text-left sm:text-right shrink-0">
+                        <div className="font-semibold text-base">
+                          {item.item_type === "hotel" && item.nights
+                            ? formatCurrency(item.unit_price * item.nights, payment.currency)
+                            : formatCurrency(item.unit_price, payment.currency)}
                         </div>
+                        {item.item_type === "hotel" && item.nights && (
+                          <div className="text-xs text-muted-foreground">
+                            {formatCurrency(item.unit_price, payment.currency)} × {item.nights}
+                          </div>
+                        )}
+                      </div>
+                      {/* Remove item button - only show if more than 1 item */}
+                      {items.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={async () => {
+                            if (!confirm(`Are you sure you want to remove this item?\n\n${item.event_label || `${item.hotel_room_type} (${item.nights} nights)`}\n\nThis will reduce the order total.`)) {
+                              return
+                            }
+                            const result = await adminRemoveOrderItem(payment.order_id, item.id)
+                            if (result.success) {
+                              alert("Item removed successfully")
+                              fetchPayments()
+                            } else {
+                              alert(`Failed to remove item: ${result.error}`)
+                            }
+                          }}
+                          title="Remove this item"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>

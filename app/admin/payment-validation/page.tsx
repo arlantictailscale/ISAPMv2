@@ -855,6 +855,31 @@ export default function PaymentValidationPage() {
                 </Button>
               </div>
             )}
+
+            {/* Cancel button for approved/verified orders - for admin mistakes */}
+            {payment.payment_status === "verified" && (
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to cancel this APPROVED order? This will revert the payment status and cancel the order. This action cannot be undone.")) {
+                      return
+                    }
+                    const result = await adminCancelOrder(payment.order_id)
+                    if (result.success) {
+                      alert("Order cancelled successfully")
+                      fetchPayments()
+                    } else {
+                      alert(`Failed to cancel order: ${result.error}`)
+                    }
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                  <span className="text-red-600">Cancel Approved Order</span>
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

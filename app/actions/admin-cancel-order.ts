@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createClient as createServiceClient } from "@supabase/supabase-js"
 import { revalidatePath } from "next/cache"
 
-export async function adminCancelOrder(orderId: string) {
+export async function adminCancelOrder(orderId: string, forceCancel: boolean = false) {
   const supabase = await createClient()
 
   // Get the current user
@@ -43,12 +43,12 @@ export async function adminCancelOrder(orderId: string) {
     return { success: false, error: "Order is already cancelled" }
   }
 
-  // Check if payment has been verified - don't cancel verified orders
+  // Check if payment has been verified - only allow if forceCancel is true
   const hasVerifiedPayment = order.order_payments?.some(
     (p: any) => p.payment_status === "verified"
   )
-  if (hasVerifiedPayment) {
-    return { success: false, error: "Cannot cancel order with verified payment" }
+  if (hasVerifiedPayment && !forceCancel) {
+    return { success: false, error: "Cannot cancel order with verified payment. Use force cancel for approved orders." }
   }
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://wilienulethgfxdiqghw.supabase.co"

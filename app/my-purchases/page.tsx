@@ -5,7 +5,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle, Gift, Video } from "lucide-react"
+import { ShoppingBag, CheckCircle, XCircle, Clock, Package, Upload, AlertCircle, Gift, Video, Tag } from "lucide-react"
 import Link from "next/link"
 import { CancelOrderButton } from "@/components/cancel-order-button"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -35,6 +35,12 @@ export default async function MyPurchasesPage() {
         verified_at,
         payment_method,
         sponsor_name
+      ),
+      promo_codes (
+        code,
+        name,
+        discount_type,
+        discount_value
       )
     `)
     .eq("user_id", user.id)
@@ -372,6 +378,23 @@ export default async function MyPurchasesPage() {
                             </div>
                           )}
 
+                          {/* Promo Code Info - Show if promo code was applied */}
+                          {order.promo_codes && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                              <Tag className="w-4 h-4 text-green-600 shrink-0" />
+                              <div className="flex-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <span className="text-sm font-medium text-green-800">
+                                  Promo Code Applied: <code className="bg-green-100 px-1.5 py-0.5 rounded text-green-700">{order.promo_codes.code}</code>
+                                </span>
+                                {order.discount_amount && order.discount_amount > 0 && (
+                                  <span className="text-sm text-green-600">
+                                    (Saved {order.currency} {order.discount_amount.toLocaleString("id-ID")})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
                           {/* Order summary */}
                           <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2 text-sm">
@@ -425,9 +448,18 @@ export default async function MyPurchasesPage() {
                               )}
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Total:</span>
-                                <span className="font-bold text-primary">
-                                  {order.currency} {calculatedTotal.toLocaleString("id-ID")}
-                                </span>
+                                <div className="text-right">
+                                  <span className="font-bold text-primary">
+                                    {order.currency} {calculatedTotal.toLocaleString("id-ID")}
+                                  </span>
+                                  {order.original_amount && order.original_amount > order.total_amount && (
+                                    <div className="flex items-center justify-end gap-1 text-xs text-green-600">
+                                      <span className="line-through text-muted-foreground">
+                                        {order.currency} {order.original_amount.toLocaleString("id-ID")}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             <div className="space-y-2 text-sm">
@@ -532,6 +564,18 @@ export default async function MyPurchasesPage() {
                                       <p className="text-xs text-muted-foreground">
                                         {item.currency} {item.unit_price.toLocaleString("id-ID")} × {item.nights} nights
                                       </p>
+                                    )}
+                                    {/* Show discount info if item was discounted */}
+                                    {item.discount_amount && item.discount_amount > 0 && (
+                                      <div className="flex items-center justify-end gap-1 text-xs text-green-600 mt-0.5">
+                                        <Tag className="w-3 h-3" />
+                                        <span className="line-through text-muted-foreground">
+                                          {item.currency} {(item.original_price || item.unit_price + item.discount_amount).toLocaleString("id-ID")}
+                                        </span>
+                                        <span className="font-medium">
+                                          -{item.currency} {item.discount_amount.toLocaleString("id-ID")}
+                                        </span>
+                                      </div>
                                     )}
                                     <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                                   </div>

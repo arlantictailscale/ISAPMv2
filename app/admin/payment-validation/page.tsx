@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client"
 import { adminCancelOrder } from "@/app/actions/admin-cancel-order"
+import { adminRemoveOrderItem } from "@/app/actions/admin-remove-order-item"
 import { useEffect, useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -28,6 +29,8 @@ import {
   Building,
   Hash,
   ExternalLink,
+  Trash2,
+  Tag,
 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
@@ -150,16 +153,23 @@ export default function PaymentValidationPage() {
     setError(null)
 
     try {
-      // Fetch existing payment records
+      // Fetch existing payment records (exclude payments for cancelled orders)
       const { data: paymentsData, error: paymentsError } = await createClient()
         .from("order_payments")
         .select(`
           *,
-          orders (
+          orders!inner (
             *,
-            order_items (*)
+            order_items (*),
+            promo_codes (
+              code,
+              name,
+              discount_type,
+              discount_value
+            )
           )
         `)
+        .neq("orders.status", "cancelled")
         .order("created_at", { ascending: false })
 
       if (paymentsError) {
@@ -172,7 +182,13 @@ export default function PaymentValidationPage() {
         .from("orders")
         .select(`
           *,
-          order_items (*)
+          order_items (*),
+          promo_codes (
+            code,
+            name,
+            discount_type,
+            discount_value
+          )
         `)
         .neq("status", "cancelled")
         .order("created_at", { ascending: false })
@@ -611,16 +627,53 @@ export default function PaymentValidationPage() {
                         </>
                       )}
                     </div>
-                    <div className="text-left sm:text-right shrink-0">
-                      <div className="font-semibold text-base">
-                        {item.item_type === "hotel" && item.nights
-                          ? formatCurrency(item.unit_price * item.nights, payment.currency)
-                          : formatCurrency(item.unit_price, payment.currency)}
-                      </div>
-                      {item.item_type === "hotel" && item.nights && (
-                        <div className="text-xs text-muted-foreground">
-                          {formatCurrency(item.unit_price, payment.currency)} × {item.nights}
+                    <div className="flex items-center gap-2">
+                      <div className="text-left sm:text-right shrink-0">
+                        <div className="font-semibold text-base">
+                          {item.item_type === "hotel" && item.nights
+                            ? formatCurrency(item.unit_price * item.nights, payment.currency)
+                            : formatCurrency(item.unit_price, payment.currency)}
                         </div>
+                        {item.item_type === "hotel" && item.nights && (
+                          <div className="text-xs text-muted-foreground">
+                            {formatCurrency(item.unit_price, payment.currency)} × {item.nights}
+                          </div>
+                        )}
+                        {/* Show discount info if item was discounted */}
+                        {item.discount_amount && item.discount_amount > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-green-600 mt-0.5">
+                            <Tag className="w-3 h-3" />
+                            <span className="line-through text-muted-foreground">
+                              {formatCurrency(item.original_price || item.unit_price + item.discount_amount, payment.currency)}
+                            </span>
+                            <span className="font-medium">
+                              -{formatCurrency(item.discount_amount, payment.currency)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* Remove item button - only show if more than 1 item */}
+                      {items.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={async () => {
+                            if (!confirm(`Are you sure you want to remove this item?\n\n${item.event_label || `${item.hotel_room_type} (${item.nights} nights)`}\n\nThis will reduce the order total.`)) {
+                              return
+                            }
+                            const result = await adminRemoveOrderItem(payment.order_id, item.id)
+                            if (result.success) {
+                              alert("Item removed successfully")
+                              fetchPayments()
+                            } else {
+                              alert(`Failed to remove item: ${result.error}`)
+                            }
+                          }}
+                          title="Remove this item"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -708,6 +761,23 @@ export default function PaymentValidationPage() {
               </div>
             )}
 
+            {/* Promo Code Info - Show if promo code was applied */}
+            {order?.promo_codes && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 flex items-center gap-2">
+                <Tag className="w-4 h-4 text-green-600" />
+                <div className="flex-1">
+                  <span className="text-sm font-medium text-green-800">
+                    Promo Code Applied: <code className="bg-green-100 px-1.5 py-0.5 rounded text-green-700">{order.promo_codes.code}</code>
+                  </span>
+                  {order.discount_amount && order.discount_amount > 0 && (
+                    <span className="text-sm text-green-600 ml-2">
+                      (Saved {formatCurrency(order.discount_amount, payment.currency)})
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Total - Enhanced styling and separation */}
             <div className="pt-4 border-t-2 border-primary/20">
               <div className="bg-gradient-to-r from-primary/5 to-transparent rounded-lg p-4">
@@ -717,8 +787,13 @@ export default function PaymentValidationPage() {
                     {formatCurrency(calculatedTotal, payment.currency)}
                   </span>
                 </div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  {items.length} item{items.length > 1 ? "s" : ""}
+                <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                  <span>{items.length} item{items.length > 1 ? "s" : ""}</span>
+                  {order?.original_amount && order.original_amount > order.total_amount && (
+                    <span className="text-green-600">
+                      Original: <span className="line-through">{formatCurrency(order.original_amount, payment.currency)}</span>
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -852,6 +927,31 @@ export default function PaymentValidationPage() {
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Cancel Order
+                </Button>
+              </div>
+            )}
+
+            {/* Cancel button for approved/verified orders - for admin mistakes */}
+            {payment.payment_status === "verified" && (
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t">
+                <Button
+                  className="flex-1"
+                  variant="outline"
+                  onClick={async () => {
+                    if (!confirm("Are you sure you want to cancel this APPROVED order? This will revert the payment status and cancel the order. This action cannot be undone.")) {
+                      return
+                    }
+                    const result = await adminCancelOrder(payment.order_id, true) // forceCancel = true for verified orders
+                    if (result.success) {
+                      alert("Order cancelled successfully")
+                      fetchPayments()
+                    } else {
+                      alert(`Failed to cancel order: ${result.error}`)
+                    }
+                  }}
+                >
+                  <XCircle className="w-4 h-4 mr-2 text-red-500" />
+                  <span className="text-red-600">Cancel Approved Order</span>
                 </Button>
               </div>
             )}

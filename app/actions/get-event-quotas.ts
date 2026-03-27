@@ -69,9 +69,27 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
           console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
         }
 
-        // Debug logging for ws2
+        // Debug logging for ws2 - check the cancelled order specifically
         if (quota.event_id === "ws2") {
-          console.log(`[v0] WS2 verified count: ${verifiedCount}, data:`, JSON.stringify(verifiedData?.map(d => ({ id: d.id, status: d.status }))))
+          const cancelledOrderId = "7d5789c9-2207-4074-bb1e-152555d50e32"
+          
+          // Check the cancelled order's actual data
+          const { data: cancelledOrder } = await adminClient
+            .from("orders")
+            .select(`
+              id,
+              status,
+              order_items(event_id, item_type),
+              order_payments(payment_status)
+            `)
+            .eq("id", cancelledOrderId)
+            .single()
+          
+          console.log(`[v0] Cancelled order details:`, JSON.stringify(cancelledOrder))
+          
+          // Check if cancelled order is in verifiedData
+          const hasCancelledOrder = verifiedData?.some(d => d.id === cancelledOrderId)
+          console.log(`[v0] WS2 verified count: ${verifiedCount}, includes cancelled order: ${hasCancelledOrder}`)
         }
 
         // Count items from orders with pending payments (waiting for approval, excluding cancelled orders)

@@ -52,12 +52,14 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
       quotas.map(async (quota) => {
         // Count items from orders with verified payments (excluding cancelled orders)
         // Use orders table as base to properly filter by status
-        const { count: verifiedCount, error: verifiedError } = await adminClient
+        const { count: verifiedCount, data: verifiedData, error: verifiedError } = await adminClient
           .from("orders")
           .select(`
+            id,
+            status,
             order_items!inner(id, event_id, item_type),
             order_payments!inner(payment_status)
-          `, { count: "exact", head: true })
+          `, { count: "exact" })
           .neq("status", "cancelled")
           .eq("order_items.item_type", "event")
           .eq("order_items.event_id", quota.event_id)
@@ -65,6 +67,11 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
 
         if (verifiedError) {
           console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
+        }
+
+        // Debug logging for ws2
+        if (quota.event_id === "ws2") {
+          console.log(`[v0] WS2 verified count: ${verifiedCount}, data:`, JSON.stringify(verifiedData?.map(d => ({ id: d.id, status: d.status }))))
         }
 
         // Count items from orders with pending payments (waiting for approval, excluding cancelled orders)

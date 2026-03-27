@@ -866,7 +866,7 @@ export default function PaymentValidationPage() {
                     if (!confirm("Are you sure you want to cancel this APPROVED order? This will revert the payment status and cancel the order. This action cannot be undone.")) {
                       return
                     }
-                    const result = await adminCancelOrder(payment.order_id)
+                    const result = await adminCancelOrder(payment.order_id, true) // forceCancel = true for verified orders
                     if (result.success) {
                       alert("Order cancelled successfully")
                       fetchPayments()

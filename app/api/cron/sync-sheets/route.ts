@@ -68,39 +68,56 @@ export async function GET(request: NextRequest) {
       console.log("[v0] No poster submissions found in database")
     }
 
-    // Fetch confirmed attendees data
-    const { data: paymentsData, error: paymentsError } = await supabaseAdmin
-      .from("order_payments")
+    // Fetch confirmed attendees data - query from orders to properly filter cancelled orders
+    const { data: ordersData, error: ordersError } = await supabaseAdmin
+      .from("orders")
       .select(`
         *,
-        orders!order_payments_order_id_fkey (
-          *,
-          order_items (*)
-        )
+        order_items (*),
+        order_payments!inner (*)
       `)
-      .eq("payment_status", "verified")
-      .order("verified_at", { ascending: false })
+      .neq("status", "cancelled")
+      .eq("order_payments.payment_status", "verified")
+      .order("created_at", { ascending: false })
 
-    if (paymentsError) {
-      throw paymentsError
+    // Transform to match expected paymentsData structure
+    const paymentsData = ordersData?.map(order => ({
+      ...order.order_payments?.[0],
+      orders: {
+        ...order,
+        order_items: order.order_items
+      }
+    })).filter(p => p.id) || []
+
+    if (ordersError) {
+      throw ordersError
     }
 
     console.log("[v0] Found verified payments:", paymentsData?.length || 0)
 
-    const { data: allPaymentsData, error: allPaymentsError } = await supabaseAdmin
-      .from("order_payments")
+    // Fetch all payments (excluding cancelled orders)
+    const { data: allOrdersData, error: allOrdersError } = await supabaseAdmin
+      .from("orders")
       .select(`
         *,
-        orders!order_payments_order_id_fkey (
-          *,
-          order_items (*)
-        )
+        order_items (*),
+        order_payments!inner (*)
       `)
-      .or("payment_proof_url.not.is.null,payment_method.ilike.sponsored") // Include sponsored payments
+      .neq("status", "cancelled")
+      .or("order_payments.payment_proof_url.not.is.null,order_payments.payment_method.ilike.sponsored")
       .order("created_at", { ascending: false })
 
-    if (allPaymentsError) {
-      console.error("[v0] Error fetching all payments:", allPaymentsError)
+    // Transform to match expected allPaymentsData structure
+    const allPaymentsData = allOrdersData?.map(order => ({
+      ...order.order_payments?.[0],
+      orders: {
+        ...order,
+        order_items: order.order_items
+      }
+    })).filter(p => p.id) || []
+
+    if (allOrdersError) {
+      console.error("[v0] Error fetching all payments:", allOrdersError)
     }
 
     console.log("[v0] Found payment proofs:", allPaymentsData?.length || 0)

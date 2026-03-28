@@ -580,40 +580,32 @@ export default function PricingPage() {
                         <DialogTitle className="text-xl pr-8 break-words">{event.label}</DialogTitle>
                         <DialogDescription className="break-words">{event.date}</DialogDescription>
                         
-                        {/* Quota Status Warning */}
-                        {quotaStatuses[event.id] && (
+                        {/* Quota Status Warning - Only show when sold out or low stock */}
+                        {quotaStatuses[event.id] && (quotaStatuses[event.id].is_sold_out || quotaStatuses[event.id].is_low_stock) && (
                           <div
                             className={`mt-3 p-3 rounded-lg border flex items-start gap-2 ${
                               quotaStatuses[event.id].is_sold_out
                                 ? "bg-red-50 border-red-200"
-                                : quotaStatuses[event.id].is_low_stock
-                                  ? "bg-amber-50 border-amber-200"
-                                  : "bg-green-50 border-green-200"
+                                : "bg-amber-50 border-amber-200"
                             }`}
                           >
                             <Zap
                               className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
                                 quotaStatuses[event.id].is_sold_out
                                   ? "text-red-600"
-                                  : quotaStatuses[event.id].is_low_stock
-                                    ? "text-amber-600"
-                                    : "text-green-600"
+                                  : "text-amber-600"
                               }`}
                             />
                             <span
                               className={`text-sm font-medium ${
                                 quotaStatuses[event.id].is_sold_out
                                   ? "text-red-700"
-                                  : quotaStatuses[event.id].is_low_stock
-                                    ? "text-amber-700"
-                                    : "text-green-700"
+                                  : "text-amber-700"
                               }`}
                             >
                               {quotaStatuses[event.id].is_sold_out
                                 ? "This session is currently sold out"
-                                : quotaStatuses[event.id].is_low_stock
-                                  ? `Only ${quotaStatuses[event.id].available_seats} seats remaining!`
-                                  : `${quotaStatuses[event.id].available_seats} out of ${quotaStatuses[event.id].max_capacity} seats available`}
+                                : `Only ${quotaStatuses[event.id].available_seats} seats remaining!`}
                             </span>
                           </div>
                         )}

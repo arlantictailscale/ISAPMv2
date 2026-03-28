@@ -61,13 +61,28 @@ export default function ConfirmedAttendeesPage() {
   }
 
   const loadData = async () => {
-    const { data: paymentsData, error: paymentsError } = await supabase
-      .from("order_payments")
-      .select(`*, orders (*, order_items (*))`)
-      .eq("payment_status", "verified")
-      .order("verified_at", { ascending: false })
+    // Query from orders table to properly filter by status
+    const { data: ordersData, error: ordersError } = await supabase
+      .from("orders")
+      .select(`
+        *,
+        order_items (*),
+        order_payments!inner (*)
+      `)
+      .neq("status", "cancelled")
+      .eq("order_payments.payment_status", "verified")
+      .order("created_at", { ascending: false })
 
-    if (paymentsError) throw paymentsError
+    if (ordersError) throw ordersError
+    
+    // Transform data to match expected structure (payment with nested order)
+    const paymentsData = ordersData?.map(order => ({
+      ...order.order_payments?.[0],
+      orders: {
+        ...order,
+        order_items: order.order_items
+      }
+    })).filter(p => p.id) || []
 
     const grouped: Record<string, any[]> = {}
     EVENT_OPTIONS.forEach((event) => {

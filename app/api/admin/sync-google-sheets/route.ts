@@ -84,17 +84,28 @@ export async function POST(request: NextRequest) {
       console.log("[v0] No poster submissions found in database")
     }
 
-    const { data: paymentsData, error: paymentsError } = await supabaseAdmin
-      .from("order_payments")
+    // Query from orders table to properly filter out cancelled orders
+    const { data: ordersData, error: ordersError } = await supabaseAdmin
+      .from("orders")
       .select(`
         *,
-        orders!order_payments_order_id_fkey (
-          *,
-          order_items (*)
-        )
+        order_items (*),
+        order_payments!inner (*)
       `)
-      .eq("payment_status", "verified")
-      .order("verified_at", { ascending: false })
+      .neq("status", "cancelled")
+      .eq("order_payments.payment_status", "verified")
+      .order("created_at", { ascending: false })
+
+    // Transform to match expected paymentsData structure
+    const paymentsData = ordersData?.map(order => ({
+      ...order.order_payments?.[0],
+      orders: {
+        ...order,
+        order_items: order.order_items
+      }
+    })).filter(p => p.id) || []
+
+    const paymentsError = ordersError
 
     if (paymentsError) {
       throw paymentsError

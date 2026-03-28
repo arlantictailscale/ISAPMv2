@@ -50,80 +50,71 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
     // Fetch registration counts for each event from orders with verified, pending, OR no_proof payments
     const quotaStatuses = await Promise.all(
       quotas.map(async (quota) => {
-        // Count items from orders with verified payments
+        // Count items from orders with verified payments (excluding cancelled orders)
+        // Use orders table as base to properly filter by status
         const { count: verifiedCount, error: verifiedError } = await adminClient
-          .from("order_items")
+          .from("orders")
           .select(`
-            id,
-            order_id!inner(
-              id,
-              order_payments!inner(payment_status)
-            )
+            order_items!inner(id, event_id, item_type),
+            order_payments!inner(payment_status)
           `, { count: "exact", head: true })
-          .eq("item_type", "event")
-          .eq("event_id", quota.event_id)
-          .eq("order_id.order_payments.payment_status", "verified")
+          .neq("status", "cancelled")
+          .eq("order_items.item_type", "event")
+          .eq("order_items.event_id", quota.event_id)
+          .eq("order_payments.payment_status", "verified")
 
         if (verifiedError) {
           console.error(`[v0] Error counting verified registrations for ${quota.event_id}:`, verifiedError)
         }
 
-        // Count items from orders with pending payments (waiting for approval)
+        // Count items from orders with pending payments (waiting for approval, excluding cancelled orders)
         const { count: pendingCount, error: pendingError } = await adminClient
-          .from("order_items")
+          .from("orders")
           .select(`
-            id,
-            order_id!inner(
-              id,
-              order_payments!inner(payment_status)
-            )
+            order_items!inner(id, event_id, item_type),
+            order_payments!inner(payment_status)
           `, { count: "exact", head: true })
-          .eq("item_type", "event")
-          .eq("event_id", quota.event_id)
-          .eq("order_id.order_payments.payment_status", "pending")
+          .neq("status", "cancelled")
+          .eq("order_items.item_type", "event")
+          .eq("order_items.event_id", quota.event_id)
+          .eq("order_payments.payment_status", "pending")
 
         if (pendingError) {
           console.error(`[v0] Error counting pending registrations for ${quota.event_id}:`, pendingError)
         }
 
-        // Count items from orders with no_proof status (payment not yet uploaded)
+        // Count items from orders with no_proof status (payment not yet uploaded, excluding cancelled orders)
         const { count: noProofCount, error: noProofError } = await adminClient
-          .from("order_items")
+          .from("orders")
           .select(`
-            id,
-            order_id!inner(
-              id,
-              order_payments!inner(payment_status)
-            )
+            order_items!inner(id, event_id, item_type),
+            order_payments!inner(payment_status)
           `, { count: "exact", head: true })
-          .eq("item_type", "event")
-          .eq("event_id", quota.event_id)
-          .eq("order_id.order_payments.payment_status", "no_proof")
+          .neq("status", "cancelled")
+          .eq("order_items.item_type", "event")
+          .eq("order_items.event_id", quota.event_id)
+          .eq("order_payments.payment_status", "no_proof")
 
         if (noProofError) {
           console.error(`[v0] Error counting no_proof registrations for ${quota.event_id}:`, noProofError)
         }
 
         // Count items from orders that have NO payment record at all (orders created before payment system)
-        // First get all order_items for this event, then filter those without payments
+        // Use orders table as base to properly filter by status
         const { data: allItems, error: allItemsError } = await adminClient
-          .from("order_items")
+          .from("orders")
           .select(`
             id,
-            order_id,
-            orders!inner(
-              id,
-              status
-            )
+            order_items!inner(id, order_id, event_id, item_type)
           `)
-          .eq("item_type", "event")
-          .eq("event_id", quota.event_id)
-          .neq("orders.status", "cancelled")
+          .neq("status", "cancelled")
+          .eq("order_items.item_type", "event")
+          .eq("order_items.event_id", quota.event_id)
 
         let noPaymentCount = 0
         if (!allItemsError && allItems) {
-          // Get all order IDs that have payment records
-          const orderIds = [...new Set(allItems.map(item => item.order_id))]
+          // Get all order IDs (now allItems is from orders table, so item.id is the order_id)
+          const orderIds = [...new Set(allItems.map(order => order.id))]
           if (orderIds.length > 0) {
             const { data: paymentsData } = await adminClient
               .from("order_payments")
@@ -131,7 +122,8 @@ export async function getAllEventQuotasWithStatus(): Promise<QuotaStatus[]> {
               .in("order_id", orderIds)
             
             const orderIdsWithPayments = new Set(paymentsData?.map(p => p.order_id) || [])
-            noPaymentCount = allItems.filter(item => !orderIdsWithPayments.has(item.order_id)).length
+            // Count orders that don't have payments
+            noPaymentCount = allItems.filter(order => !orderIdsWithPayments.has(order.id)).length
           }
         }
 
@@ -192,75 +184,69 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
       return null
     }
 
-    // Count verified registrations from orders with verified payments
+    // Count verified registrations from orders with verified payments (excluding cancelled orders)
     const { count: verifiedCount, error: verifiedError } = await adminClient
-      .from("order_items")
+      .from("orders")
       .select(`
-        id,
-        order_id!inner(
-          id,
-          order_payments!inner(payment_status)
-        )
+        order_items!inner(id, event_id, item_type),
+        order_payments!inner(payment_status)
       `, { count: "exact", head: true })
-      .eq("item_type", "event")
-      .eq("event_id", eventId)
-      .eq("order_id.order_payments.payment_status", "verified")
+      .neq("status", "cancelled")
+      .eq("order_items.item_type", "event")
+      .eq("order_items.event_id", eventId)
+      .eq("order_payments.payment_status", "verified")
 
     if (verifiedError) {
       console.error(`[v0] Error counting verified registrations for ${eventId}:`, verifiedError)
     }
 
-    // Count pending registrations from orders with pending payments
+    // Count pending registrations from orders with pending payments (excluding cancelled orders)
     const { count: pendingCount, error: pendingError } = await adminClient
-      .from("order_items")
+      .from("orders")
       .select(`
-        id,
-        order_id!inner(
-          id,
-          order_payments!inner(payment_status)
-        )
+        order_items!inner(id, event_id, item_type),
+        order_payments!inner(payment_status)
       `, { count: "exact", head: true })
-      .eq("item_type", "event")
-      .eq("event_id", eventId)
-      .eq("order_id.order_payments.payment_status", "pending")
+      .neq("status", "cancelled")
+      .eq("order_items.item_type", "event")
+      .eq("order_items.event_id", eventId)
+      .eq("order_payments.payment_status", "pending")
 
     if (pendingError) {
       console.error(`[v0] Error counting pending registrations for ${eventId}:`, pendingError)
     }
 
-    // Count no_proof registrations (payment not yet uploaded)
+    // Count no_proof registrations (payment not yet uploaded, excluding cancelled orders)
     const { count: noProofCount, error: noProofError } = await adminClient
-      .from("order_items")
+      .from("orders")
       .select(`
-        id,
-        order_id!inner(
-          id,
-          order_payments!inner(payment_status)
-        )
+        order_items!inner(id, event_id, item_type),
+        order_payments!inner(payment_status)
       `, { count: "exact", head: true })
-      .eq("item_type", "event")
-      .eq("event_id", eventId)
-      .eq("order_id.order_payments.payment_status", "no_proof")
+      .neq("status", "cancelled")
+      .eq("order_items.item_type", "event")
+      .eq("order_items.event_id", eventId)
+      .eq("order_payments.payment_status", "no_proof")
 
     if (noProofError) {
       console.error(`[v0] Error counting no_proof registrations for ${eventId}:`, noProofError)
     }
 
-    // Count orders without any payment record
+    // Count orders without any payment record - use orders table as base
     const { data: allItems } = await adminClient
-      .from("order_items")
+      .from("orders")
       .select(`
         id,
-        order_id,
-        orders!inner(id, status)
+        order_items!inner(id, order_id, event_id, item_type)
       `)
-      .eq("item_type", "event")
-      .eq("event_id", eventId)
-      .neq("orders.status", "cancelled")
+      .neq("status", "cancelled")
+      .eq("order_items.item_type", "event")
+      .eq("order_items.event_id", eventId)
 
     let noPaymentCount = 0
     if (allItems) {
-      const orderIds = [...new Set(allItems.map(item => item.order_id))]
+      // allItems is now from orders table, so order.id is the order_id
+      const orderIds = [...new Set(allItems.map(order => order.id))]
       if (orderIds.length > 0) {
         const { data: paymentsData } = await adminClient
           .from("order_payments")
@@ -268,7 +254,7 @@ export async function getEventQuotaStatus(eventId: string): Promise<QuotaStatus 
           .in("order_id", orderIds)
         
         const orderIdsWithPayments = new Set(paymentsData?.map(p => p.order_id) || [])
-        noPaymentCount = allItems.filter(item => !orderIdsWithPayments.has(item.order_id)).length
+        noPaymentCount = allItems.filter(order => !orderIdsWithPayments.has(order.id)).length
       }
     }
 

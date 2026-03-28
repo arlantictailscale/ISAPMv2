@@ -92,6 +92,42 @@ export default function HotelSoldOutPage() {
                   </div>
                 </div>
 
+                {/* Other Hotels Nearby */}
+                <div className="border-t border-slate-200 pt-6 text-left max-w-lg mx-auto">
+                  <h3 className="text-sm font-semibold text-slate-700 mb-4 text-center">
+                    Other Reputable Hotels & Resorts in Batu
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                      <h4 className="font-medium text-slate-800">Royal Orchids Garden Hotel & Condominiums</h4>
+                      <p className="text-xs text-slate-500 mt-1">5-star resort with lush gardens, multiple pools, and spa facilities</p>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                      <h4 className="font-medium text-slate-800">Klub Bunga Butik Resort</h4>
+                      <p className="text-xs text-slate-500 mt-1">Boutique resort offering private villas with mountain views</p>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                      <h4 className="font-medium text-slate-800">Jambuluwuk Batu Resort</h4>
+                      <p className="text-xs text-slate-500 mt-1">Family-friendly resort with spacious rooms and recreational activities</p>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                      <h4 className="font-medium text-slate-800">Hotel & Resto Lombok Ijo Batu</h4>
+                      <p className="text-xs text-slate-500 mt-1">Comfortable stay with traditional Javanese ambiance and local cuisine</p>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                      <h4 className="font-medium text-slate-800">Grand Mercure Malang Mirama</h4>
+                      <p className="text-xs text-slate-500 mt-1">International chain hotel in nearby Malang with premium amenities (~30 min drive)</p>
+                    </div>
+                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
+                      <h4 className="font-medium text-slate-800">Harris Hotel & Conventions Malang</h4>
+                      <p className="text-xs text-slate-500 mt-1">Modern hotel in Malang city center with conference facilities (~25 min drive)</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-4 text-center">
+                    Search for these hotels on Traveloka, Booking.com, or Agoda for current rates and availability.
+                  </p>
+                </div>
+
                 {/* Contact Support */}
                 <div className="pt-4">
                   <p className="text-sm text-slate-500 mb-2">

@@ -97,34 +97,82 @@ export default function HotelSoldOutPage() {
                   <h3 className="text-sm font-semibold text-slate-700 mb-4 text-center">
                     Other Reputable Hotels & Resorts in Batu
                   </h3>
-                  <div className="space-y-3">
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
-                      <h4 className="font-medium text-slate-800">Royal Orchids Garden Hotel & Condominiums</h4>
-                      <p className="text-xs text-slate-500 mt-1">5-star resort with lush gardens, multiple pools, and spa facilities</p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
-                      <h4 className="font-medium text-slate-800">Klub Bunga Butik Resort</h4>
-                      <p className="text-xs text-slate-500 mt-1">Boutique resort offering private villas with mountain views</p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
-                      <h4 className="font-medium text-slate-800">Jambuluwuk Batu Resort</h4>
-                      <p className="text-xs text-slate-500 mt-1">Family-friendly resort with spacious rooms and recreational activities</p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
-                      <h4 className="font-medium text-slate-800">Hotel & Resto Lombok Ijo Batu</h4>
-                      <p className="text-xs text-slate-500 mt-1">Comfortable stay with traditional Javanese ambiance and local cuisine</p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
-                      <h4 className="font-medium text-slate-800">Grand Mercure Malang Mirama</h4>
-                      <p className="text-xs text-slate-500 mt-1">International chain hotel in nearby Malang with premium amenities (~30 min drive)</p>
-                    </div>
-                    <div className="bg-white border border-slate-200 rounded-lg p-4 hover:border-teal-300 transition-colors">
-                      <h4 className="font-medium text-slate-800">Harris Hotel & Conventions Malang</h4>
-                      <p className="text-xs text-slate-500 mt-1">Modern hotel in Malang city center with conference facilities (~25 min drive)</p>
-                    </div>
+                  <div className="space-y-2">
+                    <a href="https://trv.lk/b06b3d52" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">1. Jambuluwuk Convention Hall & Resort Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/8414e5dd" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">2. The Onsen Hot Spring Resort Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/4633e75a" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">3. Aston Inn Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/53825508" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">4. eL Hotel Kartika Wijaya Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/adabd59d" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">5. Horison Trunojoyo Batu Malang</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/901f700d" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">6. Aster Hotel</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/dcf7e77a" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">7. Royal Hotel & Villa Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/2e6e7522" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">8. Golden Tulip Holland Resort Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/ab104fc5" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">9. Baobab Safari Resort</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/70d4dca0" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">10. Amartahills Hotel and Resort Batu</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/a7f4649e" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">11. HARRIS Hotel & Conventions Malang</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
+                    <a href="https://trv.lk/5c932e7d" target="_blank" rel="noopener noreferrer" className="block bg-white border border-slate-200 rounded-lg p-3 hover:border-teal-400 hover:bg-teal-50/50 transition-colors group">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-800 group-hover:text-teal-700">12. Grand Mercure Malang Mirama</span>
+                        <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-teal-600" />
+                      </div>
+                    </a>
                   </div>
                   <p className="text-xs text-slate-400 mt-4 text-center">
-                    Search for these hotels on Traveloka, Booking.com, or Agoda for current rates and availability.
+                    Click any hotel to view rates and availability on Traveloka.
                   </p>
                 </div>
 

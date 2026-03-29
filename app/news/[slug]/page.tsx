@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { format } from "date-fns"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
+import { ArrowLeft, Calendar, Clock, User, Tag, Share2 } from "lucide-react"
 
 interface NewsItem {
   id: string

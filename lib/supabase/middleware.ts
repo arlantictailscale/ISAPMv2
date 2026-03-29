@@ -5,7 +5,6 @@ const PUBLIC_PATHS = new Set([
   "/",
   "/pricing",
   "/venue",
-  "/hotel-booking",
   "/events",
   "/call-for-papers",
   "/webinar",

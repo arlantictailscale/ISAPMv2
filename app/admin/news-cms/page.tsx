@@ -251,7 +251,19 @@ export default function NewsCMSPage() {
 
       console.log("[v0] Creating news article with slug:", slug)
 
-      const { error } = await supabase.from("news").insert({
+      // Parse dates properly
+      let publishedAtValue = null
+      let scheduledForValue = null
+
+      if (formData.is_published && formData.published_at) {
+        publishedAtValue = new Date(formData.published_at).toISOString()
+      }
+
+      if (formData.scheduled_for) {
+        scheduledForValue = new Date(formData.scheduled_for).toISOString()
+      }
+
+      const newsData = {
         title: formData.title,
         slug,
         excerpt: formData.excerpt || null,
@@ -259,20 +271,27 @@ export default function NewsCMSPage() {
         image_url: formData.image_url || null,
         is_published: formData.is_published,
         is_featured: formData.is_featured,
-        published_at: formData.is_published ? (formData.published_at || new Date().toISOString()) : null,
-        scheduled_for: formData.scheduled_for || null,
-        author_id: user?.id,
+        published_at: publishedAtValue,
+        scheduled_for: scheduledForValue,
+        author_id: user?.id || null,
         author_name: formData.author_name || null,
-        category: formData.category,
-        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : null,
-      })
+        category: formData.category || null,
+        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()).filter(t => t) : [],
+      }
 
-      console.log("[v0] Insert result - error:", error)
+      console.log("[v0] Inserting news data:", JSON.stringify(newsData))
+
+      const { data, error } = await supabase
+        .from("news")
+        .insert([newsData])
+        .select()
+
+      console.log("[v0] Insert result - error:", error, "data:", data)
 
       if (error) {
         toast({
           title: "Error",
-          description: error.message,
+          description: error.message || "Failed to create article",
           variant: "destructive",
         })
       } else {
@@ -282,7 +301,7 @@ export default function NewsCMSPage() {
         })
         setIsAddDialogOpen(false)
         resetForm()
-        fetchNews()
+        await fetchNews()
       }
     } catch (err: any) {
       console.error("[v0] handleAdd error:", err)

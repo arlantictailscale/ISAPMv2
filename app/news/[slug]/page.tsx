@@ -8,6 +8,7 @@ import { format } from "date-fns"
 import { notFound } from "next/navigation"
 import { Metadata } from "next"
 import { ArrowLeft, Calendar, Clock, User, Tag, Share2 } from "lucide-react"
+import ImageLightbox from "./image-lightbox"
 
 interface NewsItem {
   id: string
@@ -164,14 +165,7 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
 
           {/* Featured Image */}
           {news.image_url && (
-            <div className="aspect-video rounded-xl overflow-hidden mb-8 shadow-lg bg-slate-100">
-              <img
-                src={news.image_url}
-                alt={news.title}
-                className="w-full h-full object-cover"
-                crossOrigin="anonymous"
-              />
-            </div>
+            <ImageLightbox src={news.image_url} alt={news.title} />
           )}
 
           {/* Article Content */}

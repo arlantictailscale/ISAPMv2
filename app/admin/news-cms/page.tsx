@@ -609,12 +609,12 @@ export default function NewsCMSPage() {
                     <div key={news.id} className="p-4 hover:bg-slate-50 transition-colors">
                       <div className="flex gap-4">
                         {news.image_url ? (
-                          <div className="relative w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 hidden sm:block">
-                            <Image
+                          <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 hidden sm:block bg-slate-100">
+                            <img
                               src={news.image_url}
                               alt={news.title}
-                              fill
-                              className="object-cover"
+                              className="w-full h-full object-cover"
+                              crossOrigin="anonymous"
                             />
                           </div>
                         ) : (
@@ -841,12 +841,12 @@ export default function NewsCMSPage() {
                   </div>
                 </div>
                 {formData.image_url && (
-                  <div className="relative w-full h-32 rounded-lg overflow-hidden mt-2">
-                    <Image
+                  <div className="relative w-full h-32 rounded-lg overflow-hidden mt-2 bg-slate-100">
+                    <img
                       src={formData.image_url}
                       alt="Preview"
-                      fill
-                      className="object-cover"
+                      className="w-full h-full object-cover"
+                      crossOrigin="anonymous"
                     />
                   </div>
                 )}

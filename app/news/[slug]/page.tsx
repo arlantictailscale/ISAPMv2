@@ -2,8 +2,6 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
-import Image from "next/image"
-import { Calendar, ArrowLeft, User, Tag, Share2, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { format } from "date-fns"
@@ -165,13 +163,12 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
 
           {/* Featured Image */}
           {news.image_url && (
-            <div className="relative aspect-video rounded-xl overflow-hidden mb-8 shadow-lg">
-              <Image
+            <div className="aspect-video rounded-xl overflow-hidden mb-8 shadow-lg bg-slate-100">
+              <img
                 src={news.image_url}
                 alt={news.title}
-                fill
-                className="object-cover"
-                priority
+                className="w-full h-full object-cover"
+                crossOrigin="anonymous"
               />
             </div>
           )}
@@ -237,12 +234,12 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
                 <Link key={item.id} href={`/news/${item.slug}`}>
                   <Card className="group overflow-hidden hover:shadow-md transition-all duration-300 border-0 bg-white h-full">
                     {item.image_url && (
-                      <div className="relative h-32 overflow-hidden">
-                        <Image
+                      <div className="h-32 overflow-hidden bg-slate-100">
+                        <img
                           src={item.image_url}
                           alt={item.title}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          crossOrigin="anonymous"
                         />
                       </div>
                     )}

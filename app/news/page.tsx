@@ -2,7 +2,6 @@ import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
 import { createClient } from "@/lib/supabase/server"
 import Link from "next/link"
-import Image from "next/image"
 import { Calendar, Clock, ArrowRight, Tag, Newspaper } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -101,12 +100,12 @@ export default async function NewsPage() {
                   <Link key={news.id} href={`/news/${news.slug}`}>
                     <Card className="group overflow-hidden hover:shadow-lg transition-all duration-300 border-0 bg-white h-full">
                       {news.image_url && (
-                        <div className="relative h-48 overflow-hidden">
-                          <Image
+                        <div className="relative h-48 overflow-hidden bg-slate-100">
+                          <img
                             src={news.image_url}
                             alt={news.title}
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            crossOrigin="anonymous"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
                           <Badge 
@@ -171,12 +170,12 @@ export default async function NewsPage() {
                       <CardContent className="p-6">
                         <div className="flex gap-6">
                           {news.image_url && (
-                            <div className="relative w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden hidden sm:block">
-                              <Image
+                            <div className="w-32 h-24 flex-shrink-0 rounded-lg overflow-hidden hidden sm:block bg-slate-100">
+                              <img
                                 src={news.image_url}
                                 alt={news.title}
-                                fill
-                                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                crossOrigin="anonymous"
                               />
                             </div>
                           )}

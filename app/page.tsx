@@ -9,6 +9,7 @@ import {
   FlipBookSkeleton,
   StatsSkeleton,
   WelcomeSkeleton,
+  LatestNewsSkeleton,
   HighlightsSkeleton,
   AboutSkeleton,
   ImportantInfoSkeleton,
@@ -32,6 +33,11 @@ import { ParticipantMapWrapper } from "@/components/participant-map-wrapper"
 
 const WelcomeSection = dynamic(() => import("@/components/welcome-section"), {
   loading: () => <WelcomeSkeleton />,
+  ssr: true,
+})
+
+const LatestNewsSection = dynamic(() => import("@/components/latest-news-section"), {
+  loading: () => <LatestNewsSkeleton />,
   ssr: true,
 })
 
@@ -89,6 +95,10 @@ export default async function Home() {
 
         <ScrollReveal direction="up" duration={900}>
           <WelcomeSection />
+        </ScrollReveal>
+
+        <ScrollReveal direction="up" duration={800} delay={50}>
+          <LatestNewsSection />
         </ScrollReveal>
 
         <ParallaxSection speed={0.2}>

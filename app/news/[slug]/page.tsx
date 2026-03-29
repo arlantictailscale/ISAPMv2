@@ -5,7 +5,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { Calendar, ArrowLeft, User, Tag, Share2, Clock } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { format } from "date-fns"
 import { notFound } from "next/navigation"
@@ -205,22 +204,23 @@ export default async function NewsArticlePage({ params }: { params: Promise<{ sl
           <div className="flex items-center justify-between py-6 border-y border-slate-200 mb-12">
             <span className="text-slate-600 font-medium">Share this article</span>
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {}}
-                className="gap-2"
-                asChild
+              <a
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(news.title)}&url=${encodeURIComponent(`https://isapm2026.org/news/${news.slug}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-200 rounded-md hover:bg-slate-50 transition-colors text-slate-700"
               >
-                <a 
-                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(news.title)}&url=${encodeURIComponent(`https://isapm2026.org/news/${news.slug}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </a>
-              </Button>
+                <Share2 className="w-4 h-4" />
+                Share
+              </a>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`${news.title} - https://isapm2026.org/news/${news.slug}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm border border-slate-200 rounded-md hover:bg-slate-50 transition-colors text-slate-700"
+              >
+                WhatsApp
+              </a>
             </div>
           </div>
         </article>

@@ -185,21 +185,21 @@ export default function NewsCMSPage() {
   const handleImageUpload = async (file: File) => {
     setIsUploading(true)
     try {
-      const fileExt = file.name.split(".").pop()
-      const fileName = `news-${Date.now()}.${fileExt}`
-      const filePath = `news/${fileName}`
+      const formData = new FormData()
+      formData.append("file", file)
 
-      const { error: uploadError } = await supabase.storage
-        .from("images")
-        .upload(filePath, file)
+      const response = await fetch("/api/upload-news-image", {
+        method: "POST",
+        body: formData,
+      })
 
-      if (uploadError) throw uploadError
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || "Upload failed")
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from("images")
-        .getPublicUrl(filePath)
-
-      setFormData(prev => ({ ...prev, image_url: publicUrl }))
+      const data = await response.json()
+      setFormData(prev => ({ ...prev, image_url: data.url }))
       toast({
         title: "Success",
         description: "Image uploaded successfully",
@@ -335,6 +335,21 @@ export default function NewsCMSPage() {
     if (!selectedNews) return
 
     setIsProcessing(true)
+    
+    // Delete image from Blob if it exists
+    if (selectedNews.image_url) {
+      try {
+        await fetch("/api/delete-blob", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: selectedNews.image_url }),
+        })
+      } catch (error) {
+        console.error("Error deleting image:", error)
+        // Continue with deletion even if image delete fails
+      }
+    }
+
     const { error } = await supabase
       .from("news")
       .delete()

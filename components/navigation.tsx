@@ -34,6 +34,7 @@ import {
   Send,
   BarChart3,
   Tag,
+  Newspaper,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -65,6 +66,7 @@ const adminNavItems = [
 { label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
 { label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
 { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
+{ label: "News CMS", href: "/admin/news-cms", icon: Newspaper },
 ]
 
 const navItems = [
@@ -73,6 +75,7 @@ const navItems = [
   { label: "Webinar", href: "/webinar" },
   { label: "e-Poster", href: "/call-for-papers" },
   { label: "Venue", href: "/venue" },
+  { label: "News", href: "/news" },
 ]
 
 export default function Navigation() {

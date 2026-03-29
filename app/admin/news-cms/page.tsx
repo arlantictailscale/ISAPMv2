@@ -243,42 +243,57 @@ export default function NewsCMSPage() {
     }
 
     setIsProcessing(true)
-    const slug = formData.slug || generateSlug(formData.title)
     
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+      const slug = formData.slug || generateSlug(formData.title)
+      
+      const { data: { user } } = await supabase.auth.getUser()
 
-    const { error } = await supabase.from("news").insert({
-      title: formData.title,
-      slug,
-      excerpt: formData.excerpt || null,
-      content: formData.content,
-      image_url: formData.image_url || null,
-      is_published: formData.is_published,
-      is_featured: formData.is_featured,
-      published_at: formData.is_published ? (formData.published_at || new Date().toISOString()) : null,
-      scheduled_for: formData.scheduled_for || null,
-      author_id: user?.id,
-      author_name: formData.author_name || null,
-      category: formData.category,
-      tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : null,
-    })
+      console.log("[v0] Creating news article with slug:", slug)
 
-    if (error) {
+      const { error } = await supabase.from("news").insert({
+        title: formData.title,
+        slug,
+        excerpt: formData.excerpt || null,
+        content: formData.content,
+        image_url: formData.image_url || null,
+        is_published: formData.is_published,
+        is_featured: formData.is_featured,
+        published_at: formData.is_published ? (formData.published_at || new Date().toISOString()) : null,
+        scheduled_for: formData.scheduled_for || null,
+        author_id: user?.id,
+        author_name: formData.author_name || null,
+        category: formData.category,
+        tags: formData.tags ? formData.tags.split(",").map(t => t.trim()) : null,
+      })
+
+      console.log("[v0] Insert result - error:", error)
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        })
+      } else {
+        toast({
+          title: "Success",
+          description: "News article created successfully",
+        })
+        setIsAddDialogOpen(false)
+        resetForm()
+        fetchNews()
+      }
+    } catch (err: any) {
+      console.error("[v0] handleAdd error:", err)
       toast({
         title: "Error",
-        description: error.message,
+        description: err.message || "An unexpected error occurred",
         variant: "destructive",
       })
-    } else {
-      toast({
-        title: "Success",
-        description: "News article created successfully",
-      })
-      setIsAddDialogOpen(false)
-      resetForm()
-      fetchNews()
+    } finally {
+      setIsProcessing(false)
     }
-    setIsProcessing(false)
   }
 
   const handleEdit = async () => {

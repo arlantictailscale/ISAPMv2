@@ -13,7 +13,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ChevronRight, AlertCircle, Gift } from "lucide-react"
-import { AddToCartButton } from "@/components/add-to-cart-button"
+import { AddToCartBypassButton } from "./add-to-cart-bypass"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -505,7 +505,7 @@ export default function SecretPricingPage() {
                               </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                              <AddToCartButton
+                              <AddToCartBypassButton
                                 item={{
                                   item_type: "event",
                                   event_id: event.id,
@@ -519,7 +519,6 @@ export default function SecretPricingPage() {
                                 size="default"
                                 className="w-full"
                                 onSuccess={() => setOpenDialogId(null)}
-                                isSoldOut={false}
                               />
                             </div>
                           </div>

@@ -11,6 +11,7 @@ const PUBLIC_PATHS = new Set([
   "/webinar",
   "/news",
   "/akomodasi",
+  "/registrasi",
   "/privacy-policy",
   "/terms-of-service",
   "/favicon.ico",

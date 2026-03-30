@@ -289,18 +289,13 @@ export default function HotelBookingPage() {
     toast.success("Dates copied to all rooms")
   }
 
-  const isRoomTypeAvailable = (roomTypeId: string) => {
-    if (!availability) return true
-    const avail = availability[roomTypeId as "deluxe" | "premier"]
-    return avail ? avail.available > 0 : true
+  // Always allow room selection - no sold out restrictions for secret booking page
+  const isRoomTypeAvailable = (_roomTypeId: string) => {
+    return true
   }
 
-  const getRoomAvailabilityLabel = (roomTypeId: string) => {
-    if (!availability) return null
-    const avail = availability[roomTypeId as "deluxe" | "premier"]
-    if (!avail) return null
-    if (avail.available === 0) return "Sold Out"
-    if (avail.available <= 5) return `${avail.available} left`
+  const getRoomAvailabilityLabel = (_roomTypeId: string) => {
+    // No availability labels on secret booking page
     return null
   }
 
@@ -331,33 +326,7 @@ export default function HotelBookingPage() {
       }
     }
 
-    // Check each room for sold-out status
-    for (let i = 0; i < rooms.length; i++) {
-      const room = rooms[i]
-      if (room.roomType && !isRoomTypeAvailable(room.roomType)) {
-        const roomName = ROOM_TYPES.find((r) => r.id === room.roomType)?.name || room.roomType
-        toast.error(`${roomName} is fully booked`, {
-          description: "This room type is no longer available. Please select a different room type.",
-        })
-        return false
-      }
-    }
-
-    // Check availability totals
-    const deluxeCount = rooms.filter((r) => r.roomType === "deluxe").length
-    const premierCount = rooms.filter((r) => r.roomType === "premier").length
-
-    if (availability) {
-      if (deluxeCount > availability.deluxe.available) {
-        toast.error(`Only ${availability.deluxe.available} Deluxe rooms available`)
-        return false
-      }
-      if (premierCount > availability.premier.available) {
-        toast.error(`Only ${availability.premier.available} Premier rooms available`)
-        return false
-      }
-    }
-
+    // No sold-out restrictions on secret booking page - allow all bookings
     return true
   }
 
@@ -385,45 +354,7 @@ export default function HotelBookingPage() {
     setIsSubmitting(true)
 
     try {
-      // Fetch fresh availability data before submitting to prevent race conditions
-      const freshAvailability = await getRoomAvailability()
-      setAvailability(freshAvailability)
-
-      // Re-validate with fresh data
-      const deluxeCount = rooms.filter((r) => r.roomType === "deluxe").length
-      const premierCount = rooms.filter((r) => r.roomType === "premier").length
-
-      if (freshAvailability) {
-        if (freshAvailability.deluxe.available <= 0 && deluxeCount > 0) {
-          toast.error("Deluxe rooms are now fully booked", {
-            description: "Please select a different room type or try again later.",
-          })
-          setIsSubmitting(false)
-          return
-        }
-        if (freshAvailability.premier.available <= 0 && premierCount > 0) {
-          toast.error("Premier rooms are now fully booked", {
-            description: "Please select a different room type or try again later.",
-          })
-          setIsSubmitting(false)
-          return
-        }
-        if (deluxeCount > freshAvailability.deluxe.available) {
-          toast.error(`Only ${freshAvailability.deluxe.available} Deluxe room(s) available`, {
-            description: "Please reduce the number of Deluxe rooms in your booking.",
-          })
-          setIsSubmitting(false)
-          return
-        }
-        if (premierCount > freshAvailability.premier.available) {
-          toast.error(`Only ${freshAvailability.premier.available} Premier room(s) available`, {
-            description: "Please reduce the number of Premier rooms in your booking.",
-          })
-          setIsSubmitting(false)
-          return
-        }
-      }
-
+      // No availability checks on secret booking page - allow all bookings
       for (let i = 0; i < rooms.length; i++) {
         const room = rooms[i]
         const roomType = ROOM_TYPES.find((r) => r.id === room.roomType)
@@ -509,8 +440,8 @@ export default function HotelBookingPage() {
   }
 
   const total = calculateTotal()
-  const hasSoldOutRoom = rooms.some((r) => r.roomType && !isRoomTypeAvailable(r.roomType))
-  const isFormValid = !hasSoldOutRoom && rooms.every((r) => {
+  // No sold-out restrictions on secret booking page
+  const isFormValid = rooms.every((r) => {
     const nights = calculateNights(r.checkInDate, r.checkOutDate)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     const isValidEmail = r.guestEmail && emailRegex.test(r.guestEmail)
@@ -592,41 +523,22 @@ export default function HotelBookingPage() {
                               <SelectValue placeholder="Select room type" />
                             </SelectTrigger>
                             <SelectContent>
-                              {ROOM_TYPES.map((rt) => {
-                                const available = isRoomTypeAvailable(rt.id)
-                                const label = getRoomAvailabilityLabel(rt.id)
-                                return (
-                                  <SelectItem key={rt.id} value={rt.id} disabled={!available}>
-                                    <span className="flex items-center justify-between w-full gap-4">
-                                      <span className={`pointer-events-auto ${!available ? "text-muted-foreground" : ""}`}>
-                                        {rt.name}
-                                        {label && (
-                                          <span className={`ml-2 text-xs font-semibold ${label === "Sold Out" ? "text-destructive" : "text-amber-600"}`}>
-                                            ({label})
-                                          </span>
-                                        )}
-                                      </span>
-                                      {available && (
-                                        <span className="text-primary font-semibold pointer-events-auto whitespace-nowrap">
-                                          Rp {rt.price.toLocaleString("id-ID")}/night
-                                        </span>
-                                      )}
+                              {ROOM_TYPES.map((rt) => (
+                                <SelectItem key={rt.id} value={rt.id}>
+                                  <span className="flex items-center justify-between w-full gap-4">
+                                    <span className="pointer-events-auto">
+                                      {rt.name}
                                     </span>
-                                  </SelectItem>
-                                )
-                              })}
+                                    <span className="text-primary font-semibold pointer-events-auto whitespace-nowrap">
+                                      Rp {rt.price.toLocaleString("id-ID")}/night
+                                    </span>
+                                  </span>
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
 
-                          {room.roomType && !isRoomTypeAvailable(room.roomType) && (
-                            <div className="mt-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
-                              <span className="text-destructive text-sm font-medium">
-                                This room type is fully booked and cannot be reserved.
-                              </span>
-                            </div>
-                          )}
-
-                          {room.roomType && isRoomTypeAvailable(room.roomType) && (
+                          {room.roomType && (
                             <div className="mt-2 p-3 bg-primary/5 rounded-lg">
                               <div className="flex items-center gap-2 flex-wrap">
                                 {ROOM_TYPES.find((r) => r.id === room.roomType)?.amenities.map((amenity) => (
@@ -967,8 +879,6 @@ export default function HotelBookingPage() {
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Adding to Cart...
                   </>
-                ) : hasSoldOutRoom ? (
-                  <>Room Unavailable - Fully Booked</>
                 ) : (
                   <>
                     Add {rooms.filter((r) => r.roomType).length} Room

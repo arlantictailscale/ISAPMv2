@@ -229,6 +229,67 @@ export async function clearCart() {
 }
 
 /**
+ * Add item to cart - BYPASSES QUOTA CHECK
+ * Only use this for secret/admin pages like /registrasi
+ */
+export async function addToCartBypassQuota(item: Omit<CartItem, "id" | "cart_id" | "created_at">) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return { error: "Not authenticated" }
+  }
+
+  // Validate item
+  if (!validateCartItem(item)) {
+    return { error: "Invalid cart item data" }
+  }
+
+  // NO QUOTA CHECK - bypassed for secret pages
+
+  // Get or create cart (uses cache)
+  const cartResult = await getOrCreateCart()
+  if (cartResult.error) {
+    return { error: cartResult.error }
+  }
+
+  const cart = cartResult.data!
+
+  // Check for duplicates
+  const existingItems = cart.cart_items || []
+  const duplicate = existingItems.find((existingItem) => isDuplicateCartItem(item, existingItem))
+
+  if (duplicate) {
+    return { error: "This item is already in your cart" }
+  }
+
+  // Insert cart item
+  const { data, error } = await supabase
+    .from("cart_items")
+    .insert({
+      cart_id: cart.id,
+      ...item,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error("[v0] Error adding to cart:", error)
+    return { error: error.message }
+  }
+
+  await invalidateCartCache(user.id)
+
+  revalidatePath("/cart")
+  revalidatePath("/pricing")
+  revalidatePath("/registrasi")
+
+  return { data }
+}
+
+/**
  * Get cart item count for badge
  */
 export async function getCartItemCount() {

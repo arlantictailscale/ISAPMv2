@@ -9,9 +9,10 @@ interface RoomAvailability {
 
 interface EventOverviewCardProps {
   availability?: RoomAvailability | null
+  showAvailability?: boolean
 }
 
-export function EventOverviewCard({ availability }: EventOverviewCardProps) {
+export function EventOverviewCard({ availability, showAvailability = true }: EventOverviewCardProps) {
   return (
     <Card className="sticky top-24 h-fit">
       <CardHeader className="pb-4">
@@ -47,6 +48,7 @@ export function EventOverviewCard({ availability }: EventOverviewCardProps) {
         </div>
 
         {/* Room Availability */}
+        {showAvailability && (
         <div className="border-t pt-4">
           <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
             <Hotel className="w-4 h-4 text-primary" />
@@ -87,6 +89,7 @@ export function EventOverviewCard({ availability }: EventOverviewCardProps) {
             </div>
           </div>
         </div>
+        )}
 
         {/* Extra Bed Option */}
         <div className="border-t pt-4">

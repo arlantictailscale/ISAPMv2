@@ -113,6 +113,44 @@ export function CTASkeleton() {
   )
 }
 
+export function LatestNewsSkeleton() {
+  return (
+    <section className="py-14 px-4 sm:px-6 lg:px-8 bg-slate-50 border-t border-slate-100">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-1 h-8 bg-gray-200 rounded-full animate-pulse" />
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 rounded w-20 animate-pulse" />
+              <div className="h-7 bg-gray-200 rounded w-36 animate-pulse" />
+            </div>
+          </div>
+          <div className="h-4 bg-gray-200 rounded w-24 animate-pulse hidden sm:block" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div className="h-44 bg-gray-100 animate-pulse" />
+              <div className="p-4 space-y-3">
+                <div className="flex gap-2">
+                  <div className="h-5 bg-gray-100 rounded-full w-20 animate-pulse" />
+                  <div className="h-5 bg-gray-100 rounded w-24 animate-pulse" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="h-4 bg-gray-100 rounded w-full animate-pulse" />
+                  <div className="h-4 bg-gray-100 rounded w-4/5 animate-pulse" />
+                </div>
+                <div className="h-3 bg-gray-100 rounded w-full animate-pulse" />
+                <div className="h-3 bg-gray-100 rounded w-3/4 animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export function FooterSkeleton() {
   return (
     <footer className="bg-primary text-primary-foreground">

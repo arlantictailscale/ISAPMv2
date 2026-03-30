@@ -4,7 +4,7 @@ import Footer from "@/components/footer"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Hotel, ExternalLink, AlertCircle } from "lucide-react"
+import { Hotel, ExternalLink } from "lucide-react"
 import Link from "next/link"
 
 export const metadata: Metadata = {
@@ -194,30 +194,6 @@ export default function HotelSoldOutPage() {
             </CardContent>
           </Card>
 
-          {/* Room Availability Status */}
-          <Card className="mt-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-amber-500" />
-                Current Availability Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <span className="text-sm text-slate-600">Deluxe Room (Promotional)</span>
-                  <Badge variant="destructive">Sold Out</Badge>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-sm text-slate-600">Premier Room (Promotional)</span>
-                  <Badge variant="destructive">Sold Out</Badge>
-                </div>
-              </div>
-              <p className="text-xs text-slate-400 mt-4">
-                Promotional rates through ISAPM 2026 registration are no longer available.
-              </p>
-            </CardContent>
-          </Card>
           
           {/* Back to Home */}
           <div className="mt-6 text-center">

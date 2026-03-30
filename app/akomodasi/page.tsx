@@ -176,13 +176,6 @@ export default function HotelBookingPage() {
 
   const loadRoomAvailability = async () => {
     const data = await getRoomAvailability()
-    
-    // Check if all rooms are sold out and redirect immediately
-    if (data && data.deluxe.available <= 0 && data.premier.available <= 0) {
-      window.location.replace("/akomodasi/sold-out")
-      return
-    }
-    
     setAvailability(data)
   }
 

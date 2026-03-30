@@ -9,6 +9,7 @@ const PUBLIC_PATHS = new Set([
   "/call-for-papers",
   "/webinar",
   "/news",
+  "/akomodasi",
   "/privacy-policy",
   "/terms-of-service",
   "/favicon.ico",

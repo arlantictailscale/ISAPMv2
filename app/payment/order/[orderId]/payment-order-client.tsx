@@ -714,7 +714,19 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                         )}
                       </div>
                       <div className="text-right">
-                        {item.item_type === "hotel" && item.nights > 1 ? (
+                        {item.discount_amount && item.discount_amount > 0 ? (
+                          <>
+                            <p className="text-xs text-muted-foreground line-through">
+                              IDR {(item.original_price || item.unit_price * (item.nights || 1) + item.discount_amount).toLocaleString("id-ID")}
+                            </p>
+                            <p className="font-semibold text-cyan-700">
+                              IDR {((item.unit_price || 0) * (item.nights || 1)).toLocaleString("id-ID")}
+                            </p>
+                            <p className="text-xs text-green-600 font-medium">
+                              -{((item.discount_amount / (item.original_price || item.unit_price * (item.nights || 1) + item.discount_amount)) * 100).toFixed(0)}% off
+                            </p>
+                          </>
+                        ) : item.item_type === "hotel" && item.nights > 1 ? (
                           <>
                             <p className="font-semibold text-cyan-700">
                               IDR {((item.unit_price || 0) * item.nights).toLocaleString("id-ID")}
@@ -734,9 +746,37 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                   ))}
                 </div>
 
-                <div className="flex justify-between items-center pt-3 border-t">
-                  <p className="font-semibold text-lg">Total Amount</p>
-                  <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>
+                {/* Promo Code Applied Banner */}
+                {hasDiscount && initialOrder?.promo_code && (
+                  <div className="flex items-center gap-2 p-2 bg-green-50 border border-green-200 rounded-lg mt-2">
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-700">
+                      Promo Code Applied: {initialOrder.promo_code.code}
+                    </span>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t space-y-2">
+                  {hasDiscount && (
+                    <>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-muted-foreground">Original Price</span>
+                        <span className="text-muted-foreground line-through">
+                          IDR {calculateOriginalTotal().toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm text-green-600">
+                        <span className="font-medium">Discount</span>
+                        <span className="font-medium">
+                          -IDR {(initialOrder?.discount_amount || (calculateOriginalTotal() - calculateTotal())).toLocaleString("id-ID")}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex justify-between items-center">
+                    <p className="font-semibold text-lg">Total Amount</p>
+                    <p className="font-bold text-xl text-cyan-700">IDR {calculateTotal().toLocaleString("id-ID")}</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

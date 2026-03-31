@@ -73,6 +73,7 @@ interface Payment {
   invoice_number: string | null
   verified_at: string | null
   verified_by: string | null
+  promo_eligibility_proof_url: string | null
   orders: {
     id: string
     full_name: string
@@ -834,6 +835,46 @@ export default function PaymentValidationPage() {
                         const target = e.target as HTMLImageElement
                         target.src = "/payment-proof-image.jpg"
                       }}
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors">
+                      <Eye className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity drop-shadow-lg" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Promo Eligibility Proof - show if present */}
+            {payment.promo_eligibility_proof_url && (
+              <div className="pt-2 border-t">
+                <p className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4" />
+                  Promo Eligibility Proof:
+                </p>
+                {payment.promo_eligibility_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div
+                    className="relative w-full h-40 bg-green-50 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center border border-green-200"
+                    onClick={() => window.open(payment.promo_eligibility_proof_url!, "_blank")}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-green-700">
+                      <FileText className="w-12 h-12" />
+                      <span className="text-sm font-medium">PDF Document</span>
+                      <span className="text-xs flex items-center gap-1">
+                        <ExternalLink className="w-3 h-3" /> Click to view
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="relative w-full h-40 bg-green-50 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity border border-green-200"
+                    onClick={() => window.open(payment.promo_eligibility_proof_url!, "_blank")}
+                  >
+                    <Image
+                      src={payment.promo_eligibility_proof_url || "/placeholder.svg"}
+                      alt="Promo eligibility proof"
+                      fill
+                      className="object-contain"
+                      unoptimized
                     />
                     <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors">
                       <Eye className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity drop-shadow-lg" />

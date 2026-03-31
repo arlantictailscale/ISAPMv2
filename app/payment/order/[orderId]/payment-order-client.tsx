@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Upload, AlertCircle, CreditCard, Gift, Copy, CheckCircle } from "lucide-react"
+import { Upload, AlertCircle, CreditCard, Gift, Copy, CheckCircle, Tag } from "lucide-react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { getBadgeColors, getCategoryLabel } from "@/lib/badge-colors"
@@ -67,6 +67,10 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const [transactionRef, setTransactionRef] = useState("")
   const [additionalNotes, setAdditionalNotes] = useState("")
   const [sponsorName, setSponsorName] = useState("")
+
+  // Promo eligibility proof
+  const [eligibilityFile, setEligibilityFile] = useState<File | null>(null)
+  const [eligibilityPreviewUrl, setEligibilityPreviewUrl] = useState<string | null>(null)
 
   const bankAccount = {
     bank: "Bank Syariah Indonesia (BSI)",
@@ -134,6 +138,21 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
   const handleRemoveFile = () => {
     setSelectedFile(null)
     setPreviewUrl(null)
+  }
+
+  const handleEligibilityFileSelect = (file: File | null) => {
+    setEligibilityFile(file)
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setEligibilityPreviewUrl(url)
+    } else {
+      setEligibilityPreviewUrl(null)
+    }
+  }
+
+  const handleRemoveEligibilityFile = () => {
+    setEligibilityFile(null)
+    setEligibilityPreviewUrl(null)
   }
 
   const copyToClipboard = (text: string, field: string) => {
@@ -217,6 +236,9 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
       formData.append("additionalNotes", additionalNotes)
       formData.append("userId", initialOrder.user_id)
       formData.append("sponsorName", sponsorName)
+      if (eligibilityFile) {
+        formData.append("eligibilityFile", eligibilityFile)
+      }
 
       console.log("[v0] Submitting payment proof:", {
         orderId: initialOrder.id,
@@ -961,6 +983,38 @@ export default function PaymentOrderClient({ initialOrder, initialPayment }: Pay
                       </p>
                     </div>
                   </>
+                )}
+
+                {/* Additional Notes - Shown for both payment types */}
+                {/* Promo Eligibility Proof - Only shown if user used a promo code */}
+                {initialOrder?.promo_code && paymentMethod !== "Sponsored" && (
+                  <div className="space-y-2 rounded-xl border border-green-200 bg-green-50 p-4">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="p-2 bg-green-100 rounded-lg shrink-0">
+                        <Tag className="w-4 h-4 text-green-700" />
+                      </div>
+                      <div>
+                        <Label className="text-base font-semibold text-green-900 block mb-0.5">
+                          Promo Code Eligibility Proof
+                          <span className="ml-1.5 text-xs font-normal text-green-600">(Optional)</span>
+                        </Label>
+                        <p className="text-sm text-green-700">
+                          You used promo code <code className="bg-green-100 border border-green-200 px-1.5 py-0.5 rounded text-green-800 font-mono text-xs">{initialOrder.promo_code.code}</code>.
+                          Please upload a document proving your eligibility (e.g., membership card, student ID, institution letter).
+                        </p>
+                      </div>
+                    </div>
+                    <PaymentProofUploader
+                      selectedFile={eligibilityFile}
+                      onFileSelect={handleEligibilityFileSelect}
+                      onRemoveFile={handleRemoveEligibilityFile}
+                      previewUrl={eligibilityPreviewUrl}
+                    />
+                    <p className="text-xs text-green-600 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      Supported formats: JPG, PNG, PDF (Max 5MB). Skipping this may delay verification.
+                    </p>
+                  </div>
                 )}
 
                 {/* Additional Notes - Shown for both payment types */}

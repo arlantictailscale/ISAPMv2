@@ -108,6 +108,8 @@ export default function PaymentValidationPage() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  const [isEligibilityDialogOpen, setIsEligibilityDialogOpen] = useState(false)
+  const [selectedEligibilityPayment, setSelectedEligibilityPayment] = useState<Payment | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -854,7 +856,7 @@ export default function PaymentValidationPage() {
                 {payment.promo_eligibility_proof_url.toLowerCase().endsWith(".pdf") ? (
                   <div
                     className="relative w-full h-40 bg-green-50 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center border border-green-200"
-                    onClick={() => window.open(payment.promo_eligibility_proof_url!, "_blank")}
+                    onClick={() => { setSelectedEligibilityPayment(payment); setIsEligibilityDialogOpen(true) }}
                   >
                     <div className="flex flex-col items-center gap-2 text-green-700">
                       <FileText className="w-12 h-12" />
@@ -867,7 +869,7 @@ export default function PaymentValidationPage() {
                 ) : (
                   <div
                     className="relative w-full h-40 bg-green-50 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity border border-green-200"
-                    onClick={() => window.open(payment.promo_eligibility_proof_url!, "_blank")}
+                    onClick={() => { setSelectedEligibilityPayment(payment); setIsEligibilityDialogOpen(true) }}
                   >
                     <Image
                       src={payment.promo_eligibility_proof_url || "/placeholder.svg"}
@@ -1372,6 +1374,57 @@ export default function PaymentValidationPage() {
                   </Button>
                 </>
               )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Promo Eligibility Proof Preview Dialog */}
+        <Dialog open={isEligibilityDialogOpen} onOpenChange={setIsEligibilityDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-green-600" />
+                Promo Eligibility Proof
+              </DialogTitle>
+              <DialogDescription>
+                Review the submitted promo code eligibility document
+                {selectedEligibilityPayment?.promo_code && (
+                  <span className="ml-1">
+                    for code <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{(selectedEligibilityPayment.promo_code as any).code ?? selectedEligibilityPayment.promo_code}</code>
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedEligibilityPayment?.promo_eligibility_proof_url && (
+              <div className="relative w-full min-h-[300px]">
+                {selectedEligibilityPayment.promo_eligibility_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-8">
+                    <FileText className="w-16 h-16 text-green-600" />
+                    <p className="text-muted-foreground">PDF Document</p>
+                    <Button
+                      onClick={() => window.open(selectedEligibilityPayment.promo_eligibility_proof_url!, "_blank")}
+                      variant="outline"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open PDF in New Tab
+                    </Button>
+                  </div>
+                ) : (
+                  <Image
+                    src={selectedEligibilityPayment.promo_eligibility_proof_url || "/placeholder.svg"}
+                    alt="Promo eligibility proof"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto object-contain rounded-lg"
+                    unoptimized
+                  />
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEligibilityDialogOpen(false)}>
+                Close
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

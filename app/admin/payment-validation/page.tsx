@@ -1415,7 +1415,8 @@ export default function PaymentValidationPage() {
                     alt="Promo eligibility proof"
                     width={800}
                     height={600}
-                    className="w-full h-auto object-contain rounded-lg"
+                    className="w-full h-auto object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => window.open(selectedEligibilityPayment.promo_eligibility_proof_url!, "_blank")}
                     unoptimized
                   />
                 )}

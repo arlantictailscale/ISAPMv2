@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
     const additionalNotes = formData.get("additionalNotes") as string
     const userId = formData.get("userId") as string
     const sponsorName = formData.get("sponsorName") as string
+    const eligibilityFile = formData.get("eligibilityFile") as File | null
 
     const isSponsored = paymentMethod === "Sponsored"
 
@@ -151,6 +152,37 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient()
 
+    // Upload promo eligibility proof if provided
+    let eligibilityBlobUrl: string | null = null
+    if (eligibilityFile && eligibilityFile.size > 0) {
+      if (!UPLOAD_CONFIG.allowedTypes.includes(eligibilityFile.type)) {
+        return NextResponse.json(
+          { error: "Invalid eligibility proof file type. Only JPG, PNG, and PDF files are allowed." },
+          { status: 400 },
+        )
+      }
+      if (eligibilityFile.size > UPLOAD_CONFIG.maxFileSize) {
+        return NextResponse.json(
+          { error: `Eligibility proof file size must not exceed ${UPLOAD_CONFIG.maxFileSize / 1024 / 1024}MB` },
+          { status: 400 },
+        )
+      }
+      try {
+        const originalExtension = eligibilityFile.name.split(".").pop() || "jpg"
+        const timestamp = Date.now()
+        const blob = await put(
+          `promo-eligibility-proofs/${orderId}-${timestamp}.${originalExtension}`,
+          eligibilityFile,
+          { access: "public", token: process.env.BLOB_READ_WRITE_TOKEN, contentType: eligibilityFile.type },
+        )
+        eligibilityBlobUrl = blob.url
+        console.log("[v0] Eligibility proof uploaded to blob:", blob.url)
+      } catch (blobError) {
+        console.error("[v0] Eligibility proof blob upload error:", blobError)
+        // Don't fail the whole request — just log and continue without the eligibility URL
+      }
+    }
+
     console.log("[v0] Fetching order details...")
     const { data: order, error: orderError } = await supabase
       .from("orders")
@@ -172,6 +204,7 @@ export async function POST(request: NextRequest) {
       transaction_reference: isSponsored ? null : transactionRef,
       notes: additionalNotes,
       sponsor_name: isSponsored ? sponsorName : null,
+      ...(eligibilityBlobUrl ? { promo_eligibility_proof_url: eligibilityBlobUrl } : {}),
       updated_at: new Date().toISOString(),
     }
 

@@ -73,6 +73,7 @@ interface Payment {
   invoice_number: string | null
   verified_at: string | null
   verified_by: string | null
+  promo_eligibility_proof_url: string | null
   orders: {
     id: string
     full_name: string
@@ -107,6 +108,8 @@ export default function PaymentValidationPage() {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false)
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false)
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false)
+  const [isEligibilityDialogOpen, setIsEligibilityDialogOpen] = useState(false)
+  const [selectedEligibilityPayment, setSelectedEligibilityPayment] = useState<Payment | null>(null)
   const [rejectionReason, setRejectionReason] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -843,6 +846,46 @@ export default function PaymentValidationPage() {
               </div>
             )}
 
+            {/* Promo Eligibility Proof - show if present */}
+            {payment.promo_eligibility_proof_url && (
+              <div className="pt-2 border-t">
+                <p className="text-sm font-medium text-green-700 mb-2 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4" />
+                  Promo Eligibility Proof:
+                </p>
+                {payment.promo_eligibility_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div
+                    className="relative w-full h-40 bg-green-50 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center border border-green-200"
+                    onClick={() => { setSelectedEligibilityPayment(payment); setIsEligibilityDialogOpen(true) }}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-green-700">
+                      <FileText className="w-12 h-12" />
+                      <span className="text-sm font-medium">PDF Document</span>
+                      <span className="text-xs flex items-center gap-1">
+                        <ExternalLink className="w-3 h-3" /> Click to view
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="relative w-full h-40 bg-green-50 rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity border border-green-200"
+                    onClick={() => { setSelectedEligibilityPayment(payment); setIsEligibilityDialogOpen(true) }}
+                  >
+                    <Image
+                      src={payment.promo_eligibility_proof_url || "/placeholder.svg"}
+                      alt="Promo eligibility proof"
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/10 transition-colors">
+                      <Eye className="w-8 h-8 text-white opacity-0 hover:opacity-100 transition-opacity drop-shadow-lg" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Rejection Reason */}
             {payment.rejection_reason && (
               <div className="pt-2 border-t">
@@ -1331,6 +1374,58 @@ export default function PaymentValidationPage() {
                   </Button>
                 </>
               )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Promo Eligibility Proof Preview Dialog */}
+        <Dialog open={isEligibilityDialogOpen} onOpenChange={setIsEligibilityDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-green-600" />
+                Promo Eligibility Proof
+              </DialogTitle>
+              <DialogDescription>
+                Review the submitted promo code eligibility document
+                {selectedEligibilityPayment?.promo_code && (
+                  <span className="ml-1">
+                    for code <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{(selectedEligibilityPayment.promo_code as any).code ?? selectedEligibilityPayment.promo_code}</code>
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedEligibilityPayment?.promo_eligibility_proof_url && (
+              <div className="relative w-full min-h-[300px]">
+                {selectedEligibilityPayment.promo_eligibility_proof_url.toLowerCase().endsWith(".pdf") ? (
+                  <div className="flex flex-col items-center justify-center gap-4 py-8">
+                    <FileText className="w-16 h-16 text-green-600" />
+                    <p className="text-muted-foreground">PDF Document</p>
+                    <Button
+                      onClick={() => window.open(selectedEligibilityPayment.promo_eligibility_proof_url!, "_blank")}
+                      variant="outline"
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Open PDF in New Tab
+                    </Button>
+                  </div>
+                ) : (
+                  <Image
+                    src={selectedEligibilityPayment.promo_eligibility_proof_url || "/placeholder.svg"}
+                    alt="Promo eligibility proof"
+                    width={800}
+                    height={600}
+                    className="w-full h-auto object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => window.open(selectedEligibilityPayment.promo_eligibility_proof_url!, "_blank")}
+                    unoptimized
+                  />
+                )}
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEligibilityDialogOpen(false)}>
+                Close
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

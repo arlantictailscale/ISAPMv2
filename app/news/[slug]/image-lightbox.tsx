@@ -29,13 +29,13 @@ export default function ImageLightbox({ src, alt }: ImageLightboxProps) {
     <>
       {/* Clickable Image */}
       <div
-        className="aspect-video rounded-xl overflow-hidden mb-8 shadow-lg bg-slate-100 relative group cursor-zoom-in"
+        className="w-full rounded-xl overflow-hidden mb-8 shadow-lg bg-slate-100 relative group cursor-zoom-in"
         onClick={() => setIsOpen(true)}
       >
         <img
           src={src}
           alt={alt}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          className="w-full h-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
           crossOrigin="anonymous"
         />
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 flex items-center justify-center">

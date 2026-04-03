@@ -98,28 +98,23 @@ export default function EventsPage() {
         {
           sesi: "Session 3",
           items: [
-            {
-              time: "11:00 - 11:25",
-              title: "Procedure Specific Pain Management",
-              speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
-            },
+            { time: "11:00 - 11:25", title: "Procedure Specific Pain Management Recommendation (PROSPECT)", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
             { time: "11:25 - 11:50", title: "Interventional Technique for Perioperative Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
-            { time: "11:50 - 12:15", title: "The Role and Privilege of Anesthesiologist in Pain Management", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "11:50 - 12:15", title: "Acute Pain Service", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
             { time: "12:15 - 12:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "Lunch Break (ISHOMA)", speaker: "-" }],
         },
         {
           sesi: "Session 4",
           items: [
-            { time: "13:00 - 13:30", title: "Discussion Session: Cancer Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP / Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
-            { time: "13:30 - 15:30", title: "Skill Station A: Epidural Analgesia, Epidural USG guidance", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
-            { time: "13:30 - 15:30", title: "Skill Station B: Intra-articular knee, CTS", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
-            { time: "13:30 - 15:30", title: "Skill Station C: Suprascapular, Paravertebra block, Occipital", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
-            { time: "15:30 - 16:00", title: "Post-Test / Closing", speaker: "-" },
+            { time: "13:00 - 13:30", title: "Discussion Session: Postoperative Pain", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K) / dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
+            { time: "13:30 - 15:30", title: "Skill Station A: PCA, PCEA", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP / Dr.dr. R. Dwi Pantja Wibowo, Sp.An-TI, Subsp.T.I.(K), Subsp.M.N.(K)" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Postoperative ACB, FICB", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K) / Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
+            { time: "13:30 - 15:30", title: "Skill Station C: Postoperative Trunk Block (TAP, ESP)", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP / dr. Mahmud, M.Sc., SpAn-TI, Subsp.MN(K), FIPM" },
           ],
         },
       ],
@@ -134,17 +129,17 @@ export default function EventsPage() {
           items: [
             { time: "08:00 - 08:25", title: "Chronic Pain After Surgery", speaker: "Prof.dr. Andi Husni Tanra, PhD, Sp.An-TI(K), Subsp.M.N.(K)" },
             { time: "08:25 - 08:50", title: "Neuropathic Pain", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
-            { time: "08:50 - 09:15", title: "Pain in Special Population: Pediatric and Geriatric", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
+            { time: "08:50 - 09:15", title: "Pain in Special Populations: Pediatric and Geriatric", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
             { time: "09:15 - 09:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Session 2",
           items: [
-            { time: "09:30 - 09:55", title: "CRPS", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
-            { time: "09:55 - 10:20", title: "Cancer Pain and The Management", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
-            { time: "10:20 - 10:45", title: "Interventional Technique for Chronic Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
-            { time: "10:45 - 11:00", title: "Discussion", speaker: "-" },
+            { time: "09:30 - 09:55", title: "CRPS (Complex Regional Pain Syndrome)", speaker: "dr. Syaffrudin Gaus, PhD, Sp.An-TI, Subsp.M.N(K), Subsp.N.An(K)" },
+            { time: "09:55 - 10:20", title: "Cancer Pain and Its Management", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "10:20 - 10:50", title: "Interventional Technique for Chronic Pain and Regenerative Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP" },
+            { time: "10:50 - 11:00", title: "Discussion", speaker: "-" },
           ],
         },
         {
@@ -152,33 +147,22 @@ export default function EventsPage() {
           items: [
             { time: "11:00 - 11:25", title: "The Role of Interventional Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
             { time: "11:25 - 11:50", title: "Ethics and Patient Safety in Pain Management", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)" },
-            {
-              time: "11:50 - 12:15",
-              title: "Acute Pain Service",
-              speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP",
-            },
+            { time: "11:50 - 12:15", title: "The Role and Privilege of Anesthesiologist in Pain Management", speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
             { time: "12:15 - 12:30", title: "Discussion", speaker: "-" },
           ],
         },
         {
           sesi: "Break",
-          items: [{ time: "12:30 - 13:00", title: "Lunch Break", speaker: "-" }],
+          items: [{ time: "12:30 - 13:00", title: "Lunch Break (ISHOMA)", speaker: "-" }],
         },
         {
           sesi: "Session 4",
           items: [
-            { time: "13:00 - 13:30", title: "Discussion Session: Postoperative Pain", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K) / dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
-            {
-              time: "13:30 - 15:30",
-              title: "Skill Station A: PCA, PCEA",
-              speaker: "Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP / Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K)",
-            },
-            { time: "13:30 - 15:30", title: "Skill Station B: Postoperative ACB, FICB", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)" },
-            {
-              time: "13:30 - 15:30",
-              title: "Skill Station C: Postoperative Trunk Block (TAP, ESP)",
-              speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
-            },
+            { time: "13:00 - 13:30", title: "Discussion Session: Cancer Pain", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP / Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "13:30 - 15:30", title: "Skill Station A: Epidural Analgesia and Ultrasound-Guided Epidural", speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP / Dr.dr. R. Dwi Pantja Wibowo, Sp.An-TI, Subsp.T.I.(K), Subsp.M.N.(K)" },
+            { time: "13:30 - 15:30", title: "Skill Station B: Intra-articular Knee Injection, CTS", speaker: "Dr.dr. Ristiawan Muji Laksono, SpAn-TI., Subsp.M.N.(K) / Dr.dr. Takdir Musbah, Sp.An-TI, Subsp.M.N(K), FIP" },
+            { time: "13:30 - 15:30", title: "Skill Station C: Suprascapular Block, Paravertebral Block, Occipital Block", speaker: "dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K) / dr. Mahmud, M.Sc., SpAn-TI, Subsp.MN(K), FIPM" },
+            { time: "15:30 - 16:00", title: "Post-Test and Closing", speaker: "-" },
           ],
         },
       ],

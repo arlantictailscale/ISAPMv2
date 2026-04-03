@@ -65,8 +65,8 @@ export default function FlipBookSection({ registeredCount }: FlipBookSectionProp
             allow="clipboard-write"
             scrolling="no"
             className="w-full border border-border rounded-lg shadow-lg"
-            src="https://heyzine.com/flip-book/0b71dfd677.html"
-            style={{ height: "600px" }}
+            src="https://heyzine.com/flip-book/5b02458371.html"
+            style={{ height: "443px" }}
             title="Conference Flip Book"
           />
         </div>

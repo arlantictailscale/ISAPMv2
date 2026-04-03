@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/server"
 import { deriveProvinceFromInstitution, INDONESIA_PROVINCES } from "@/lib/data/indonesia-provinces"
+import { revalidatePath } from "next/cache"
 
 export interface ProvinceDistribution {
   provinceId: string
@@ -19,6 +20,7 @@ export interface ParticipantMapData {
 /**
  * Get participant distribution by province for verified (paid) orders only
  * Derives province from institution name
+ * Revalidates every hour to ensure fresh data
  */
 export async function getParticipantDistribution(): Promise<ParticipantMapData> {
   const supabase = createAdminClient()
@@ -75,6 +77,9 @@ export async function getParticipantDistribution(): Promise<ParticipantMapData> 
 
   // Sort by count descending
   provinces.sort((a, b) => b.count - a.count)
+
+  // Revalidate home page to show latest participant stats
+  revalidatePath("/")
 
   return {
     provinces,

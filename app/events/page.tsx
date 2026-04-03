@@ -607,36 +607,36 @@ export default function EventsPage() {
       },
       {
         title: "Break",
-        items: [{ time: "12:50 - 13:15", activity: "Lunch Break", speaker: "-" }],
+        items: [{ time: "12:50 - 13:15", activity: "Lunch Break (ISHOMA)", speaker: "-" }],
       },
       {
         title: "Regenerative Pain Symposium",
         items: [
           {
-            time: "13:00 - 13:15",
+            time: "13:15 - 13:30",
             activity: "Industrial Symposium",
             speaker: "dr. Puja Laksana Maqbul, Sp.An-TI, FIPM, FIPP",
           },
           {
-            time: "13:15 - 13:35",
+            time: "13:30 - 13:50",
             activity:
               "Regenerative Pain Medicine: From Biologic Science to Ultrasound-Guided Clinical Application",
             speaker: "dr. Said Sofwan, SpAn-TI., FIPP., FIP",
           },
           {
-            time: "13:35 - 13:55",
+            time: "13:50 - 14:10",
             activity:
               "Secretome and Exosome-Based Therapy: Evidence, Mechanism, and Clinical Potential in Pain and Tissue Repair",
             speaker: "dr. Nur Surya Wirawan., Sp.An-TI., Subsp.MN(K)., MARS., AIFO(K)",
           },
           {
-            time: "13:55 - 14:15",
+            time: "14:10 - 14:30",
             activity:
               "Comparative Effectiveness of Regenerative Pain Interventions: PRP, Stem Cell, and Biologic Derivatives in Chronic Pain Management",
             speaker: "dr. Ahmad Muttaqin 'Alim, Sp.An-TI., FIP., MSc., DM",
           },
           {
-            time: "14:15 - 14:25",
+            time: "14:30 - 14:40",
             activity: "DISCUSSION",
             speaker: "Moderator: dr. Wayan Widana, Sp.An-TI, FIP, FIPP, CIPS, Subsp. M.N (K)",
           },
@@ -645,26 +645,26 @@ export default function EventsPage() {
       {
         title: "High Technology Pain Management Symposium",
         items: [
-          { time: "14:25 - 14:45", activity: "Industrial Symposium", speaker: "-" },
+          { time: "14:40 - 15:00", activity: "Industrial Symposium", speaker: "-" },
           {
-            time: "14:45 - 15:05",
+            time: "15:00 - 15:20",
             activity:
               "Radiofrequency Interventions for Chronic Pain: Current Evidence, Expanding Indications, and Long-Term Outcomes",
             speaker: "Dr. dr. Ristiawan Muji Laksono, Sp. An-TI., Subsp. M. N. (K)., FIPP",
           },
           {
-            time: "15:05 - 15:25",
+            time: "15:20 - 15:40",
             activity: "From Needles to Neuromodulation: Advances in Minimally Invasive Pain Procedures",
             speaker: "dr. Mirza Koeshardiandi, SpAn-TI., FIP., FIPP",
           },
           {
-            time: "15:25 - 15:45",
+            time: "15:40 - 16:00",
             activity:
               "Hybrid Regenerative-Radiofrequency Techniques: Combining Biologic and Thermal Modulation for Enhanced Pain Relief",
             speaker: "dr. Dedi Susila, Sp.An, Subsp. M.N (K)., FIP, FIPP",
           },
           {
-            time: "15:45 - 15:55",
+            time: "16:00 - 16:10",
             activity: "DISCUSSION",
             speaker: "Moderator: dr. Buyung Hartiyo Laksono, Sp. An-TI., Subsp.N.An.(K)., FIP",
           },
@@ -673,25 +673,25 @@ export default function EventsPage() {
       {
         title: "Drug and Equipment in Cancer Pain Management",
         items: [
-          { time: "15:55 - 16:10", activity: "Industrial Symposium", speaker: "-" },
+          { time: "16:10 - 16:25", activity: "Industrial Symposium", speaker: "-" },
           {
-            time: "15:55 - 16:15",
+            time: "16:25 - 16:45",
             activity:
               "Interventional Pain Procedures in Palliative Care: Balancing Efficacy, Safety, and Quality of Life",
             speaker: "Dr. dr. R. Dwi Pantja Wibowo, Sp.An-TI, Subsp. T.I. (K), Subsp. M.N. (K)",
           },
           {
-            time: "16:15 - 16:35",
+            time: "16:45 - 17:05",
             activity:
               "Integrated Palliative Pain Management: Bridging Pharmacologic, Interventional, and Psychosocial Strategies",
             speaker: "Dr. dr. Tasrif Hamdi M. Ked (An)., Sp.An-TI, Subsp. MN(K)",
           },
           {
-            time: "16:35 - 16:45",
+            time: "17:05 - 17:15",
             activity: "DISCUSSION",
             speaker: "Moderator: Dr. dr. Hari Bagianto, Sp. An-TI, Subsp. An.O (K), Subsp. MN(K)",
           },
-          { time: "16:45 - 17:00", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
+          { time: "17:15 - 17:30", activity: "Closing & E-Poster Winner Announcement", speaker: "Committee" },
         ],
       },
     ],

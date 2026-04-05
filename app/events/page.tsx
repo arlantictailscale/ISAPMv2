@@ -292,7 +292,7 @@ export default function EventsPage() {
     {
       no: 4,
       title: "Adjunct Therapy for Pain Management",
-      participant: "General Practitioner, Nurse, Anesthesia Nurse",
+      participant: "Anesthesiologist, Family Medicine and Primary Care Specialist, General Practitioner, Resident, Nurse, Nurse Anesthetist",
       director: "dr. Taufiq Agus Siswagama, Sp.An-TI., Subsp. M.N. (K)",
       date: "Friday, April 17, 2026",
       agenda: [

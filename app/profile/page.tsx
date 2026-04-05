@@ -506,6 +506,7 @@ export default function ProfilePage() {
                           >
                             <option value="">Select your profession</option>
                             <option value="Anestesiologist">Anestesiologist</option>
+                            <option value="Family Medicine and Primary Care Specialist">Family Medicine and Primary Care Specialist</option>
                             <option value="General Practitioner">General Practitioner</option>
                             <option value="Resident">Resident</option>
                             <option value="Nurse">Nurse</option>

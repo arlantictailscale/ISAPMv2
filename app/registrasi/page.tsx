@@ -65,6 +65,7 @@ export default function SecretPricingPage() {
 
   const professionToParticipantMap: Record<string, string[]> = {
     Anestesiologist: ["span", "span_team"],
+    "Family Medicine and Primary Care Specialist": ["dokter_sp_umum"],
     "General Practitioner": ["dokter_umum"],
     Resident: ["resident"],
     Nurse: ["perawat"],
@@ -194,6 +195,12 @@ export default function SecretPricingPage() {
         {
           id: "span",
           label: "Anesthesiologist",
+          onSitePrice: 2000000,
+          currency: "IDR",
+        },
+        {
+          id: "dokter_sp_umum",
+          label: "Family Medicine and Primary Care Specialist",
           onSitePrice: 2000000,
           currency: "IDR",
         },

@@ -97,6 +97,7 @@ export default function PricingPage() {
 
   const professionToParticipantMap: Record<string, string[]> = {
     Anestesiologist: ["span", "span_team"],
+    "Family Medicine and Primary Care Specialist": ["dokter_sp_umum"],
     "General Practitioner": ["dokter_umum"],
     Resident: ["resident"],
     Nurse: ["perawat"],
@@ -240,6 +241,14 @@ export default function PricingPage() {
         {
           id: "span",
           label: "Anesthesiologist",
+          earlyBirdPrice: 1500000,
+          normalPrice: 1750000,
+          onSitePrice: 2000000,
+          currency: "IDR",
+        },
+        {
+          id: "dokter_sp_umum",
+          label: "Family Medicine and Primary Care Specialist",
           earlyBirdPrice: 1500000,
           normalPrice: 1750000,
           onSitePrice: 2000000,

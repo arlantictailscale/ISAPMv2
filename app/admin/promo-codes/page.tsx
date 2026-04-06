@@ -105,6 +105,7 @@ const EVENT_OPTIONS = [
 const PARTICIPANT_OPTIONS = [
   { value: "all", label: "All Participants" },
   { value: "span", label: "Anesthesiologist" },
+  { value: "dokter_sp_umum", label: "Family Medicine and Primary Care Specialist" },
   { value: "resident", label: "Resident" },
   { value: "dokter_umum", label: "General Practitioner" },
   { value: "perawat", label: "Nurse" },

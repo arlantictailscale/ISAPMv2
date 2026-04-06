@@ -348,6 +348,14 @@ export default function PricingPage() {
           currency: "IDR",
         },
         {
+          id: "dokter_sp_umum",
+          label: "Family Medicine and Primary Care Specialist",
+          earlyBirdPrice: 2500000,
+          normalPrice: 3000000,
+          onSitePrice: 3500000,
+          currency: "IDR",
+        },
+        {
           id: "resident",
           label: "Resident",
           earlyBirdPrice: 1500000,

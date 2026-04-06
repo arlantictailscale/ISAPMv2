@@ -282,6 +282,12 @@ export default function SecretPricingPage() {
           currency: "IDR",
         },
         {
+          id: "dokter_sp_umum",
+          label: "Family Medicine and Primary Care Specialist",
+          onSitePrice: 3500000,
+          currency: "IDR",
+        },
+        {
           id: "resident",
           label: "Resident",
           onSitePrice: 2000000,

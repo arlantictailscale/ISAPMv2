@@ -14,6 +14,7 @@ const PUBLIC_PATHS = new Set([
   "/registrasi",
   "/privacy-policy",
   "/terms-of-service",
+  "/pain-clinic-survey",
   "/favicon.ico",
   "/robots.txt",
   "/sitemap.xml",

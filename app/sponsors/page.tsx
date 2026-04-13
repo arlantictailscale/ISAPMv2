@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Image from "next/image"
 import { Navigation } from "@/components/navigation"
-import { Footer } from "@/components/footer"
+import Footer from "@/components/footer"
 
 export const metadata: Metadata = {
   title: "Our Sponsors",

@@ -103,6 +103,9 @@ export default function ConfirmedAttendeesPage() {
           grouped[eventId].push({
             ...order,
             participant_type_label: item.participant_type_label,
+            unit_price: item.unit_price,
+            original_price: item.original_price,
+            discount_amount: item.discount_amount,
             verified_at: payment.verified_at,
           })
         } else if (item.item_type === "hotel") {
@@ -169,15 +172,27 @@ export default function ConfirmedAttendeesPage() {
     Object.entries(attendees).forEach(([eventId, list]) => {
       if (list.length === 0) return
       const sheetName = eventId.toUpperCase().substring(0, 31)
-      const wsData = list.map((a) => ({
-        "Full Name": a.full_name,
-        Email: a.email,
-        Phone: a.phone,
-        Institution: a.institution,
-        Position: a.position,
-        "Participant Type": a.participant_type_label,
-        "Verified At": a.verified_at ? format(new Date(a.verified_at), "MMM dd, yyyy") : "",
-      }))
+      const wsData = list.map((a) => {
+        const pricePaid = a.unit_price ?? 0
+        const originalPrice = a.original_price ?? pricePaid
+        const discountAmount = a.discount_amount ?? 0
+        let priceType = "Full Price"
+        if (discountAmount > 0) priceType = "Discounted"
+        else if (pricePaid < originalPrice) priceType = "Early Bird"
+        return {
+          "Full Name": a.full_name,
+          Email: a.email,
+          Phone: a.phone,
+          Institution: a.institution,
+          Position: a.position,
+          "Participant Type": a.participant_type_label,
+          "Price Paid (IDR)": pricePaid,
+          "Original Price (IDR)": originalPrice,
+          "Discount Amount (IDR)": discountAmount,
+          "Price Type": priceType,
+          "Verified At": a.verified_at ? format(new Date(a.verified_at), "MMM dd, yyyy") : "",
+        }
+      })
       const ws = XLSX.utils.json_to_sheet(wsData)
       XLSX.utils.book_append_sheet(wb, ws, sheetName)
     })
@@ -384,21 +399,40 @@ export default function ConfirmedAttendeesPage() {
                                 <th className="text-left py-2 px-2">Email</th>
                                 <th className="text-left py-2 px-2">Institution</th>
                                 <th className="text-left py-2 px-2">Type</th>
+                                <th className="text-left py-2 px-2">Price Paid</th>
+                                <th className="text-left py-2 px-2">Price Type</th>
                                 <th className="text-left py-2 px-2">Verified</th>
                               </tr>
                             </thead>
                             <tbody>
-                              {list.slice(0, 5).map((a, i) => (
-                                <tr key={i} className="border-b last:border-0">
-                                  <td className="py-2 px-2">{a.full_name || "-"}</td>
-                                  <td className="py-2 px-2">{a.email || "-"}</td>
-                                  <td className="py-2 px-2">{a.institution || "-"}</td>
-                                  <td className="py-2 px-2">{a.participant_type_label || "-"}</td>
-                                  <td className="py-2 px-2">
-                                    {a.verified_at ? format(new Date(a.verified_at), "MMM dd") : "-"}
-                                  </td>
-                                </tr>
-                              ))}
+                              {list.slice(0, 5).map((a, i) => {
+                                const pricePaid = a.unit_price ?? 0
+                                const originalPrice = a.original_price ?? pricePaid
+                                const discountAmount = a.discount_amount ?? 0
+                                let priceType = "Full Price"
+                                let priceTypeBadge = "bg-gray-100 text-gray-700"
+                                if (discountAmount > 0) { priceType = "Discounted"; priceTypeBadge = "bg-purple-100 text-purple-700" }
+                                else if (pricePaid < originalPrice) { priceType = "Early Bird"; priceTypeBadge = "bg-green-100 text-green-700" }
+                                return (
+                                  <tr key={i} className="border-b last:border-0">
+                                    <td className="py-2 px-2">{a.full_name || "-"}</td>
+                                    <td className="py-2 px-2">{a.email || "-"}</td>
+                                    <td className="py-2 px-2">{a.institution || "-"}</td>
+                                    <td className="py-2 px-2">{a.participant_type_label || "-"}</td>
+                                    <td className="py-2 px-2 font-medium">
+                                      {pricePaid > 0 ? `Rp ${pricePaid.toLocaleString("id-ID")}` : "-"}
+                                    </td>
+                                    <td className="py-2 px-2">
+                                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priceTypeBadge}`}>
+                                        {priceType}
+                                      </span>
+                                    </td>
+                                    <td className="py-2 px-2">
+                                      {a.verified_at ? format(new Date(a.verified_at), "MMM dd") : "-"}
+                                    </td>
+                                  </tr>
+                                )
+                              })}
                             </tbody>
                           </table>
                           {list.length > 5 && (

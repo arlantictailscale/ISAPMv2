@@ -75,6 +75,7 @@ const navItems = [
   { label: "Webinar", href: "/webinar" },
   { label: "e-Poster", href: "/call-for-papers" },
   { label: "Venue", href: "/venue" },
+  { label: "Sponsors", href: "/sponsors" },
   { label: "News", href: "/news" },
 ]
 

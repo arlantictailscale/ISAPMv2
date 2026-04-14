@@ -78,6 +78,7 @@ export default function AdminParticipantCardsPage() {
   const [eventFilter, setEventFilter] = useState<string>("all")
   const [selectedCard, setSelectedCard] = useState<ParticipantCard | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [updatingCheckIn, setUpdatingCheckIn] = useState(false)
 
   // Check admin access
   useEffect(() => {
@@ -175,6 +176,54 @@ export default function AdminParticipantCardsPage() {
     const revoked = 0 // Not implemented in current schema
     return { total, active, checkedIn, revoked }
   }, [cards])
+
+  const handleToggleCheckIn = async (card: ParticipantCard, newStatus: boolean) => {
+    setUpdatingCheckIn(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const updateData: {
+        is_checked_in: boolean
+        checked_in_at: string | null
+        checked_in_by: string | null
+      } = {
+        is_checked_in: newStatus,
+        checked_in_at: newStatus ? new Date().toISOString() : null,
+        checked_in_by: newStatus ? user?.id || null : null,
+      }
+      
+      const { error } = await supabase
+        .from("participant_cards")
+        .update(updateData)
+        .eq("id", card.id)
+      
+      if (error) throw error
+      
+      // Update local state
+      const updatedCard = { 
+        ...card, 
+        ...updateData 
+      }
+      setCards(prev => prev.map(c => c.id === card.id ? updatedCard : c))
+      setSelectedCard(updatedCard)
+      
+      toast({
+        title: newStatus ? "Checked In" : "Check-in Reverted",
+        description: newStatus 
+          ? `${card.full_name} has been manually checked in.`
+          : `${card.full_name}'s check-in has been reverted to active.`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update check-in status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingCheckIn(false)
+    }
+  }
 
   const handleExport = async () => {
     setExporting(true)
@@ -519,6 +568,50 @@ export default function AdminParticipantCardsPage() {
                     </span>
                   </div>
                 )}
+              </div>
+
+              {/* Manual Check-in Toggle */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Check-in Status</p>
+                    <p className="text-sm text-gray-500">
+                      {selectedCard.is_checked_in 
+                        ? "Participant has checked in" 
+                        : "Participant has not checked in yet"}
+                    </p>
+                  </div>
+                  {selectedCard.is_checked_in ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleCheckIn(selectedCard, false)}
+                      disabled={updatingCheckIn}
+                      className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                    >
+                      {updatingCheckIn ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <XCircle className="w-4 h-4 mr-2" />
+                      )}
+                      Revert to Active
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleToggleCheckIn(selectedCard, true)}
+                      disabled={updatingCheckIn}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {updatingCheckIn ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                      )}
+                      Mark as Checked In
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           )}

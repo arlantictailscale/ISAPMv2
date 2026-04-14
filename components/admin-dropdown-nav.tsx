@@ -17,6 +17,8 @@ import {
   Send,
   Calendar,
   BarChart3,
+  ScanLine,
+  QrCode,
 } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
@@ -24,6 +26,8 @@ import { cn } from "@/lib/utils"
 
 const adminNavItems = [
   { title: "Events Dashboard", href: "/admin/events", icon: Calendar },
+  { title: "Check-In Scanner", href: "/admin/check-in", icon: ScanLine },
+  { title: "Participant Cards", href: "/admin/participant-cards", icon: QrCode },
   { title: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
   { title: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
   { title: "Invoice Management", href: "/admin/invoices", icon: Receipt },

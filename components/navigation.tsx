@@ -35,6 +35,8 @@ import {
   BarChart3,
   Tag,
   Newspaper,
+  ScanLine,
+  QrCode,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -51,6 +53,8 @@ import { CartIcon } from "@/components/cart/cart-icon"
 
 const adminNavItems = [
   { label: "Events Dashboard", href: "/admin/events", icon: Calendar },
+  { label: "Check-In Scanner", href: "/admin/check-in", icon: ScanLine },
+  { label: "Participant Cards", href: "/admin/participant-cards", icon: QrCode },
   { label: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
   { label: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
   { label: "Invoice Management", href: "/admin/invoices", icon: Receipt },
@@ -63,10 +67,10 @@ const adminNavItems = [
   { label: "Hotel Management", href: "/admin/hotel-management", icon: Hotel },
   { label: "Room Availability", href: "/admin/room-availability", icon: BedDouble },
   { label: "Email Test", href: "/admin/email-test", icon: Mail },
-{ label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
-{ label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
-{ label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
-{ label: "News CMS", href: "/admin/news-cms", icon: Newspaper },
+  { label: "Email Broadcast", href: "/admin/email-broadcast", icon: Send },
+  { label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
+  { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
+  { label: "News CMS", href: "/admin/news-cms", icon: Newspaper },
 ]
 
 const navItems = [

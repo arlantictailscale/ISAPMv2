@@ -27,12 +27,11 @@ export function MobileBottomNav() {
       setIsLoggedIn(!!session?.user)
       
       if (session?.user) {
-        // Fetch the user's first participant card
+        // Fetch the user's first participant card (most recent)
         const { data: card } = await supabase
           .from("participant_cards")
           .select("order_id")
           .eq("user_id", session.user.id)
-          .eq("status", "active")
           .order("issued_at", { ascending: false })
           .limit(1)
           .single()

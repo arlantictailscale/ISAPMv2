@@ -6,14 +6,14 @@ import { useState } from "react"
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, CalendarDays, Video, Hotel, Receipt } from "lucide-react"
+import { LayoutDashboard, CalendarDays, CreditCard, Hotel, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createBrowserClient } from "@supabase/ssr"
 
 const navItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/my-events", icon: CalendarDays, label: "My Events" },
-  { href: "/my-webinars", icon: Video, label: "Webinars" },
+  { href: "/my-events/participant-card", icon: CreditCard, label: "My Card" },
   { href: "/my-hotels", icon: Hotel, label: "Hotel" },
   { href: "/my-purchases", icon: Receipt, label: "Purchases" },
 ]

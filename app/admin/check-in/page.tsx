@@ -31,13 +31,11 @@ import {
 
 interface ParticipantCard {
   id: string
-  card_number: string
-  secure_token: string
+  card_token: string
   user_id: string
   order_id: string
   full_name: string
   email: string
-  phone: string | null
   institution: string | null
   position: string | null
   events: Array<{
@@ -46,7 +44,7 @@ interface ParticipantCard {
     participant_type: string
     participant_type_label: string
   }>
-  status: string
+  is_checked_in: boolean
   issued_at: string
   checked_in_at: string | null
   checked_in_by: string | null
@@ -111,7 +109,7 @@ export default function AdminCheckInPage() {
     const { count: checkedIn } = await supabase
       .from("participant_cards")
       .select("*", { count: "exact", head: true })
-      .eq("status", "checked_in")
+      .eq("is_checked_in", true)
 
     setStats({ total: total || 0, checkedIn: checkedIn || 0 })
   }
@@ -121,7 +119,7 @@ export default function AdminCheckInPage() {
     const { data } = await supabase
       .from("participant_cards")
       .select("*")
-      .eq("status", "checked_in")
+      .eq("is_checked_in", true)
       .order("checked_in_at", { ascending: false })
       .limit(5)
 
@@ -142,11 +140,11 @@ export default function AdminCheckInPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Look up the participant card
+      // Look up the participant card by token or card_token
       const { data: card, error } = await supabase
         .from("participant_cards")
         .select("*")
-        .eq("secure_token", token)
+        .eq("card_token", token)
         .single()
 
       if (error || !card) {
@@ -158,7 +156,7 @@ export default function AdminCheckInPage() {
       }
 
       // Check if already checked in
-      if (card.status === "checked_in") {
+      if (card.is_checked_in) {
         setScanResult({
           status: "already_checked_in",
           card,
@@ -171,7 +169,7 @@ export default function AdminCheckInPage() {
       const { error: updateError } = await supabase
         .from("participant_cards")
         .update({
-          status: "checked_in",
+          is_checked_in: true,
           checked_in_at: new Date().toISOString(),
           checked_in_by: user?.id,
         })
@@ -181,7 +179,7 @@ export default function AdminCheckInPage() {
 
       const updatedCard = {
         ...card,
-        status: "checked_in",
+        is_checked_in: true,
         checked_in_at: new Date().toISOString(),
         checked_in_by: user?.id,
       }
@@ -213,19 +211,37 @@ export default function AdminCheckInPage() {
 
   const startScanner = async () => {
     try {
+      // Stop any existing scanner first
+      if (scannerRef.current) {
+        try {
+          await scannerRef.current.stop()
+        } catch (e) {
+          // Ignore stop errors
+        }
+        scannerRef.current = null
+      }
+
       const html5QrCode = new Html5Qrcode("qr-reader")
       scannerRef.current = html5QrCode
 
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.0,
+      }
+
       await html5QrCode.start(
         { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
+        config,
         (decodedText) => {
           // Stop scanner and process the code
           html5QrCode.stop().then(() => {
             setScanning(false)
+            scannerRef.current = null
+            processQRCode(decodedText)
+          }).catch(() => {
+            setScanning(false)
+            scannerRef.current = null
             processQRCode(decodedText)
           })
         },
@@ -236,12 +252,34 @@ export default function AdminCheckInPage() {
 
       setScanning(true)
     } catch (err: any) {
-      console.error("Failed to start scanner:", err)
-      toast({
-        title: "Camera Error",
-        description: "Could not access camera. Please check permissions or use manual entry.",
-        variant: "destructive",
-      })
+      console.error("[v0] Failed to start scanner:", err)
+      
+      // Try with user-facing camera as fallback
+      try {
+        const html5QrCode = new Html5Qrcode("qr-reader")
+        scannerRef.current = html5QrCode
+        
+        await html5QrCode.start(
+          { facingMode: "user" },
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          (decodedText) => {
+            html5QrCode.stop().then(() => {
+              setScanning(false)
+              scannerRef.current = null
+              processQRCode(decodedText)
+            })
+          },
+          () => {}
+        )
+        setScanning(true)
+      } catch (fallbackErr) {
+        console.error("[v0] Fallback camera also failed:", fallbackErr)
+        toast({
+          title: "Camera Error",
+          description: err.message || "Could not access camera. Please check permissions or use manual entry.",
+          variant: "destructive",
+        })
+      }
     }
   }
 
@@ -296,7 +334,7 @@ export default function AdminCheckInPage() {
               <h1 className="text-2xl font-bold text-gray-900">Check-In Scanner</h1>
               <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
             </div>
-            <Button variant="outline" onClick={() => router.push("/admin")}>
+            <Button variant="outline" onClick={() => router.push("/admin/events")}>
               Back to Admin
             </Button>
           </div>
@@ -393,7 +431,7 @@ export default function AdminCheckInPage() {
                           )}
                           <div className="flex items-center gap-2 text-gray-600">
                             <QrCode className="w-4 h-4" />
-                            <span className="font-mono text-xs">{scanResult.card.card_number}</span>
+                            <span className="font-mono text-xs">{scanResult.card.card_token.substring(0, 12)}...</span>
                           </div>
                         </div>
 

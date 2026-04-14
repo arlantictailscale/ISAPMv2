@@ -48,13 +48,11 @@ import {
 
 interface ParticipantCard {
   id: string
-  card_number: string
-  secure_token: string
+  card_token: string
   user_id: string
   order_id: string
   full_name: string
   email: string
-  phone: string | null
   institution: string | null
   position: string | null
   events: Array<{
@@ -63,7 +61,7 @@ interface ParticipantCard {
     participant_type: string
     participant_type_label: string
   }>
-  status: string
+  is_checked_in: boolean
   issued_at: string
   checked_in_at: string | null
   checked_in_by: string | null
@@ -153,11 +151,12 @@ export default function AdminParticipantCardsPage() {
         !searchQuery ||
         card.full_name.toLowerCase().includes(searchLower) ||
         card.email.toLowerCase().includes(searchLower) ||
-        card.card_number.toLowerCase().includes(searchLower) ||
+        card.card_token.toLowerCase().includes(searchLower) ||
         (card.institution && card.institution.toLowerCase().includes(searchLower))
 
       // Status filter
-      const matchesStatus = statusFilter === "all" || card.status === statusFilter
+      const cardStatus = card.is_checked_in ? "checked_in" : "active"
+    const matchesStatus = statusFilter === "all" || cardStatus === statusFilter
 
       // Event filter
       const matchesEvent =
@@ -171,9 +170,9 @@ export default function AdminParticipantCardsPage() {
   // Stats
   const stats = useMemo(() => {
     const total = cards.length
-    const active = cards.filter((c) => c.status === "active").length
-    const checkedIn = cards.filter((c) => c.status === "checked_in").length
-    const revoked = cards.filter((c) => c.status === "revoked").length
+    const checkedIn = cards.filter((c) => c.is_checked_in).length
+    const active = cards.length - checkedIn
+    const revoked = 0 // Not implemented in current schema
     return { total, active, checkedIn, revoked }
   }, [cards])
 
@@ -181,7 +180,7 @@ export default function AdminParticipantCardsPage() {
     setExporting(true)
     try {
       const exportData = filteredCards.map((card) => ({
-        "Card Number": card.card_number,
+        "Card Token": card.card_token.substring(0, 12) + "...",
         "Full Name": card.full_name,
         Email: card.email,
         Phone: card.phone || "",
@@ -189,7 +188,7 @@ export default function AdminParticipantCardsPage() {
         Position: card.position || "",
         Events: card.events.map((e) => e.event_label).join(", "),
         "Participant Types": card.events.map((e) => e.participant_type_label).join(", "),
-        Status: card.status,
+        Status: card.is_checked_in ? "Checked In" : "Active",
         "Issued At": card.issued_at ? format(new Date(card.issued_at), "yyyy-MM-dd HH:mm") : "",
         "Checked In At": card.checked_in_at ? format(new Date(card.checked_in_at), "yyyy-MM-dd HH:mm") : "",
       }))
@@ -259,7 +258,7 @@ export default function AdminParticipantCardsPage() {
                 <ScanLine className="w-4 h-4 mr-2" />
                 Scanner
               </Button>
-              <Button variant="outline" onClick={() => router.push("/admin")}>
+              <Button variant="outline" onClick={() => router.push("/admin/events")}>
                 Back to Admin
               </Button>
             </div>
@@ -405,7 +404,7 @@ export default function AdminParticipantCardsPage() {
                   ) : (
                     filteredCards.map((card) => (
                       <TableRow key={card.id} className="hover:bg-gray-50">
-                        <TableCell className="font-mono text-sm">{card.card_number}</TableCell>
+                        <TableCell className="font-mono text-sm">{card.card_token.substring(0, 8)}...</TableCell>
                         <TableCell>
                           <div>
                             <p className="font-medium text-gray-900">{card.full_name}</p>
@@ -429,7 +428,7 @@ export default function AdminParticipantCardsPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{getStatusBadge(card.status)}</TableCell>
+                        <TableCell>{getStatusBadge(card.is_checked_in ? "checked_in" : "active")}</TableCell>
                         <TableCell className="text-sm text-gray-600">
                           {format(new Date(card.issued_at), "MMM d, yyyy")}
                         </TableCell>
@@ -480,7 +479,7 @@ export default function AdminParticipantCardsPage() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-900">{selectedCard.full_name}</h3>
                   <p className="text-gray-600">{selectedCard.position}</p>
-                  {getStatusBadge(selectedCard.status)}
+                  {getStatusBadge(selectedCard.is_checked_in ? "checked_in" : "active")}
                 </div>
               </div>
 
@@ -488,7 +487,7 @@ export default function AdminParticipantCardsPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-2 text-gray-600">
                   <QrCode className="w-4 h-4" />
-                  <span className="font-mono">{selectedCard.card_number}</span>
+                  <span className="font-mono text-sm">{selectedCard.card_token.substring(0, 16)}...</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <Mail className="w-4 h-4" />

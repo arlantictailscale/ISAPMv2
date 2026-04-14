@@ -226,17 +226,17 @@ export default function AdminCheckInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <Navigation />
 
-      <main className="container mx-auto px-4 pt-24 pb-8">
+      <main className="container mx-auto px-4 pt-24 pb-8 max-w-full overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Check-In Scanner</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Check-In Scanner</h1>
             <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
           </div>
-          <Button variant="outline" onClick={() => router.push("/admin/events")}>
+          <Button variant="outline" onClick={() => router.push("/admin/events")} className="self-start sm:self-auto flex-shrink-0">
             Back to Admin
           </Button>
         </div>
@@ -278,8 +278,8 @@ export default function AdminCheckInPage() {
               <CardContent className="p-6">
                 {scanResult ? (
                   // Scan Result
-                  <div className="space-y-6">
-                    <div className="text-center">
+                  <div className="space-y-6 overflow-hidden">
+                    <div className="text-center px-2">
                       {scanResult.status === "success" && (
                         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                           <CheckCircle2 className="w-10 h-10 text-green-600" />
@@ -301,48 +301,48 @@ export default function AdminCheckInPage() {
                         {scanResult.status === "not_found" && "Not Found"}
                         {scanResult.status === "error" && "Error"}
                       </h3>
-                      <p className="text-gray-600">{scanResult.message}</p>
+                      <p className="text-gray-600 break-words">{scanResult.message}</p>
                     </div>
 
                     {scanResult.card && (
-                      <div className="bg-gray-50 rounded-xl p-6 space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
-                            <User className="w-8 h-8 text-teal-600" />
+                      <div className="bg-gray-50 rounded-xl p-4 sm:p-6 space-y-4 overflow-hidden">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+                            <User className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600" />
                           </div>
-                          <div>
-                            <h4 className="text-xl font-bold text-gray-900">{scanResult.card.full_name}</h4>
-                            <p className="text-gray-600">{scanResult.card.position}</p>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{scanResult.card.full_name}</h4>
+                            <p className="text-gray-600 text-sm sm:text-base truncate">{scanResult.card.position}</p>
                           </div>
                         </div>
 
                         <div className="grid gap-2 text-sm">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Mail className="w-4 h-4" />
-                            <span>{scanResult.card.email}</span>
+                          <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">{scanResult.card.email}</span>
                           </div>
                           {scanResult.card.institution && (
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Building className="w-4 h-4" />
-                              <span>{scanResult.card.institution}</span>
+                            <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                              <Building className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{scanResult.card.institution}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <QrCode className="w-4 h-4" />
-                            <span className="font-mono text-xs">{scanResult.card.card_token.substring(0, 12)}...</span>
+                          <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                            <QrCode className="w-4 h-4 flex-shrink-0" />
+                            <span className="font-mono text-xs truncate">{scanResult.card.card_token.substring(0, 12)}...</span>
                           </div>
                         </div>
 
                         <div className="pt-4 border-t">
                           <h5 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-teal-600" />
+                            <Calendar className="w-4 h-4 text-teal-600 flex-shrink-0" />
                             Registered Events
                           </h5>
                           <div className="space-y-2">
                             {scanResult.card.events.map((event, i) => (
-                              <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
-                                <span className="font-medium text-gray-900 text-sm">{event.event_label}</span>
-                                <Badge variant="secondary" className="text-xs">
+                              <div key={i} className="flex items-center justify-between gap-2 bg-white rounded-lg px-3 py-2">
+                                <span className="font-medium text-gray-900 text-sm truncate">{event.event_label}</span>
+                                <Badge variant="secondary" className="text-xs flex-shrink-0">
                                   {event.participant_type_label}
                                 </Badge>
                               </div>

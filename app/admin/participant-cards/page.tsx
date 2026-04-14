@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import * as XLSX from "xlsx"
 import { createClient } from "@/lib/supabase/client"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -243,6 +245,7 @@ export default function AdminParticipantCardsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navigation />
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -536,6 +539,7 @@ export default function AdminParticipantCardsPage() {
           )}
         </DialogContent>
       </Dialog>
+      <Footer />
     </div>
   )
 }

@@ -84,22 +84,31 @@ export default function ParticipantCardPage() {
     fetchCard()
   }, [orderId, router])
 
-  const handleDownload = () => {
-    if (!cardRef.current) return
+  const handleDownload = async () => {
+    if (!cardRef.current || !card) return
 
-    // Create a canvas from the card element
-    import("html2canvas").then(({ default: html2canvas }) => {
-      html2canvas(cardRef.current!, {
+    try {
+      // Dynamically import html2canvas
+      const html2canvas = (await import("html2canvas")).default
+      
+      const canvas = await html2canvas(cardRef.current, {
         scale: 2,
         backgroundColor: "#ffffff",
         useCORS: true,
-      }).then((canvas) => {
-        const link = document.createElement("a")
-        link.download = `participant-card-${card?.card_token.substring(0, 8)}.png`
-        link.href = canvas.toDataURL("image/png")
-        link.click()
+        logging: false,
+        allowTaint: true,
       })
-    })
+      
+      const link = document.createElement("a")
+      link.download = `ISAPM2026-participant-card-${card.full_name.replace(/[^a-zA-Z0-9]/g, "_")}.png`
+      link.href = canvas.toDataURL("image/png")
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (err) {
+      console.error("Failed to download card:", err)
+      alert("Failed to download card. Please try using the Print option instead.")
+    }
   }
 
   const handlePrint = () => {
@@ -186,6 +195,7 @@ export default function ParticipantCardPage() {
           {/* Participant Card */}
           <div
             ref={cardRef}
+            id="participant-card-printable"
             className="bg-white rounded-2xl shadow-xl overflow-hidden print:shadow-none print:rounded-none"
           >
             {/* Card Header */}
@@ -330,18 +340,46 @@ export default function ParticipantCardPage() {
       {/* Print Styles */}
       <style jsx global>{`
         @media print {
+          /* Hide everything by default */
           body * {
             visibility: hidden;
           }
-          #__next > div > main > div > div:nth-child(2),
-          #__next > div > main > div > div:nth-child(2) * {
-            visibility: visible;
+          
+          /* Show only the participant card */
+          #participant-card-printable,
+          #participant-card-printable * {
+            visibility: visible !important;
           }
-          #__next > div > main > div > div:nth-child(2) {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+          
+          /* Position the card at the top */
+          #participant-card-printable {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          
+          /* Ensure backgrounds print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          /* Hide navigation and footer */
+          nav, footer, .print\\:hidden {
+            display: none !important;
+          }
+          
+          /* Ensure proper page sizing */
+          @page {
+            margin: 0.5in;
+            size: auto;
           }
         }
       `}</style>

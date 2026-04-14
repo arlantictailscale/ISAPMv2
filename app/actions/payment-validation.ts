@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { sendPaymentVerificationEmail, sendPaymentConfirmationWithInvoice } from "@/lib/email"
 import { generateSequentialInvoiceNumber } from "@/lib/invoice/invoice-number"
 import { grantSymposiumWebinarAccess, orderContainsSymposium } from "@/app/actions/webinar-access"
+import { generateParticipantCard } from "@/app/actions/generate-participant-card"
 import { invalidateWebinarAccessCache, invalidateUserOrdersCache, invalidateRoomAvailabilityCache } from "@/lib/cache"
 
 export async function approvePayment(paymentId: string, orderId: string, calculatedTotal?: number) {
@@ -81,6 +82,19 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
     } catch (grantError) {
       console.error("[v0] Error checking/granting symposium webinar access:", grantError)
       // Don't fail the payment approval if webinar grant fails
+    }
+
+    // Generate participant card for the verified order
+    try {
+      const cardResult = await generateParticipantCard(orderId)
+      if (cardResult.success) {
+        console.log("[v0] Participant card generated:", cardResult.cardNumber)
+      } else {
+        console.error("[v0] Failed to generate participant card:", cardResult.error)
+      }
+    } catch (cardError) {
+      console.error("[v0] Error generating participant card:", cardError)
+      // Don't fail the payment approval if card generation fails
     }
 
     try {

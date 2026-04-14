@@ -1,0 +1,545 @@
+"use client"
+
+import { useEffect, useState, useRef, useCallback } from "react"
+import { useRouter } from "next/navigation"
+import { Html5Qrcode } from "html5-qrcode"
+import { format } from "date-fns"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+import {
+  Camera,
+  CameraOff,
+  Search,
+  User,
+  Mail,
+  Building,
+  Briefcase,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Loader2,
+  RotateCcw,
+  QrCode,
+} from "lucide-react"
+
+interface ParticipantCard {
+  id: string
+  card_number: string
+  secure_token: string
+  user_id: string
+  order_id: string
+  full_name: string
+  email: string
+  phone: string | null
+  institution: string | null
+  position: string | null
+  events: Array<{
+    event_id: string
+    event_label: string
+    participant_type: string
+    participant_type_label: string
+  }>
+  status: string
+  issued_at: string
+  checked_in_at: string | null
+  checked_in_by: string | null
+}
+
+type ScanResult = {
+  status: "success" | "already_checked_in" | "not_found" | "error"
+  card?: ParticipantCard
+  message: string
+}
+
+export default function AdminCheckInPage() {
+  const router = useRouter()
+  const { toast } = useToast()
+  const scannerRef = useRef<Html5Qrcode | null>(null)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [scanning, setScanning] = useState(false)
+  const [manualCode, setManualCode] = useState("")
+  const [processing, setProcessing] = useState(false)
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [recentCheckIns, setRecentCheckIns] = useState<ParticipantCard[]>([])
+  const [stats, setStats] = useState({ total: 0, checkedIn: 0 })
+
+  // Check admin access
+  useEffect(() => {
+    async function checkAuth() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single()
+
+      if (profile?.role !== "admin") {
+        router.push("/")
+        return
+      }
+
+      setIsAdmin(true)
+      setLoading(false)
+      fetchStats()
+      fetchRecentCheckIns()
+    }
+
+    checkAuth()
+  }, [router])
+
+  const fetchStats = async () => {
+    const supabase = createClient()
+    const { count: total } = await supabase
+      .from("participant_cards")
+      .select("*", { count: "exact", head: true })
+
+    const { count: checkedIn } = await supabase
+      .from("participant_cards")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "checked_in")
+
+    setStats({ total: total || 0, checkedIn: checkedIn || 0 })
+  }
+
+  const fetchRecentCheckIns = async () => {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from("participant_cards")
+      .select("*")
+      .eq("status", "checked_in")
+      .order("checked_in_at", { ascending: false })
+      .limit(5)
+
+    if (data) setRecentCheckIns(data)
+  }
+
+  const processQRCode = useCallback(async (code: string) => {
+    if (processing) return
+    setProcessing(true)
+
+    try {
+      // Extract token from QR code (format: ISAPM2026:token)
+      let token = code
+      if (code.startsWith("ISAPM2026:")) {
+        token = code.replace("ISAPM2026:", "")
+      }
+
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      // Look up the participant card
+      const { data: card, error } = await supabase
+        .from("participant_cards")
+        .select("*")
+        .eq("secure_token", token)
+        .single()
+
+      if (error || !card) {
+        setScanResult({
+          status: "not_found",
+          message: "No participant found with this QR code. Please verify the code is correct.",
+        })
+        return
+      }
+
+      // Check if already checked in
+      if (card.status === "checked_in") {
+        setScanResult({
+          status: "already_checked_in",
+          card,
+          message: `This participant was already checked in on ${format(new Date(card.checked_in_at!), "MMM d, yyyy 'at' h:mm a")}`,
+        })
+        return
+      }
+
+      // Perform check-in
+      const { error: updateError } = await supabase
+        .from("participant_cards")
+        .update({
+          status: "checked_in",
+          checked_in_at: new Date().toISOString(),
+          checked_in_by: user?.id,
+        })
+        .eq("id", card.id)
+
+      if (updateError) throw updateError
+
+      const updatedCard = {
+        ...card,
+        status: "checked_in",
+        checked_in_at: new Date().toISOString(),
+        checked_in_by: user?.id,
+      }
+
+      setScanResult({
+        status: "success",
+        card: updatedCard,
+        message: "Check-in successful!",
+      })
+
+      toast({
+        title: "Check-in Successful",
+        description: `${card.full_name} has been checked in.`,
+      })
+
+      // Refresh stats and recent check-ins
+      fetchStats()
+      fetchRecentCheckIns()
+    } catch (err: any) {
+      console.error("Check-in error:", err)
+      setScanResult({
+        status: "error",
+        message: err.message || "An error occurred during check-in",
+      })
+    } finally {
+      setProcessing(false)
+    }
+  }, [processing, toast])
+
+  const startScanner = async () => {
+    try {
+      const html5QrCode = new Html5Qrcode("qr-reader")
+      scannerRef.current = html5QrCode
+
+      await html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText) => {
+          // Stop scanner and process the code
+          html5QrCode.stop().then(() => {
+            setScanning(false)
+            processQRCode(decodedText)
+          })
+        },
+        () => {
+          // QR code not detected - ignore
+        }
+      )
+
+      setScanning(true)
+    } catch (err: any) {
+      console.error("Failed to start scanner:", err)
+      toast({
+        title: "Camera Error",
+        description: "Could not access camera. Please check permissions or use manual entry.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const stopScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop()
+        scannerRef.current = null
+      } catch (err) {
+        console.error("Error stopping scanner:", err)
+      }
+    }
+    setScanning(false)
+  }
+
+  const handleManualSearch = () => {
+    if (!manualCode.trim()) return
+    processQRCode(manualCode.trim())
+    setManualCode("")
+  }
+
+  const resetScan = () => {
+    setScanResult(null)
+    setManualCode("")
+  }
+
+  // Cleanup scanner on unmount
+  useEffect(() => {
+    return () => {
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {})
+      }
+    }
+  }, [])
+
+  if (loading || !isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Check-In Scanner</h1>
+              <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
+            </div>
+            <Button variant="outline" onClick={() => router.push("/admin")}>
+              Back to Admin
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Scanner Section */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center">
+                      <User className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+                      <p className="text-sm text-gray-500">Total Cards</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="border-0 shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-gray-900">{stats.checkedIn}</p>
+                      <p className="text-sm text-gray-500">Checked In</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Scanner / Result Area */}
+            <Card className="border-0 shadow-lg">
+              <CardContent className="p-6">
+                {scanResult ? (
+                  // Scan Result
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      {scanResult.status === "success" && (
+                        <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                          <CheckCircle2 className="w-10 h-10 text-green-600" />
+                        </div>
+                      )}
+                      {scanResult.status === "already_checked_in" && (
+                        <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                          <AlertCircle className="w-10 h-10 text-amber-600" />
+                        </div>
+                      )}
+                      {(scanResult.status === "not_found" || scanResult.status === "error") && (
+                        <div className="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4">
+                          <XCircle className="w-10 h-10 text-red-600" />
+                        </div>
+                      )}
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                        {scanResult.status === "success" && "Check-In Successful"}
+                        {scanResult.status === "already_checked_in" && "Already Checked In"}
+                        {scanResult.status === "not_found" && "Not Found"}
+                        {scanResult.status === "error" && "Error"}
+                      </h3>
+                      <p className="text-gray-600">{scanResult.message}</p>
+                    </div>
+
+                    {scanResult.card && (
+                      <div className="bg-gray-50 rounded-xl p-6 space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
+                            <User className="w-8 h-8 text-teal-600" />
+                          </div>
+                          <div>
+                            <h4 className="text-xl font-bold text-gray-900">{scanResult.card.full_name}</h4>
+                            <p className="text-gray-600">{scanResult.card.position}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <Mail className="w-4 h-4" />
+                            <span>{scanResult.card.email}</span>
+                          </div>
+                          {scanResult.card.institution && (
+                            <div className="flex items-center gap-2 text-gray-600">
+                              <Building className="w-4 h-4" />
+                              <span>{scanResult.card.institution}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2 text-gray-600">
+                            <QrCode className="w-4 h-4" />
+                            <span className="font-mono text-xs">{scanResult.card.card_number}</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t">
+                          <h5 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-teal-600" />
+                            Registered Events
+                          </h5>
+                          <div className="space-y-2">
+                            {scanResult.card.events.map((event, i) => (
+                              <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
+                                <span className="font-medium text-gray-900 text-sm">{event.event_label}</span>
+                                <Badge variant="secondary" className="text-xs">
+                                  {event.participant_type_label}
+                                </Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button onClick={resetScan} className="w-full bg-teal-600 hover:bg-teal-700">
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Scan Next Participant
+                    </Button>
+                  </div>
+                ) : (
+                  // Scanner
+                  <div className="space-y-6">
+                    {/* Camera Scanner */}
+                    <div className="relative">
+                      <div
+                        id="qr-reader"
+                        className={`w-full aspect-square max-w-md mx-auto rounded-xl overflow-hidden bg-gray-900 ${
+                          scanning ? "" : "flex items-center justify-center"
+                        }`}
+                      >
+                        {!scanning && (
+                          <div className="text-center text-gray-400 p-8">
+                            <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                            <p>Click Start Scanner to activate camera</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {processing && (
+                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl">
+                          <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex justify-center">
+                      {scanning ? (
+                        <Button variant="destructive" onClick={stopScanner}>
+                          <CameraOff className="w-4 h-4 mr-2" />
+                          Stop Scanner
+                        </Button>
+                      ) : (
+                        <Button onClick={startScanner} className="bg-teal-600 hover:bg-teal-700">
+                          <Camera className="w-4 h-4 mr-2" />
+                          Start Scanner
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Manual Entry */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-2 text-gray-500">Or enter code manually</span>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Enter card number or token..."
+                        value={manualCode}
+                        onChange={(e) => setManualCode(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+                      />
+                      <Button onClick={handleManualSearch} disabled={!manualCode.trim() || processing}>
+                        <Search className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Recent Check-ins Sidebar */}
+          <div className="space-y-6">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Recent Check-ins</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {recentCheckIns.length === 0 ? (
+                  <p className="text-sm text-gray-500 text-center py-4">No check-ins yet</p>
+                ) : (
+                  <div className="space-y-3">
+                    {recentCheckIns.map((card) => (
+                      <div key={card.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-gray-900 text-sm truncate">{card.full_name}</p>
+                          <p className="text-xs text-gray-500">
+                            {card.checked_in_at && format(new Date(card.checked_in_at), "h:mm a")}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm">
+              <CardContent className="p-4">
+                <h4 className="font-semibold text-gray-900 mb-3">Quick Actions</h4>
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => router.push("/admin/participant-cards")}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    View All Cards
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => router.push("/admin/confirmed-attendees")}
+                  >
+                    <Calendar className="w-4 h-4 mr-2" />
+                    Confirmed Attendees
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}

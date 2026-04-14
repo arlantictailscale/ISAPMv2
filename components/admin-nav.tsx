@@ -16,12 +16,16 @@ import {
   BedDouble,
   Presentation,
   Calendar,
+  ScanLine,
+  QrCode,
 } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 
 const adminNavItems = [
   { title: "Events Dashboard", href: "/admin/events", icon: Calendar },
+  { title: "Check-In Scanner", href: "/admin/check-in", icon: ScanLine },
+  { title: "Participant Cards", href: "/admin/participant-cards", icon: QrCode },
   { title: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
   { title: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
   { title: "Invoice Management", href: "/admin/invoices", icon: Receipt },

@@ -110,7 +110,7 @@ export default function ParticipantCardPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 pt-24 pb-8">
           <div className="max-w-2xl mx-auto">
             <Skeleton className="h-8 w-48 mb-6" />
             <Skeleton className="h-[600px] w-full rounded-2xl" />
@@ -125,7 +125,7 @@ export default function ParticipantCardPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 pt-24 pb-8">
           <div className="max-w-2xl mx-auto">
             <Button
               variant="ghost"
@@ -159,7 +159,7 @@ export default function ParticipantCardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -281,8 +281,9 @@ export default function ParticipantCardPage() {
                 <div className="flex items-start gap-2 text-sm text-gray-600">
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="font-medium text-gray-900">Royal Ambarrukmo Yogyakarta</p>
-                    <p>April 17-19, 2026</p>
+                    <p className="font-medium text-gray-900">The Singhasari Resort</p>
+                    <p>Batu, Malang, East Java, Indonesia</p>
+                    <p className="mt-1">April 16-18, 2026</p>
                   </div>
                 </div>
               </div>

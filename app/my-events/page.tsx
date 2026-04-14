@@ -431,14 +431,24 @@ export default function MyEventsPage() {
               <Badge className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2">Symposium: {stats.symposium}</Badge>
             </div>
 
-            {/* Participant Card Button */}
+            {/* Participant Card Button - Prominent CTA */}
             {orders.length > 0 && (
-              <div className="mt-6">
+              <div className="mt-8">
                 <Link href={`/my-events/participant-card/${orders[0].id}`}>
-                  <Button className="bg-white text-orange-600 hover:bg-orange-50">
-                    <QrCode className="w-4 h-4 mr-2" />
-                    View Participant Card
-                  </Button>
+                  <div className="inline-block p-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-red-400 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    <div className="bg-white rounded-lg px-6 py-4 flex items-center gap-4">
+                      <div className="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-lg">
+                        <QrCode className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-gray-500">Event Day Required</p>
+                        <p className="text-lg font-bold text-gray-900">View Participant Card</p>
+                      </div>
+                      <div className="ml-2 bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-sm font-semibold">
+                        QR Code
+                      </div>
+                    </div>
+                  </div>
                 </Link>
               </div>
             )}

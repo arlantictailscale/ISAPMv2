@@ -245,28 +245,24 @@ export default function AdminParticipantCardsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Participant Cards</h1>
-              <p className="text-sm text-gray-500">Manage all issued participant cards</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => router.push("/admin/check-in")}>
-                <ScanLine className="w-4 h-4 mr-2" />
-                Scanner
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/admin/events")}>
-                Back to Admin
-              </Button>
-            </div>
+
+      <main className="container mx-auto px-4 pt-24 pb-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Participant Cards</h1>
+            <p className="text-sm text-gray-500">Manage all issued participant cards</p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => router.push("/admin/check-in")}>
+              <ScanLine className="w-4 h-4 mr-2" />
+              Scanner
+            </Button>
+            <Button variant="outline" onClick={() => router.push("/admin/events")}>
+              Back to Admin
+            </Button>
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-0 shadow-sm">
@@ -380,78 +376,68 @@ export default function AdminParticipantCardsPage() {
         {/* Table */}
         <Card className="border-0 shadow-sm overflow-hidden">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table className="min-w-[1000px]">
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[35%]">Participant</TableHead>
+                  <TableHead className="w-[30%]">Institution</TableHead>
+                  <TableHead>Events</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Issued</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCards.length === 0 ? (
                   <TableRow>
-                    <TableHead>Card Number</TableHead>
-                    <TableHead>Participant</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead>Events</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Issued</TableHead>
-                    <TableHead>Checked In</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                      {cards.length === 0 ? "No participant cards issued yet" : "No cards match your filters"}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCards.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12 text-gray-500">
-                        {cards.length === 0 ? "No participant cards issued yet" : "No cards match your filters"}
+                ) : (
+                  filteredCards.map((card) => (
+                    <TableRow key={card.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-gray-900 text-sm">{card.full_name}</p>
+                          <p className="text-xs text-gray-500">{card.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {card.institution || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {card.events.slice(0, 2).map((event, i) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              {event.event_id.toUpperCase()}
+                            </Badge>
+                          ))}
+                          {card.events.length > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{card.events.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(card.is_checked_in ? "checked_in" : "active")}</TableCell>
+                      <TableCell className="text-sm text-gray-600 whitespace-nowrap">
+                        {format(new Date(card.issued_at), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedCard(card)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredCards.map((card) => (
-                      <TableRow key={card.id} className="hover:bg-gray-50">
-                        <TableCell className="font-mono text-sm">{card.card_token.substring(0, 8)}...</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-gray-900">{card.full_name}</p>
-                            <p className="text-sm text-gray-500">{card.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {card.institution || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {card.events.slice(0, 2).map((event, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">
-                                {event.event_id.toUpperCase()}
-                              </Badge>
-                            ))}
-                            {card.events.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{card.events.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(card.is_checked_in ? "checked_in" : "active")}</TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {format(new Date(card.issued_at), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {card.checked_in_at
-                            ? format(new Date(card.checked_in_at), "MMM d, h:mm a")
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedCard(card)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                  ))
+                )}
+              </TableBody>
+            </Table>
 
             {/* Pagination Info */}
             <div className="px-4 py-3 border-t bg-gray-50">

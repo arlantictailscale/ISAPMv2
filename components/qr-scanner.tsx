@@ -84,24 +84,41 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
 
   // Start camera
   const startCamera = async () => {
+    console.log("[v0] startCamera called")
     setIsInitializing(true)
     setError(null)
 
     try {
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.log("[v0] getUserMedia not supported")
         throw new Error("Camera access is not supported in this browser")
       }
 
-      // Request camera access
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facingMode,
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-        },
-        audio: false,
-      })
+      console.log("[v0] Requesting camera with facingMode:", facingMode)
+      
+      let stream: MediaStream | null = null
+      
+      // Try with facingMode constraint first
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: facingMode,
+            width: { ideal: 640 },
+            height: { ideal: 480 },
+          },
+          audio: false,
+        })
+        console.log("[v0] Got stream with facingMode:", stream.getTracks().map(t => t.label))
+      } catch (constraintErr) {
+        console.log("[v0] FacingMode constraint failed, trying basic video:", constraintErr)
+        // Fallback: try without facingMode constraint
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: false,
+        })
+        console.log("[v0] Got basic video stream:", stream.getTracks().map(t => t.label))
+      }
 
       streamRef.current = stream
 
@@ -126,7 +143,7 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
         animationRef.current = requestAnimationFrame(scanQRCode)
       }
     } catch (err: any) {
-      console.error("Camera error:", err)
+      console.error("[v0] Camera error:", err.name, err.message)
       setIsInitializing(false)
       
       let errorMessage = "Could not access camera"
@@ -156,12 +173,22 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
     setFacingMode(prev => prev === "environment" ? "user" : "environment")
   }
 
-  // Auto-start when facingMode changes after initial mount
+  // Restart camera when facingMode changes (for camera switch)
+  const hasStartedRef = useRef(false)
+  
   useEffect(() => {
-    if (isStreaming) {
+    // Only restart if we were already streaming before the facingMode change
+    if (hasStartedRef.current && !isStreaming && !isInitializing) {
       startCamera()
     }
   }, [facingMode])
+  
+  // Track if camera has been started at least once
+  useEffect(() => {
+    if (isStreaming) {
+      hasStartedRef.current = true
+    }
+  }, [isStreaming])
 
   // Cleanup on unmount
   useEffect(() => {

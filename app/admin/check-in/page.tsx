@@ -1,25 +1,22 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Html5Qrcode } from "html5-qrcode"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
 import Footer from "@/components/footer"
+import QRScanner from "@/components/qr-scanner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import {
-  Camera,
-  CameraOff,
   Search,
   User,
   Mail,
   Building,
-  Briefcase,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -59,12 +56,8 @@ type ScanResult = {
 export default function AdminCheckInPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const scannerRef = useRef<Html5Qrcode | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [scanning, setScanning] = useState(false)
-  const [initializing, setInitializing] = useState(false)
-  const [cameraError, setCameraError] = useState<string | null>(null)
   const [manualCode, setManualCode] = useState("")
   const [processing, setProcessing] = useState(false)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
@@ -211,183 +204,6 @@ export default function AdminCheckInPage() {
     }
   }, [processing, toast])
 
-  const startScanner = async () => {
-    setInitializing(true)
-    setCameraError(null) // Clear any previous error
-    
-    try {
-      // Stop any existing scanner first
-      if (scannerRef.current) {
-        try {
-          await scannerRef.current.stop()
-        } catch (e) {
-          // Ignore stop errors
-        }
-        scannerRef.current = null
-      }
-
-      // Clear the container before initializing
-      const container = document.getElementById("qr-reader")
-      if (container) {
-        container.innerHTML = ""
-      }
-
-      // First, request camera permission explicitly
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: true // Use simple constraint first
-        })
-        // Stop the stream immediately - we just needed permission
-        stream.getTracks().forEach(track => track.stop())
-      } catch (permErr: any) {
-        console.error("[v0] Camera permission error:", permErr)
-        setInitializing(false)
-        
-        let errorMessage = ""
-        if (permErr.name === "NotAllowedError") {
-          errorMessage = "Camera access was denied. Please click the camera icon in your browser's address bar to allow access, then try again."
-        } else if (permErr.name === "NotFoundError") {
-          errorMessage = "No camera found on this device. Please use manual code entry instead."
-        } else if (permErr.name === "NotReadableError") {
-          errorMessage = "Camera is being used by another application. Please close other apps using the camera."
-        } else if (permErr.name === "NotSupportedError") {
-          errorMessage = "Camera access is not supported in this browser or context. Please use manual code entry."
-        } else {
-          errorMessage = `Camera error: ${permErr.message || "Unknown error"}. Please use manual code entry.`
-        }
-        
-        setCameraError(errorMessage)
-        toast({
-          title: "Camera Error",
-          description: errorMessage,
-          variant: "destructive",
-        })
-        return
-      }
-
-      // Get available cameras
-      let cameras: { id: string; label: string }[] = []
-      try {
-        cameras = await Html5Qrcode.getCameras()
-      } catch (camErr) {
-        console.error("[v0] Failed to enumerate cameras:", camErr)
-      }
-
-      const html5QrCode = new Html5Qrcode("qr-reader", {
-        verbose: false,
-      })
-      scannerRef.current = html5QrCode
-
-      const qrboxSize = Math.min(250, window.innerWidth - 100)
-      const config = {
-        fps: 10,
-        qrbox: { width: qrboxSize, height: qrboxSize },
-        aspectRatio: 1.0,
-        disableFlip: false,
-      }
-
-      const onScanSuccess = (decodedText: string) => {
-        // Stop scanner and process the code
-        html5QrCode.stop().then(() => {
-          setScanning(false)
-          setInitializing(false)
-          scannerRef.current = null
-          processQRCode(decodedText)
-        }).catch(() => {
-          setScanning(false)
-          setInitializing(false)
-          scannerRef.current = null
-          processQRCode(decodedText)
-        })
-      }
-
-      // Try with specific camera if available (prefer back camera)
-      if (cameras.length > 0) {
-        // Find back camera (usually contains "back", "rear", or "environment" in label)
-        const backCamera = cameras.find(c => 
-          c.label.toLowerCase().includes("back") || 
-          c.label.toLowerCase().includes("rear") ||
-          c.label.toLowerCase().includes("environment")
-        )
-        const cameraToUse = backCamera || cameras[0]
-        
-        try {
-          await html5QrCode.start(
-            cameraToUse.id,
-            config,
-            onScanSuccess,
-            () => {} // QR code not detected - ignore
-          )
-          setScanning(true)
-          setInitializing(false)
-          return
-        } catch (camErr) {
-          console.log("[v0] Specific camera failed, trying facingMode:", camErr)
-        }
-      }
-
-      // Fallback: Try environment camera (back camera on mobile)
-      try {
-        await html5QrCode.start(
-          { facingMode: "environment" },
-          config,
-          onScanSuccess,
-          () => {}
-        )
-        setScanning(true)
-        setInitializing(false)
-        return
-      } catch (envErr) {
-        console.log("[v0] Environment camera failed, trying user camera:", envErr)
-      }
-
-      // Fallback: Try user camera (front camera)
-      try {
-        await html5QrCode.start(
-          { facingMode: "user" },
-          config,
-          onScanSuccess,
-          () => {}
-        )
-        setScanning(true)
-        setInitializing(false)
-        return
-      } catch (userErr) {
-        console.log("[v0] User camera also failed:", userErr)
-        throw new Error("Could not start camera. Please try refreshing the page.")
-      }
-    } catch (err: any) {
-      console.error("[v0] Scanner initialization failed:", err)
-      setInitializing(false)
-      setScanning(false)
-      toast({
-        title: "Camera Error",
-        description: err.message || "Could not access camera. Please check browser permissions or use manual entry.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop()
-        scannerRef.current = null
-      } catch (err) {
-        console.error("Error stopping scanner:", err)
-      }
-    }
-    setScanning(false)
-    setInitializing(false)
-    setCameraError(null)
-    
-    // Clear the container
-    const container = document.getElementById("qr-reader")
-    if (container) {
-      container.innerHTML = ""
-    }
-  }
-
   const handleManualSearch = () => {
     if (!manualCode.trim()) return
     processQRCode(manualCode.trim())
@@ -399,14 +215,7 @@ export default function AdminCheckInPage() {
     setManualCode("")
   }
 
-  // Cleanup scanner on unmount
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {})
-      }
-    }
-  }, [])
+
 
   if (loading || !isAdmin) {
     return (
@@ -551,92 +360,26 @@ export default function AdminCheckInPage() {
                 ) : (
                   // Scanner
                   <div className="space-y-6">
-                    {/* Camera Scanner */}
-                    <div className="relative">
-                      <div
-                        id="qr-reader"
-                        className="w-full aspect-square max-w-md mx-auto rounded-xl overflow-hidden bg-gray-900"
-                        style={{ minHeight: "300px" }}
-                      />
-                      
-                      {/* Overlay states */}
-                      {!scanning && !initializing && (
-                        <div className="absolute inset-0 flex items-center justify-center max-w-md mx-auto">
-                          <div className="text-center text-gray-400 p-8">
-                            <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                            <p className="font-medium">Click Start Scanner to activate camera</p>
-                            {cameraError && (
-                              <p className="text-red-400 text-sm mt-2 max-w-xs">
-                                {cameraError}
-                              </p>
-                            )}
-                          </div>
+                    {/* QR Scanner Component */}
+                    <QRScanner 
+                      onScan={processQRCode}
+                      onError={(error) => {
+                        toast({
+                          title: "Camera Error",
+                          description: error,
+                          variant: "destructive",
+                        })
+                      }}
+                    />
+                    
+                    {processing && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl p-6 text-center shadow-xl">
+                          <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">Processing check-in...</p>
                         </div>
-                      )}
-                      
-                      {initializing && (
-                        <div className="absolute inset-0 flex items-center justify-center max-w-md mx-auto bg-gray-900/90 rounded-xl">
-                          <div className="text-center text-white p-8">
-                            <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-teal-400" />
-                            <p className="font-medium">Initializing Camera...</p>
-                            <p className="text-sm text-gray-400 mt-1">Please allow camera access</p>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {scanning && (
-                        <div className="absolute top-4 left-1/2 -translate-x-1/2 max-w-md">
-                          <div className="bg-green-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 shadow-lg">
-                            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                            Scanner Active - Point at QR code
-                          </div>
-                        </div>
-                      )}
-
-                      {processing && (
-                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl max-w-md mx-auto">
-                          <div className="text-center">
-                            <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto mb-2" />
-                            <p className="text-sm text-gray-600">Processing...</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="flex gap-3">
-                        {scanning ? (
-                          <Button variant="destructive" onClick={stopScanner} size="lg">
-                            <CameraOff className="w-4 h-4 mr-2" />
-                            Stop Scanner
-                          </Button>
-                        ) : (
-                          <Button 
-                            onClick={startScanner} 
-                            className="bg-teal-600 hover:bg-teal-700" 
-                            size="lg"
-                            disabled={initializing}
-                          >
-                            {initializing ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Starting...
-                              </>
-                            ) : (
-                              <>
-                                <Camera className="w-4 h-4 mr-2" />
-                                Start Scanner
-                              </>
-                            )}
-                          </Button>
-                        )}
                       </div>
-                      {!scanning && !initializing && cameraError && (
-                        <p className="text-sm text-amber-600 text-center max-w-sm">
-                          Tip: You can also use the manual code entry below
-                        </p>
-                      )}
-                    </div>
+                    )}
 
                     {/* Manual Entry */}
                     <div className="relative">

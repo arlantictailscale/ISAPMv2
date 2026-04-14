@@ -1,27 +1,17 @@
 "use client"
 
-import { useEffect } from "react"
-
-import { useState } from "react"
-
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { LayoutDashboard, CalendarDays, CreditCard, Hotel, Receipt } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { createBrowserClient } from "@supabase/ssr"
 
-const navItems = [
-  { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/my-events", icon: CalendarDays, label: "My Events" },
-  { href: "/my-events/participant-card", icon: CreditCard, label: "My Card" },
-  { href: "/my-hotels", icon: Hotel, label: "Hotel" },
-  { href: "/my-purchases", icon: Receipt, label: "Purchases" },
-]
-
 export function MobileBottomNav() {
   const pathname = usePathname()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [participantCardUrl, setParticipantCardUrl] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createBrowserClient(
@@ -29,16 +19,33 @@ export function MobileBottomNav() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
-    // Check initial auth state
-    const checkAuth = async () => {
+    // Check initial auth state and fetch participant card
+    const checkAuthAndFetchCard = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession()
       setIsLoggedIn(!!session?.user)
+      
+      if (session?.user) {
+        // Fetch the user's first participant card
+        const { data: card } = await supabase
+          .from("participant_cards")
+          .select("order_id")
+          .eq("user_id", session.user.id)
+          .eq("status", "active")
+          .order("issued_at", { ascending: false })
+          .limit(1)
+          .single()
+        
+        if (card?.order_id) {
+          setParticipantCardUrl(`/my-events/participant-card/${card.order_id}`)
+        }
+      }
+      
       setIsLoading(false)
     }
 
-    checkAuth()
+    checkAuthAndFetchCard()
 
     // Listen for auth state changes
     const {
@@ -56,6 +63,15 @@ export function MobileBottomNav() {
   if (isLoading || !isLoggedIn) {
     return null
   }
+
+  // Build nav items with dynamic participant card URL
+  const navItems = [
+    { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { href: "/my-events", icon: CalendarDays, label: "My Events" },
+    ...(participantCardUrl ? [{ href: participantCardUrl, icon: CreditCard, label: "My Card" }] : []),
+    { href: "/my-hotels", icon: Hotel, label: "Hotel" },
+    { href: "/my-purchases", icon: Receipt, label: "Purchases" },
+  ]
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white pb-safe md:hidden">

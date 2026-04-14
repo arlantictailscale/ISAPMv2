@@ -15,13 +15,11 @@ import { Download, Printer, Calendar, MapPin, User, Mail, Building, Briefcase, A
 
 interface ParticipantCard {
   id: string
-  card_number: string
-  secure_token: string
+  card_token: string
   user_id: string
   order_id: string
   full_name: string
   email: string
-  phone: string | null
   institution: string | null
   position: string | null
   events: Array<{
@@ -30,7 +28,7 @@ interface ParticipantCard {
     participant_type: string
     participant_type_label: string
   }>
-  status: string
+  is_checked_in: boolean
   issued_at: string
   checked_in_at: string | null
 }
@@ -97,7 +95,7 @@ export default function ParticipantCardPage() {
         useCORS: true,
       }).then((canvas) => {
         const link = document.createElement("a")
-        link.download = `participant-card-${card?.card_number}.png`
+        link.download = `participant-card-${card?.card_token.substring(0, 8)}.png`
         link.href = canvas.toDataURL("image/png")
         link.click()
       })
@@ -144,8 +142,8 @@ export default function ParticipantCardPage() {
                 <p className="text-gray-600 mb-6">
                   {error || "Your participant card will be available once your payment has been verified."}
                 </p>
-                <Button onClick={() => router.push("/my-registrations")}>
-                  View My Registrations
+                <Button onClick={() => router.push("/my-events")}>
+                  Back to My Events
                 </Button>
               </CardContent>
             </Card>
@@ -156,7 +154,7 @@ export default function ParticipantCardPage() {
     )
   }
 
-  const qrValue = `ISAPM2026:${card.secure_token}`
+  const qrValue = card.card_token
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -198,10 +196,10 @@ export default function ParticipantCardPage() {
                   <p className="text-teal-100 text-sm">Indonesian Society for the Study of Pain Medicine</p>
                 </div>
                 <Badge
-                  variant={card.status === "active" ? "default" : "secondary"}
-                  className={card.status === "active" ? "bg-white text-teal-700" : ""}
+                  variant={!card.is_checked_in ? "default" : "secondary"}
+                  className={!card.is_checked_in ? "bg-white text-teal-700" : ""}
                 >
-                  {card.status === "active" ? "Active" : card.status === "checked_in" ? "Checked In" : card.status}
+                  {card.is_checked_in ? "Checked In" : "Active"}
                 </Badge>
               </div>
             </div>
@@ -221,7 +219,7 @@ export default function ParticipantCardPage() {
                       fgColor="#0d9488"
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2 font-mono">{card.card_number}</p>
+                  <p className="text-xs text-gray-500 mt-2 font-mono">{card.card_token.substring(0, 12)}...</p>
                 </div>
 
                 {/* Participant Info */}

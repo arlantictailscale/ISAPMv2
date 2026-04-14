@@ -376,10 +376,10 @@ export default function AdminParticipantCardsPage() {
         </Card>
 
         {/* Table */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border-0 shadow-sm overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-[1000px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Card Number</TableHead>

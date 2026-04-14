@@ -84,18 +84,14 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
 
   // Start camera
   const startCamera = async () => {
-    console.log("[v0] startCamera called")
     setIsInitializing(true)
     setError(null)
 
     try {
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        console.log("[v0] getUserMedia not supported")
         throw new Error("Camera access is not supported in this browser")
       }
-
-      console.log("[v0] Requesting camera with facingMode:", facingMode)
       
       let stream: MediaStream | null = null
       
@@ -109,15 +105,12 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
           },
           audio: false,
         })
-        console.log("[v0] Got stream with facingMode:", stream.getTracks().map(t => t.label))
-      } catch (constraintErr) {
-        console.log("[v0] FacingMode constraint failed, trying basic video:", constraintErr)
+      } catch {
         // Fallback: try without facingMode constraint
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
           audio: false,
         })
-        console.log("[v0] Got basic video stream:", stream.getTracks().map(t => t.label))
       }
 
       streamRef.current = stream
@@ -143,7 +136,6 @@ export default function QRScanner({ onScan, onError }: QRScannerProps) {
         animationRef.current = requestAnimationFrame(scanQRCode)
       }
     } catch (err: any) {
-      console.error("[v0] Camera error:", err.name, err.message)
       setIsInitializing(false)
       
       let errorMessage = "Could not access camera"

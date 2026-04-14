@@ -105,6 +105,7 @@ const EVENT_OPTIONS = [
 const PARTICIPANT_OPTIONS = [
   { value: "all", label: "All Participants" },
   { value: "span", label: "Anesthesiologist" },
+  { value: "dokter_sp_umum", label: "Family Medicine and Primary Care Specialist" },
   { value: "resident", label: "Resident" },
   { value: "dokter_umum", label: "General Practitioner" },
   { value: "perawat", label: "Nurse" },
@@ -338,7 +339,23 @@ export default function PromoCodesAdminPage() {
   }
 
   async function handleAddRule() {
-    if (!selectedPromo || !ruleFormData.event_slug) return
+    if (!selectedPromo) {
+      toast({
+        title: "Error",
+        description: "No promo code selected. Please select a promo code first.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!ruleFormData.event_slug) {
+      toast({
+        title: "Error",
+        description: "Please select an event",
+        variant: "destructive",
+      })
+      return
+    }
 
     setIsProcessing(true)
     try {

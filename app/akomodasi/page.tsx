@@ -31,11 +31,11 @@ import { useCart } from "@/lib/cart/cart-context"
 import { Badge } from "@/components/ui/badge"
 
 const ROOM_TYPES = [
-  { id: "deluxe", name: "Deluxe Room", price: 1250000, amenities: ["Queen Bed", "Garden View", "WiFi", "Mini Bar"] },
+  { id: "deluxe", name: "Deluxe Room", price: 1350000, amenities: ["Queen Bed", "Garden View", "WiFi", "Mini Bar"] },
   {
     id: "premier",
     name: "Premier Room",
-    price: 1350000,
+    price: 1700000,
     amenities: ["King Bed", "Mountain View", "WiFi", "Mini Bar", "Bathtub"],
   },
 ]

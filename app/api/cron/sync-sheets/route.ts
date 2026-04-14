@@ -180,6 +180,9 @@ export async function GET(request: NextRequest) {
             ...profile,
             participant_type_label: item.participant_type_label,
             event_label: item.event_label,
+            unit_price: item.unit_price,
+            original_price: item.original_price,
+            discount_amount: item.discount_amount,
             verified_at: payment.verified_at,
           }
 
@@ -380,16 +383,28 @@ export async function GET(request: NextRequest) {
       const list = grouped[event.id] || []
       const sheetName = event.label.substring(0, 100)
 
-      const headers = ["Full Name", "Email", "Phone", "Institution", "Position", "Participant Type", "Verified At"]
-      const rows = list.map((a) => [
-        a.full_name || "",
-        a.email || "",
-        a.phone || "",
-        a.institution || "",
-        a.position || "",
-        a.participant_type_label || "",
-        a.verified_at ? new Date(a.verified_at).toLocaleDateString() : "",
-      ])
+      const headers = ["Full Name", "Email", "Phone", "Institution", "Position", "Participant Type", "Price Paid (IDR)", "Original Price (IDR)", "Discount Amount (IDR)", "Price Type", "Verified At"]
+      const rows = list.map((a) => {
+        const pricePaid = a.unit_price ?? 0
+        const originalPrice = a.original_price ?? pricePaid
+        const discountAmount = a.discount_amount ?? 0
+        let priceType = "Full Price"
+        if (discountAmount > 0) priceType = "Discounted"
+        else if (pricePaid < originalPrice) priceType = "Early Bird"
+        return [
+          a.full_name || "",
+          a.email || "",
+          a.phone || "",
+          a.institution || "",
+          a.position || "",
+          a.participant_type_label || "",
+          pricePaid,
+          originalPrice,
+          discountAmount,
+          priceType,
+          a.verified_at ? new Date(a.verified_at).toLocaleDateString() : "",
+        ]
+      })
 
       const values = [headers, ...rows]
 

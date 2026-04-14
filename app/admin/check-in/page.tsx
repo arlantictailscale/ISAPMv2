@@ -326,22 +326,18 @@ export default function AdminCheckInPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Check-In Scanner</h1>
-              <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
-            </div>
-            <Button variant="outline" onClick={() => router.push("/admin/events")}>
-              Back to Admin
-            </Button>
-          </div>
-        </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pt-24 pb-8">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Check-In Scanner</h1>
+            <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
+          </div>
+          <Button variant="outline" onClick={() => router.push("/admin/events")}>
+            Back to Admin
+          </Button>
+        </div>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Scanner Section */}
           <div className="lg:col-span-2 space-y-6">

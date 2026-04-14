@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { QRCodeSVG } from "qrcode.react"
+import { QRCodeSVG, QRCodeCanvas } from "qrcode.react"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
@@ -85,23 +85,178 @@ export default function ParticipantCardPage() {
   }, [orderId, router])
 
   const handleDownload = async () => {
-    if (!cardRef.current || !card) return
+    if (!card) return
 
     try {
-      // Dynamically import html2canvas
-      const html2canvas = (await import("html2canvas")).default
-      
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-        logging: false,
-        allowTaint: true,
+      // Create a canvas to draw the card
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("Canvas not supported")
+
+      // Card dimensions (2x for retina)
+      const scale = 2
+      const width = 600 * scale
+      const height = 800 * scale
+      canvas.width = width
+      canvas.height = height
+
+      // Background
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, width, height)
+
+      // Header background
+      const headerHeight = 120 * scale
+      const gradient = ctx.createLinearGradient(0, 0, width, 0)
+      gradient.addColorStop(0, "#0d9488")
+      gradient.addColorStop(1, "#0f766e")
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, width, headerHeight)
+
+      // Header text
+      ctx.fillStyle = "#ffffff"
+      ctx.font = `bold ${32 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillText("ISAPM 2026", 30 * scale, 50 * scale)
+      ctx.font = `${14 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#99f6e4"
+      ctx.fillText("Indonesian Society for the Study of Pain Medicine", 30 * scale, 80 * scale)
+
+      // Status badge
+      const badgeText = card.is_checked_in ? "Checked In" : "Active"
+      ctx.font = `bold ${12 * scale}px system-ui, -apple-system, sans-serif`
+      const badgeWidth = ctx.measureText(badgeText).width + 20 * scale
+      ctx.fillStyle = card.is_checked_in ? "#f59e0b" : "#ffffff"
+      ctx.beginPath()
+      ctx.roundRect(width - badgeWidth - 30 * scale, 35 * scale, badgeWidth, 30 * scale, 15 * scale)
+      ctx.fill()
+      ctx.fillStyle = card.is_checked_in ? "#ffffff" : "#0d9488"
+      ctx.fillText(badgeText, width - badgeWidth - 20 * scale, 55 * scale)
+
+      // Get QR code as data URL from the hidden canvas
+      const qrCanvas = document.getElementById("qr-code-canvas") as HTMLCanvasElement
+      if (qrCanvas) {
+        const qrSize = 180 * scale
+        const qrX = 30 * scale
+        const qrY = headerHeight + 30 * scale
+        
+        // QR code border
+        ctx.fillStyle = "#f9fafb"
+        ctx.beginPath()
+        ctx.roundRect(qrX - 10 * scale, qrY - 10 * scale, qrSize + 20 * scale, qrSize + 20 * scale, 12 * scale)
+        ctx.fill()
+        ctx.strokeStyle = "#e5e7eb"
+        ctx.lineWidth = 2 * scale
+        ctx.stroke()
+        
+        // Draw QR code
+        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
+        
+        // QR code token
+        ctx.font = `${10 * scale}px monospace`
+        ctx.fillStyle = "#9ca3af"
+        ctx.fillText(card.card_token.substring(0, 12) + "...", qrX, qrY + qrSize + 20 * scale)
+      }
+
+      // Participant info
+      const infoX = 250 * scale
+      const infoY = headerHeight + 40 * scale
+
+      // Name
+      ctx.font = `bold ${24 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#111827"
+      ctx.fillText(card.full_name, infoX, infoY)
+
+      // Position
+      if (card.position) {
+        ctx.font = `${14 * scale}px system-ui, -apple-system, sans-serif`
+        ctx.fillStyle = "#6b7280"
+        ctx.fillText(card.position, infoX, infoY + 30 * scale)
+      }
+
+      // Email
+      ctx.font = `${13 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#6b7280"
+      ctx.fillText(card.email, infoX, infoY + 70 * scale)
+
+      // Institution
+      if (card.institution) {
+        ctx.fillText(card.institution, infoX, infoY + 95 * scale)
+      }
+
+      // Issued date
+      ctx.font = `${11 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#9ca3af"
+      ctx.fillText(`Issued: ${format(new Date(card.issued_at), "MMMM d, yyyy")}`, infoX, infoY + 130 * scale)
+
+      if (card.checked_in_at) {
+        ctx.fillStyle = "#0d9488"
+        ctx.fillText(`Checked in: ${format(new Date(card.checked_in_at), "MMMM d, yyyy 'at' h:mm a")}`, infoX, infoY + 150 * scale)
+      }
+
+      // Divider line
+      const dividerY = headerHeight + 230 * scale
+      ctx.strokeStyle = "#e5e7eb"
+      ctx.lineWidth = 1 * scale
+      ctx.beginPath()
+      ctx.moveTo(30 * scale, dividerY)
+      ctx.lineTo(width - 30 * scale, dividerY)
+      ctx.stroke()
+
+      // Registered Events section
+      ctx.font = `bold ${14 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#111827"
+      ctx.fillText("Registered Events", 30 * scale, dividerY + 30 * scale)
+
+      // Events list
+      let eventY = dividerY + 60 * scale
+      card.events.forEach((event) => {
+        ctx.fillStyle = "#f3f4f6"
+        ctx.beginPath()
+        ctx.roundRect(30 * scale, eventY, width - 60 * scale, 50 * scale, 8 * scale)
+        ctx.fill()
+
+        ctx.font = `500 ${13 * scale}px system-ui, -apple-system, sans-serif`
+        ctx.fillStyle = "#111827"
+        ctx.fillText(event.event_label, 45 * scale, eventY + 22 * scale)
+        
+        ctx.font = `${11 * scale}px system-ui, -apple-system, sans-serif`
+        ctx.fillStyle = "#6b7280"
+        ctx.fillText(event.participant_type_label, 45 * scale, eventY + 40 * scale)
+
+        eventY += 60 * scale
       })
+
+      // Venue section
+      const venueY = eventY + 20 * scale
+      ctx.strokeStyle = "#e5e7eb"
+      ctx.beginPath()
+      ctx.moveTo(30 * scale, venueY)
+      ctx.lineTo(width - 30 * scale, venueY)
+      ctx.stroke()
+
+      ctx.font = `bold ${13 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#111827"
+      ctx.fillText("The Singhasari Resort", 30 * scale, venueY + 30 * scale)
       
+      ctx.font = `${12 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#6b7280"
+      ctx.fillText("Batu, Malang, East Java, Indonesia", 30 * scale, venueY + 50 * scale)
+      ctx.fillText("April 16-18, 2026", 30 * scale, venueY + 70 * scale)
+
+      // Footer
+      const footerY = height - 60 * scale
+      ctx.fillStyle = "#f9fafb"
+      ctx.fillRect(0, footerY, width, 60 * scale)
+      
+      ctx.font = `${10 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#9ca3af"
+      ctx.textAlign = "center"
+      ctx.fillText("Present this card at the registration desk for check-in.", width / 2, footerY + 25 * scale)
+      ctx.fillText("This card is non-transferable.", width / 2, footerY + 42 * scale)
+
+      // Download the canvas
       const link = document.createElement("a")
       link.download = `ISAPM2026-participant-card-${card.full_name.replace(/[^a-zA-Z0-9]/g, "_")}.png`
-      link.href = canvas.toDataURL("image/png")
+      link.href = canvas.toDataURL("image/png", 1.0)
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
@@ -227,6 +382,17 @@ export default function ParticipantCardPage() {
                       includeMargin={false}
                       bgColor="#ffffff"
                       fgColor="#0d9488"
+                    />
+                    {/* Hidden canvas QR code for download */}
+                    <QRCodeCanvas
+                      id="qr-code-canvas"
+                      value={qrValue}
+                      size={360}
+                      level="H"
+                      includeMargin={false}
+                      bgColor="#ffffff"
+                      fgColor="#0d9488"
+                      style={{ display: "none" }}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-2 font-mono">{card.card_token.substring(0, 12)}...</p>

@@ -64,7 +64,7 @@ export default function AdminCheckInPage() {
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [initializing, setInitializing] = useState(false)
-  const [cameraPermission, setCameraPermission] = useState<"prompt" | "granted" | "denied" | "unknown">("unknown")
+  const [cameraError, setCameraError] = useState<string | null>(null)
   const [manualCode, setManualCode] = useState("")
   const [processing, setProcessing] = useState(false)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
@@ -101,32 +101,6 @@ export default function AdminCheckInPage() {
 
     checkAuth()
   }, [router])
-
-  // Check camera permission status on mount
-  useEffect(() => {
-    async function checkCameraPermission() {
-      try {
-        // Check if permissions API is available
-        if (navigator.permissions && navigator.permissions.query) {
-          const result = await navigator.permissions.query({ name: "camera" as PermissionName })
-          setCameraPermission(result.state as "prompt" | "granted" | "denied")
-          
-          // Listen for permission changes
-          result.onchange = () => {
-            setCameraPermission(result.state as "prompt" | "granted" | "denied")
-          }
-        } else {
-          // Permissions API not available, set to unknown
-          setCameraPermission("unknown")
-        }
-      } catch (err) {
-        // Permissions API might not support camera query
-        setCameraPermission("unknown")
-      }
-    }
-    
-    checkCameraPermission()
-  }, [])
 
   const fetchStats = async () => {
     const supabase = createClient()
@@ -239,6 +213,7 @@ export default function AdminCheckInPage() {
 
   const startScanner = async () => {
     setInitializing(true)
+    setCameraError(null) // Clear any previous error
     
     try {
       // Stop any existing scanner first
@@ -260,31 +235,30 @@ export default function AdminCheckInPage() {
       // First, request camera permission explicitly
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: "environment" } 
+          video: true // Use simple constraint first
         })
         // Stop the stream immediately - we just needed permission
         stream.getTracks().forEach(track => track.stop())
-        setCameraPermission("granted")
       } catch (permErr: any) {
-        console.error("[v0] Camera permission denied:", permErr)
+        console.error("[v0] Camera permission error:", permErr)
         setInitializing(false)
-        setCameraPermission(permErr.name === "NotAllowedError" ? "denied" : "unknown")
         
-        let errorMessage = "Camera access denied. "
+        let errorMessage = ""
         if (permErr.name === "NotAllowedError") {
-          errorMessage += "Please allow camera access in your browser settings and try again."
+          errorMessage = "Camera access was denied. Please click the camera icon in your browser's address bar to allow access, then try again."
         } else if (permErr.name === "NotFoundError") {
-          errorMessage += "No camera found on this device."
+          errorMessage = "No camera found on this device. Please use manual code entry instead."
         } else if (permErr.name === "NotReadableError") {
-          errorMessage += "Camera is being used by another application."
-        } else if (permErr.name === "OverconstrainedError") {
-          errorMessage = "Camera constraints could not be satisfied. Trying alternative settings."
+          errorMessage = "Camera is being used by another application. Please close other apps using the camera."
+        } else if (permErr.name === "NotSupportedError") {
+          errorMessage = "Camera access is not supported in this browser or context. Please use manual code entry."
         } else {
-          errorMessage += "Please check your browser permissions."
+          errorMessage = `Camera error: ${permErr.message || "Unknown error"}. Please use manual code entry.`
         }
         
+        setCameraError(errorMessage)
         toast({
-          title: "Camera Permission Required",
+          title: "Camera Error",
           description: errorMessage,
           variant: "destructive",
         })
@@ -405,6 +379,7 @@ export default function AdminCheckInPage() {
     }
     setScanning(false)
     setInitializing(false)
+    setCameraError(null)
     
     // Clear the container
     const container = document.getElementById("qr-reader")
@@ -590,14 +565,9 @@ export default function AdminCheckInPage() {
                           <div className="text-center text-gray-400 p-8">
                             <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
                             <p className="font-medium">Click Start Scanner to activate camera</p>
-                            {cameraPermission === "denied" && (
-                              <p className="text-red-400 text-sm mt-2">
-                                Camera access was denied. Please enable it in your browser settings.
-                              </p>
-                            )}
-                            {cameraPermission === "granted" && (
-                              <p className="text-green-400 text-sm mt-2">
-                                Camera permission granted
+                            {cameraError && (
+                              <p className="text-red-400 text-sm mt-2 max-w-xs">
+                                {cameraError}
                               </p>
                             )}
                           </div>
@@ -661,9 +631,9 @@ export default function AdminCheckInPage() {
                           </Button>
                         )}
                       </div>
-                      {!scanning && !initializing && cameraPermission === "denied" && (
-                        <p className="text-sm text-red-500">
-                          Camera blocked. Click the camera icon in your browser&apos;s address bar to allow access.
+                      {!scanning && !initializing && cameraError && (
+                        <p className="text-sm text-amber-600 text-center max-w-sm">
+                          Tip: You can also use the manual code entry below
                         </p>
                       )}
                     </div>

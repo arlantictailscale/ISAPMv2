@@ -64,6 +64,7 @@ export default function AdminCheckInPage() {
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [initializing, setInitializing] = useState(false)
+  const [cameraPermission, setCameraPermission] = useState<"prompt" | "granted" | "denied" | "unknown">("unknown")
   const [manualCode, setManualCode] = useState("")
   const [processing, setProcessing] = useState(false)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
@@ -100,6 +101,32 @@ export default function AdminCheckInPage() {
 
     checkAuth()
   }, [router])
+
+  // Check camera permission status on mount
+  useEffect(() => {
+    async function checkCameraPermission() {
+      try {
+        // Check if permissions API is available
+        if (navigator.permissions && navigator.permissions.query) {
+          const result = await navigator.permissions.query({ name: "camera" as PermissionName })
+          setCameraPermission(result.state as "prompt" | "granted" | "denied")
+          
+          // Listen for permission changes
+          result.onchange = () => {
+            setCameraPermission(result.state as "prompt" | "granted" | "denied")
+          }
+        } else {
+          // Permissions API not available, set to unknown
+          setCameraPermission("unknown")
+        }
+      } catch (err) {
+        // Permissions API might not support camera query
+        setCameraPermission("unknown")
+      }
+    }
+    
+    checkCameraPermission()
+  }, [])
 
   const fetchStats = async () => {
     const supabase = createClient()
@@ -230,9 +257,50 @@ export default function AdminCheckInPage() {
         container.innerHTML = ""
       }
 
+      // First, request camera permission explicitly
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: "environment" } 
+        })
+        // Stop the stream immediately - we just needed permission
+        stream.getTracks().forEach(track => track.stop())
+        setCameraPermission("granted")
+      } catch (permErr: any) {
+        console.error("[v0] Camera permission denied:", permErr)
+        setInitializing(false)
+        setCameraPermission(permErr.name === "NotAllowedError" ? "denied" : "unknown")
+        
+        let errorMessage = "Camera access denied. "
+        if (permErr.name === "NotAllowedError") {
+          errorMessage += "Please allow camera access in your browser settings and try again."
+        } else if (permErr.name === "NotFoundError") {
+          errorMessage += "No camera found on this device."
+        } else if (permErr.name === "NotReadableError") {
+          errorMessage += "Camera is being used by another application."
+        } else if (permErr.name === "OverconstrainedError") {
+          errorMessage = "Camera constraints could not be satisfied. Trying alternative settings."
+        } else {
+          errorMessage += "Please check your browser permissions."
+        }
+        
+        toast({
+          title: "Camera Permission Required",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Get available cameras
+      let cameras: { id: string; label: string }[] = []
+      try {
+        cameras = await Html5Qrcode.getCameras()
+      } catch (camErr) {
+        console.error("[v0] Failed to enumerate cameras:", camErr)
+      }
+
       const html5QrCode = new Html5Qrcode("qr-reader", {
         verbose: false,
-        formatsToSupport: [0], // QR_CODE format
       })
       scannerRef.current = html5QrCode
 
@@ -241,30 +309,56 @@ export default function AdminCheckInPage() {
         fps: 10,
         qrbox: { width: qrboxSize, height: qrboxSize },
         aspectRatio: 1.0,
+        disableFlip: false,
       }
 
-      // Try environment camera first (back camera on mobile)
+      const onScanSuccess = (decodedText: string) => {
+        // Stop scanner and process the code
+        html5QrCode.stop().then(() => {
+          setScanning(false)
+          setInitializing(false)
+          scannerRef.current = null
+          processQRCode(decodedText)
+        }).catch(() => {
+          setScanning(false)
+          setInitializing(false)
+          scannerRef.current = null
+          processQRCode(decodedText)
+        })
+      }
+
+      // Try with specific camera if available (prefer back camera)
+      if (cameras.length > 0) {
+        // Find back camera (usually contains "back", "rear", or "environment" in label)
+        const backCamera = cameras.find(c => 
+          c.label.toLowerCase().includes("back") || 
+          c.label.toLowerCase().includes("rear") ||
+          c.label.toLowerCase().includes("environment")
+        )
+        const cameraToUse = backCamera || cameras[0]
+        
+        try {
+          await html5QrCode.start(
+            cameraToUse.id,
+            config,
+            onScanSuccess,
+            () => {} // QR code not detected - ignore
+          )
+          setScanning(true)
+          setInitializing(false)
+          return
+        } catch (camErr) {
+          console.log("[v0] Specific camera failed, trying facingMode:", camErr)
+        }
+      }
+
+      // Fallback: Try environment camera (back camera on mobile)
       try {
         await html5QrCode.start(
           { facingMode: "environment" },
           config,
-          (decodedText) => {
-            // Stop scanner and process the code
-            html5QrCode.stop().then(() => {
-              setScanning(false)
-              setInitializing(false)
-              scannerRef.current = null
-              processQRCode(decodedText)
-            }).catch(() => {
-              setScanning(false)
-              setInitializing(false)
-              scannerRef.current = null
-              processQRCode(decodedText)
-            })
-          },
-          () => {
-            // QR code not detected - ignore silently
-          }
+          onScanSuccess,
+          () => {}
         )
         setScanning(true)
         setInitializing(false)
@@ -273,23 +367,12 @@ export default function AdminCheckInPage() {
         console.log("[v0] Environment camera failed, trying user camera:", envErr)
       }
 
-      // Fallback to user-facing camera
+      // Fallback: Try user camera (front camera)
       try {
         await html5QrCode.start(
           { facingMode: "user" },
           config,
-          (decodedText) => {
-            html5QrCode.stop().then(() => {
-              setScanning(false)
-              setInitializing(false)
-              scannerRef.current = null
-              processQRCode(decodedText)
-            }).catch(() => {
-              setScanning(false)
-              setInitializing(false)
-              processQRCode(decodedText)
-            })
-          },
+          onScanSuccess,
           () => {}
         )
         setScanning(true)
@@ -297,30 +380,8 @@ export default function AdminCheckInPage() {
         return
       } catch (userErr) {
         console.log("[v0] User camera also failed:", userErr)
+        throw new Error("Could not start camera. Please try refreshing the page.")
       }
-
-      // Final fallback: request any available camera
-      const devices = await Html5Qrcode.getCameras()
-      if (devices && devices.length > 0) {
-        await html5QrCode.start(
-          devices[0].id,
-          config,
-          (decodedText) => {
-            html5QrCode.stop().then(() => {
-              setScanning(false)
-              setInitializing(false)
-              scannerRef.current = null
-              processQRCode(decodedText)
-            })
-          },
-          () => {}
-        )
-        setScanning(true)
-        setInitializing(false)
-        return
-      }
-
-      throw new Error("No cameras found on this device")
     } catch (err: any) {
       console.error("[v0] Scanner initialization failed:", err)
       setInitializing(false)
@@ -528,7 +589,17 @@ export default function AdminCheckInPage() {
                         <div className="absolute inset-0 flex items-center justify-center max-w-md mx-auto">
                           <div className="text-center text-gray-400 p-8">
                             <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                            <p>Click Start Scanner to activate camera</p>
+                            <p className="font-medium">Click Start Scanner to activate camera</p>
+                            {cameraPermission === "denied" && (
+                              <p className="text-red-400 text-sm mt-2">
+                                Camera access was denied. Please enable it in your browser settings.
+                              </p>
+                            )}
+                            {cameraPermission === "granted" && (
+                              <p className="text-green-400 text-sm mt-2">
+                                Camera permission granted
+                              </p>
+                            )}
                           </div>
                         </div>
                       )}
@@ -562,31 +633,38 @@ export default function AdminCheckInPage() {
                       )}
                     </div>
 
-                    <div className="flex justify-center gap-3">
-                      {scanning ? (
-                        <Button variant="destructive" onClick={stopScanner} size="lg">
-                          <CameraOff className="w-4 h-4 mr-2" />
-                          Stop Scanner
-                        </Button>
-                      ) : (
-                        <Button 
-                          onClick={startScanner} 
-                          className="bg-teal-600 hover:bg-teal-700" 
-                          size="lg"
-                          disabled={initializing}
-                        >
-                          {initializing ? (
-                            <>
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                              Starting...
-                            </>
-                          ) : (
-                            <>
-                              <Camera className="w-4 h-4 mr-2" />
-                              Start Scanner
-                            </>
-                          )}
-                        </Button>
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex gap-3">
+                        {scanning ? (
+                          <Button variant="destructive" onClick={stopScanner} size="lg">
+                            <CameraOff className="w-4 h-4 mr-2" />
+                            Stop Scanner
+                          </Button>
+                        ) : (
+                          <Button 
+                            onClick={startScanner} 
+                            className="bg-teal-600 hover:bg-teal-700" 
+                            size="lg"
+                            disabled={initializing}
+                          >
+                            {initializing ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Starting...
+                              </>
+                            ) : (
+                              <>
+                                <Camera className="w-4 h-4 mr-2" />
+                                Start Scanner
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      {!scanning && !initializing && cameraPermission === "denied" && (
+                        <p className="text-sm text-red-500">
+                          Camera blocked. Click the camera icon in your browser&apos;s address bar to allow access.
+                        </p>
                       )}
                     </div>
 

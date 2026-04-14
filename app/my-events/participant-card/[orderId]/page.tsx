@@ -114,11 +114,11 @@ export default function ParticipantCardPage() {
 
       // Header text
       ctx.fillStyle = "#ffffff"
-      ctx.font = `bold ${32 * scale}px system-ui, -apple-system, sans-serif`
-      ctx.fillText("ISAPM 2026", 30 * scale, 50 * scale)
-      ctx.font = `${14 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.font = `bold ${24 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillText("ISAPM 8th National Meeting 2026", 30 * scale, 50 * scale)
+      ctx.font = `${12 * scale}px system-ui, -apple-system, sans-serif`
       ctx.fillStyle = "#99f6e4"
-      ctx.fillText("Indonesian Society for the Study of Pain Medicine", 30 * scale, 80 * scale)
+      ctx.fillText("Indonesian Society of Anesthesiology for Pain Management", 30 * scale, 80 * scale)
 
       // Status badge
       const badgeText = card.is_checked_in ? "Checked In" : "Active"
@@ -357,8 +357,8 @@ export default function ParticipantCardPage() {
             <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold">ISAPM 2026</h1>
-                  <p className="text-teal-100 text-sm">Indonesian Society for the Study of Pain Medicine</p>
+                  <h1 className="text-xl font-bold">ISAPM 8th National Meeting 2026</h1>
+                  <p className="text-teal-100 text-sm">Indonesian Society of Anesthesiology for Pain Management</p>
                 </div>
                 <Badge
                   variant={!card.is_checked_in ? "default" : "secondary"}

@@ -99,17 +99,23 @@ export default function Navigation() {
 
   // Fast role fetch with localStorage cache (persists across sessions)
   const fetchUserRole = useCallback(
-    async (userId: string) => {
-      // Check localStorage cache first (faster than sessionStorage, persists)
+    async (userId: string, forceRefresh = false) => {
       const cacheKey = `isapm_role_${userId}`
-      const cached = localStorage.getItem(cacheKey)
-      if (cached) {
-        try {
-          const { role, expires } = JSON.parse(cached)
-          if (Date.now() < expires) {
-            return role
+      
+      // Check localStorage cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          try {
+            const { role, expires } = JSON.parse(cached)
+            if (Date.now() < expires && role) {
+              return role
+            }
+          } catch {
+            // Invalid cache, will refetch
+            localStorage.removeItem(cacheKey)
           }
-        } catch {}
+        }
       }
 
       try {
@@ -120,8 +126,8 @@ export default function Navigation() {
           .maybeSingle()
 
         const role = profile?.role || "user"
-        // Cache for 30 minutes
-        localStorage.setItem(cacheKey, JSON.stringify({ role, expires: Date.now() + 30 * 60 * 1000 }))
+        // Cache for 10 minutes (shorter for faster admin detection)
+        localStorage.setItem(cacheKey, JSON.stringify({ role, expires: Date.now() + 10 * 60 * 1000 }))
         return role
       } catch {
         return "user"
@@ -157,7 +163,9 @@ export default function Navigation() {
       setIsLoading(false)
 
       if (currentUser) {
-        fetchUserRole(currentUser.id).then((role) => {
+        // Force refresh role on sign in to ensure admin status is up-to-date
+        const forceRefresh = event === "SIGNED_IN"
+        fetchUserRole(currentUser.id, forceRefresh).then((role) => {
           if (isMounted.current) setUserRole(role)
         })
       } else {

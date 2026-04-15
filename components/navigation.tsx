@@ -137,10 +137,18 @@ export default function Navigation() {
     isMounted.current = true
 
     const initAuth = async () => {
+      // Set a timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        if (isMounted.current) {
+          setUser(null)
+          setIsLoading(false)
+        }
+      }, 5000) // 5 second max wait
+
       try {
-        // Fast path: check session without timeout racing
         const { data: { session } } = await supabase.auth.getSession()
 
+        clearTimeout(timeoutId)
         if (!isMounted.current) return
 
         if (session?.user) {
@@ -155,6 +163,7 @@ export default function Navigation() {
           setIsLoading(false)
         }
       } catch {
+        clearTimeout(timeoutId)
         // On error, just show logged out state (don't retry/reload)
         if (isMounted.current) {
           setUser(null)

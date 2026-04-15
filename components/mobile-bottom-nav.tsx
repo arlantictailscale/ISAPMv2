@@ -34,15 +34,23 @@ export function MobileBottomNav() {
       }
     }
 
-    // Check initial auth state
+    // Check initial auth state with timeout
     const init = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
+      // Timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        setIsLoading(false)
+      }, 3000)
 
-      if (session?.user) {
-        setIsLoggedIn(true)
-        await fetchCardUrl(session.user.id)
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        clearTimeout(timeoutId)
+
+        if (session?.user) {
+          setIsLoggedIn(true)
+          await fetchCardUrl(session.user.id)
+        }
+      } catch {
+        clearTimeout(timeoutId)
       }
 
       setIsLoading(false)

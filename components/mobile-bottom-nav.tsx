@@ -19,38 +19,48 @@ export function MobileBottomNav() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
-    // Check initial auth state and fetch participant card
-    const checkAuthAndFetchCard = async () => {
+    // Fetch participant card URL for a given user id
+    const fetchCardUrl = async (userId: string) => {
+      const { data: card } = await supabase
+        .from("participant_cards")
+        .select("order_id")
+        .eq("user_id", userId)
+        .order("issued_at", { ascending: false })
+        .limit(1)
+        .single()
+
+      if (card?.order_id) {
+        setParticipantCardUrl(`/my-events/participant-card/${card.order_id}`)
+      }
+    }
+
+    // Check initial auth state
+    const init = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession()
-      setIsLoggedIn(!!session?.user)
-      
+
       if (session?.user) {
-        // Fetch the user's first participant card (most recent)
-        const { data: card } = await supabase
-          .from("participant_cards")
-          .select("order_id")
-          .eq("user_id", session.user.id)
-          .order("issued_at", { ascending: false })
-          .limit(1)
-          .single()
-        
-        if (card?.order_id) {
-          setParticipantCardUrl(`/my-events/participant-card/${card.order_id}`)
-        }
+        setIsLoggedIn(true)
+        await fetchCardUrl(session.user.id)
       }
-      
+
       setIsLoading(false)
     }
 
-    checkAuthAndFetchCard()
+    init()
 
-    // Listen for auth state changes
+    // Also fetch card on auth state change (handles client-side navigation)
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoggedIn(!!session?.user)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setIsLoggedIn(true)
+        await fetchCardUrl(session.user.id)
+      } else {
+        setIsLoggedIn(false)
+        setParticipantCardUrl(null)
+      }
       setIsLoading(false)
     })
 

@@ -297,17 +297,17 @@ export default function AdminParticipantCardsPage() {
 
       <main className="container mx-auto px-4 pt-24 pb-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Participant Cards</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Participant Cards</h1>
             <p className="text-sm text-gray-500">Manage all issued participant cards</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => router.push("/admin/check-in")}>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={() => router.push("/admin/check-in")}>
               <ScanLine className="w-4 h-4 mr-2" />
               Scanner
             </Button>
-            <Button variant="outline" onClick={() => router.push("/admin/events")}>
+            <Button variant="outline" size="sm" onClick={() => router.push("/admin/events")}>
               Back to Admin
             </Button>
           </div>
@@ -422,17 +422,17 @@ export default function AdminParticipantCardsPage() {
           </CardContent>
         </Card>
 
-        {/* Table */}
-        <Card className="border-0 shadow-sm overflow-hidden">
+        {/* Table - Desktop */}
+        <Card className="border-0 shadow-sm overflow-hidden hidden md:block">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[35%]">Participant</TableHead>
-                  <TableHead className="w-[30%]">Institution</TableHead>
-                  <TableHead>Events</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Issued</TableHead>
+                  <TableHead className="w-[38%]">Participant</TableHead>
+                  <TableHead className="w-[28%]">Institution</TableHead>
+                  <TableHead className="w-[14%]">Events</TableHead>
+                  <TableHead className="w-[10%]">Status</TableHead>
+                  <TableHead className="w-[8%]">Issued</TableHead>
                   <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -445,20 +445,20 @@ export default function AdminParticipantCardsPage() {
                   </TableRow>
                 ) : (
                   filteredCards.map((card) => (
-                    <TableRow key={card.id} className="hover:bg-gray-50">
+                    <TableRow key={card.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedCard(card)}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium text-gray-900 text-sm">{card.full_name}</p>
-                          <p className="text-xs text-gray-500">{card.email}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">{card.full_name}</p>
+                          <p className="text-xs text-gray-500 truncate">{card.email}</p>
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm text-gray-600">
-                        {card.institution || "-"}
+                      <TableCell className="text-sm text-gray-600 truncate max-w-0">
+                        <span className="block truncate">{card.institution || "-"}</span>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {card.events.slice(0, 2).map((event, i) => (
-                            <Badge key={i} variant="outline" className="text-xs">
+                            <Badge key={i} variant="outline" className="text-xs whitespace-nowrap">
                               {event.event_id.toUpperCase()}
                             </Badge>
                           ))}
@@ -470,10 +470,10 @@ export default function AdminParticipantCardsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{getStatusBadge(card.is_checked_in ? "checked_in" : "active")}</TableCell>
-                      <TableCell className="text-sm text-gray-600 whitespace-nowrap">
-                        {format(new Date(card.issued_at), "MMM d, yyyy")}
+                      <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                        {format(new Date(card.issued_at), "MMM d")}
                       </TableCell>
-                      <TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -487,8 +487,6 @@ export default function AdminParticipantCardsPage() {
                 )}
               </TableBody>
             </Table>
-
-            {/* Pagination Info */}
             <div className="px-4 py-3 border-t bg-gray-50">
               <p className="text-sm text-gray-600">
                 Showing {filteredCards.length} of {cards.length} cards
@@ -496,6 +494,60 @@ export default function AdminParticipantCardsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Card List - Mobile / Tablet */}
+        <div className="md:hidden space-y-2">
+          {filteredCards.length === 0 ? (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="py-12 text-center text-gray-500 text-sm">
+                {cards.length === 0 ? "No participant cards issued yet" : "No cards match your filters"}
+              </CardContent>
+            </Card>
+          ) : (
+            filteredCards.map((card) => (
+              <button
+                key={card.id}
+                onClick={() => setSelectedCard(card)}
+                className="w-full text-left bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  {/* Left: name + email + institution */}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{card.full_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{card.email}</p>
+                    {card.institution && (
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{card.institution}</p>
+                    )}
+                    {/* Event badges */}
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {card.events.slice(0, 3).map((event, i) => (
+                        <Badge key={i} variant="outline" className="text-xs px-1.5 py-0">
+                          {event.event_id.toUpperCase()}
+                        </Badge>
+                      ))}
+                      {card.events.length > 3 && (
+                        <Badge variant="outline" className="text-xs px-1.5 py-0">
+                          +{card.events.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {/* Right: status + date */}
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    {getStatusBadge(card.is_checked_in ? "checked_in" : "active")}
+                    <span className="text-xs text-gray-400">
+                      {format(new Date(card.issued_at), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))
+          )}
+          {/* Mobile count */}
+          <p className="text-sm text-gray-500 text-center py-2">
+            Showing {filteredCards.length} of {cards.length} cards
+          </p>
+        </div>
       </main>
 
       {/* Card Detail Dialog */}

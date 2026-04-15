@@ -130,56 +130,31 @@ export default function Navigation() {
     [supabase],
   )
 
-  // Single streamlined auth initialization
+  // Robust auth initialization using onAuthStateChange as primary source
+  // This approach never hangs because onAuthStateChange fires immediately with INITIAL_SESSION
   useEffect(() => {
     if (authInitialized.current) return
     authInitialized.current = true
     isMounted.current = true
 
-    const initAuth = async () => {
-      // Set a timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        if (isMounted.current) {
-          setUser(null)
-          setIsLoading(false)
-        }
-      }, 5000) // 5 second max wait
-
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-
-        clearTimeout(timeoutId)
-        if (!isMounted.current) return
-
-        if (session?.user) {
-          setUser(session.user)
-          setIsLoading(false)
-          // Fetch role in background (don't block UI)
-          fetchUserRole(session.user.id).then((role) => {
-            if (isMounted.current) setUserRole(role)
-          })
-        } else {
-          setUser(null)
-          setIsLoading(false)
-        }
-      } catch {
-        clearTimeout(timeoutId)
-        // On error, just show logged out state (don't retry/reload)
-        if (isMounted.current) {
-          setUser(null)
-          setIsLoading(false)
-        }
+    // Safety timeout - ensures UI never stays stuck even if Supabase fails completely
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted.current && isLoading) {
+        setIsLoading(false)
       }
-    }
+    }, 3000)
 
-    initAuth()
-
-    // Listen for auth changes (handles login/logout from other tabs)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // onAuthStateChange fires IMMEDIATELY with INITIAL_SESSION event
+    // This is more reliable than getSession() which can hang on slow networks
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!isMounted.current) return
+
+      // Clear safety timeout on first auth event
+      clearTimeout(safetyTimeout)
 
       const currentUser = session?.user || null
       setUser(currentUser)
+      setIsLoading(false)
 
       if (currentUser) {
         fetchUserRole(currentUser.id).then((role) => {
@@ -188,15 +163,14 @@ export default function Navigation() {
       } else {
         setUserRole("user")
       }
-
-      setIsLoading(false)
     })
 
     return () => {
       isMounted.current = false
+      clearTimeout(safetyTimeout)
       subscription?.unsubscribe()
     }
-  }, [supabase, fetchUserRole])
+  }, [supabase, fetchUserRole, isLoading])
 
   useEffect(() => {
     const handleScroll = () => {

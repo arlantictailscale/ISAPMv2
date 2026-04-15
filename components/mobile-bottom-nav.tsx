@@ -19,60 +19,49 @@ export function MobileBottomNav() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     )
 
-    // Fetch participant card URL for a given user id
+    // Fetch participant card URL for a given user id (non-blocking)
     const fetchCardUrl = async (userId: string) => {
-      const { data: card } = await supabase
-        .from("participant_cards")
-        .select("order_id")
-        .eq("user_id", userId)
-        .order("issued_at", { ascending: false })
-        .limit(1)
-        .single()
-
-      if (card?.order_id) {
-        setParticipantCardUrl(`/my-events/participant-card/${card.order_id}`)
-      }
-    }
-
-    // Check initial auth state with timeout
-    const init = async () => {
-      // Timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        setIsLoading(false)
-      }, 3000)
-
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        clearTimeout(timeoutId)
+        const { data: card } = await supabase
+          .from("participant_cards")
+          .select("order_id")
+          .eq("user_id", userId)
+          .order("issued_at", { ascending: false })
+          .limit(1)
+          .single()
 
-        if (session?.user) {
-          setIsLoggedIn(true)
-          await fetchCardUrl(session.user.id)
+        if (card?.order_id) {
+          setParticipantCardUrl(`/my-events/participant-card/${card.order_id}`)
         }
       } catch {
-        clearTimeout(timeoutId)
+        // Silently fail - card URL is optional
       }
-
-      setIsLoading(false)
     }
 
-    init()
+    // Safety timeout - ensures nav renders even if Supabase completely fails
+    const safetyTimeout = setTimeout(() => {
+      setIsLoading(false)
+    }, 2000)
 
-    // Also fetch card on auth state change (handles client-side navigation)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Use onAuthStateChange as primary source - fires IMMEDIATELY with INITIAL_SESSION
+    // This is more reliable than getSession() which can hang on slow mobile networks
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      clearTimeout(safetyTimeout)
+      
       if (session?.user) {
         setIsLoggedIn(true)
-        await fetchCardUrl(session.user.id)
+        setIsLoading(false)
+        // Fetch card URL in background - don't block nav render
+        fetchCardUrl(session.user.id)
       } else {
         setIsLoggedIn(false)
         setParticipantCardUrl(null)
+        setIsLoading(false)
       }
-      setIsLoading(false)
     })
 
     return () => {
+      clearTimeout(safetyTimeout)
       subscription.unsubscribe()
     }
   }, [])

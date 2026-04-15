@@ -163,8 +163,17 @@ export default function Navigation() {
       setIsLoading(false)
 
       if (currentUser) {
-        // Force refresh role on sign in to ensure admin status is up-to-date
-        const forceRefresh = event === "SIGNED_IN"
+        // Force refresh role on sign in OR on fresh page load after login
+        // SIGNED_IN fires during login, INITIAL_SESSION fires after redirect
+        // Check sessionStorage flag to detect fresh login redirect
+        const justLoggedIn = sessionStorage.getItem("isapm_just_logged_in") === "true"
+        const forceRefresh = event === "SIGNED_IN" || justLoggedIn
+        
+        // Clear the flag after checking
+        if (justLoggedIn) {
+          sessionStorage.removeItem("isapm_just_logged_in")
+        }
+        
         fetchUserRole(currentUser.id, forceRefresh).then((role) => {
           if (isMounted.current) setUserRole(role)
         })

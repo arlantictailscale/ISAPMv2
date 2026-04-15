@@ -25,11 +25,16 @@ export default function CallbackPage() {
       return
     }
 
-    // Fast redirect helper
-    const redirect = (path: string) => {
+    // Fast redirect helper with login flag
+    const redirect = (path: string, userId?: string) => {
       if (isProcessed || !isMounted) return
       isProcessed = true
-      // Use window.location for faster, more reliable redirect
+      // Set flag so navigation knows to force-refresh role after redirect
+      sessionStorage.setItem("isapm_just_logged_in", "true")
+      // Clear any stale role cache
+      if (userId) {
+        localStorage.removeItem(`isapm_role_${userId}`)
+      }
       window.location.href = path
     }
 
@@ -40,9 +45,9 @@ export default function CallbackPage() {
       if ((event === "SIGNED_IN" || event === "USER_UPDATED") && session) {
         setStatus("success")
         setMessage("Authentication successful!")
-        redirect("/dashboard")
+        redirect("/dashboard", session.user.id)
       } else if (event === "TOKEN_REFRESHED" && session) {
-        redirect("/dashboard")
+        redirect("/dashboard", session.user.id)
       }
     })
 
@@ -57,7 +62,7 @@ export default function CallbackPage() {
 
       if (session) {
         setStatus("success")
-        redirect("/dashboard")
+        redirect("/dashboard", session.user.id)
       } else {
         // Give auth state change time to fire
         setTimeout(() => {

@@ -80,7 +80,12 @@ export default function LoginPage() {
         return
       }
 
-      // Redirect immediately - don't wait for refresh
+      // Set flag so navigation knows to force-refresh role after redirect
+      sessionStorage.setItem("isapm_just_logged_in", "true")
+      // Clear any stale role cache to ensure fresh fetch
+      localStorage.removeItem(`isapm_role_${data.session.user.id}`)
+      
+      // Redirect immediately
       window.location.href = "/dashboard"
     } catch (error: unknown) {
       setErrorType("general")

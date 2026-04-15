@@ -152,7 +152,7 @@ export default function Navigation() {
 
     // onAuthStateChange fires IMMEDIATELY with INITIAL_SESSION event
     // This is more reliable than getSession() which can hang on slow networks
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted.current) return
 
       // Clear safety timeout on first auth event
@@ -160,7 +160,6 @@ export default function Navigation() {
 
       const currentUser = session?.user || null
       setUser(currentUser)
-      setIsLoading(false)
 
       if (currentUser) {
         // Force refresh role on sign in OR on fresh page load after login
@@ -174,11 +173,15 @@ export default function Navigation() {
           sessionStorage.removeItem("isapm_just_logged_in")
         }
         
-        fetchUserRole(currentUser.id, forceRefresh).then((role) => {
-          if (isMounted.current) setUserRole(role)
-        })
+        // Wait for role before finishing loading - ensures admin menu shows immediately
+        const role = await fetchUserRole(currentUser.id, forceRefresh)
+        if (isMounted.current) {
+          setUserRole(role)
+          setIsLoading(false)
+        }
       } else {
         setUserRole("user")
+        setIsLoading(false)
       }
     })
 

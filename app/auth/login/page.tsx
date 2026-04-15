@@ -80,8 +80,8 @@ export default function LoginPage() {
         return
       }
 
-      router.push("/dashboard")
-      router.refresh()
+      // Redirect immediately - don't wait for refresh
+      window.location.href = "/dashboard"
     } catch (error: unknown) {
       setErrorType("general")
       if (error instanceof Error) {

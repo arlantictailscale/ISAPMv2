@@ -2,11 +2,21 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 import { Resend } from "resend"
 
-const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+// Lazy initialization to avoid build-time errors
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 export async function POST(request: Request) {
+  const supabaseAdmin = getSupabaseAdmin()
+  const resend = getResend()
   try {
     const body = await request.json()
     const { name, email, category, message } = body
@@ -39,7 +49,7 @@ export async function POST(request: Request) {
     }
 
     // Send confirmation email if email is provided
-    if (email && email.trim()) {
+    if (email && email.trim() && process.env.RESEND_API_KEY) {
       try {
         await resend.emails.send({
           from: "ISAPM 2026 <noreply@isapm2026.org>",

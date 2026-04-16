@@ -15,9 +15,10 @@ function getResend() {
 }
 
 export async function POST(request: Request) {
-  const supabaseAdmin = getSupabaseAdmin()
-  const resend = getResend()
   try {
+    // Initialize clients inside try block
+    const supabaseAdmin = getSupabaseAdmin()
+    const resend = getResend()
     const body = await request.json()
     const { name, email, category, message } = body
 
@@ -44,8 +45,11 @@ export async function POST(request: Request) {
       .single()
 
     if (dbError) {
-      console.error("Database error:", dbError)
-      return NextResponse.json({ error: "Failed to save feedback" }, { status: 500 })
+      console.error("[v0] Database error:", dbError.message, dbError.details, dbError.hint)
+      return NextResponse.json({ 
+        error: "Failed to save feedback", 
+        details: dbError.message 
+      }, { status: 500 })
     }
 
     // Send confirmation email if email is provided
@@ -104,8 +108,9 @@ export async function POST(request: Request) {
       id: feedback.id,
     })
   } catch (error) {
-    console.error("Feedback submission error:", error)
-    return NextResponse.json({ error: "An unexpected error occurred" }, { status: 500 })
+    console.error("[v0] Feedback submission error:", error)
+    const message = error instanceof Error ? error.message : "An unexpected error occurred"
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 

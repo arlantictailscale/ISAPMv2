@@ -27,7 +27,19 @@ export default function FeedbackPage() {
         body: JSON.stringify(formData),
       })
 
-      const result = await response.json()
+      // Handle empty response
+      const text = await response.text()
+      if (!text) {
+        throw new Error("Server returned empty response")
+      }
+      
+      let result
+      try {
+        result = JSON.parse(text)
+      } catch {
+        console.error("[v0] Failed to parse response:", text)
+        throw new Error("Invalid server response")
+      }
 
       if (!response.ok) {
         throw new Error(result.error || "Failed to submit feedback")
@@ -35,6 +47,7 @@ export default function FeedbackPage() {
 
       setIsSubmitted(true)
     } catch (err) {
+      console.error("[v0] Feedback submission error:", err)
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
     } finally {
       setIsSubmitting(false)

@@ -215,15 +215,13 @@ export default async function DashboardPage() {
       pendingPostersResult,
       paymentsResult,
       ordersResult,
-      verifiedPaymentsResult,
       eventsResult,
       hotelBookingsResult,
     ] = await Promise.all([
       adminClient.from("abstracts").select("id", { count: "exact", head: true }),
       adminClient.from("abstracts").select("id", { count: "exact", head: true }).eq("submission_status", "pending"),
       supabase.from("order_payments").select("id", { count: "exact", head: true }).eq("payment_status", "pending"),
-      supabase.from("orders").select("id", { count: "exact", head: true }),
-      supabase.from("order_payments").select("id, amount", { count: "exact" }).eq("payment_status", "verified"),
+      supabase.from("orders").select("id", { count: "exact", head: true }).neq("status", "cancelled"),
       supabase.from("events").select("id", { count: "exact", head: true }).eq("is_active", true),
       supabase
         .from("order_items")
@@ -231,14 +229,18 @@ export default async function DashboardPage() {
         .in("hotel_room_type", ["deluxe", "premier"]),
     ])
 
-    // Calculate total revenue
-    const totalRevenue = verifiedPaymentsResult.data?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0
-
-    // Get confirmed attendees (verified payments)
-    const { count: confirmedAttendeesCount } = await supabase
+    // Get verified payments excluding cancelled orders for accurate revenue
+    const { data: verifiedPaymentsData, count: verifiedPaymentsCount } = await supabase
       .from("order_payments")
-      .select("id", { count: "exact", head: true })
+      .select("id, amount, orders!inner(status)", { count: "exact" })
       .eq("payment_status", "verified")
+      .neq("orders.status", "cancelled")
+
+    // Calculate total revenue (excluding cancelled orders)
+    const totalRevenue = verifiedPaymentsData?.reduce((sum, p) => sum + (Number(p.amount) || 0), 0) || 0
+
+    // Confirmed attendees = verified payments excluding cancelled orders
+    const confirmedAttendeesCount = verifiedPaymentsCount || 0
 
     adminStats = {
       totalUsers: authUserCountResult.count || 0,
@@ -247,11 +249,11 @@ export default async function DashboardPage() {
       pendingPayments: paymentsResult.count || 0,
       totalOrders: ordersResult.count || 0,
       totalRevenue: totalRevenue,
-      verifiedPayments: verifiedPaymentsResult.count || 0,
+      verifiedPayments: verifiedPaymentsCount || 0,
       totalEvents: eventsResult.count || 0,
       totalWebinars: 0,
       hotelBookings: hotelBookingsResult.count || 0,
-      confirmedAttendees: confirmedAttendeesCount || 0,
+      confirmedAttendees: confirmedAttendeesCount,
     }
   }
 

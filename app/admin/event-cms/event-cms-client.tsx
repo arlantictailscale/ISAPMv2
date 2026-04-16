@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useMemo, useRef } from "react"
+import { upload } from "@vercel/blob/client"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -1147,27 +1148,47 @@ function ResourceForm({
     setUploadError("")
 
     try {
-      const body = new FormData()
-      body.append("file", file)
-      if (eventSlug) body.append("eventSlug", eventSlug)
-
-      const res = await fetch("/api/upload-event-resource", {
-        method: "POST",
-        body,
-      })
-
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.error || "Upload failed")
+      // Client-side validation (mirrors server)
+      const maxSize = 500 * 1024 * 1024 // 500MB
+      if (file.size > maxSize) {
+        throw new Error("File size exceeds 500MB limit")
       }
 
-      const data = await res.json()
+      // Upload directly to Vercel Blob from the browser.
+      // This bypasses the 4.5MB Vercel server route body limit,
+      // allowing large files (e.g., 50MB+ PowerPoints) to upload.
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+      const pathname = `event-resources/${eventSlug || "general"}/${safeName}`
+
+      const blob = await upload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/upload-event-resource",
+        contentType: file.type || undefined,
+      })
+
+      // Determine file type category from MIME type
+      let fileType = "url"
+      if (file.type.startsWith("image/")) {
+        fileType = file.type.split("/")[1] === "png" ? "png" : "jpg"
+      } else if (file.type.startsWith("video/")) {
+        fileType = "mp4"
+      } else if (file.type === "application/pdf") {
+        fileType = "pdf"
+      } else if (file.type.includes("word")) {
+        fileType = "doc"
+      } else if (file.type.includes("presentation") || file.type.includes("powerpoint")) {
+        fileType = "ppt"
+      } else if (file.type.includes("sheet") || file.type.includes("excel")) {
+        fileType = "xls"
+      } else if (file.type.includes("zip")) {
+        fileType = "zip"
+      }
 
       setFormData((prev) => ({
         ...prev,
-        url: data.url,
-        file_type: data.fileType || prev.file_type,
-        file_size: data.size || prev.file_size,
+        url: blob.url,
+        file_type: fileType || prev.file_type,
+        file_size: file.size || prev.file_size,
       }))
 
       if (!formData.title) {
@@ -1182,7 +1203,7 @@ function ResourceForm({
       setUploadedFileName(file.name)
       setUploadProgress("success")
     } catch (error) {
-      console.error("Upload error:", error)
+      console.error("[v0] Upload error:", error)
       setUploadError(error instanceof Error ? error.message : "Upload failed")
       setUploadProgress("error")
     } finally {

@@ -13,10 +13,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Name and message are required" }, { status: 400 })
     }
 
-    // Get IP for rate limiting/spam detection (optional)
-    const forwarded = request.headers.get("x-forwarded-for")
-    const ip = forwarded ? forwarded.split(",")[0] : "unknown"
-
     // Insert feedback into database
     const { data: feedback, error: dbError } = await supabaseAdmin
       .from("feedback")
@@ -25,7 +21,6 @@ export async function POST(request: Request) {
         email: email?.trim() || null,
         category: category || "general",
         message: message.trim(),
-        ip_address: ip,
       })
       .select()
       .single()

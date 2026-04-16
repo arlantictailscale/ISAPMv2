@@ -27,6 +27,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
   Loader2,
   Search,
   Download,
@@ -42,6 +52,7 @@ import {
   FileSpreadsheet,
   Filter,
   X,
+  Trash2,
 } from "lucide-react"
 
 interface Feedback {
@@ -80,6 +91,8 @@ export default function AdminFeedbackPage() {
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [feedbackToDelete, setFeedbackToDelete] = useState<Feedback | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("")
@@ -216,6 +229,35 @@ export default function AdminFeedbackPage() {
       today: feedback.filter((f) => isToday(new Date(f.created_at))).length,
     }
   }, [feedback])
+
+  // Delete feedback
+  const handleDelete = async () => {
+    if (!feedbackToDelete) return
+    setIsDeleting(true)
+    try {
+      const { error } = await supabase
+        .from("feedback")
+        .delete()
+        .eq("id", feedbackToDelete.id)
+
+      if (error) throw error
+
+      setFeedback((prev) => prev.filter((f) => f.id !== feedbackToDelete.id))
+      toast.success("Feedback deleted successfully")
+
+      // Close detail dialog if the deleted item was being viewed
+      if (selectedFeedback?.id === feedbackToDelete.id) {
+        setIsDetailOpen(false)
+        setSelectedFeedback(null)
+      }
+      setFeedbackToDelete(null)
+    } catch (error: any) {
+      console.error("Delete error:", error)
+      toast.error(error.message || "Failed to delete feedback")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   // Export to Excel
   const exportToExcel = () => {
@@ -537,6 +579,17 @@ export default function AdminFeedbackPage() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setFeedbackToDelete(item)
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -632,11 +685,63 @@ export default function AdminFeedbackPage() {
                     </a>
                   </Button>
                 )}
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={() => setFeedbackToDelete(selectedFeedback)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </Button>
               </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={!!feedbackToDelete}
+        onOpenChange={(open) => !open && setFeedbackToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Feedback?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the feedback from{" "}
+              <span className="font-medium text-foreground">
+                {feedbackToDelete?.name}
+              </span>
+              . This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleDelete()
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Footer />
     </div>

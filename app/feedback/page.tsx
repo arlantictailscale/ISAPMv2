@@ -60,7 +60,7 @@ export default function FeedbackPage() {
     return (
       <div className="min-h-screen flex flex-col bg-gradient-to-b from-teal-50 to-white">
         <Navigation />
-        <main className="flex-1 flex items-center justify-center px-4 py-12">
+        <main className="flex-1 flex items-center justify-center px-4 py-12 pt-24 md:pt-28">
           <div className="max-w-md w-full text-center">
             <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -104,7 +104,7 @@ export default function FeedbackPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-teal-50 to-white">
       <Navigation />
-      <main className="flex-1">
+      <main className="flex-1 pt-20 md:pt-24">
         {/* Header */}
         <div className="bg-gradient-to-r from-teal-600 to-teal-500 text-white">
           <div className="max-w-2xl mx-auto px-4 py-8">

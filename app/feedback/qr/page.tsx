@@ -37,7 +37,7 @@ export default function FeedbackQRPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-teal-50 to-white">
       <Navigation />
-      <main className="flex-1 flex items-center justify-center px-4 py-12">
+      <main className="flex-1 flex items-center justify-center px-4 py-12 pt-24 md:pt-28">
         <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
           {/* Header */}

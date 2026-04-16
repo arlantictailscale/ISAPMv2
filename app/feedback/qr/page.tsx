@@ -3,6 +3,8 @@
 import { QRCodeSVG } from "qrcode.react"
 import { MessageSquare, Download } from "lucide-react"
 import Link from "next/link"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 
 export default function FeedbackQRPage() {
   const feedbackUrl = "https://isapm2026.org/feedback"
@@ -33,8 +35,10 @@ export default function FeedbackQRPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center px-4 py-12">
-      <div className="max-w-md w-full">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-teal-50 to-white">
+      <Navigation />
+      <main className="flex-1 flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 text-center">
           {/* Header */}
           <div className="w-16 h-16 bg-teal-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -97,7 +101,9 @@ export default function FeedbackQRPage() {
             Kembali ke Beranda
           </Link>
         </div>
-      </div>
+        </div>
+      </main>
+      <Footer />
     </div>
   )
 }

@@ -3,6 +3,8 @@
 import { useState } from "react"
 import { MessageSquare, Send, CheckCircle, ArrowLeft } from "lucide-react"
 import Link from "next/link"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 
 export default function FeedbackPage() {
   const [formData, setFormData] = useState({
@@ -56,68 +58,74 @@ export default function FeedbackPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white flex items-center justify-center px-4 py-12">
-        <div className="max-w-md w-full text-center">
-          <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Terima Kasih!</h2>
-            <p className="text-gray-600 mb-6">
-              Masukan Anda telah berhasil dikirim. Kami sangat menghargai waktu dan kontribusi Anda untuk membantu kami
-              menjadi lebih baik.
-            </p>
-            {formData.email && (
-              <p className="text-sm text-gray-500 mb-6">
-                Konfirmasi telah dikirim ke <span className="font-medium">{formData.email}</span>
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-teal-50 to-white">
+        <Navigation />
+        <main className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="max-w-md w-full text-center">
+            <div className="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <CheckCircle className="w-8 h-8 text-green-600" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Terima Kasih!</h2>
+              <p className="text-gray-600 mb-6">
+                Masukan Anda telah berhasil dikirim. Kami sangat menghargai waktu dan kontribusi Anda untuk membantu kami
+                menjadi lebih baik.
               </p>
-            )}
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={() => {
-                  setIsSubmitted(false)
-                  setFormData({ name: "", email: "", category: "general", message: "" })
-                }}
-                className="w-full py-3 px-4 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors"
-              >
-                Kirim Masukan Lainnya
-              </button>
-              <Link
-                href="/"
-                className="w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors text-center"
-              >
-                Kembali ke Beranda
-              </Link>
+              {formData.email && (
+                <p className="text-sm text-gray-500 mb-6">
+                  Konfirmasi telah dikirim ke <span className="font-medium">{formData.email}</span>
+                </p>
+              )}
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setIsSubmitted(false)
+                    setFormData({ name: "", email: "", category: "general", message: "" })
+                  }}
+                  className="w-full py-3 px-4 bg-teal-600 text-white rounded-xl font-medium hover:bg-teal-700 transition-colors"
+                >
+                  Kirim Masukan Lainnya
+                </button>
+                <Link
+                  href="/"
+                  className="w-full py-3 px-4 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors text-center"
+                >
+                  Kembali ke Beranda
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
+        <Footer />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-teal-50 to-white">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-teal-600 to-teal-500 text-white">
-        <div className="max-w-2xl mx-auto px-4 py-8">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4 text-sm transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Kembali ke Beranda
-          </Link>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-              <MessageSquare className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold">Kritik & Saran</h1>
-              <p className="text-teal-100 text-sm">ISAPM 2026</p>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-teal-50 to-white">
+      <Navigation />
+      <main className="flex-1">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-teal-600 to-teal-500 text-white">
+          <div className="max-w-2xl mx-auto px-4 py-8">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-white/80 hover:text-white mb-4 text-sm transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Kembali ke Beranda
+            </Link>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">Kritik & Saran</h1>
+                <p className="text-teal-100 text-sm">ISAPM 2026</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
       {/* Form */}
       <div className="max-w-2xl mx-auto px-4 py-8 -mt-4">
@@ -228,6 +236,8 @@ export default function FeedbackPage() {
           </p>
         </div>
       </div>
+      </main>
+      <Footer />
     </div>
   )
 }

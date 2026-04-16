@@ -36,6 +36,7 @@ import {
   Newspaper,
   ScanLine,
   QrCode,
+  MessageSquare,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -70,6 +71,7 @@ const adminNavItems = [
   { label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
   { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
   { label: "News CMS", href: "/admin/news-cms", icon: Newspaper },
+  { label: "Feedback", href: "/admin/feedback", icon: MessageSquare },
 ]
 
 const navItems = [

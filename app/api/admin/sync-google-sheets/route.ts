@@ -238,17 +238,26 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Total webinar registrations:", webinarList.length)
 
-    const { data: allPaymentsData, error: allPaymentsError } = await supabaseAdmin
-      .from("order_payments")
+    // Query from orders to properly filter out cancelled orders for payment proofs
+    const { data: allOrdersForPayments, error: allPaymentsError } = await supabaseAdmin
+      .from("orders")
       .select(`
         *,
-        orders!order_payments_order_id_fkey (
-          *,
-          order_items (*)
-        )
+        order_items (*),
+        order_payments!inner (*)
       `)
-      .or("payment_proof_url.not.is.null,payment_method.ilike.sponsored") // Include sponsored payments
+      .neq("status", "cancelled")
+      .or("order_payments.payment_proof_url.not.is.null,order_payments.payment_method.ilike.sponsored")
       .order("created_at", { ascending: false })
+
+    // Transform to match expected allPaymentsData structure
+    const allPaymentsData = allOrdersForPayments?.map(order => ({
+      ...order.order_payments?.[0],
+      orders: {
+        ...order,
+        order_items: order.order_items
+      }
+    })).filter(p => p.id) || []
 
     if (allPaymentsError) {
       console.error("[v0] Error fetching all payments:", allPaymentsError)

@@ -220,7 +220,7 @@ export default async function DashboardPage() {
     ] = await Promise.all([
       adminClient.from("abstracts").select("id", { count: "exact", head: true }),
       adminClient.from("abstracts").select("id", { count: "exact", head: true }).eq("submission_status", "pending"),
-      supabase.from("order_payments").select("id", { count: "exact", head: true }).eq("payment_status", "pending"),
+      supabase.from("order_payments").select("id", { count: "exact", head: true }).eq("payment_status", "pending").not("payment_proof_url", "is", null),
       supabase.from("orders").select("id", { count: "exact", head: true }).neq("status", "cancelled"),
       supabase.from("events").select("id", { count: "exact", head: true }).eq("is_active", true),
       supabase

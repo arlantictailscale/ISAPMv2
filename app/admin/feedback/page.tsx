@@ -266,8 +266,18 @@ export default function AdminFeedbackPage() {
   const syncToGoogleSheets = async () => {
     setIsSyncing(true)
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        toast.error("Not authenticated")
+        return
+      }
+
       const response = await fetch("/api/admin/sync-feedback-sheets", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
       })
 
       if (!response.ok) {
@@ -276,7 +286,7 @@ export default function AdminFeedbackPage() {
       }
 
       const result = await response.json()
-      toast.success(`Synced ${result.syncedCount} feedback entries to Google Sheets`)
+      toast.success(result.message || `Synced ${result.syncedCount} feedback entries to Google Sheets`)
     } catch (error: any) {
       console.error("Sync error:", error)
       toast.error(error.message || "Failed to sync to Google Sheets")

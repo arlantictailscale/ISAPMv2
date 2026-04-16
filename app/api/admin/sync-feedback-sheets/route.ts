@@ -7,43 +7,28 @@ export async function POST(request: NextRequest) {
   try {
     console.log("[v0] Starting Feedback Google Sheets sync...")
 
-    // Initialize Supabase admin client
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    // Authenticate user - matches sync-google-sheets pattern
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://wilienulethgfxdiqghw.supabase.co"
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabaseAdmin = createSupabaseAdmin(supabaseUrl, supabaseServiceKey)
 
-    // Get the session from cookies for authentication
-    const cookieHeader = request.headers.get("cookie") || ""
-    const { createServerClient } = await import("@supabase/ssr")
-    
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieHeader.split(";").map((cookie) => {
-              const [name, ...rest] = cookie.trim().split("=")
-              return { name, value: rest.join("=") }
-            })
-          },
-          setAll() {},
-        },
-      }
-    )
+    const authHeader = request.headers.get("authorization")
+    if (!authHeader) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-    const { data: { user }, error: userError } = await supabaseAuth.auth.getUser()
+    const token = authHeader.replace("Bearer ", "")
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin.auth.getUser(token)
 
     if (userError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Check admin role
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
+    const { data: profile } = await supabaseAdmin.from("profiles").select("role").eq("id", user.id).single()
 
     if (profile?.role !== "admin") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
@@ -62,40 +47,34 @@ export async function POST(request: NextRequest) {
 
     console.log("[v0] Found feedback entries:", feedbackData?.length || 0)
 
-    // Check for Google credentials
-    const googleCredentials = process.env.GOOGLE_SERVICE_ACCOUNT_KEY
-    const spreadsheetId = process.env.GOOGLE_SPREADSHEET_ID
-
-    if (!googleCredentials || !spreadsheetId) {
-      return NextResponse.json(
-        { error: "Google Sheets not configured. Please add GOOGLE_SERVICE_ACCOUNT_KEY and GOOGLE_SPREADSHEET_ID." },
-        { status: 400 }
-      )
-    }
-
-    // Parse credentials
-    let credentials
-    try {
-      credentials = JSON.parse(googleCredentials)
-    } catch {
-      return NextResponse.json(
-        { error: "Invalid Google service account credentials" },
-        { status: 400 }
-      )
-    }
-
-    // Authenticate with Google
+    // Initialize Google Sheets API - SAME credentials as sync-google-sheets
     const auth = new google.auth.GoogleAuth({
-      credentials,
+      credentials: {
+        client_email: process.env.GOOGLE_CLIENT_EMAIL,
+        private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+        project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
+      },
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
     })
 
     const sheets = google.sheets({ version: "v4", auth })
 
-    // Sheet name for feedback
-    const sheetName = "Feedback"
+    // Use SAME spreadsheet as confirmed-attendees sync
+    const spreadsheetId = process.env.GOOGLE_SHEETS_SPREADSHEET_ID
 
-    // Check if sheet exists, create if not
+    if (!spreadsheetId) {
+      return NextResponse.json(
+        { error: "GOOGLE_SHEETS_SPREADSHEET_ID not configured" },
+        { status: 400 }
+      )
+    }
+
+    console.log("[v0] Syncing feedback to spreadsheet:", spreadsheetId)
+
+    // Sheet tab name for feedback - dedicated tab that won't disturb others
+    const sheetName = "Kritik & Saran"
+
+    // Check if sheet tab exists, create if not
     try {
       const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId })
       const existingSheets = spreadsheet.data.sheets?.map((s) => s.properties?.title) || []
@@ -113,22 +92,22 @@ export async function POST(request: NextRequest) {
             ],
           },
         })
-        console.log("[v0] Created new sheet:", sheetName)
+        console.log("[v0] Created new sheet tab:", sheetName)
       }
     } catch (err) {
-      console.error("[v0] Error checking/creating sheet:", err)
+      console.error("[v0] Error checking/creating sheet tab:", err)
     }
 
     // Prepare data for sheets
     const headers = [
       "ID",
-      "Name",
+      "Nama",
       "Email",
-      "Category",
-      "Message",
+      "Kategori",
+      "Pesan",
       "Status",
-      "Submitted At",
-      "Last Updated",
+      "Dikirim Pada",
+      "Terakhir Diperbarui",
     ]
 
     const rows = feedbackData?.map((item) => [
@@ -142,12 +121,13 @@ export async function POST(request: NextRequest) {
       format(new Date(item.updated_at), "yyyy-MM-dd HH:mm:ss"),
     ]) || []
 
-    // Clear existing data and write new
+    // Clear existing data in the feedback tab only (won't affect other tabs)
     await sheets.spreadsheets.values.clear({
       spreadsheetId,
       range: `${sheetName}!A:Z`,
     })
 
+    // Write new data
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: `${sheetName}!A1`,
@@ -157,7 +137,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Format header row
+    // Format header row with teal brand color
     try {
       const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId })
       const sheet = spreadsheet.data.sheets?.find((s) => s.properties?.title === sheetName)
@@ -177,7 +157,7 @@ export async function POST(request: NextRequest) {
                   },
                   cell: {
                     userEnteredFormat: {
-                      backgroundColor: { red: 0.2, green: 0.6, blue: 0.6 },
+                      backgroundColor: { red: 0.08, green: 0.47, blue: 0.47 },
                       textFormat: { bold: true, foregroundColor: { red: 1, green: 1, blue: 1 } },
                     },
                   },
@@ -207,7 +187,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       syncedCount: feedbackData?.length || 0,
-      message: `Synced ${feedbackData?.length || 0} feedback entries to Google Sheets`,
+      message: `Synced ${feedbackData?.length || 0} feedback entries to "${sheetName}" tab`,
     })
   } catch (error: any) {
     console.error("[v0] Feedback sync error:", error)

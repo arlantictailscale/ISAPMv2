@@ -391,54 +391,88 @@ export default function ConfirmedAttendeesPage() {
                         </span>
                       </div>
                       {list.length > 0 && (
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="border-b">
-                                <th className="text-left py-2 px-2">Name</th>
-                                <th className="text-left py-2 px-2">Email</th>
-                                <th className="text-left py-2 px-2">Institution</th>
-                                <th className="text-left py-2 px-2">Type</th>
-                                <th className="text-left py-2 px-2">Price Paid</th>
-                                <th className="text-left py-2 px-2">Price Type</th>
-                                <th className="text-left py-2 px-2">Verified</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {list.slice(0, 5).map((a, i) => {
-                                const pricePaid = a.unit_price ?? 0
-                                const originalPrice = a.original_price ?? pricePaid
-                                const discountAmount = a.discount_amount ?? 0
-                                let priceType = "Full Price"
-                                let priceTypeBadge = "bg-gray-100 text-gray-700"
-                                if (discountAmount > 0) { priceType = "Discounted"; priceTypeBadge = "bg-purple-100 text-purple-700" }
-                                else if (pricePaid < originalPrice) { priceType = "Early Bird"; priceTypeBadge = "bg-green-100 text-green-700" }
-                                return (
-                                  <tr key={i} className="border-b last:border-0">
-                                    <td className="py-2 px-2">{a.full_name || "-"}</td>
-                                    <td className="py-2 px-2">{a.email || "-"}</td>
-                                    <td className="py-2 px-2">{a.institution || "-"}</td>
-                                    <td className="py-2 px-2">{a.participant_type_label || "-"}</td>
-                                    <td className="py-2 px-2 font-medium">
-                                      {pricePaid > 0 ? `Rp ${pricePaid.toLocaleString("id-ID")}` : "-"}
-                                    </td>
-                                    <td className="py-2 px-2">
-                                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priceTypeBadge}`}>
-                                        {priceType}
+                        <>
+                          {/* Mobile card layout */}
+                          <div className="md:hidden space-y-2 mt-2">
+                            {list.slice(0, 5).map((a, i) => {
+                              const pricePaid = a.unit_price ?? 0
+                              const originalPrice = a.original_price ?? pricePaid
+                              const discountAmount = a.discount_amount ?? 0
+                              let priceType = "Full Price"
+                              let priceTypeBadge = "bg-gray-100 text-gray-700"
+                              if (discountAmount > 0) { priceType = "Discounted"; priceTypeBadge = "bg-purple-100 text-purple-700" }
+                              else if (pricePaid < originalPrice) { priceType = "Early Bird"; priceTypeBadge = "bg-green-100 text-green-700" }
+                              return (
+                                <div key={i} className="border rounded-lg p-3 bg-muted/30">
+                                  <p className="font-medium text-sm truncate">{a.full_name || "-"}</p>
+                                  <p className="text-xs text-muted-foreground truncate">{a.email || "-"}</p>
+                                  <div className="flex flex-wrap gap-1.5 mt-2">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priceTypeBadge}`}>
+                                      {priceType}
+                                    </span>
+                                    {pricePaid > 0 && (
+                                      <span className="text-xs text-muted-foreground">
+                                        Rp {pricePaid.toLocaleString("id-ID")}
                                       </span>
-                                    </td>
-                                    <td className="py-2 px-2">
-                                      {a.verified_at ? format(new Date(a.verified_at), "MMM dd") : "-"}
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                            </tbody>
-                          </table>
-                          {list.length > 5 && (
-                            <p className="text-sm text-muted-foreground mt-2">+ {list.length - 5} more attendees</p>
-                          )}
-                        </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            {list.length > 5 && (
+                              <p className="text-sm text-muted-foreground">+ {list.length - 5} more attendees</p>
+                            )}
+                          </div>
+                          {/* Desktop table layout */}
+                          <div className="hidden md:block overflow-x-auto">
+                            <table className="w-full text-sm">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left py-2 px-2">Name</th>
+                                  <th className="text-left py-2 px-2">Email</th>
+                                  <th className="text-left py-2 px-2">Institution</th>
+                                  <th className="text-left py-2 px-2">Type</th>
+                                  <th className="text-left py-2 px-2">Price Paid</th>
+                                  <th className="text-left py-2 px-2">Price Type</th>
+                                  <th className="text-left py-2 px-2">Verified</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {list.slice(0, 5).map((a, i) => {
+                                  const pricePaid = a.unit_price ?? 0
+                                  const originalPrice = a.original_price ?? pricePaid
+                                  const discountAmount = a.discount_amount ?? 0
+                                  let priceType = "Full Price"
+                                  let priceTypeBadge = "bg-gray-100 text-gray-700"
+                                  if (discountAmount > 0) { priceType = "Discounted"; priceTypeBadge = "bg-purple-100 text-purple-700" }
+                                  else if (pricePaid < originalPrice) { priceType = "Early Bird"; priceTypeBadge = "bg-green-100 text-green-700" }
+                                  return (
+                                    <tr key={i} className="border-b last:border-0">
+                                      <td className="py-2 px-2">{a.full_name || "-"}</td>
+                                      <td className="py-2 px-2">{a.email || "-"}</td>
+                                      <td className="py-2 px-2">{a.institution || "-"}</td>
+                                      <td className="py-2 px-2">{a.participant_type_label || "-"}</td>
+                                      <td className="py-2 px-2 font-medium">
+                                        {pricePaid > 0 ? `Rp ${pricePaid.toLocaleString("id-ID")}` : "-"}
+                                      </td>
+                                      <td className="py-2 px-2">
+                                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${priceTypeBadge}`}>
+                                          {priceType}
+                                        </span>
+                                      </td>
+                                      <td className="py-2 px-2">
+                                        {a.verified_at ? format(new Date(a.verified_at), "MMM dd") : "-"}
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                            {list.length > 5 && (
+                              <p className="text-sm text-muted-foreground mt-2">+ {list.length - 5} more attendees</p>
+                            )}
+                          </div>
+                        </>
                       )}
                     </div>
                   )
@@ -449,87 +483,140 @@ export default function ConfirmedAttendeesPage() {
             <div>
               <h2 className="text-xl font-semibold mb-4">Hotel Bookings ({hotelBookings.length})</h2>
               {hotelBookings.length > 0 && (
-                <div className="bg-card border rounded-lg overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4">Guest Name</th>
-                        <th className="text-left py-3 px-4">Email</th>
-                        <th className="text-left py-3 px-4">Room Type</th>
-                        <th className="text-left py-3 px-4">Check-in</th>
-                        <th className="text-left py-3 px-4">Check-out</th>
-                        <th className="text-left py-3 px-4">Nights</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {hotelBookings.slice(0, 10).map((booking, i) => {
-                        const item = booking.order_items[0]
-                        return (
-                          <tr key={i} className="border-b last:border-0">
-                            <td className="py-3 px-4">{booking.full_name || "-"}</td>
-                            <td className="py-3 px-4">{booking.email || "-"}</td>
-                            <td className="py-3 px-4">{item?.hotel_room_type || "-"}</td>
-                            <td className="py-3 px-4">
-                              {item?.check_in_date ? format(new Date(item.check_in_date), "MMM dd, yyyy") : "-"}
-                            </td>
-                            <td className="py-3 px-4">
-                              {item?.check_out_date ? format(new Date(item.check_out_date), "MMM dd, yyyy") : "-"}
-                            </td>
-                            <td className="py-3 px-4">{item?.nights || "-"}</td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                  {hotelBookings.length > 10 && (
-                    <p className="text-sm text-muted-foreground p-4">+ {hotelBookings.length - 10} more bookings</p>
-                  )}
-                </div>
+                <>
+                  {/* Mobile card layout */}
+                  <div className="md:hidden space-y-2">
+                    {hotelBookings.slice(0, 10).map((booking, i) => {
+                      const item = booking.order_items[0]
+                      return (
+                        <div key={i} className="bg-card border rounded-lg p-3">
+                          <p className="font-medium text-sm truncate">{booking.full_name || "-"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{booking.email || "-"}</p>
+                          <div className="flex flex-wrap gap-2 mt-2 text-xs">
+                            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full capitalize">
+                              {item?.hotel_room_type || "-"}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {item?.check_in_date ? format(new Date(item.check_in_date), "MMM dd") : "-"} - {item?.check_out_date ? format(new Date(item.check_out_date), "MMM dd") : "-"}
+                            </span>
+                            <span className="text-muted-foreground">{item?.nights || 0} nights</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {hotelBookings.length > 10 && (
+                      <p className="text-sm text-muted-foreground">+ {hotelBookings.length - 10} more bookings</p>
+                    )}
+                  </div>
+                  {/* Desktop table layout */}
+                  <div className="hidden md:block bg-card border rounded-lg overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left py-3 px-4">Guest Name</th>
+                          <th className="text-left py-3 px-4">Email</th>
+                          <th className="text-left py-3 px-4">Room Type</th>
+                          <th className="text-left py-3 px-4">Check-in</th>
+                          <th className="text-left py-3 px-4">Check-out</th>
+                          <th className="text-left py-3 px-4">Nights</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {hotelBookings.slice(0, 10).map((booking, i) => {
+                          const item = booking.order_items[0]
+                          return (
+                            <tr key={i} className="border-b last:border-0">
+                              <td className="py-3 px-4">{booking.full_name || "-"}</td>
+                              <td className="py-3 px-4">{booking.email || "-"}</td>
+                              <td className="py-3 px-4">{item?.hotel_room_type || "-"}</td>
+                              <td className="py-3 px-4">
+                                {item?.check_in_date ? format(new Date(item.check_in_date), "MMM dd, yyyy") : "-"}
+                              </td>
+                              <td className="py-3 px-4">
+                                {item?.check_out_date ? format(new Date(item.check_out_date), "MMM dd, yyyy") : "-"}
+                              </td>
+                              <td className="py-3 px-4">{item?.nights || "-"}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                    {hotelBookings.length > 10 && (
+                      <p className="text-sm text-muted-foreground p-4">+ {hotelBookings.length - 10} more bookings</p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
 
             <div>
               <h2 className="text-xl font-semibold mb-4">Webinar Registrations ({webinarRegistrations.length})</h2>
               {webinarRegistrations.length > 0 && (
-                <div className="bg-card border rounded-lg overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b bg-muted/50">
-                        <th className="text-left py-3 px-4">Name</th>
-                        <th className="text-left py-3 px-4">Email</th>
-                        <th className="text-left py-3 px-4">Webinar</th>
-                        <th className="text-left py-3 px-4">Date</th>
-                        <th className="text-left py-3 px-4">Access Type</th>
-                        <th className="text-left py-3 px-4">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {webinarRegistrations.slice(0, 10).map((reg, i) => (
-                        <tr key={i} className="border-b last:border-0">
-                          <td className="py-3 px-4">{reg.full_name || "-"}</td>
-                          <td className="py-3 px-4">{reg.email || "-"}</td>
-                          <td className="py-3 px-4">{reg.webinar_short_title || reg.webinar_title || "-"}</td>
-                          <td className="py-3 px-4">{reg.webinar_date || "TBD"}</td>
-                          <td className="py-3 px-4">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${reg.access_type === "purchased" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}
-                            >
-                              {reg.access_type === "purchased" ? "Purchased" : "Symposium Bonus"}
-                            </span>
-                          </td>
-                          <td className="py-3 px-4">
+                <>
+                  {/* Mobile card layout */}
+                  <div className="md:hidden space-y-2">
+                    {webinarRegistrations.slice(0, 10).map((reg, i) => (
+                      <div key={i} className="bg-card border rounded-lg p-3">
+                        <p className="font-medium text-sm truncate">{reg.full_name || "-"}</p>
+                        <p className="text-xs text-muted-foreground truncate">{reg.email || "-"}</p>
+                        <p className="text-xs text-muted-foreground mt-1 truncate">{reg.webinar_short_title || reg.webinar_title || "-"}</p>
+                        <div className="flex flex-wrap gap-2 mt-2 text-xs">
+                          <span
+                            className={`px-2 py-0.5 rounded-full ${reg.access_type === "purchased" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}
+                          >
+                            {reg.access_type === "purchased" ? "Purchased" : "Bonus"}
+                          </span>
+                          <span className="text-muted-foreground">
                             {reg.unit_price ? `Rp ${reg.unit_price.toLocaleString("id-ID")}` : "Free"}
-                          </td>
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {webinarRegistrations.length > 10 && (
+                      <p className="text-sm text-muted-foreground">+ {webinarRegistrations.length - 10} more registrations</p>
+                    )}
+                  </div>
+                  {/* Desktop table layout */}
+                  <div className="hidden md:block bg-card border rounded-lg overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b bg-muted/50">
+                          <th className="text-left py-3 px-4">Name</th>
+                          <th className="text-left py-3 px-4">Email</th>
+                          <th className="text-left py-3 px-4">Webinar</th>
+                          <th className="text-left py-3 px-4">Date</th>
+                          <th className="text-left py-3 px-4">Access Type</th>
+                          <th className="text-left py-3 px-4">Amount</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {webinarRegistrations.length > 10 && (
-                    <p className="text-sm text-muted-foreground p-4">
-                      + {webinarRegistrations.length - 10} more registrations
-                    </p>
-                  )}
-                </div>
+                      </thead>
+                      <tbody>
+                        {webinarRegistrations.slice(0, 10).map((reg, i) => (
+                          <tr key={i} className="border-b last:border-0">
+                            <td className="py-3 px-4">{reg.full_name || "-"}</td>
+                            <td className="py-3 px-4">{reg.email || "-"}</td>
+                            <td className="py-3 px-4">{reg.webinar_short_title || reg.webinar_title || "-"}</td>
+                            <td className="py-3 px-4">{reg.webinar_date || "TBD"}</td>
+                            <td className="py-3 px-4">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${reg.access_type === "purchased" ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"}`}
+                              >
+                                {reg.access_type === "purchased" ? "Purchased" : "Symposium Bonus"}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              {reg.unit_price ? `Rp ${reg.unit_price.toLocaleString("id-ID")}` : "Free"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {webinarRegistrations.length > 10 && (
+                      <p className="text-sm text-muted-foreground p-4">
+                        + {webinarRegistrations.length - 10} more registrations
+                      </p>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>

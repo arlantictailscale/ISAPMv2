@@ -170,46 +170,28 @@ export default function SponsorReviewPage() {
   async function fetchPayments() {
     setLoading(true)
     try {
-      // Fetch all payments with orders (same pattern as payment-validation)
-      const { data, error } = await supabase
-        .from("order_payments")
-        .select(
-          `
-          *,
-          orders (
-            id,
-            user_id,
-            total_amount,
-            email,
-            full_name,
-            institution,
-            invoice_number,
-            currency,
-            created_at,
-            status,
-            order_items (
-              id,
-              event_label,
-              item_type,
-              unit_price
-            )
-          )
-        `,
-        )
-        .order("created_at", { ascending: false })
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (error) throw error
+      if (!session?.access_token) {
+        throw new Error("Not authenticated")
+      }
 
-      // Filter on client side: sponsored + verified + not cancelled
-      const sponsoredData = (data || []).filter((r: any) => {
-        const isSponsored = r.payment_method?.toLowerCase() === "sponsored"
-        const isVerified = r.payment_status === "verified"
-        const order = Array.isArray(r.orders) ? r.orders[0] : r.orders
-        const notCancelled = order && order.status !== "cancelled"
-        return isSponsored && isVerified && notCancelled
+      const res = await fetch("/api/admin/sponsor-payments", {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       })
 
-      const rows = sponsoredData.map((r: any) => ({
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Request failed" }))
+        throw new Error(err.error || `Request failed (${res.status})`)
+      }
+
+      const { payments: data } = await res.json()
+
+      const rows = (data || []).map((r: any) => ({
         ...r,
         orders: Array.isArray(r.orders) ? r.orders[0] : r.orders,
       })) as SponsorPayment[]
@@ -307,21 +289,33 @@ export default function SponsorReviewPage() {
     setTogglingId(payment.id)
     try {
       const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      const {
         data: { user },
       } = await supabase.auth.getUser()
 
-      const updates: Record<string, any> = {
-        sponsor_externally_paid: next,
-        sponsor_externally_paid_at: next ? new Date().toISOString() : null,
-        sponsor_externally_paid_by: next ? user?.email || user?.id || null : null,
+      if (!session?.access_token) throw new Error("Not authenticated")
+
+      const res = await fetch("/api/admin/sponsor-payments", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          payment_id: payment.id,
+          sponsor_externally_paid: next,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Update failed" }))
+        throw new Error(err.error || "Update failed")
       }
 
-      const { error } = await supabase
-        .from("order_payments")
-        .update(updates)
-        .eq("id", payment.id)
-
-      if (error) throw error
+      const now = next ? new Date().toISOString() : null
+      const by = next ? user?.email || user?.id || null : null
 
       setPayments((prev) =>
         prev.map((p) =>
@@ -329,8 +323,8 @@ export default function SponsorReviewPage() {
             ? {
                 ...p,
                 sponsor_externally_paid: next,
-                sponsor_externally_paid_at: updates.sponsor_externally_paid_at,
-                sponsor_externally_paid_by: updates.sponsor_externally_paid_by,
+                sponsor_externally_paid_at: now,
+                sponsor_externally_paid_by: by,
               }
             : p,
         ),
@@ -338,7 +332,6 @@ export default function SponsorReviewPage() {
 
       toast.success(next ? "Marked as paid externally" : "Marked as unpaid")
     } catch (err: any) {
-      console.error("[v0] Toggle error:", err)
       toast.error(err.message || "Failed to update status")
     } finally {
       setTogglingId(null)
@@ -349,12 +342,28 @@ export default function SponsorReviewPage() {
     if (!notesTarget) return
     setIsSavingNotes(true)
     try {
-      const { error } = await supabase
-        .from("order_payments")
-        .update({ sponsor_external_payment_notes: notesDraft || null })
-        .eq("id", notesTarget.id)
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
 
-      if (error) throw error
+      if (!session?.access_token) throw new Error("Not authenticated")
+
+      const res = await fetch("/api/admin/sponsor-payments", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          payment_id: notesTarget.id,
+          sponsor_external_payment_notes: notesDraft || "",
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Save failed" }))
+        throw new Error(err.error || "Save failed")
+      }
 
       setPayments((prev) =>
         prev.map((p) =>
@@ -367,7 +376,6 @@ export default function SponsorReviewPage() {
       setNotesTarget(null)
       setNotesDraft("")
     } catch (err: any) {
-      console.error("[v0] Save notes error:", err)
       toast.error(err.message || "Failed to save notes")
     } finally {
       setIsSavingNotes(false)

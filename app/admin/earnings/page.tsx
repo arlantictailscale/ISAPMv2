@@ -585,11 +585,20 @@ export default function AdminEarningsPage() {
               ) : (
                 <>
                   {/* Desktop Table */}
-                  <div className="hidden md:block overflow-x-auto">
-                    <Table>
+                  <div className="hidden md:block">
+                    <Table className="w-full table-fixed">
+                      <colgroup>
+                        <col className="w-[34%]" />
+                        <col className="w-[11%]" />
+                        <col className="w-[8%]" />
+                        <col className="w-[8%]" />
+                        <col className="w-[13%]" />
+                        <col className="w-[12%]" />
+                        <col className="w-[14%]" />
+                      </colgroup>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>
+                          <TableHead className="px-2">
                             <SortButton
                               label="Event / Item"
                               field="label"
@@ -598,9 +607,9 @@ export default function AdminEarningsPage() {
                               onClick={() => toggleSort("label")}
                             />
                           </TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead className="text-right">Orders</TableHead>
-                          <TableHead className="text-right">
+                          <TableHead className="px-2">Type</TableHead>
+                          <TableHead className="px-2 text-right">Orders</TableHead>
+                          <TableHead className="px-2 text-right">
                             <SortButton
                               label="Tickets"
                               field="tickets"
@@ -610,7 +619,7 @@ export default function AdminEarningsPage() {
                               align="right"
                             />
                           </TableHead>
-                          <TableHead className="text-right">
+                          <TableHead className="px-2 text-right">
                             <SortButton
                               label="Gross"
                               field="gross"
@@ -620,7 +629,7 @@ export default function AdminEarningsPage() {
                               align="right"
                             />
                           </TableHead>
-                          <TableHead className="text-right">
+                          <TableHead className="px-2 text-right">
                             <SortButton
                               label="Discounts"
                               field="discounts"
@@ -630,9 +639,9 @@ export default function AdminEarningsPage() {
                               align="right"
                             />
                           </TableHead>
-                          <TableHead className="text-right">
+                          <TableHead className="px-2 text-right">
                             <SortButton
-                              label="Net Revenue"
+                              label="Net"
                               field="net"
                               sortField={sortField}
                               sortDir={sortDir}
@@ -645,35 +654,52 @@ export default function AdminEarningsPage() {
                       <TableBody>
                         {sortedEarnings.map((e) => (
                           <TableRow key={e.key}>
-                            <TableCell>
-                              <div className="font-medium">{e.event_label}</div>
-                              <div className="text-xs text-muted-foreground font-mono">
+                            <TableCell className="px-2 py-2 align-top">
+                              <div
+                                className="font-medium text-sm truncate"
+                                title={e.event_label}
+                              >
+                                {e.event_label}
+                              </div>
+                              <div
+                                className="text-xs text-muted-foreground font-mono truncate"
+                                title={e.event_id}
+                              >
                                 {e.event_id}
                               </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="px-2 py-2 align-top">
                               <Badge
                                 variant="outline"
-                                className={ITEM_TYPE_COLORS[e.item_type] || ""}
+                                className={`${ITEM_TYPE_COLORS[e.item_type] || ""} whitespace-nowrap text-xs`}
                               >
                                 {ITEM_TYPE_LABELS[e.item_type] || e.item_type}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">
+                            <TableCell className="px-2 py-2 text-right tabular-nums align-top">
                               {e.orders.size}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">
+                            <TableCell className="px-2 py-2 text-right tabular-nums align-top">
                               {e.tickets_sold}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-muted-foreground">
+                            <TableCell
+                              className="px-2 py-2 text-right tabular-nums text-muted-foreground align-top text-sm"
+                              title={formatCurrency(e.gross_revenue, e.currency)}
+                            >
                               {formatCurrency(e.gross_revenue, e.currency)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums text-orange-600">
+                            <TableCell
+                              className="px-2 py-2 text-right tabular-nums text-orange-600 align-top text-sm"
+                              title={e.discounts > 0 ? formatCurrency(e.discounts, e.currency) : ""}
+                            >
                               {e.discounts > 0
-                                ? `- ${formatCurrency(e.discounts, e.currency)}`
+                                ? `-${formatCurrency(e.discounts, e.currency)}`
                                 : "—"}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums font-semibold text-teal-700">
+                            <TableCell
+                              className="px-2 py-2 text-right tabular-nums font-semibold text-teal-700 align-top text-sm"
+                              title={formatCurrency(e.net_revenue, e.currency)}
+                            >
                               {formatCurrency(e.net_revenue, e.currency)}
                             </TableCell>
                           </TableRow>
@@ -681,24 +707,24 @@ export default function AdminEarningsPage() {
                       </TableBody>
                       <tfoot>
                         <tr className="border-t-2 bg-muted/40">
-                          <td className="px-4 py-3 font-semibold" colSpan={2}>
+                          <td className="px-2 py-3 font-semibold" colSpan={2}>
                             Totals
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                          <td className="px-2 py-3 text-right font-semibold tabular-nums">
                             {totals.ordersCount}
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                          <td className="px-2 py-3 text-right font-semibold tabular-nums">
                             {totals.ticketsSold}
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                          <td className="px-2 py-3 text-right font-semibold tabular-nums text-sm">
                             {formatCurrency(totals.grossRevenue)}
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold tabular-nums text-orange-600">
+                          <td className="px-2 py-3 text-right font-semibold tabular-nums text-orange-600 text-sm">
                             {totals.discounts > 0
-                              ? `- ${formatCurrency(totals.discounts)}`
+                              ? `-${formatCurrency(totals.discounts)}`
                               : "—"}
                           </td>
-                          <td className="px-4 py-3 text-right font-bold tabular-nums text-teal-700">
+                          <td className="px-2 py-3 text-right font-bold tabular-nums text-teal-700 text-sm">
                             {formatCurrency(totals.netRevenue)}
                           </td>
                         </tr>

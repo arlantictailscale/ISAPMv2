@@ -174,29 +174,15 @@ export default function SponsorReviewPage() {
         .from("order_payments")
         .select(
           `
-          id,
-          order_id,
-          amount,
-          currency,
-          payment_method,
-          payment_status,
-          sponsor_name,
-          invoice_number,
-          notes,
-          created_at,
-          verified_at,
-          sponsor_externally_paid,
-          sponsor_externally_paid_at,
-          sponsor_externally_paid_by,
-          sponsor_external_payment_notes,
-          orders:order_id (
+          *,
+          orders!inner (
             id,
-            full_name,
-            email,
-            phone,
-            institution,
-            position,
+            user_id,
             total_amount,
+            email,
+            full_name,
+            institution,
+            invoice_number,
             currency,
             created_at,
             status,
@@ -211,21 +197,18 @@ export default function SponsorReviewPage() {
         )
         .ilike("payment_method", "sponsored")
         .eq("payment_status", "verified")
+        .neq("orders.status", "cancelled")
         .order("created_at", { ascending: false })
 
       if (error) throw error
 
-      // Exclude cancelled orders
-      const rows = ((data || []) as any[])
-        .filter((r) => r.orders && r.orders.status !== "cancelled")
-        .map((r) => ({
-          ...r,
-          orders: Array.isArray(r.orders) ? r.orders[0] : r.orders,
-        })) as SponsorPayment[]
+      const rows = ((data || []) as any[]).map((r) => ({
+        ...r,
+        orders: Array.isArray(r.orders) ? r.orders[0] : r.orders,
+      })) as SponsorPayment[]
 
       setPayments(rows)
     } catch (err: any) {
-      console.error("[v0] Error fetching sponsor payments:", err)
       toast.error(err.message || "Failed to load sponsor payments")
     } finally {
       setLoading(false)

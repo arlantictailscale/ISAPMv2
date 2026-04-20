@@ -170,12 +170,13 @@ export default function SponsorReviewPage() {
   async function fetchPayments() {
     setLoading(true)
     try {
+      // Fetch all payments with orders (same pattern as payment-validation)
       const { data, error } = await supabase
         .from("order_payments")
         .select(
           `
           *,
-          orders!inner (
+          orders (
             id,
             user_id,
             total_amount,
@@ -195,14 +196,20 @@ export default function SponsorReviewPage() {
           )
         `,
         )
-        .ilike("payment_method", "sponsored")
-        .eq("payment_status", "verified")
-        .neq("orders.status", "cancelled")
         .order("created_at", { ascending: false })
 
       if (error) throw error
 
-      const rows = ((data || []) as any[]).map((r) => ({
+      // Filter on client side: sponsored + verified + not cancelled
+      const sponsoredData = (data || []).filter((r: any) => {
+        const isSponsored = r.payment_method?.toLowerCase() === "sponsored"
+        const isVerified = r.payment_status === "verified"
+        const order = Array.isArray(r.orders) ? r.orders[0] : r.orders
+        const notCancelled = order && order.status !== "cancelled"
+        return isSponsored && isVerified && notCancelled
+      })
+
+      const rows = sponsoredData.map((r: any) => ({
         ...r,
         orders: Array.isArray(r.orders) ? r.orders[0] : r.orders,
       })) as SponsorPayment[]

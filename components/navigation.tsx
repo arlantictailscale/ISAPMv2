@@ -37,6 +37,7 @@ import {
   ScanLine,
   QrCode,
   MessageSquare,
+  DollarSign,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -56,6 +57,7 @@ const adminNavItems = [
   { label: "Check-In Scanner", href: "/admin/check-in", icon: ScanLine },
   { label: "Participant Cards", href: "/admin/participant-cards", icon: QrCode },
   { label: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
+  { label: "Earnings", href: "/admin/earnings", icon: DollarSign },
   { label: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
   { label: "Invoice Management", href: "/admin/invoices", icon: Receipt },
   { label: "User Management", href: "/admin/users", icon: Users },

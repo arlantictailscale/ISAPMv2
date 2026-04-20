@@ -209,7 +209,7 @@ export default function SponsorReviewPage() {
           )
         `,
         )
-        .eq("payment_method", "sponsored")
+        .ilike("payment_method", "sponsored")
         .eq("payment_status", "verified")
         .order("created_at", { ascending: false })
 

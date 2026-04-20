@@ -253,8 +253,12 @@ export default function AdminEarningsPage() {
       const eventId = it.event_id || "unknown"
       const itemType = it.item_type || "event"
       const key = `${itemType}::${eventId}`
-      const unit = Number(it.unit_price || 0)
-      const original = Number(it.original_price || unit)
+      // For hotel items the prices are per-night; multiply by nights for the real totals.
+      // For all other item types, multiplier is 1.
+      const isHotel = itemType === "hotel" || Number(it.nights || 0) > 0
+      const multiplier = isHotel ? Math.max(1, Number(it.nights || 1)) : 1
+      const unit = Number(it.unit_price || 0) * multiplier
+      const original = Number(it.original_price || it.unit_price || 0) * multiplier
       const discount = Number(it.discount_amount || Math.max(0, original - unit))
       const gross = original > 0 ? original : unit
 
@@ -318,14 +322,24 @@ export default function AdminEarningsPage() {
     const ticketsSold = earningsByEvent.reduce((s, e) => s + e.tickets_sold, 0)
     const ordersSet = new Set<string>()
     earningsByEvent.forEach((e) => e.orders.forEach((id) => ordersSet.add(id)))
+
+    // Total collected = sum of verified order_payments.amount (matches Payment Validation page)
+    const totalCollected = orders.reduce((s, o) => {
+      const verified = (o.order_payments || []).filter(
+        (p: any) => p.payment_status === "verified",
+      )
+      return s + verified.reduce((ss: number, p: any) => ss + Number(p.amount || 0), 0)
+    }, 0)
+
     return {
       grossRevenue,
       discounts,
       netRevenue,
       ticketsSold,
       ordersCount: ordersSet.size,
+      totalCollected,
     }
-  }, [earningsByEvent])
+  }, [earningsByEvent, orders])
 
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
@@ -372,9 +386,9 @@ export default function AdminEarningsPage() {
       const summary = [
         { Metric: "Total Orders", Value: totals.ordersCount },
         { Metric: "Tickets / Items Sold", Value: totals.ticketsSold },
-        { Metric: "Gross Revenue (IDR)", Value: Math.round(totals.grossRevenue) },
+        { Metric: "Gross Revenue (IDR)", Value: Math.round(totals.totalCollected + totals.discounts) },
         { Metric: "Discounts (IDR)", Value: Math.round(totals.discounts) },
-        { Metric: "Net Revenue (IDR)", Value: Math.round(totals.netRevenue) },
+        { Metric: "Net Revenue (IDR)", Value: Math.round(totals.totalCollected) },
         { Metric: "Generated", Value: format(new Date(), "yyyy-MM-dd HH:mm") },
       ]
       const wsSummary = XLSX.utils.json_to_sheet(summary)
@@ -472,20 +486,20 @@ export default function AdminEarningsPage() {
 
           {/* Summary Cards */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 mb-6">
-            <SummaryCard
-              label="Net Revenue"
-              value={formatCurrency(totals.netRevenue)}
-              icon={<Wallet className="h-5 w-5" />}
-              accent="border-l-teal-500 bg-teal-50"
-              iconBg="bg-teal-100 text-teal-700"
-            />
-            <SummaryCard
-              label="Gross Revenue"
-              value={formatCurrency(totals.grossRevenue)}
-              icon={<TrendingUp className="h-5 w-5" />}
-              accent="border-l-blue-500 bg-blue-50"
-              iconBg="bg-blue-100 text-blue-700"
-            />
+        <SummaryCard
+          label="Net Revenue"
+          value={formatCurrency(totals.totalCollected)}
+          icon={<Wallet className="h-5 w-5" />}
+          accent="border-l-teal-500 bg-teal-50"
+          iconBg="bg-teal-100 text-teal-700"
+        />
+        <SummaryCard
+          label="Gross Revenue"
+          value={formatCurrency(totals.totalCollected + totals.discounts)}
+          icon={<TrendingUp className="h-5 w-5" />}
+          accent="border-l-blue-500 bg-blue-50"
+          iconBg="bg-blue-100 text-blue-700"
+        />
             <SummaryCard
               label="Discounts"
               value={formatCurrency(totals.discounts)}

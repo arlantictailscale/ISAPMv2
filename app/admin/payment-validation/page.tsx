@@ -345,6 +345,15 @@ export default function PaymentValidationPage() {
       .filter((p) => p.payment_status === "verified")
       .reduce((sum, p) => sum + (p.amount || 0), 0)
 
+    const sponsoredApprovedPayments = filteredPayments.filter(
+      (p) => p.payment_method?.toLowerCase() === "sponsored" && p.payment_status === "verified",
+    )
+    const sponsoredApprovedCount = sponsoredApprovedPayments.length
+    const totalSponsoredApprovedAmount = sponsoredApprovedPayments.reduce(
+      (sum, p) => sum + (p.amount || 0),
+      0,
+    )
+
     return {
       pendingCount,
       sponsoredPendingCount,
@@ -353,6 +362,8 @@ export default function PaymentValidationPage() {
       noProofCount,
       totalPendingAmount,
       totalApprovedAmount,
+      sponsoredApprovedCount,
+      totalSponsoredApprovedAmount,
       totalNeedingAction: pendingCount + sponsoredPendingCount,
     }
   }, [filteredPayments])
@@ -1047,7 +1058,7 @@ export default function PaymentValidationPage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             <Card className="bg-amber-50 border-amber-200">
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -1098,6 +1109,23 @@ export default function PaymentValidationPage() {
                       {formatCurrency(stats.totalApprovedAmount, "IDR")}
                     </p>
                     <p className="text-sm text-blue-600">Total Approved</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-rose-50 border-rose-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-rose-100 rounded-lg">
+                    <Gift className="w-5 h-5 text-rose-600" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-lg font-bold text-rose-700 truncate">
+                      {formatCurrency(stats.totalSponsoredApprovedAmount, "IDR")}
+                    </p>
+                    <p className="text-sm text-rose-600">
+                      Sponsored Approved ({stats.sponsoredApprovedCount})
+                    </p>
                   </div>
                 </div>
               </CardContent>

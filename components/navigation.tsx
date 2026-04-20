@@ -30,13 +30,14 @@ import {
   UserCheck,
   FolderOpen,
   Hotel,
-  RefreshCw,
   Send,
   BarChart3,
   Tag,
   Newspaper,
   ScanLine,
   QrCode,
+  MessageSquare,
+  DollarSign,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -56,6 +57,8 @@ const adminNavItems = [
   { label: "Check-In Scanner", href: "/admin/check-in", icon: ScanLine },
   { label: "Participant Cards", href: "/admin/participant-cards", icon: QrCode },
   { label: "Payment Validation", href: "/admin/payment-validation", icon: CheckCircle },
+  { label: "Sponsor Review", href: "/admin/sponsor-review", icon: Gift },
+  { label: "Earnings", href: "/admin/earnings", icon: DollarSign },
   { label: "Cart Management", href: "/admin/carts", icon: ShoppingCart },
   { label: "Invoice Management", href: "/admin/invoices", icon: Receipt },
   { label: "User Management", href: "/admin/users", icon: Users },
@@ -71,6 +74,7 @@ const adminNavItems = [
   { label: "Event Quotas", href: "/admin/event-quotas", icon: BarChart3 },
   { label: "Promo Codes", href: "/admin/promo-codes", icon: Tag },
   { label: "News CMS", href: "/admin/news-cms", icon: Newspaper },
+  { label: "Feedback", href: "/admin/feedback", icon: MessageSquare },
 ]
 
 const navItems = [
@@ -88,167 +92,110 @@ export default function Navigation() {
   const [adminMenuOpen, setAdminMenuOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [authTimedOut, setAuthTimedOut] = useState(false)
   const [userRole, setUserRole] = useState<string>("user")
   const [isScrolled, setIsScrolled] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
   const isMounted = useRef(true)
-  const maxRetries = 2 // Limit retries to prevent infinite loop
+  const authInitialized = useRef(false)
 
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   const isAdmin = useMemo(() => userRole === "admin", [userRole])
 
-
-
+  // Fast role fetch with localStorage cache (persists across sessions)
   const fetchUserRole = useCallback(
-    async (userId: string) => {
-      try {
-        const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", userId).maybeSingle()
-
-        if (error) {
-          console.error("Error fetching user role:", error.message)
-          return "user"
+    async (userId: string, forceRefresh = false) => {
+      const cacheKey = `isapm_role_${userId}`
+      
+      // Check localStorage cache first (unless force refresh)
+      if (!forceRefresh) {
+        const cached = localStorage.getItem(cacheKey)
+        if (cached) {
+          try {
+            const { role, expires } = JSON.parse(cached)
+            if (Date.now() < expires && role) {
+              return role
+            }
+          } catch {
+            // Invalid cache, will refetch
+            localStorage.removeItem(cacheKey)
+          }
         }
-        return profile?.role || "user"
-      } catch (profileError) {
-        console.error("Failed to fetch profile:", profileError)
+      }
+
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .maybeSingle()
+
+        const role = profile?.role || "user"
+        // Cache for 10 minutes (shorter for faster admin detection)
+        localStorage.setItem(cacheKey, JSON.stringify({ role, expires: Date.now() + 10 * 60 * 1000 }))
+        return role
+      } catch {
         return "user"
       }
     },
     [supabase],
   )
 
-  const checkUser = useCallback(async () => {
-    if (!isMounted.current) return
-
-    setIsLoading(true)
-    setAuthTimedOut(false)
-
-    try {
-      // Detect mobile for longer timeout (mobile browsers are slower)
-      const isMobile = /Android|iPhone|iPad|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(
-        typeof navigator !== "undefined" ? navigator.userAgent : ""
-      )
-      // Mobile needs longer timeout due to slower JS execution
-      const timeout = isMobile ? 5000 : 2000
-      const sessionPromise = supabase.auth.getSession()
-      const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), timeout))
-      
-      const sessionResult = await Promise.race([sessionPromise, timeoutPromise])
-
-      if (!isMounted.current) return
-
-      if (sessionResult && sessionResult.data?.session?.user) {
-        const sessionUser = sessionResult.data.session.user
-        setUser(sessionUser)
-        setIsLoading(false)
-        setAuthTimedOut(false)
-        // Clear reload flag on successful auth
-        sessionStorage.removeItem("isapm_auth_reloaded")
-
-        // Check sessionStorage cache for role first (avoids DB call)
-        const cachedRole = sessionStorage.getItem(`user_role_${sessionUser.id}`)
-        const cacheTime = sessionStorage.getItem(`user_role_time_${sessionUser.id}`)
-        const isCacheValid = cacheTime && Date.now() - parseInt(cacheTime) < 5 * 60 * 1000 // 5 min cache
-
-        if (cachedRole && isCacheValid) {
-          setUserRole(cachedRole)
-        } else {
-          // Fetch and cache role
-          fetchUserRole(sessionUser.id).then((role) => {
-            if (isMounted.current) {
-              setUserRole(role)
-              sessionStorage.setItem(`user_role_${sessionUser.id}`, role)
-              sessionStorage.setItem(`user_role_time_${sessionUser.id}`, Date.now().toString())
-            }
-          })
-        }
-        // Removed redundant getUser() call - middleware already validates sessions
-      } else if (sessionResult === null) {
-        if (isMounted.current) {
-          setAuthTimedOut(true)
-          setIsLoading(false)
-        }
-      } else {
-        setUser(null)
-        setIsLoading(false)
-        setAuthTimedOut(false)
-        // Clear reload flag - auth check completed (even if no session)
-        sessionStorage.removeItem("isapm_auth_reloaded")
-      }
-    } catch (authError) {
-      console.error("Auth check failed:", authError)
-      if (isMounted.current) {
-        setAuthTimedOut(true)
-        setIsLoading(false)
-      }
-    }
-  }, [supabase, fetchUserRole])
-
+  // Robust auth initialization using onAuthStateChange as primary source
+  // This approach never hangs because onAuthStateChange fires immediately with INITIAL_SESSION
   useEffect(() => {
-    if (!authTimedOut) return
-
-    // On first timeout, try a page reload (which helps on mobile Chrome)
-    // Use sessionStorage to track if we've already tried reloading this session
-    const hasReloadedKey = "isapm_auth_reloaded"
-    const hasReloaded = sessionStorage.getItem(hasReloadedKey)
-
-    if (!hasReloaded) {
-      // First timeout - try reloading the page (bypasses some mobile browser cache issues)
-      sessionStorage.setItem(hasReloadedKey, "true")
-      // Small delay to allow any pending operations to complete
-      setTimeout(() => {
-        if (isMounted.current) {
-          window.location.reload()
-        }
-      }, 500)
-      return
-    }
-
-    // Already reloaded once this session, try soft retry
-    if (retryCount < maxRetries) {
-      const retryTimer = setTimeout(() => {
-        if (isMounted.current) {
-          setRetryCount((prev) => prev + 1)
-          setAuthTimedOut(false)
-          checkUser()
-        }
-      }, 1000) // Wait 1 second before retry
-      return () => clearTimeout(retryTimer)
-    }
-    // After max retries, show login button - don't loop forever
-  }, [authTimedOut, retryCount, checkUser])
-
-  useEffect(() => {
+    if (authInitialized.current) return
+    authInitialized.current = true
     isMounted.current = true
-    checkUser()
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Safety timeout - ensures UI never stays stuck even if Supabase fails completely
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted.current && isLoading) {
+        setIsLoading(false)
+      }
+    }, 3000)
+
+    // onAuthStateChange fires IMMEDIATELY with INITIAL_SESSION event
+    // This is more reliable than getSession() which can hang on slow networks
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!isMounted.current) return
+
+      // Clear safety timeout on first auth event
+      clearTimeout(safetyTimeout)
 
       const currentUser = session?.user || null
       setUser(currentUser)
-      setAuthTimedOut(false)
 
       if (currentUser) {
-        const role = await fetchUserRole(currentUser.id)
-        if (isMounted.current) setUserRole(role)
+        // Force refresh role on sign in OR on fresh page load after login
+        // SIGNED_IN fires during login, INITIAL_SESSION fires after redirect
+        // Check sessionStorage flag to detect fresh login redirect
+        const justLoggedIn = sessionStorage.getItem("isapm_just_logged_in") === "true"
+        const forceRefresh = event === "SIGNED_IN" || justLoggedIn
+        
+        // Clear the flag after checking
+        if (justLoggedIn) {
+          sessionStorage.removeItem("isapm_just_logged_in")
+        }
+        
+        // Wait for role before finishing loading - ensures admin menu shows immediately
+        const role = await fetchUserRole(currentUser.id, forceRefresh)
+        if (isMounted.current) {
+          setUserRole(role)
+          setIsLoading(false)
+        }
       } else {
         setUserRole("user")
+        setIsLoading(false)
       }
-
-      setIsLoading(false)
     })
 
     return () => {
       isMounted.current = false
+      clearTimeout(safetyTimeout)
       subscription?.unsubscribe()
     }
-  }, [supabase, fetchUserRole, checkUser])
+  }, [supabase, fetchUserRole, isLoading])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -260,55 +207,14 @@ export default function Navigation() {
   }, [])
 
   const handleLogout = useCallback(async () => {
+    // Clear cached role on logout
+    if (user?.id) {
+      localStorage.removeItem(`isapm_role_${user.id}`)
+    }
     await supabase.auth.signOut()
     setUser(null)
     router.push("/")
-  }, [supabase, router])
-
-  const handleManualRetry = useCallback(() => {
-    setRetryCount(0)
-    setAuthTimedOut(false)
-    setIsLoading(true)
-    checkUser()
-  }, [checkUser])
-
-  const renderAuthTimeoutUI = () => {
-    // If still within retry limit, show loading
-    if (retryCount < maxRetries) {
-      return (
-        <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
-          <span className="text-xs text-muted-foreground">Retrying...</span>
-        </div>
-      )
-    }
-    // After max retries, show login button (don't block the user)
-    return (
-      <Link href="/auth/login">
-        <Button variant="outline" size="sm">
-          Login
-        </Button>
-      </Link>
-    )
-  }
-
-  const renderMobileAuthTimeoutUI = () => {
-    // If still within retry limit, show loading
-    if (retryCount < maxRetries) {
-      return (
-        <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
-          <span className="text-xs text-muted-foreground">Retrying...</span>
-        </div>
-      )
-    }
-    // After max retries, show login button (don't block the user)
-    return (
-      <Link href="/auth/login" className="w-full mt-2">
-        <Button variant="outline" size="sm" className="w-full">
-          Login
-        </Button>
-      </Link>
-    )
-  }
+  }, [supabase, router, user?.id])
 
   return (
     <nav
@@ -352,10 +258,8 @@ export default function Navigation() {
               {user && <CartIcon />}
               {isLoading ? (
                 <div className="flex items-center justify-center px-3 h-8 bg-muted animate-pulse rounded-md">
-                  <span className="text-xs text-muted-foreground">Loading account...</span>
+                  <span className="text-xs text-muted-foreground">Loading...</span>
                 </div>
-              ) : authTimedOut ? (
-                renderAuthTimeoutUI()
               ) : user ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -483,10 +387,8 @@ export default function Navigation() {
 
             {isLoading ? (
               <div className="flex items-center justify-center w-full h-10 bg-muted animate-pulse rounded-md mt-2">
-                <span className="text-xs text-muted-foreground">Loading account...</span>
+                <span className="text-xs text-muted-foreground">Loading...</span>
               </div>
-            ) : authTimedOut ? (
-              renderMobileAuthTimeoutUI()
             ) : user ? (
               <div className="border-t pt-4 mt-4 space-y-1">
                 <Link

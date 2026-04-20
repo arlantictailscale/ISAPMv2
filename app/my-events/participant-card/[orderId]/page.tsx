@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { QRCodeSVG } from "qrcode.react"
+import { QRCodeSVG, QRCodeCanvas } from "qrcode.react"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
 import Navigation from "@/components/navigation"
@@ -15,13 +15,11 @@ import { Download, Printer, Calendar, MapPin, User, Mail, Building, Briefcase, A
 
 interface ParticipantCard {
   id: string
-  card_number: string
-  secure_token: string
+  card_token: string
   user_id: string
   order_id: string
   full_name: string
   email: string
-  phone: string | null
   institution: string | null
   position: string | null
   events: Array<{
@@ -30,7 +28,7 @@ interface ParticipantCard {
     participant_type: string
     participant_type_label: string
   }>
-  status: string
+  is_checked_in: boolean
   issued_at: string
   checked_in_at: string | null
 }
@@ -86,22 +84,186 @@ export default function ParticipantCardPage() {
     fetchCard()
   }, [orderId, router])
 
-  const handleDownload = () => {
-    if (!cardRef.current) return
+  const handleDownload = async () => {
+    if (!card) return
 
-    // Create a canvas from the card element
-    import("html2canvas").then(({ default: html2canvas }) => {
-      html2canvas(cardRef.current!, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      }).then((canvas) => {
-        const link = document.createElement("a")
-        link.download = `participant-card-${card?.card_number}.png`
-        link.href = canvas.toDataURL("image/png")
-        link.click()
+    try {
+      // Create a canvas to draw the card
+      const canvas = document.createElement("canvas")
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("Canvas not supported")
+
+      // Card dimensions (2x for retina)
+      const scale = 2
+      const width = 600 * scale
+      const height = 800 * scale
+      canvas.width = width
+      canvas.height = height
+
+      // Background
+      ctx.fillStyle = "#ffffff"
+      ctx.fillRect(0, 0, width, height)
+
+      // Header background
+      const headerHeight = 120 * scale
+      const gradient = ctx.createLinearGradient(0, 0, width, 0)
+      gradient.addColorStop(0, "#0d9488")
+      gradient.addColorStop(1, "#0f766e")
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, width, headerHeight)
+
+      // Header text
+      ctx.fillStyle = "#ffffff"
+      ctx.font = `bold ${24 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillText("ISAPM 8th National Meeting 2026", 30 * scale, 50 * scale)
+      ctx.font = `${12 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#99f6e4"
+      ctx.fillText("Indonesian Society of Anesthesiology for Pain Management", 30 * scale, 80 * scale)
+
+      // Status badge
+      const badgeText = card.is_checked_in ? "Checked In" : "Active"
+      ctx.font = `bold ${12 * scale}px system-ui, -apple-system, sans-serif`
+      const badgeWidth = ctx.measureText(badgeText).width + 20 * scale
+      ctx.fillStyle = card.is_checked_in ? "#f59e0b" : "#ffffff"
+      ctx.beginPath()
+      ctx.roundRect(width - badgeWidth - 30 * scale, 35 * scale, badgeWidth, 30 * scale, 15 * scale)
+      ctx.fill()
+      ctx.fillStyle = card.is_checked_in ? "#ffffff" : "#0d9488"
+      ctx.fillText(badgeText, width - badgeWidth - 20 * scale, 55 * scale)
+
+      // Get QR code as data URL from the hidden canvas
+      const qrCanvas = document.getElementById("qr-code-canvas") as HTMLCanvasElement
+      if (qrCanvas) {
+        const qrSize = 180 * scale
+        const qrX = 30 * scale
+        const qrY = headerHeight + 30 * scale
+        
+        // QR code border
+        ctx.fillStyle = "#f9fafb"
+        ctx.beginPath()
+        ctx.roundRect(qrX - 10 * scale, qrY - 10 * scale, qrSize + 20 * scale, qrSize + 20 * scale, 12 * scale)
+        ctx.fill()
+        ctx.strokeStyle = "#e5e7eb"
+        ctx.lineWidth = 2 * scale
+        ctx.stroke()
+        
+        // Draw QR code
+        ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize)
+        
+        // QR code token
+        ctx.font = `${10 * scale}px monospace`
+        ctx.fillStyle = "#9ca3af"
+        ctx.fillText(card.card_token.substring(0, 12) + "...", qrX, qrY + qrSize + 20 * scale)
+      }
+
+      // Participant info
+      const infoX = 250 * scale
+      const infoY = headerHeight + 40 * scale
+
+      // Name
+      ctx.font = `bold ${24 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#111827"
+      ctx.fillText(card.full_name, infoX, infoY)
+
+      // Position
+      if (card.position) {
+        ctx.font = `${14 * scale}px system-ui, -apple-system, sans-serif`
+        ctx.fillStyle = "#6b7280"
+        ctx.fillText(card.position, infoX, infoY + 30 * scale)
+      }
+
+      // Email
+      ctx.font = `${13 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#6b7280"
+      ctx.fillText(card.email, infoX, infoY + 70 * scale)
+
+      // Institution
+      if (card.institution) {
+        ctx.fillText(card.institution, infoX, infoY + 95 * scale)
+      }
+
+      // Issued date
+      ctx.font = `${11 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#9ca3af"
+      ctx.fillText(`Issued: ${format(new Date(card.issued_at), "MMMM d, yyyy")}`, infoX, infoY + 130 * scale)
+
+      if (card.checked_in_at) {
+        ctx.fillStyle = "#0d9488"
+        ctx.fillText(`Checked in: ${format(new Date(card.checked_in_at), "MMMM d, yyyy 'at' h:mm a")}`, infoX, infoY + 150 * scale)
+      }
+
+      // Divider line
+      const dividerY = headerHeight + 230 * scale
+      ctx.strokeStyle = "#e5e7eb"
+      ctx.lineWidth = 1 * scale
+      ctx.beginPath()
+      ctx.moveTo(30 * scale, dividerY)
+      ctx.lineTo(width - 30 * scale, dividerY)
+      ctx.stroke()
+
+      // Registered Events section
+      ctx.font = `bold ${14 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#111827"
+      ctx.fillText("Registered Events", 30 * scale, dividerY + 30 * scale)
+
+      // Events list
+      let eventY = dividerY + 60 * scale
+      card.events.forEach((event) => {
+        ctx.fillStyle = "#f3f4f6"
+        ctx.beginPath()
+        ctx.roundRect(30 * scale, eventY, width - 60 * scale, 50 * scale, 8 * scale)
+        ctx.fill()
+
+        ctx.font = `500 ${13 * scale}px system-ui, -apple-system, sans-serif`
+        ctx.fillStyle = "#111827"
+        ctx.fillText(event.event_label, 45 * scale, eventY + 22 * scale)
+        
+        ctx.font = `${11 * scale}px system-ui, -apple-system, sans-serif`
+        ctx.fillStyle = "#6b7280"
+        ctx.fillText(event.participant_type_label, 45 * scale, eventY + 40 * scale)
+
+        eventY += 60 * scale
       })
-    })
+
+      // Venue section
+      const venueY = eventY + 20 * scale
+      ctx.strokeStyle = "#e5e7eb"
+      ctx.beginPath()
+      ctx.moveTo(30 * scale, venueY)
+      ctx.lineTo(width - 30 * scale, venueY)
+      ctx.stroke()
+
+      ctx.font = `bold ${13 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#111827"
+      ctx.fillText("The Singhasari Resort", 30 * scale, venueY + 30 * scale)
+      
+      ctx.font = `${12 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#6b7280"
+      ctx.fillText("Batu, Malang, East Java, Indonesia", 30 * scale, venueY + 50 * scale)
+      ctx.fillText("April 16-18, 2026", 30 * scale, venueY + 70 * scale)
+
+      // Footer
+      const footerY = height - 60 * scale
+      ctx.fillStyle = "#f9fafb"
+      ctx.fillRect(0, footerY, width, 60 * scale)
+      
+      ctx.font = `${10 * scale}px system-ui, -apple-system, sans-serif`
+      ctx.fillStyle = "#9ca3af"
+      ctx.textAlign = "center"
+      ctx.fillText("Present this card at the registration desk for check-in.", width / 2, footerY + 25 * scale)
+      ctx.fillText("This card is non-transferable.", width / 2, footerY + 42 * scale)
+
+      // Download the canvas
+      const link = document.createElement("a")
+      link.download = `ISAPM2026-participant-card-${card.full_name.replace(/[^a-zA-Z0-9]/g, "_")}.png`
+      link.href = canvas.toDataURL("image/png", 1.0)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (err) {
+      console.error("Failed to download card:", err)
+      alert("Failed to download card. Please try using the Print option instead.")
+    }
   }
 
   const handlePrint = () => {
@@ -112,7 +274,7 @@ export default function ParticipantCardPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 pt-24 pb-8">
           <div className="max-w-2xl mx-auto">
             <Skeleton className="h-8 w-48 mb-6" />
             <Skeleton className="h-[600px] w-full rounded-2xl" />
@@ -127,7 +289,7 @@ export default function ParticipantCardPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 pt-24 pb-8">
           <div className="max-w-2xl mx-auto">
             <Button
               variant="ghost"
@@ -144,8 +306,8 @@ export default function ParticipantCardPage() {
                 <p className="text-gray-600 mb-6">
                   {error || "Your participant card will be available once your payment has been verified."}
                 </p>
-                <Button onClick={() => router.push("/my-registrations")}>
-                  View My Registrations
+                <Button onClick={() => router.push("/my-events")}>
+                  Back to My Events
                 </Button>
               </CardContent>
             </Card>
@@ -156,12 +318,12 @@ export default function ParticipantCardPage() {
     )
   }
 
-  const qrValue = `ISAPM2026:${card.secure_token}`
+  const qrValue = card.card_token
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="max-w-2xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -188,20 +350,21 @@ export default function ParticipantCardPage() {
           {/* Participant Card */}
           <div
             ref={cardRef}
+            id="participant-card-printable"
             className="bg-white rounded-2xl shadow-xl overflow-hidden print:shadow-none print:rounded-none"
           >
             {/* Card Header */}
             <div className="bg-gradient-to-r from-teal-600 to-teal-700 text-white p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-2xl font-bold">ISAPM 2026</h1>
-                  <p className="text-teal-100 text-sm">Indonesian Society for the Study of Pain Medicine</p>
+                  <h1 className="text-xl font-bold">ISAPM 8th National Meeting 2026</h1>
+                  <p className="text-teal-100 text-sm">Indonesian Society of Anesthesiology for Pain Management</p>
                 </div>
                 <Badge
-                  variant={card.status === "active" ? "default" : "secondary"}
-                  className={card.status === "active" ? "bg-white text-teal-700" : ""}
+                  variant={!card.is_checked_in ? "default" : "secondary"}
+                  className={!card.is_checked_in ? "bg-white text-teal-700" : ""}
                 >
-                  {card.status === "active" ? "Active" : card.status === "checked_in" ? "Checked In" : card.status}
+                  {card.is_checked_in ? "Checked In" : "Active"}
                 </Badge>
               </div>
             </div>
@@ -220,8 +383,19 @@ export default function ParticipantCardPage() {
                       bgColor="#ffffff"
                       fgColor="#0d9488"
                     />
+                    {/* Hidden canvas QR code for download */}
+                    <QRCodeCanvas
+                      id="qr-code-canvas"
+                      value={qrValue}
+                      size={360}
+                      level="H"
+                      includeMargin={false}
+                      bgColor="#ffffff"
+                      fgColor="#0d9488"
+                      style={{ display: "none" }}
+                    />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2 font-mono">{card.card_number}</p>
+                  <p className="text-xs text-gray-500 mt-2 font-mono">{card.card_token.substring(0, 12)}...</p>
                 </div>
 
                 {/* Participant Info */}
@@ -283,8 +457,9 @@ export default function ParticipantCardPage() {
                 <div className="flex items-start gap-2 text-sm text-gray-600">
                   <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
                   <div>
-                    <p className="font-medium text-gray-900">Royal Ambarrukmo Yogyakarta</p>
-                    <p>April 17-19, 2026</p>
+                    <p className="font-medium text-gray-900">The Singhasari Resort</p>
+                    <p>Batu, Malang, East Java, Indonesia</p>
+                    <p className="mt-1">April 16-18, 2026</p>
                   </div>
                 </div>
               </div>
@@ -331,18 +506,46 @@ export default function ParticipantCardPage() {
       {/* Print Styles */}
       <style jsx global>{`
         @media print {
+          /* Hide everything by default */
           body * {
             visibility: hidden;
           }
-          #__next > div > main > div > div:nth-child(2),
-          #__next > div > main > div > div:nth-child(2) * {
-            visibility: visible;
+          
+          /* Show only the participant card */
+          #participant-card-printable,
+          #participant-card-printable * {
+            visibility: visible !important;
           }
-          #__next > div > main > div > div:nth-child(2) {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+          
+          /* Position the card at the top */
+          #participant-card-printable {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 20px !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+          }
+          
+          /* Ensure backgrounds print */
+          * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
+          }
+          
+          /* Hide navigation and footer */
+          nav, footer, .print\\:hidden {
+            display: none !important;
+          }
+          
+          /* Ensure proper page sizing */
+          @page {
+            margin: 0.5in;
+            size: auto;
           }
         }
       `}</style>

@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation"
 import { format } from "date-fns"
 import * as XLSX from "xlsx"
 import { createClient } from "@/lib/supabase/client"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -46,13 +48,11 @@ import {
 
 interface ParticipantCard {
   id: string
-  card_number: string
-  secure_token: string
+  card_token: string
   user_id: string
   order_id: string
   full_name: string
   email: string
-  phone: string | null
   institution: string | null
   position: string | null
   events: Array<{
@@ -61,7 +61,7 @@ interface ParticipantCard {
     participant_type: string
     participant_type_label: string
   }>
-  status: string
+  is_checked_in: boolean
   issued_at: string
   checked_in_at: string | null
   checked_in_by: string | null
@@ -78,6 +78,7 @@ export default function AdminParticipantCardsPage() {
   const [eventFilter, setEventFilter] = useState<string>("all")
   const [selectedCard, setSelectedCard] = useState<ParticipantCard | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [updatingCheckIn, setUpdatingCheckIn] = useState(false)
 
   // Check admin access
   useEffect(() => {
@@ -151,11 +152,12 @@ export default function AdminParticipantCardsPage() {
         !searchQuery ||
         card.full_name.toLowerCase().includes(searchLower) ||
         card.email.toLowerCase().includes(searchLower) ||
-        card.card_number.toLowerCase().includes(searchLower) ||
+        card.card_token.toLowerCase().includes(searchLower) ||
         (card.institution && card.institution.toLowerCase().includes(searchLower))
 
       // Status filter
-      const matchesStatus = statusFilter === "all" || card.status === statusFilter
+      const cardStatus = card.is_checked_in ? "checked_in" : "active"
+    const matchesStatus = statusFilter === "all" || cardStatus === statusFilter
 
       // Event filter
       const matchesEvent =
@@ -169,17 +171,65 @@ export default function AdminParticipantCardsPage() {
   // Stats
   const stats = useMemo(() => {
     const total = cards.length
-    const active = cards.filter((c) => c.status === "active").length
-    const checkedIn = cards.filter((c) => c.status === "checked_in").length
-    const revoked = cards.filter((c) => c.status === "revoked").length
+    const checkedIn = cards.filter((c) => c.is_checked_in).length
+    const active = cards.length - checkedIn
+    const revoked = 0 // Not implemented in current schema
     return { total, active, checkedIn, revoked }
   }, [cards])
+
+  const handleToggleCheckIn = async (card: ParticipantCard, newStatus: boolean) => {
+    setUpdatingCheckIn(true)
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      const updateData: {
+        is_checked_in: boolean
+        checked_in_at: string | null
+        checked_in_by: string | null
+      } = {
+        is_checked_in: newStatus,
+        checked_in_at: newStatus ? new Date().toISOString() : null,
+        checked_in_by: newStatus ? user?.id || null : null,
+      }
+      
+      const { error } = await supabase
+        .from("participant_cards")
+        .update(updateData)
+        .eq("id", card.id)
+      
+      if (error) throw error
+      
+      // Update local state
+      const updatedCard = { 
+        ...card, 
+        ...updateData 
+      }
+      setCards(prev => prev.map(c => c.id === card.id ? updatedCard : c))
+      setSelectedCard(updatedCard)
+      
+      toast({
+        title: newStatus ? "Checked In" : "Check-in Reverted",
+        description: newStatus 
+          ? `${card.full_name} has been manually checked in.`
+          : `${card.full_name}'s check-in has been reverted to active.`,
+      })
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err.message || "Failed to update check-in status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingCheckIn(false)
+    }
+  }
 
   const handleExport = async () => {
     setExporting(true)
     try {
       const exportData = filteredCards.map((card) => ({
-        "Card Number": card.card_number,
+        "Card Token": card.card_token.substring(0, 12) + "...",
         "Full Name": card.full_name,
         Email: card.email,
         Phone: card.phone || "",
@@ -187,7 +237,7 @@ export default function AdminParticipantCardsPage() {
         Position: card.position || "",
         Events: card.events.map((e) => e.event_label).join(", "),
         "Participant Types": card.events.map((e) => e.participant_type_label).join(", "),
-        Status: card.status,
+        Status: card.is_checked_in ? "Checked In" : "Active",
         "Issued At": card.issued_at ? format(new Date(card.issued_at), "yyyy-MM-dd HH:mm") : "",
         "Checked In At": card.checked_in_at ? format(new Date(card.checked_in_at), "yyyy-MM-dd HH:mm") : "",
       }))
@@ -243,28 +293,25 @@ export default function AdminParticipantCardsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Participant Cards</h1>
-              <p className="text-sm text-gray-500">Manage all issued participant cards</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => router.push("/admin/check-in")}>
-                <ScanLine className="w-4 h-4 mr-2" />
-                Scanner
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/admin")}>
-                Back to Admin
-              </Button>
-            </div>
+      <Navigation />
+
+      <main className="container mx-auto px-4 pt-24 pb-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Participant Cards</h1>
+            <p className="text-sm text-gray-500">Manage all issued participant cards</p>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button variant="outline" size="sm" onClick={() => router.push("/admin/check-in")}>
+              <ScanLine className="w-4 h-4 mr-2" />
+              Scanner
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => router.push("/admin/events")}>
+              Back to Admin
+            </Button>
           </div>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="border-0 shadow-sm">
@@ -375,83 +422,71 @@ export default function AdminParticipantCardsPage() {
           </CardContent>
         </Card>
 
-        {/* Table */}
-        <Card className="border-0 shadow-sm">
+        {/* Table - Desktop */}
+        <Card className="border-0 shadow-sm overflow-hidden hidden md:block">
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[38%]">Participant</TableHead>
+                  <TableHead className="w-[28%]">Institution</TableHead>
+                  <TableHead className="w-[14%]">Events</TableHead>
+                  <TableHead className="w-[10%]">Status</TableHead>
+                  <TableHead className="w-[8%]">Issued</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCards.length === 0 ? (
                   <TableRow>
-                    <TableHead>Card Number</TableHead>
-                    <TableHead>Participant</TableHead>
-                    <TableHead>Institution</TableHead>
-                    <TableHead>Events</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Issued</TableHead>
-                    <TableHead>Checked In</TableHead>
-                    <TableHead className="w-12"></TableHead>
+                    <TableCell colSpan={6} className="text-center py-12 text-gray-500">
+                      {cards.length === 0 ? "No participant cards issued yet" : "No cards match your filters"}
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCards.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-12 text-gray-500">
-                        {cards.length === 0 ? "No participant cards issued yet" : "No cards match your filters"}
+                ) : (
+                  filteredCards.map((card) => (
+                    <TableRow key={card.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => setSelectedCard(card)}>
+                      <TableCell>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-900 text-sm truncate">{card.full_name}</p>
+                          <p className="text-xs text-gray-500 truncate">{card.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600 truncate max-w-0">
+                        <span className="block truncate">{card.institution || "-"}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {card.events.slice(0, 2).map((event, i) => (
+                            <Badge key={i} variant="outline" className="text-xs whitespace-nowrap">
+                              {event.event_id.toUpperCase()}
+                            </Badge>
+                          ))}
+                          {card.events.length > 2 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{card.events.length - 2}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(card.is_checked_in ? "checked_in" : "active")}</TableCell>
+                      <TableCell className="text-xs text-gray-600 whitespace-nowrap">
+                        {format(new Date(card.issued_at), "MMM d")}
+                      </TableCell>
+                      <TableCell onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedCard(card)}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  ) : (
-                    filteredCards.map((card) => (
-                      <TableRow key={card.id} className="hover:bg-gray-50">
-                        <TableCell className="font-mono text-sm">{card.card_number}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium text-gray-900">{card.full_name}</p>
-                            <p className="text-sm text-gray-500">{card.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {card.institution || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {card.events.slice(0, 2).map((event, i) => (
-                              <Badge key={i} variant="outline" className="text-xs">
-                                {event.event_id.toUpperCase()}
-                              </Badge>
-                            ))}
-                            {card.events.length > 2 && (
-                              <Badge variant="outline" className="text-xs">
-                                +{card.events.length - 2}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>{getStatusBadge(card.status)}</TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {format(new Date(card.issued_at), "MMM d, yyyy")}
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600">
-                          {card.checked_in_at
-                            ? format(new Date(card.checked_in_at), "MMM d, h:mm a")
-                            : "-"}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedCard(card)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination Info */}
+                  ))
+                )}
+              </TableBody>
+            </Table>
             <div className="px-4 py-3 border-t bg-gray-50">
               <p className="text-sm text-gray-600">
                 Showing {filteredCards.length} of {cards.length} cards
@@ -459,6 +494,60 @@ export default function AdminParticipantCardsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Card List - Mobile / Tablet */}
+        <div className="md:hidden space-y-2">
+          {filteredCards.length === 0 ? (
+            <Card className="border-0 shadow-sm">
+              <CardContent className="py-12 text-center text-gray-500 text-sm">
+                {cards.length === 0 ? "No participant cards issued yet" : "No cards match your filters"}
+              </CardContent>
+            </Card>
+          ) : (
+            filteredCards.map((card) => (
+              <button
+                key={card.id}
+                onClick={() => setSelectedCard(card)}
+                className="w-full text-left bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3 hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  {/* Left: name + email + institution */}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 text-sm truncate">{card.full_name}</p>
+                    <p className="text-xs text-gray-500 truncate">{card.email}</p>
+                    {card.institution && (
+                      <p className="text-xs text-gray-400 truncate mt-0.5">{card.institution}</p>
+                    )}
+                    {/* Event badges */}
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {card.events.slice(0, 3).map((event, i) => (
+                        <Badge key={i} variant="outline" className="text-xs px-1.5 py-0">
+                          {event.event_id.toUpperCase()}
+                        </Badge>
+                      ))}
+                      {card.events.length > 3 && (
+                        <Badge variant="outline" className="text-xs px-1.5 py-0">
+                          +{card.events.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  {/* Right: status + date */}
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    {getStatusBadge(card.is_checked_in ? "checked_in" : "active")}
+                    <span className="text-xs text-gray-400">
+                      {format(new Date(card.issued_at), "MMM d, yyyy")}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))
+          )}
+          {/* Mobile count */}
+          <p className="text-sm text-gray-500 text-center py-2">
+            Showing {filteredCards.length} of {cards.length} cards
+          </p>
+        </div>
       </main>
 
       {/* Card Detail Dialog */}
@@ -477,7 +566,7 @@ export default function AdminParticipantCardsPage() {
                 <div className="flex-1">
                   <h3 className="text-xl font-bold text-gray-900">{selectedCard.full_name}</h3>
                   <p className="text-gray-600">{selectedCard.position}</p>
-                  {getStatusBadge(selectedCard.status)}
+                  {getStatusBadge(selectedCard.is_checked_in ? "checked_in" : "active")}
                 </div>
               </div>
 
@@ -485,7 +574,7 @@ export default function AdminParticipantCardsPage() {
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-2 text-gray-600">
                   <QrCode className="w-4 h-4" />
-                  <span className="font-mono">{selectedCard.card_number}</span>
+                  <span className="font-mono text-sm">{selectedCard.card_token.substring(0, 16)}...</span>
                 </div>
                 <div className="flex items-center gap-2 text-gray-600">
                   <Mail className="w-4 h-4" />
@@ -532,10 +621,55 @@ export default function AdminParticipantCardsPage() {
                   </div>
                 )}
               </div>
+
+              {/* Manual Check-in Toggle */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-gray-900">Check-in Status</p>
+                    <p className="text-sm text-gray-500">
+                      {selectedCard.is_checked_in 
+                        ? "Participant has checked in" 
+                        : "Participant has not checked in yet"}
+                    </p>
+                  </div>
+                  {selectedCard.is_checked_in ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggleCheckIn(selectedCard, false)}
+                      disabled={updatingCheckIn}
+                      className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                    >
+                      {updatingCheckIn ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <XCircle className="w-4 h-4 mr-2" />
+                      )}
+                      Revert to Active
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() => handleToggleCheckIn(selectedCard, true)}
+                      disabled={updatingCheckIn}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {updatingCheckIn ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                      )}
+                      Mark as Checked In
+                    </Button>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>
       </Dialog>
+      <Footer />
     </div>
   )
 }

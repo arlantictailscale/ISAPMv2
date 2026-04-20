@@ -112,6 +112,14 @@ export default function Footer() {
                     Call for Papers
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/feedback"
+                    className="text-primary-foreground/80 hover:text-primary-foreground hover:underline transition-colors"
+                  >
+                    Kritik & Saran
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

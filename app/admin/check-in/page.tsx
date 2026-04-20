@@ -1,23 +1,22 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { Html5Qrcode } from "html5-qrcode"
 import { format } from "date-fns"
 import { createClient } from "@/lib/supabase/client"
+import Navigation from "@/components/navigation"
+import Footer from "@/components/footer"
+import QRScanner from "@/components/qr-scanner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import {
-  Camera,
-  CameraOff,
   Search,
   User,
   Mail,
   Building,
-  Briefcase,
   Calendar,
   CheckCircle2,
   XCircle,
@@ -29,13 +28,11 @@ import {
 
 interface ParticipantCard {
   id: string
-  card_number: string
-  secure_token: string
+  card_token: string
   user_id: string
   order_id: string
   full_name: string
   email: string
-  phone: string | null
   institution: string | null
   position: string | null
   events: Array<{
@@ -44,7 +41,7 @@ interface ParticipantCard {
     participant_type: string
     participant_type_label: string
   }>
-  status: string
+  is_checked_in: boolean
   issued_at: string
   checked_in_at: string | null
   checked_in_by: string | null
@@ -59,10 +56,8 @@ type ScanResult = {
 export default function AdminCheckInPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const scannerRef = useRef<Html5Qrcode | null>(null)
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [scanning, setScanning] = useState(false)
   const [manualCode, setManualCode] = useState("")
   const [processing, setProcessing] = useState(false)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
@@ -109,7 +104,7 @@ export default function AdminCheckInPage() {
     const { count: checkedIn } = await supabase
       .from("participant_cards")
       .select("*", { count: "exact", head: true })
-      .eq("status", "checked_in")
+      .eq("is_checked_in", true)
 
     setStats({ total: total || 0, checkedIn: checkedIn || 0 })
   }
@@ -119,7 +114,7 @@ export default function AdminCheckInPage() {
     const { data } = await supabase
       .from("participant_cards")
       .select("*")
-      .eq("status", "checked_in")
+      .eq("is_checked_in", true)
       .order("checked_in_at", { ascending: false })
       .limit(5)
 
@@ -140,11 +135,11 @@ export default function AdminCheckInPage() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // Look up the participant card
+      // Look up the participant card by token or card_token
       const { data: card, error } = await supabase
         .from("participant_cards")
         .select("*")
-        .eq("secure_token", token)
+        .eq("card_token", token)
         .single()
 
       if (error || !card) {
@@ -156,7 +151,7 @@ export default function AdminCheckInPage() {
       }
 
       // Check if already checked in
-      if (card.status === "checked_in") {
+      if (card.is_checked_in) {
         setScanResult({
           status: "already_checked_in",
           card,
@@ -169,7 +164,7 @@ export default function AdminCheckInPage() {
       const { error: updateError } = await supabase
         .from("participant_cards")
         .update({
-          status: "checked_in",
+          is_checked_in: true,
           checked_in_at: new Date().toISOString(),
           checked_in_by: user?.id,
         })
@@ -179,7 +174,7 @@ export default function AdminCheckInPage() {
 
       const updatedCard = {
         ...card,
-        status: "checked_in",
+        is_checked_in: true,
         checked_in_at: new Date().toISOString(),
         checked_in_by: user?.id,
       }
@@ -209,52 +204,6 @@ export default function AdminCheckInPage() {
     }
   }, [processing, toast])
 
-  const startScanner = async () => {
-    try {
-      const html5QrCode = new Html5Qrcode("qr-reader")
-      scannerRef.current = html5QrCode
-
-      await html5QrCode.start(
-        { facingMode: "environment" },
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        (decodedText) => {
-          // Stop scanner and process the code
-          html5QrCode.stop().then(() => {
-            setScanning(false)
-            processQRCode(decodedText)
-          })
-        },
-        () => {
-          // QR code not detected - ignore
-        }
-      )
-
-      setScanning(true)
-    } catch (err: any) {
-      console.error("Failed to start scanner:", err)
-      toast({
-        title: "Camera Error",
-        description: "Could not access camera. Please check permissions or use manual entry.",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const stopScanner = async () => {
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop()
-        scannerRef.current = null
-      } catch (err) {
-        console.error("Error stopping scanner:", err)
-      }
-    }
-    setScanning(false)
-  }
-
   const handleManualSearch = () => {
     if (!manualCode.trim()) return
     processQRCode(manualCode.trim())
@@ -266,14 +215,7 @@ export default function AdminCheckInPage() {
     setManualCode("")
   }
 
-  // Cleanup scanner on unmount
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {})
-      }
-    }
-  }, [])
+
 
   if (loading || !isAdmin) {
     return (
@@ -284,23 +226,20 @@ export default function AdminCheckInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Check-In Scanner</h1>
-              <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
-            </div>
-            <Button variant="outline" onClick={() => router.push("/admin")}>
-              Back to Admin
-            </Button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+      <Navigation />
 
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-4 pt-24 pb-8 max-w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Check-In Scanner</h1>
+            <p className="text-sm text-gray-500">Scan participant QR codes for event check-in</p>
+          </div>
+          <Button variant="outline" onClick={() => router.push("/admin/events")} className="self-start sm:self-auto flex-shrink-0">
+            Back to Admin
+          </Button>
+        </div>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Scanner Section */}
           <div className="lg:col-span-2 space-y-6">
@@ -339,8 +278,8 @@ export default function AdminCheckInPage() {
               <CardContent className="p-6">
                 {scanResult ? (
                   // Scan Result
-                  <div className="space-y-6">
-                    <div className="text-center">
+                  <div className="space-y-6 overflow-hidden">
+                    <div className="text-center px-2">
                       {scanResult.status === "success" && (
                         <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                           <CheckCircle2 className="w-10 h-10 text-green-600" />
@@ -362,48 +301,48 @@ export default function AdminCheckInPage() {
                         {scanResult.status === "not_found" && "Not Found"}
                         {scanResult.status === "error" && "Error"}
                       </h3>
-                      <p className="text-gray-600">{scanResult.message}</p>
+                      <p className="text-gray-600 break-words">{scanResult.message}</p>
                     </div>
 
                     {scanResult.card && (
-                      <div className="bg-gray-50 rounded-xl p-6 space-y-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center">
-                            <User className="w-8 h-8 text-teal-600" />
+                      <div className="bg-gray-50 rounded-xl p-4 sm:p-6 space-y-4 overflow-hidden">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+                            <User className="w-6 h-6 sm:w-8 sm:h-8 text-teal-600" />
                           </div>
-                          <div>
-                            <h4 className="text-xl font-bold text-gray-900">{scanResult.card.full_name}</h4>
-                            <p className="text-gray-600">{scanResult.card.position}</p>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-lg sm:text-xl font-bold text-gray-900 truncate">{scanResult.card.full_name}</h4>
+                            <p className="text-gray-600 text-sm sm:text-base truncate">{scanResult.card.position}</p>
                           </div>
                         </div>
 
                         <div className="grid gap-2 text-sm">
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <Mail className="w-4 h-4" />
-                            <span>{scanResult.card.email}</span>
+                          <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                            <Mail className="w-4 h-4 flex-shrink-0" />
+                            <span className="truncate">{scanResult.card.email}</span>
                           </div>
                           {scanResult.card.institution && (
-                            <div className="flex items-center gap-2 text-gray-600">
-                              <Building className="w-4 h-4" />
-                              <span>{scanResult.card.institution}</span>
+                            <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                              <Building className="w-4 h-4 flex-shrink-0" />
+                              <span className="truncate">{scanResult.card.institution}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-2 text-gray-600">
-                            <QrCode className="w-4 h-4" />
-                            <span className="font-mono text-xs">{scanResult.card.card_number}</span>
+                          <div className="flex items-center gap-2 text-gray-600 min-w-0">
+                            <QrCode className="w-4 h-4 flex-shrink-0" />
+                            <span className="font-mono text-xs truncate">{scanResult.card.card_token.substring(0, 12)}...</span>
                           </div>
                         </div>
 
                         <div className="pt-4 border-t">
                           <h5 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-teal-600" />
+                            <Calendar className="w-4 h-4 text-teal-600 flex-shrink-0" />
                             Registered Events
                           </h5>
                           <div className="space-y-2">
                             {scanResult.card.events.map((event, i) => (
-                              <div key={i} className="flex items-center justify-between bg-white rounded-lg px-3 py-2">
-                                <span className="font-medium text-gray-900 text-sm">{event.event_label}</span>
-                                <Badge variant="secondary" className="text-xs">
+                              <div key={i} className="flex items-center justify-between gap-2 bg-white rounded-lg px-3 py-2">
+                                <span className="font-medium text-gray-900 text-sm truncate">{event.event_label}</span>
+                                <Badge variant="secondary" className="text-xs flex-shrink-0">
                                   {event.participant_type_label}
                                 </Badge>
                               </div>
@@ -421,42 +360,26 @@ export default function AdminCheckInPage() {
                 ) : (
                   // Scanner
                   <div className="space-y-6">
-                    {/* Camera Scanner */}
-                    <div className="relative">
-                      <div
-                        id="qr-reader"
-                        className={`w-full aspect-square max-w-md mx-auto rounded-xl overflow-hidden bg-gray-900 ${
-                          scanning ? "" : "flex items-center justify-center"
-                        }`}
-                      >
-                        {!scanning && (
-                          <div className="text-center text-gray-400 p-8">
-                            <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                            <p>Click Start Scanner to activate camera</p>
-                          </div>
-                        )}
-                      </div>
-
-                      {processing && (
-                        <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl">
-                          <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
+                    {/* QR Scanner Component */}
+                    <QRScanner 
+                      onScan={processQRCode}
+                      onError={(error) => {
+                        toast({
+                          title: "Camera Error",
+                          description: error,
+                          variant: "destructive",
+                        })
+                      }}
+                    />
+                    
+                    {processing && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white rounded-xl p-6 text-center shadow-xl">
+                          <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600">Processing check-in...</p>
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex justify-center">
-                      {scanning ? (
-                        <Button variant="destructive" onClick={stopScanner}>
-                          <CameraOff className="w-4 h-4 mr-2" />
-                          Stop Scanner
-                        </Button>
-                      ) : (
-                        <Button onClick={startScanner} className="bg-teal-600 hover:bg-teal-700">
-                          <Camera className="w-4 h-4 mr-2" />
-                          Start Scanner
-                        </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Manual Entry */}
                     <div className="relative">
@@ -540,6 +463,7 @@ export default function AdminCheckInPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

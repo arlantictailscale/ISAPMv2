@@ -88,7 +88,7 @@ export async function approvePayment(paymentId: string, orderId: string, calcula
     try {
       const cardResult = await generateParticipantCard(orderId)
       if (cardResult.success) {
-        console.log("[v0] Participant card generated:", cardResult.cardNumber)
+        console.log("[v0] Participant card generated:", cardResult.cardToken?.substring(0, 8))
       } else {
         console.error("[v0] Failed to generate participant card:", cardResult.error)
       }
